@@ -456,10 +456,15 @@ export function useGameLoop({
       if (!introDone) {
         const SHORE_X = 500+4;
         introTimer += dt;
-        player.x = -30+introTimer*0.35; player.vx=2.5; player.dir=1; player.moving=true; /*DEBUG_SLOW*/
+        player.x = -30+introTimer*2.5; player.vx=2.5; player.dir=1; player.moving=true;
+        const standY = GROUND_Y - player.h;
+        const rise   = Math.max(0,Math.min(player.x/SHORE_X,1));
+        const emerge = Math.max(0,Math.min((player.x-(SHORE_X-180))/180,1));
+        const bob    = Math.sin(introTimer*0.2)*3*(1-emerge);
+        player.y = standY + 26*(1-rise) + bob;
         player.frameTimer += dt;
         if (player.frameTimer>6) { player.frameTimer=0; player.frame=(player.frame+1)%3; }
-        if (player.x >= SHORE_X) { introDone=true; player.x=SHORE_X; player.moving=false; }
+        if (player.x >= SHORE_X) { introDone=true; player.x=SHORE_X; player.y=standY; player.moving=false; }
       }
 
       const paused = pausedRef ? pausedRef.current : showCart;
@@ -746,24 +751,25 @@ export function useGameLoop({
       if (!introDone) {
         const SHORE_X=500+4;
         const waterLine=GROUND_Y-20, miloScreenX=player.x-ox;
-        const shoreProgress=Math.min(player.x/SHORE_X,1);
-        const shoreScreenX=SHORE_X-ox;
         ctx.fillStyle='rgba(15,60,140,0.92)';
-        ctx.fillRect(0,waterLine,Math.max(shoreScreenX+60,W),H-waterLine);
+        ctx.fillRect(0,waterLine,W,H-waterLine);
         ctx.fillStyle='rgba(30,100,180,0.75)';
-        ctx.fillRect(0,waterLine,Math.max(shoreScreenX+40,W),H-waterLine);
+        ctx.fillRect(0,waterLine,W,H-waterLine);
         ctx.fillStyle='rgba(80,160,220,0.25)';
-        for (let row=0;row<4;row++) ctx.fillRect(0,waterLine+10+row*18,Math.max(shoreScreenX+40,W),8);
+        for (let row=0;row<4;row++) ctx.fillRect(0,waterLine+10+row*18,W,8);
         ctx.fillStyle='rgba(120,200,255,0.35)';
         for (let w=0;w<12;w++) {
           ctx.beginPath();
           ctx.ellipse((w*130+introTimer*1.2)%(W+200)-100,waterLine+6,30+w*4,5,0,0,Math.PI*2);
           ctx.fill();
         }
-        const clipTopFinal=player.y+player.h*Math.max(0,1-shoreProgress);
+        // Milo rises out of the sea: reveal more of his body as he nears the shore
+        const emerge=Math.max(0,Math.min((player.x-(SHORE_X-180))/180,1));
+        const feet=player.y+player.h;
+        const clipBottom=waterLine+(feet-waterLine)*emerge;
         ctx.save();
         ctx.beginPath();
-        ctx.rect(miloScreenX-10,clipTopFinal-oy,player.w+20,waterLine-clipTopFinal+oy);
+        ctx.rect(miloScreenX-12,0,player.w+24,clipBottom);
         ctx.clip();
         drawCharacter(ox,oy);
         ctx.restore();
