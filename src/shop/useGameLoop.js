@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import milo1 from '../milo1.png';
 import milo2 from '../milo2.png';
 import milo3 from '../milo3.png';
-import islandBg from '../Artboard_1.svg';
+import islandBg from '../Artboard_1.png';
 import { seededColor, seededLightColor } from '../utils/colors';
 import { playSpringSound, playCubeHitSound, playPickupSound } from './audio';
 import {
