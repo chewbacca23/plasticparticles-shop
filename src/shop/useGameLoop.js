@@ -459,9 +459,10 @@ export function useGameLoop({
         player.x = -30+introTimer*2.5; player.vx=2.5; player.dir=1; player.moving=true;
         const standY = GROUND_Y - player.h;
         const rise   = Math.max(0,Math.min(player.x/SHORE_X,1));
-        const emerge = Math.max(0,Math.min((player.x-(SHORE_X-180))/180,1));
-        const bob    = Math.sin(introTimer*0.2)*3*(1-emerge);
-        player.y = standY + 26*(1-rise) + bob;
+        const emerge = Math.max(0,Math.min((player.x-(SHORE_X-220))/220,1));
+        const bob    = Math.sin(introTimer*0.2)*2.5*(1-emerge);
+        // Keep torso mostly above the waterline while swimming in
+        player.y = standY + 10*(1-rise) + bob;
         player.frameTimer += dt;
         if (player.frameTimer>6) { player.frameTimer=0; player.frame=(player.frame+1)%3; }
         if (player.x >= SHORE_X) { introDone=true; player.x=SHORE_X; player.y=standY; player.moving=false; }
@@ -773,28 +774,35 @@ export function useGameLoop({
       if (!introDone) {
         const SHORE_X=500+4;
         const waterLine=GROUND_Y-20, miloScreenX=player.x-ox;
+        const emerge=Math.max(0,Math.min((player.x-(SHORE_X-220))/220,1));
+
+        // Deep water behind Milo
         ctx.fillStyle='rgba(15,60,140,0.92)';
         ctx.fillRect(0,waterLine,W,H-waterLine);
-        ctx.fillStyle='rgba(30,100,180,0.75)';
+        ctx.fillStyle='rgba(30,100,180,0.55)';
         ctx.fillRect(0,waterLine,W,H-waterLine);
-        ctx.fillStyle='rgba(80,160,220,0.25)';
-        for (let row=0;row<4;row++) ctx.fillRect(0,waterLine+10+row*18,W,8);
-        ctx.fillStyle='rgba(120,200,255,0.35)';
-        for (let w=0;w<12;w++) {
+
+        // Draw Milo fully first so he is never hidden behind wave blobs
+        drawCharacter(ox,oy);
+
+        // Soft water veil over his submerged legs (clears as he emerges)
+        const veilTop=waterLine + (player.y+player.h-waterLine)*emerge*0.15;
+        const veilAlpha=0.55*(1-emerge*0.85);
+        ctx.fillStyle=`rgba(20,80,160,${veilAlpha})`;
+        ctx.fillRect(miloScreenX-14,veilTop,player.w+28,H-veilTop);
+
+        // Subtle foam crest at the surface — small ripples, not giant balls
+        ctx.fillStyle=`rgba(180,220,255,${0.35+0.25*(1-emerge)})`;
+        for (let i=0;i<18;i++) {
+          const wx=((i*95+introTimer*2.2)%(W+120))-60;
+          const wr=10+(i%3)*3;
           ctx.beginPath();
-          ctx.ellipse((w*130+introTimer*1.2)%(W+200)-100,waterLine+6,30+w*4,5,0,0,Math.PI*2);
+          ctx.ellipse(wx,waterLine+2,wr,3.5,0,0,Math.PI*2);
           ctx.fill();
         }
-        // Milo rises out of the sea: reveal more of his body as he nears the shore
-        const emerge=Math.max(0,Math.min((player.x-(SHORE_X-180))/180,1));
-        const feet=player.y+player.h;
-        const clipBottom=waterLine+(feet-waterLine)*emerge;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(miloScreenX-12,0,player.w+24,clipBottom);
-        ctx.clip();
-        drawCharacter(ox,oy);
-        ctx.restore();
+        // Thin highlight line so the shore edge reads cleanly
+        ctx.fillStyle=`rgba(200,230,255,${0.4+0.3*emerge})`;
+        ctx.fillRect(0,waterLine,W,2);
       }
 
       if (introDone) {
