@@ -68,23 +68,23 @@ export function useGameLoop({
     }
 
     const clouds = [
-      {x:200,y:150,w:280,h:90,speed:0.5,dir:1,opacity:0.85},
-      {x:600,y:150,w:240,h:80,speed:0.8,dir:-1,opacity:0.6},
-      {x:1000,y:150,w:320,h:100,speed:0.4,dir:1,opacity:0.75},
-      {x:1400,y:120,w:220,h:75,speed:1.0,dir:-1,opacity:0.5},
-      {x:1800,y:150,w:300,h:95,speed:0.6,dir:1,opacity:0.9},
-      {x:2200,y:140,w:350,h:110,speed:0.35,dir:-1,opacity:0.65},
-      {x:2600,y:150,w:260,h:85,speed:0.9,dir:1,opacity:0.45},
-      {x:3000,y:130,w:310,h:100,speed:0.55,dir:-1,opacity:0.8},
-      {x:400,y:150,w:280,h:90,speed:0.7,dir:1,opacity:0.55},
-      {x:900,y:150,w:330,h:105,speed:0.45,dir:-1,opacity:0.7},
-      {x:1300,y:150,w:250,h:80,speed:0.65,dir:1,opacity:0.4},
-      {x:1700,y:150,w:360,h:115,speed:0.5,dir:-1,opacity:0.95},
-      {x:2100,y:150,w:290,h:92,speed:0.75,dir:1,opacity:0.6},
-      {x:2500,y:150,w:340,h:108,speed:0.42,dir:-1,opacity:0.5},
-      {x:2900,y:150,w:270,h:86,speed:0.88,dir:1,opacity:0.78},
-      {x:3200,y:150,w:320,h:102,speed:0.58,dir:-1,opacity:0.42},
-      {x:3500,y:150,w:300,h:96,speed:0.62,dir:1,opacity:0.88},
+      {x:200,y:190,w:280,h:90,speed:0.5,dir:1,opacity:0.85},
+      {x:600,y:190,w:240,h:80,speed:0.8,dir:-1,opacity:0.6},
+      {x:1000,y:190,w:320,h:100,speed:0.4,dir:1,opacity:0.75},
+      {x:1400,y:160,w:220,h:75,speed:1.0,dir:-1,opacity:0.5},
+      {x:1800,y:190,w:300,h:95,speed:0.6,dir:1,opacity:0.9},
+      {x:2200,y:180,w:350,h:110,speed:0.35,dir:-1,opacity:0.65},
+      {x:2600,y:190,w:260,h:85,speed:0.9,dir:1,opacity:0.45},
+      {x:3000,y:170,w:310,h:100,speed:0.55,dir:-1,opacity:0.8},
+      {x:400,y:190,w:280,h:90,speed:0.7,dir:1,opacity:0.55},
+      {x:900,y:190,w:330,h:105,speed:0.45,dir:-1,opacity:0.7},
+      {x:1300,y:190,w:250,h:80,speed:0.65,dir:1,opacity:0.4},
+      {x:1700,y:190,w:360,h:115,speed:0.5,dir:-1,opacity:0.95},
+      {x:2100,y:190,w:290,h:92,speed:0.75,dir:1,opacity:0.6},
+      {x:2500,y:190,w:340,h:108,speed:0.42,dir:-1,opacity:0.5},
+      {x:2900,y:190,w:270,h:86,speed:0.88,dir:1,opacity:0.78},
+      {x:3200,y:190,w:320,h:102,speed:0.58,dir:-1,opacity:0.42},
+      {x:3500,y:190,w:300,h:96,speed:0.62,dir:1,opacity:0.88},
     ];
 
     function roundRect(ctx,x,y,w,h,r) {
@@ -571,7 +571,8 @@ export function useGameLoop({
           for (const s of springboards) {
             if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:s.x,y:s.y,w:s.w,h:s.h})) {
               if (player.vy>=0 && player.y+player.h-s.y<20) {
-                player.y=s.y-player.h; player.vy=-28; player.onGround=false;
+                // Stronger bounce so the lower ground still reaches the cloud band
+                player.y=s.y-player.h; player.vy=-34; player.onGround=false;
                 s.bounced=true; playSpringSound();
                 setTimeout(()=>{s.bounced=false;},300);
               }
@@ -580,11 +581,13 @@ export function useGameLoop({
           for (const c of clouds) {
             c.x += c.speed*c.dir;
             if (c.x<0||c.x+c.w>ISLAND_WIDTH) c.dir*=-1;
-            const ct={x:c.x+c.w*0.1,y:c.y+c.h*0.2,w:c.w*0.8,h:10};
-            if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},ct)) {
-              if (player.vy>=0&&player.y+player.h-ct.y<20) {
-                player.y=ct.y-player.h; player.vy=0; player.onGround=true; player.x+=c.speed*c.dir;
-              }
+            // Wider/thicker landing pad + swept feet check so fast falls don't tunnel through
+            const ct={x:c.x+c.w*0.08,y:c.y+c.h*0.28,w:c.w*0.84,h:18};
+            const feet=player.y+player.h;
+            const prevFeet=feet-player.vy*dt;
+            if (player.x+player.w>ct.x && player.x<ct.x+ct.w && player.vy>=0 &&
+                feet>ct.y && feet<ct.y+ct.h+28 && prevFeet<=ct.y+10) {
+              player.y=ct.y-player.h; player.vy=0; player.onGround=true; player.x+=c.speed*c.dir;
             }
           }
           islandSign.glow = (Math.sin(wobbleTime*2)+1)/2;
