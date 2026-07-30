@@ -24,7 +24,14 @@ export function useGameLoop({
     ctx.imageSmoothingEnabled = false;
     const bg     = new Image(); bg.src = islandBg;
     const mf     = [new Image(), new Image(), new Image()];
-    mf[0].src = milo1; mf[1].src = milo2; mf[2].src = milo3;
+    const miloSrcs = [milo1, milo2, milo3];
+    miloSrcs.forEach((src, i) => {
+      mf[i].src = src;
+      mf[i].onerror = () => {
+        // Retry once after a short delay (HMR can briefly 404 a module URL)
+        setTimeout(() => { if (mf[i].naturalWidth === 0) mf[i].src = src + (src.includes('?') ? '&' : '?') + 'r=' + Date.now(); }, 120);
+      };
+    });
     const isCat = character === 'cat';
     const TILE  = 32;
     const ground = Array.from({length:200},(_,i)=>({x:i*TILE,y:GROUND_Y,w:TILE,h:30}));
@@ -233,7 +240,8 @@ export function useGameLoop({
     const drawCharacter = (ox,oy) => {
       const sx = player.x-ox, sy = player.y-oy;
       const frame = mf[player.frame];
-      if (!frame.complete) return;
+      // `complete` is true for broken images too — naturalWidth catches failed loads
+      const frameOk = frame && frame.complete && frame.naturalWidth > 0;
       const { name, color, hat } = currentCustom();
 
       if (finaleRef && finaleRef.current) drawFinaleAura(sx, sy);
@@ -249,13 +257,21 @@ export function useGameLoop({
       ctx.restore();
 
       ctx.save();
-      if (player.dir === -1) {
-        ctx.translate(sx+player.w,0); ctx.scale(-1,1);
-        ctx.drawImage(frame,0,sy,player.w,player.h);
-        if (isCat) { ctx.globalAlpha=0.42; ctx.fillStyle=color; ctx.fillRect(4,sy+16,player.w-8,player.h-20); ctx.globalAlpha=1; }
+      if (frameOk) {
+        if (player.dir === -1) {
+          ctx.translate(sx+player.w,0); ctx.scale(-1,1);
+          ctx.drawImage(frame,0,sy,player.w,player.h);
+          if (isCat) { ctx.globalAlpha=0.42; ctx.fillStyle=color; ctx.fillRect(4,sy+16,player.w-8,player.h-20); ctx.globalAlpha=1; }
+        } else {
+          ctx.drawImage(frame,sx,sy,player.w,player.h);
+          if (isCat) { ctx.globalAlpha=0.42; ctx.fillStyle=color; ctx.fillRect(sx+4,sy+16,player.w-8,player.h-20); ctx.globalAlpha=1; }
+        }
       } else {
-        ctx.drawImage(frame,sx,sy,player.w,player.h);
-        if (isCat) { ctx.globalAlpha=0.42; ctx.fillStyle=color; ctx.fillRect(sx+4,sy+16,player.w-8,player.h-20); ctx.globalAlpha=1; }
+        // Fallback body so a broken/missing PNG never crashes the loop
+        ctx.fillStyle = color;
+        roundRect(ctx, sx+6, sy+10, player.w-12, player.h-14, 8); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(sx+player.w/2, sy+14, 10, 0, Math.PI*2); ctx.fill();
       }
       ctx.restore();
 
