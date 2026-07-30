@@ -34,7 +34,7 @@ export default function GameView({
   const canvasRef = useRef(null);
   const keysRef = useRef({});
   const animRef = useRef(null);
-  const springboardsRef = useRef([{ x: 1672, y: 912, w: 60, h: 18, bounced: false }]);
+  const springboardsRef = useRef([{ x: 1672, y: 962, w: 60, h: 18, bounced: false }]);
   const setPopupRef = useRef(null);
   const setWorldRef = useRef(null);
   const { cart, addToCart, cartCount } = useCart();

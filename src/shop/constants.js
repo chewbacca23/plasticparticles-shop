@@ -13,11 +13,11 @@ export const CH = 44;
 export const GAP = 8;
 
 // Ground level — matches the sand/tree line in Artboard_1.png at H=1000
-export const GROUND_Y = 930;
+export const GROUND_Y = 980;
 export const PLAYER_H = 52;
 
-// WALL ZONE — raised higher so Milo walks under freely and can jump to hit
-const WALL_Y = GROUND_Y - PLAYER_H - CH - 80;
+// WALL ZONE — raised so Milo walks under freely and can jump to hit
+const WALL_Y = GROUND_Y - PLAYER_H - CH - 180;
 export const WALL_ZONES = Array.from({ length: 21 }, (_, i) => ({
   x: 500 + i * (CW + GAP), y: WALL_Y, w: CW, h: CH,
   type: 'wall', number: i + 1, product: null,
@@ -28,7 +28,7 @@ const PYR_BASE_X    = 1820;
 const PYR_STAGE_GAP = PLAYER_H + CH + 20;
 
 // Bottom tier raised higher too
-const PYR_Y1 = GROUND_Y - PLAYER_H - CH - 80;
+const PYR_Y1 = GROUND_Y - PLAYER_H - CH - 180;
 const PYR_Y2 = PYR_Y1 - PYR_STAGE_GAP;
 const PYR_Y3 = PYR_Y2 - PYR_STAGE_GAP;
 
@@ -59,7 +59,7 @@ export const PYRAMID_PLATFORMS = pyrTiers.map(({ count, y }) => {
 });
 
 // BUS ZONE — moved right to sit above the actual bus in the artwork, raised same as wall
-const BUS_Y = GROUND_Y - PLAYER_H - CH - 80;
+const BUS_Y = GROUND_Y - PLAYER_H - CH - 180;
 export const BUS_ZONES = Array.from({ length: 10 }, (_, i) => ({
   x: 2700 + i * (CW + GAP), y: BUS_Y, w: CW, h: CH,
   type: 'bus', number: i + 1, product: null,
