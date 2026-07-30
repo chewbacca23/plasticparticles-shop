@@ -845,7 +845,7 @@ export function useGameLoop({
           ctx.fillStyle=`rgba(30,140,200,${0.75+glow*0.2})`;
           ctx.beginPath(); ctx.arc(cx,divePortal.y+18,22,0,Math.PI*2); ctx.fill();
           ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(cx-6,divePortal.y+12,5,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle={`rgba(180,240,255,${0.7+glow*0.3})`};
+          ctx.fillStyle=`rgba(180,240,255,${0.7+glow*0.3})`;
           ctx.font="bold 8px 'Press Start 2P',monospace"; ctx.textAlign='center';
           ctx.fillText('🫧 DIVE',cx,divePortal.y-10);
           ctx.fillStyle=`rgba(255,255,255,${0.55+glow*0.3})`;
