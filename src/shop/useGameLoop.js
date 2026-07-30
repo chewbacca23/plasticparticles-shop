@@ -775,12 +775,24 @@ export function useGameLoop({
         const SHORE_X=500+4;
         const waterLine=GROUND_Y-20, miloScreenX=player.x-ox;
         const emerge=Math.max(0,Math.min((player.x-(SHORE_X-220))/220,1));
+        // Keep the sea on the left — stop at the shore instead of flooding the whole canvas
+        const shoreScreenX=SHORE_X-ox;
+        const oceanW=Math.max(0,Math.min(W,shoreScreenX+36));
 
-        // Deep water behind Milo
+        // Deep water behind Milo (left side only)
         ctx.fillStyle='rgba(15,60,140,0.92)';
-        ctx.fillRect(0,waterLine,W,H-waterLine);
+        ctx.fillRect(0,waterLine,oceanW,H-waterLine);
         ctx.fillStyle='rgba(30,100,180,0.55)';
-        ctx.fillRect(0,waterLine,W,H-waterLine);
+        ctx.fillRect(0,waterLine,oceanW,H-waterLine);
+
+        // Soft shore fade so the water doesn't hard-cut into the sand
+        if (oceanW>0 && oceanW<W) {
+          const fade=ctx.createLinearGradient(oceanW-40,0,oceanW+20,0);
+          fade.addColorStop(0,'rgba(30,100,180,0.45)');
+          fade.addColorStop(1,'rgba(30,100,180,0)');
+          ctx.fillStyle=fade;
+          ctx.fillRect(oceanW-40,waterLine,60,H-waterLine);
+        }
 
         // Draw Milo fully first so he is never hidden behind wave blobs
         drawCharacter(ox,oy);
@@ -788,21 +800,25 @@ export function useGameLoop({
         // Soft water veil over his submerged legs (clears as he emerges)
         const veilTop=waterLine + (player.y+player.h-waterLine)*emerge*0.15;
         const veilAlpha=0.55*(1-emerge*0.85);
-        ctx.fillStyle=`rgba(20,80,160,${veilAlpha})`;
-        ctx.fillRect(miloScreenX-14,veilTop,player.w+28,H-veilTop);
+        const veilW=Math.min(player.w+28,Math.max(0,oceanW-(miloScreenX-14)));
+        if (veilW>0) {
+          ctx.fillStyle=`rgba(20,80,160,${veilAlpha})`;
+          ctx.fillRect(miloScreenX-14,veilTop,veilW,H-veilTop);
+        }
 
-        // Subtle foam crest at the surface — small ripples, not giant balls
+        // Subtle foam crest at the surface — only over the ocean span
         ctx.fillStyle=`rgba(180,220,255,${0.35+0.25*(1-emerge)})`;
         for (let i=0;i<18;i++) {
-          const wx=((i*95+introTimer*2.2)%(W+120))-60;
+          const wx=((i*95+introTimer*2.2)%(oceanW+80))-40;
+          if (wx< -20 || wx>oceanW+10) continue;
           const wr=10+(i%3)*3;
           ctx.beginPath();
           ctx.ellipse(wx,waterLine+2,wr,3.5,0,0,Math.PI*2);
           ctx.fill();
         }
-        // Thin highlight line so the shore edge reads cleanly
+        // Thin highlight along the water surface
         ctx.fillStyle=`rgba(200,230,255,${0.4+0.3*emerge})`;
-        ctx.fillRect(0,waterLine,W,2);
+        ctx.fillRect(0,waterLine,oceanW,2);
       }
 
       if (introDone) {

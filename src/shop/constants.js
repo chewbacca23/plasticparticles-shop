@@ -12,8 +12,8 @@ export const CW = 44;
 export const CH = 44;
 export const GAP = 8;
 
-// Ground level — matches the actual sand/floor in Artboard_1.png at H=1000
-export const GROUND_Y = 830;
+// Ground level — matches the sand/tree line in Artboard_1.png at H=1000
+export const GROUND_Y = 930;
 export const PLAYER_H = 52;
 
 // WALL ZONE — raised higher so Milo walks under freely and can jump to hit
