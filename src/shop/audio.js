@@ -11,10 +11,13 @@ async function ensureToneStarted() {
 }
 
 export const TRACKS = [
-  { id: 'island', label: '🌴 Island Groove' },
-  { id: 'jungle', label: '🥁 Jungle Bongo'  },
-  { id: 'space',  label: '🚀 Space Synth'    },
-  { id: 'pirate', label: '🏴‍☠️ Pirate Shanty' },
+  { id: 'island',     label: '🌴 Island Groove' },
+  { id: 'jungle',     label: '🥁 Jungle Bongo'  },
+  { id: 'space',      label: '🚀 Space Synth'    },
+  { id: 'underwater', label: '🫧 Deep Blue'      },
+  { id: 'pirate',     label: '🏴‍☠️ Pirate Shanty' },
+  // Bonus track — hidden until the passport SPACE world is fully stamped.
+  { id: 'starlight', label: '🌟 Starlight Bonus', locked: true, reward: 'track_starlight' },
 ];
 
 export async function startMusic(trackId = 'island') {
@@ -76,6 +79,22 @@ export async function startMusic(trackId = 'island') {
       },[...Array(8).keys()],'8n');
       T.getTransport().bpm.value=68;
 
+    } else if (trackId === 'underwater') {
+      // Soft, floaty deep-blue pad — slower than space, more submerged.
+      const reverb=new T.Reverb({decay:6,wet:0.7}).connect(limiter);
+      const filter=new T.Filter(600,'lowpass').connect(reverb);
+      const pad=new T.PolySynth(T.Synth,{oscillator:{type:'sine'},envelope:{attack:1.4,decay:0.6,sustain:0.85,release:2.5},volume:-18}).connect(filter);
+      const bub=new T.MembraneSynth({pitchDecay:0.2,octaves:2,envelope:{attack:0.01,decay:0.35,sustain:0,release:0.2},volume:-22}).connect(reverb);
+      const sub=new T.MonoSynth({oscillator:{type:'triangle'},envelope:{attack:0.4,decay:0.5,sustain:0.7,release:1.4},volume:-12}).connect(limiter);
+      const ch=[['D3','F3','A3'],['G2','Bb2','D3'],['C3','Eb3','G3'],['A2','C3','E3']];
+      const sN=['D2','G2','C2','A2']; let bar=0;
+      musicLoop=new T.Sequence((time,step)=>{
+        if(step===0){pad.triggerAttackRelease(ch[bar%ch.length],'2n',time);sub.triggerAttackRelease(sN[bar%sN.length],'2n',time);bar++;}
+        if(step===2||step===5) bub.triggerAttackRelease('C3','16n',time);
+        if(step===6) bub.triggerAttackRelease('G2','16n',time);
+      },[...Array(8).keys()],'8n');
+      T.getTransport().bpm.value=58;
+
     } else if (trackId === 'pirate') {
       const dist=new T.Distortion(0.15).connect(limiter);
       const acc=new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:0.01,decay:0.1,sustain:0.6,release:0.2},volume:-16}).connect(dist);
@@ -91,6 +110,25 @@ export async function startMusic(trackId = 'island') {
         if(step%8===0){kk.triggerAttackRelease('C1','8n',time);acc.triggerAttackRelease(ch[Math.floor(step/8)%ch.length],'4n',time+0.01);}
       },[...Array(16).keys()],'8n');
       T.getTransport().bpm.value=96;
+
+    } else if (trackId === 'starlight') {
+      // Bright, sparkly reward theme — shimmering bells over a warm pad.
+      const reverb=new T.Reverb({decay:4,wet:0.45}).connect(limiter);
+      const chorus=new T.Chorus(2.5,3,0.5).connect(reverb).start();
+      const bell=new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:0.005,decay:0.5,sustain:0.1,release:1.2},volume:-16}).connect(chorus);
+      const pad=new T.PolySynth(T.Synth,{oscillator:{type:'sine'},envelope:{attack:0.8,decay:0.4,sustain:0.7,release:2},volume:-22}).connect(reverb);
+      const spark=new T.PluckSynth({attackNoise:0.8,dampening:5000,resonance:0.9,volume:-18}).connect(reverb);
+      const bass=new T.MonoSynth({oscillator:{type:'sine'},envelope:{attack:0.05,decay:0.3,sustain:0.5,release:0.9},volume:-12}).connect(limiter);
+      const mel=['C5','E5','G5','B5','C6','G5','E5','G5'];
+      const bN=['C3','C3','A2','A2','F2','F2','G2','G2'];
+      const ch=[['C4','E4','G4'],['A3','C4','E4'],['F3','A3','C4'],['G3','B3','D4']]; let bar=0;
+      musicLoop=new T.Sequence((time,step)=>{
+        if(step===0){pad.triggerAttackRelease(ch[bar%ch.length],'2n',time);bar++;}
+        if(step%2===0) bass.triggerAttackRelease(bN[step]||'C3','4n',time);
+        bell.triggerAttackRelease(mel[step%mel.length],'8n',time);
+        if(step%2===1) spark.triggerAttack(mel[(step+2)%mel.length],time);
+      },[...Array(8).keys()],'8n');
+      T.getTransport().bpm.value=88;
     }
     musicLoop.start(0);
     T.getTransport().start();
@@ -116,6 +154,49 @@ export async function playSpringSound() {
     s2.triggerAttack(360,now+0.02); s2.frequency.exponentialRampTo(1400,0.12,now+0.02); s2.triggerRelease(now+0.14);
     setTimeout(()=>{try{s1.dispose();s2.dispose();out.dispose();}catch(e){}},1000);
   } catch(e){console.warn('Spring sound error:',e);}
+}
+
+export async function playPickupSound() {
+  try {
+    await ensureToneStarted();
+    const T=ToneLib, out=new T.Limiter(-8).toDestination();
+    const s=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:0.001,decay:0.18,sustain:0,release:0.08},volume:-18}).connect(out);
+    const now=T.now();
+    s.triggerAttack(660,now); s.frequency.exponentialRampTo(1320,0.12,now); s.triggerRelease(now+0.14);
+    setTimeout(()=>{try{s.dispose();out.dispose();}catch(e){}},500);
+  } catch(e){/* non-breaking: ignore pickup sound errors */}
+}
+
+// Little celebratory ascending jingle for unlocking a passport milestone reward.
+export async function playUnlockSound() {
+  try {
+    await ensureToneStarted();
+    const T=ToneLib, out=new T.Limiter(-6).toDestination();
+    const reverb=new T.Reverb({decay:1.6,wet:0.35}).connect(out);
+    const bell=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:0.002,decay:0.28,sustain:0.05,release:0.4},volume:-8}).connect(reverb);
+    const spark=new T.Synth({oscillator:{type:'sine'},envelope:{attack:0.002,decay:0.2,sustain:0,release:0.3},volume:-14}).connect(reverb);
+    const now=T.now(), notes=['C5','E5','G5','C6'];
+    notes.forEach((n,i)=>bell.triggerAttackRelease(n,'16n',now+i*0.09));
+    spark.triggerAttackRelease('G6','32n',now+notes.length*0.09+0.02);
+    setTimeout(()=>{try{bell.dispose();spark.dispose();reverb.dispose();out.dispose();}catch(e){}},1400);
+  } catch(e){/* non-breaking: ignore unlock sound errors */}
+}
+
+// Soft paper "page-flip" whoosh for opening the passport book. Kept subtle: a
+// short filtered noise swish plus a tiny woody tap, mirroring the other SFX guards.
+export async function playPageFlipSound() {
+  try {
+    await ensureToneStarted();
+    const T=ToneLib, out=new T.Limiter(-10).toDestination();
+    const filter=new T.Filter({type:'bandpass',frequency:1400,Q:0.8}).connect(out);
+    const swish=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:0.02,decay:0.16,sustain:0,release:0.05},volume:-20}).connect(filter);
+    const tap=new T.MembraneSynth({pitchDecay:0.02,octaves:2,envelope:{attack:0.001,decay:0.09,sustain:0,release:0.05},volume:-22}).connect(out);
+    const now=T.now();
+    swish.triggerAttackRelease('16n',now);
+    filter.frequency.setValueAtTime(900,now); filter.frequency.exponentialRampTo(2600,0.18,now);
+    tap.triggerAttackRelease('C3','32n',now+0.14);
+    setTimeout(()=>{try{swish.dispose();tap.dispose();filter.dispose();out.dispose();}catch(e){}},700);
+  } catch(e){/* non-breaking: ignore page-flip sound errors */}
 }
 
 export async function playCubeHitSound() {

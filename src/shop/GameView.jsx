@@ -20,8 +20,9 @@ const REWARD_TOASTS = {
 };
 
 const PASSPORT_WORLDS = [
-  { id: 'island', label: 'Island', emoji: '🌴', color: '#1D9E75' },
-  { id: 'space',  label: 'Space',  emoji: '🚀', color: '#7F77DD' },
+  { id: 'island',     label: 'Island',     emoji: '🌴', color: '#1D9E75' },
+  { id: 'space',      label: 'Space',      emoji: '🚀', color: '#7F77DD' },
+  { id: 'underwater', label: 'Underwater', emoji: '🫧', color: '#0B6E99' },
 ];
 
 export default function GameView({
@@ -29,6 +30,7 @@ export default function GameView({
   customization,
   islandProducts,
   spaceProducts,
+  underwaterProducts = [],
   onSwitchCharacter,
 }) {
   const canvasRef = useRef(null);
@@ -59,9 +61,12 @@ export default function GameView({
   const finaleRef = useRef(false);            // gates the grand-finale aura in the loop
 
   const worlds = PASSPORT_WORLDS.map(w => ({
-    ...w, products: w.id === 'space' ? spaceProducts : islandProducts,
+    ...w,
+    products: w.id === 'space' ? spaceProducts
+      : w.id === 'underwater' ? underwaterProducts
+      : islandProducts,
   }));
-  const allProducts = [...islandProducts, ...spaceProducts];
+  const allProducts = [...islandProducts, ...spaceProducts, ...underwaterProducts];
   const overallFound = countDiscovered(passport, allProducts);
   const overallTotal = allProducts.length;
 
@@ -102,7 +107,7 @@ export default function GameView({
         unlocked.push(REWARDS.SPACE_TRACK);
       }
       // Grand finale: every toy across every world discovered.
-      const allNow = [...islandProducts, ...spaceProducts];
+      const allNow = [...islandProducts, ...spaceProducts, ...underwaterProducts];
       let finaleJustUnlocked = false;
       if (!isRewardUnlocked(next, REWARDS.FINALE) && allNow.length &&
           countDiscovered(next, allNow) === allNow.length) {
@@ -156,7 +161,7 @@ export default function GameView({
   setWorldRef.current = setWorld;
 
   useEffect(() => {
-    const trackId = world === 'space' ? 'space' : 'island';
+    const trackId = world === 'space' ? 'space' : world === 'underwater' ? 'underwater' : 'island';
     setSelectedTrack(trackId);
     if (musicOn) startMusic(trackId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,7 +173,7 @@ export default function GameView({
     canvasRef, keysRef, animRef, springboardsRef,
     setPopupRef, setWorldRef, cartRef, customizationRef,
     recordDiscoveryRef, pausedRef, celebrateRef, finaleRef,
-    character, loading, islandProducts, spaceProducts, showCart, setScore,
+    character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore,
   });
 
   useEffect(() => {
@@ -269,7 +274,7 @@ export default function GameView({
         </div>
         {showWelcome && (
           <div style={{ background: '#26215C', border: '3px solid #7F77DD', padding: '14px 20px', margin: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 4 }}>
-            <span style={{ fontSize: 7, color: '#fff', lineHeight: 2 }}>WALK THROUGH THE ISLAND TO DISCOVER PRODUCTS — USE ARROW KEYS! 🟡 SPRINGBOARD = MEGA JUMP! WALK TO THE SIGN TO BLAST OFF TO SPACE WORLD! 🚀</span>
+            <span style={{ fontSize: 7, color: '#fff', lineHeight: 2 }}>WALK THE ISLAND FOR TOYS — 🟡 SPRINGBOARD = MEGA JUMP! 🚀 SPACE SIGN UP HIGH — 🫧 DIVE BUOY BY THE SHORE FOR UNDERWATER TOYS — SURFACE BACK TO THE ARTIST LOUNGE!</span>
             <button onClick={() => setShowWelcome(false)} style={{ background: 'none', border: 'none', color: '#7F77DD', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer', marginLeft: 16 }}>x</button>
           </div>
         )}

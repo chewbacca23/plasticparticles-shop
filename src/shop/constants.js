@@ -102,3 +102,38 @@ export const SPACE_ZONES = (() => {
 
 export const GRAVITY_SPACE = 0.16;
 export const JUMP_SPACE    = -13;
+
+// ─── Underwater World ───────────────────────────────────────────────────────
+export const UNDERWATER_W_TOTAL = 3600;
+
+// Coral / rock ledges — slow sway so every toy stays reachable
+export const CORAL_PLATFORMS = Array.from({ length: 11 }, (_, i) => ({
+  x: 160 + i * 300,
+  baseY: 620 - (i % 3) * 130,
+  w: 130 + (i % 2) * 40, h: 34,
+  driftSpeed: 0.22 + (i % 4) * 0.06,
+  driftRange: 16 + (i % 3) * 6,
+  phase: i * 0.9,
+}));
+
+export const UNDERWATER_ZONES = (() => {
+  const zones = [];
+  CORAL_PLATFORMS.forEach((plat) => {
+    zones.push({
+      x: plat.x + plat.w / 2 - CW / 2,
+      y: plat.baseY - CH - 85,
+      w: CW, h: CH, type: 'underwater', number: zones.length + 1, product: null,
+    });
+  });
+  CORAL_PLATFORMS.filter((_, i) => i % 2 === 0).forEach((plat) => {
+    zones.push({
+      x: plat.x + 20,
+      y: plat.baseY - CH - 160,
+      w: CW, h: CH, type: 'underwater', number: zones.length + 1, product: null,
+    });
+  });
+  return zones;
+})();
+
+export const GRAVITY_WATER = 0.12;
+export const JUMP_WATER    = -11;

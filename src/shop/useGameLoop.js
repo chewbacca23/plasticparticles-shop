@@ -8,13 +8,14 @@ import { playSpringSound, playCubeHitSound, playPickupSound } from './audio';
 import {
   W, H, GRAVITY, JUMP, GROUND_Y, rectsOverlap, PZ, PYRAMID_PLATFORMS,
   SPACE_W_TOTAL, SPACE_ZONES, ASTEROID_PLATFORMS, GRAVITY_SPACE, JUMP_SPACE,
+  UNDERWATER_W_TOTAL, UNDERWATER_ZONES, CORAL_PLATFORMS, GRAVITY_WATER, JUMP_WATER,
 } from './constants';
 
 export function useGameLoop({
   canvasRef, keysRef, animRef, springboardsRef,
   setPopupRef, setWorldRef, cartRef, customizationRef,
   recordDiscoveryRef, pausedRef, celebrateRef, finaleRef,
-  character, loading, islandProducts, spaceProducts, showCart, setScore,
+  character, loading, islandProducts, spaceProducts, underwaterProducts = [], showCart, setScore,
 }) {
   useEffect(() => {
     if (!character || loading || islandProducts.length === 0) return;
@@ -42,15 +43,31 @@ export function useGameLoop({
     const GREET_DUR=190;            // ~3.2s at 60fps
 
     let currentWorld = 'island';
-    const ISLAND_WIDTH = 4500, SPACE_WIDTH = SPACE_W_TOTAL;
+    const ISLAND_WIDTH = 4500, SPACE_WIDTH = SPACE_W_TOTAL, WATER_WIDTH = UNDERWATER_W_TOTAL;
+    const waterCatalog = (underwaterProducts && underwaterProducts.length) ? underwaterProducts : spaceProducts;
 
     const islandSign  = {x:4280, y:160, w:120, h:180, glow:0};
     const spacePortal = {x:120,  y:600,           w:60,  h:100, glow:0};
+    // Dive buoy near the left shore — enter the underwater toy cove
+    const divePortal  = {x:420,  y:GROUND_Y-110,  w:70,  h:90,  glow:0};
+    // Surface portal back to the Artist Lounge (island hub)
+    const loungePortal = {x:WATER_WIDTH-220, y:420, w:90, h:110, glow:0};
 
     const spaceZones = SPACE_ZONES.map((z,i) => ({
-      ...z, product: spaceProducts[i % spaceProducts.length],
+      ...z, product: spaceProducts[i % Math.max(spaceProducts.length,1)],
       hit:false, growing:0, bounceY:0, bumping:false,
     }));
+    const waterZones = UNDERWATER_ZONES.map((z,i) => ({
+      ...z, product: waterCatalog[i % Math.max(waterCatalog.length,1)],
+      hit:false, growing:0, bounceY:0, bumping:false,
+    }));
+    const bubbles = Array.from({length:50}, () => ({
+      x: Math.random()*WATER_WIDTH, y: Math.random()*H,
+      r: 2+Math.random()*5, speed: 0.4+Math.random()*1.2, wobble: Math.random()*Math.PI*2,
+    }));
+
+    const worldWidthOf = (w) => w==='space' ? SPACE_WIDTH : w==='underwater' ? WATER_WIDTH : ISLAND_WIDTH;
+    const spawnYOf = (w) => w==='space' ? 450 : w==='underwater' ? 400 : GROUND_Y-35;
 
     const stars = Array.from({length:160}, () => ({
       x: Math.random()*SPACE_WIDTH, y: Math.random()*(H-100),
@@ -470,11 +487,14 @@ export function useGameLoop({
 
       const paused = pausedRef ? pausedRef.current : showCart;
       if (!paused && introDone && !transition) {
-        const inSpace  = currentWorld==='space';
-        const grav     = inSpace ? GRAVITY_SPACE : GRAVITY;
-        const jumpV    = inSpace ? JUMP_SPACE    : JUMP;
-        const activeZones = inSpace ? spaceZones : zones;
-        const worldW   = inSpace ? SPACE_WIDTH : ISLAND_WIDTH;
+        const inSpace = currentWorld==='space';
+        const inWater = currentWorld==='underwater';
+        const inIsland = currentWorld==='island';
+        const grav = inSpace ? GRAVITY_SPACE : inWater ? GRAVITY_WATER : GRAVITY;
+        const jumpV = inSpace ? JUMP_SPACE : inWater ? JUMP_WATER : JUMP;
+        const activeZones = inSpace ? spaceZones : inWater ? waterZones : zones;
+        const worldW = worldWidthOf(currentWorld);
+        const floatPlats = inSpace ? ASTEROID_PLATFORMS : inWater ? CORAL_PLATFORMS : null;
 
         player.moving = false;
         if (keysRef.current['ArrowLeft'])       { player.vx=-3.2; player.dir=-1; player.moving=true; }
@@ -505,7 +525,7 @@ export function useGameLoop({
         player.vy += grav*dt; player.x += player.vx*dt; player.y += player.vy*dt;
         player.x = Math.max(0,Math.min(player.x,worldW-player.w)); player.onGround=false;
 
-        if (!inSpace) {
+        if (inIsland) {
           for (const g of ground) {
             if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},g)) {
               if (player.vy>=0 && player.y+player.h-g.y<20) { player.y=g.y-player.h; player.vy=0; player.onGround=true; }
@@ -519,8 +539,8 @@ export function useGameLoop({
               player.y=plat.y-player.h; player.vy=0; player.onGround=true;
             }
           }
-        } else {
-          for (const plat of ASTEROID_PLATFORMS) {
+        } else if (floatPlats) {
+          for (const plat of floatPlats) {
             const py = plat.baseY+Math.sin(wobbleTime*plat.driftSpeed+plat.phase)*plat.driftRange;
             if (player.x+player.w>plat.x && player.x<plat.x+plat.w && player.vy>=0 &&
                 player.y+player.h>py && player.y+player.h<py+plat.h+20 &&
@@ -528,11 +548,11 @@ export function useGameLoop({
               player.y=py-player.h; player.vy=0; player.onGround=true;
             }
           }
-          // Soft respawn onto the nearest asteroid instead of mid-air
+          // Soft respawn onto the nearest floating platform
           if (player.y>1100) {
-            let best=ASTEROID_PLATFORMS[0], bestDist=Infinity;
+            let best=floatPlats[0], bestDist=Infinity;
             const px=player.x+player.w/2;
-            for (const plat of ASTEROID_PLATFORMS) {
+            for (const plat of floatPlats) {
               const d=Math.abs(plat.x+plat.w/2-px);
               if (d<bestDist) { bestDist=d; best=plat; }
             }
@@ -565,9 +585,9 @@ export function useGameLoop({
           if (z.hit&&z.growing<1) z.growing=Math.min(z.growing+0.05,1);
         }
 
-        if (!inSpace && player.y>GROUND_Y+120) { player.y=GROUND_Y-35; player.vy=0; }
+        if (inIsland && player.y>GROUND_Y+120) { player.y=GROUND_Y-35; player.vy=0; }
 
-        if (!inSpace) {
+        if (inIsland) {
           for (const s of springboards) {
             if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:s.x,y:s.y,w:s.w,h:s.h})) {
               if (player.vy>=0 && player.y+player.h-s.y<20) {
@@ -591,10 +611,16 @@ export function useGameLoop({
             }
           }
           islandSign.glow = (Math.sin(wobbleTime*2)+1)/2;
+          divePortal.glow = (Math.sin(wobbleTime*2.4)+1)/2;
           if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},islandSign)) startTransition('space',250);
-        } else {
+          if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},divePortal)) startTransition('underwater',220);
+        } else if (inSpace) {
           spacePortal.glow = (Math.sin(wobbleTime*2)+1)/2;
           if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},spacePortal)) startTransition('island',4200);
+        } else if (inWater) {
+          loungePortal.glow = (Math.sin(wobbleTime*2)+1)/2;
+          // Surface back to the Artist Lounge (island shore)
+          if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},loungePortal)) startTransition('island',560);
         }
 
         targetCameraX = Math.max(0,Math.min(player.x-220,worldW-W));
@@ -618,9 +644,9 @@ export function useGameLoop({
           if (t.timer>50) {
             currentWorld=t.toWorld;
             setWorldRef.current?.(t.toWorld);
-            player.x=t.targetX; player.y=t.toWorld==='space'?450:GROUND_Y-35;
+            player.x=t.targetX; player.y=spawnYOf(t.toWorld);
             player.vx=0; player.vy=0;
-            const ww=t.toWorld==='space'?SPACE_WIDTH:ISLAND_WIDTH;
+            const ww=worldWidthOf(t.toWorld);
             cameraX=Math.max(0,Math.min(player.x-220,ww-W)); targetCameraX=cameraX;
             t.phase='arrive'; t.timer=0;
           }
@@ -639,6 +665,26 @@ export function useGameLoop({
           ctx.drawImage(bg,-ox,0,ISLAND_WIDTH,H);
         } else {
           ctx.fillStyle='#87CEEB'; ctx.fillRect(0,0,W,H);
+        }
+      } else if (currentWorld==='underwater') {
+        const waterGrad=ctx.createLinearGradient(0,0,0,H);
+        waterGrad.addColorStop(0,'#06314f'); waterGrad.addColorStop(0.45,'#0a4d6e'); waterGrad.addColorStop(1,'#021820');
+        ctx.fillStyle=waterGrad; ctx.fillRect(0,0,W,H);
+        // Light shafts
+        for (let i=0;i<6;i++) {
+          const lx=((i*260+wobbleTime*18)%(W+200))-100;
+          const shaft=ctx.createLinearGradient(lx,0,lx+40,H);
+          shaft.addColorStop(0,'rgba(120,200,255,0.12)'); shaft.addColorStop(1,'rgba(120,200,255,0)');
+          ctx.fillStyle=shaft; ctx.beginPath();
+          ctx.moveTo(lx,0); ctx.lineTo(lx+70,0); ctx.lineTo(lx+20,H); ctx.lineTo(lx-40,H); ctx.closePath(); ctx.fill();
+        }
+        for (const b of bubbles) {
+          b.y -= b.speed*dt; b.wobble += dt*0.05;
+          if (b.y < -10) { b.y = H+10; b.x = Math.random()*WATER_WIDTH; }
+          const bx=b.x-ox+Math.sin(b.wobble)*6;
+          if (bx<-10||bx>W+10) continue;
+          ctx.strokeStyle=`rgba(180,230,255,${0.35+Math.sin(b.wobble)*0.2})`;
+          ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(bx,b.y,b.r,0,Math.PI*2); ctx.stroke();
         }
       } else {
         const skyGrad=ctx.createLinearGradient(0,0,0,H);
@@ -662,7 +708,7 @@ export function useGameLoop({
       }
 
       // ── Draw zones ──
-      const zonesToDraw = currentWorld==='island' ? zones : spaceZones;
+      const zonesToDraw = currentWorld==='island' ? zones : currentWorld==='underwater' ? waterZones : spaceZones;
       if (currentWorld==='space') {
         for (const plat of ASTEROID_PLATFORMS) {
           const py=plat.baseY+Math.sin(wobbleTime*plat.driftSpeed+plat.phase)*plat.driftRange;
@@ -672,6 +718,21 @@ export function useGameLoop({
           ctx.fillStyle='rgba(255,255,255,0.12)'; roundRect(ctx,sx+6,py+4,plat.w-12,plat.h*0.35,8); ctx.fill();
           ctx.strokeStyle='#8a78a8'; ctx.lineWidth=2; roundRect(ctx,sx,py,plat.w,plat.h,14); ctx.stroke();
         }
+      } else if (currentWorld==='underwater') {
+        for (const plat of CORAL_PLATFORMS) {
+          const py=plat.baseY+Math.sin(wobbleTime*plat.driftSpeed+plat.phase)*plat.driftRange;
+          const sx=plat.x-ox;
+          if (sx<-plat.w||sx>W+plat.w) continue;
+          ctx.fillStyle='#1f6b63'; roundRect(ctx,sx,py,plat.w,plat.h,12); ctx.fill();
+          ctx.fillStyle='#2f9e8f'; roundRect(ctx,sx+6,py+3,plat.w-12,plat.h*0.35,8); ctx.fill();
+          // Coral nubs
+          ctx.fillStyle='#d85a70';
+          for (let k=0;k<3;k++) {
+            ctx.beginPath();
+            ctx.ellipse(sx+18+k*(plat.w/3.2),py-6,5,10,0,0,Math.PI*2); ctx.fill();
+          }
+          ctx.strokeStyle='#7fd9c8'; ctx.lineWidth=2; roundRect(ctx,sx,py,plat.w,plat.h,12); ctx.stroke();
+        }
       }
       for (let zi=0; zi<zonesToDraw.length; zi++) {
         const z=zonesToDraw[zi];
@@ -680,7 +741,8 @@ export function useGameLoop({
         if (z.hit&&z.growing>0) {
           const scale=1+z.growing*4, ew=z.w*scale, eh=z.h*scale;
           const ex=sx+z.w/2-ew/2, ey=sy+z.h/2-eh/2;
-          ctx.fillStyle=currentWorld==='space'?'rgba(230,220,255,0.97)':'rgba(255,245,200,0.97)';
+          ctx.fillStyle=currentWorld==='space'?'rgba(230,220,255,0.97)'
+            : currentWorld==='underwater'?'rgba(200,245,255,0.97)':'rgba(255,245,200,0.97)';
           ctx.fillRect(ex,ey,ew,eh); ctx.strokeStyle='#26215C'; ctx.lineWidth=3; ctx.strokeRect(ex,ey,ew,eh);
           if (z.growing>0.8 && z.product) {
             ctx.fillStyle='#26215C'; ctx.textAlign='center';
@@ -755,7 +817,27 @@ export function useGameLoop({
           ctx.fillText('WALK IN TO BLAST OFF →',cx,islandSign.y-4);
           ctx.restore(); ctx.textAlign='left';
         }
-      } else {
+
+        // ── Dive buoy → Underwater Cove ──
+        const diveSx = divePortal.x-ox;
+        if (diveSx>-140&&diveSx<W+140) {
+          const glow=divePortal.glow;
+          const cx=diveSx+divePortal.w/2, cy=divePortal.y+divePortal.h*0.45;
+          ctx.save();
+          ctx.shadowColor=`rgba(60,180,220,${0.5+glow*0.4})`; ctx.shadowBlur=18+glow*14;
+          ctx.fillStyle='#c45c26'; ctx.fillRect(cx-5,divePortal.y+20,10,divePortal.h-20);
+          ctx.fillStyle=`rgba(30,140,200,${0.75+glow*0.2})`;
+          ctx.beginPath(); ctx.arc(cx,divePortal.y+18,22,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(cx-6,divePortal.y+12,5,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle={`rgba(180,240,255,${0.7+glow*0.3})`};
+          ctx.font="bold 8px 'Press Start 2P',monospace"; ctx.textAlign='center';
+          ctx.fillText('🫧 DIVE',cx,divePortal.y-10);
+          ctx.fillStyle=`rgba(255,255,255,${0.55+glow*0.3})`;
+          ctx.font="bold 6px 'Press Start 2P',monospace";
+          ctx.fillText('UNDERWATER',cx,divePortal.y+2);
+          ctx.restore(); ctx.textAlign='left';
+        }
+      } else if (currentWorld==='space') {
         // Space portal back home
         const sx=spacePortal.x-ox;
         if (sx>-120&&sx<W+120) {
@@ -769,6 +851,26 @@ export function useGameLoop({
           ctx.beginPath(); ctx.ellipse(sx+spacePortal.w/2,ringY,spacePortal.w/2-8,spacePortal.h/2-8,wobbleTime,0,Math.PI*2); ctx.stroke();
           ctx.fillStyle='#fff'; ctx.font="bold 8px 'Press Start 2P',monospace"; ctx.textAlign='center';
           ctx.fillText('🌴 HOME',sx+spacePortal.w/2,spacePortal.y-12);
+          ctx.restore(); ctx.textAlign='left';
+        }
+      } else if (currentWorld==='underwater') {
+        // Surface portal → Artist Lounge (island)
+        const sx=loungePortal.x-ox;
+        if (sx>-160&&sx<W+160) {
+          const glow=loungePortal.glow;
+          const cx=sx+loungePortal.w/2;
+          const cy=loungePortal.y+loungePortal.h/2+Math.sin(wobbleTime*1.6)*6;
+          ctx.save();
+          ctx.shadowColor=`rgba(255,180,90,${0.45+glow*0.45})`; ctx.shadowBlur=20+glow*16;
+          ctx.strokeStyle=`rgba(255,210,120,${0.65+glow*0.3})`; ctx.lineWidth=5;
+          ctx.beginPath(); ctx.ellipse(cx,cy,loungePortal.w/2,loungePortal.h/2,0,0,Math.PI*2); ctx.stroke();
+          ctx.strokeStyle=`rgba(100,220,255,${0.45+glow*0.3})`; ctx.lineWidth=3;
+          ctx.beginPath(); ctx.ellipse(cx,cy,loungePortal.w/2-10,loungePortal.h/2-10,-wobbleTime,0,Math.PI*2); ctx.stroke();
+          ctx.fillStyle='#fff'; ctx.font="bold 7px 'Press Start 2P',monospace"; ctx.textAlign='center';
+          ctx.fillText('🎨 ARTIST LOUNGE',cx,loungePortal.y-16);
+          ctx.fillStyle=`rgba(200,240,255,${0.7+glow*0.25})`;
+          ctx.font="bold 6px 'Press Start 2P',monospace";
+          ctx.fillText('SURFACE ↑',cx,loungePortal.y-4);
           ctx.restore(); ctx.textAlign='left';
         }
       }
@@ -840,5 +942,5 @@ export function useGameLoop({
 
     animRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animRef.current);
-  }, [character, loading, islandProducts, spaceProducts, showCart, setScore]);
+  }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore]);
 }

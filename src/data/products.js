@@ -21,4 +21,18 @@ export const SPACE_PRODUCTS = [
   { id: 's8', name: 'Star Cluster Puzzle', price: 18.49, emoji: '✨', description: '750 piece galaxy', worldId: 'planet' },
 ];
 
-export const QUICK_SHOP_PRODUCTS = ISLAND_PRODUCTS.filter(p => p.worldId !== 'planet');
+export const UNDERWATER_PRODUCTS = [
+  { id: 'u1', name: 'Bubble Blower Kit',   price: 9.99,  emoji: '🫧', description: 'Endless foam fun', worldId: 'underwater' },
+  { id: 'u2', name: 'Coral Building Set',  price: 16.49, emoji: '🪸', description: 'Build a reef', worldId: 'underwater' },
+  { id: 'u3', name: 'Submarine Toy',       price: 21.99, emoji: '🚤', description: 'Wind-up diver', worldId: 'underwater' },
+  { id: 'u4', name: 'Seashell Stamp Pack', price: 8.49,  emoji: '🐚', description: '12 ocean stamps', worldId: 'underwater' },
+  { id: 'u5', name: 'Mermaid Figure',      price: 14.99, emoji: '🧜‍♀️', description: 'Poseable fins', worldId: 'underwater' },
+  { id: 'u6', name: 'Treasure Chest Bank', price: 18.99, emoji: '🏴‍☠️', description: 'Coins go splash', worldId: 'underwater' },
+  { id: 'u7', name: 'Jellyfish Lamp',      price: 24.99, emoji: '🎐', description: 'Soft glow nightlight', worldId: 'underwater' },
+  { id: 'u8', name: 'Ocean Puzzle',        price: 17.49, emoji: '🐠', description: '500 piece reef', worldId: 'underwater' },
+];
+
+export const QUICK_SHOP_PRODUCTS = [
+  ...ISLAND_PRODUCTS.filter(p => p.worldId !== 'planet'),
+  ...UNDERWATER_PRODUCTS,
+];

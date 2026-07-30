@@ -7,6 +7,14 @@ export const INIT_PRODUCTS = [
   { id: '6', name: 'Clay Studio',       price: 19.99, emoji: '🏺', desc: 'Rainbow clay set',   cat: 'Arts & Crafts', stock: 11, minStock: 3, sku: 'TOY-006', sales: 19, active: true, worldId: 'artist' },
   { id: '7', name: 'Sticker Book',      price: 6.99,  emoji: '🌈', desc: '500 stickers',        cat: 'Arts & Crafts', stock: 3,  minStock: 5, sku: 'TOY-007', sales: 33, active: true, worldId: 'artist' },
   { id: '8', name: 'Robot Kit',         price: 29.99, emoji: '🤖', desc: 'Build your bot',      cat: 'Building',      stock: 6,  minStock: 3, sku: 'TOY-008', sales: 28, active: true, worldId: 'jungle' },
+  { id: 'u1', name: 'Bubble Blower Kit',   price: 9.99,  emoji: '🫧', desc: 'Endless foam fun',     cat: 'Arts & Crafts', stock: 14, minStock: 3, sku: 'TOY-U01', sales: 11, active: true, worldId: 'underwater' },
+  { id: 'u2', name: 'Coral Building Set',  price: 16.49, emoji: '🪸', desc: 'Build a reef',         cat: 'Building',      stock: 9,  minStock: 3, sku: 'TOY-U02', sales: 7,  active: true, worldId: 'underwater' },
+  { id: 'u3', name: 'Submarine Toy',       price: 21.99, emoji: '🚤', desc: 'Wind-up diver',        cat: 'Figures',       stock: 5,  minStock: 2, sku: 'TOY-U03', sales: 15, active: true, worldId: 'underwater' },
+  { id: 'u4', name: 'Seashell Stamp Pack', price: 8.49,  emoji: '🐚', desc: '12 ocean stamps',      cat: 'Arts & Crafts', stock: 18, minStock: 4, sku: 'TOY-U04', sales: 22, active: true, worldId: 'underwater' },
+  { id: 'u5', name: 'Mermaid Figure',      price: 14.99, emoji: '🧜‍♀️', desc: 'Poseable fins',     cat: 'Figures',       stock: 7,  minStock: 3, sku: 'TOY-U05', sales: 19, active: true, worldId: 'underwater' },
+  { id: 'u6', name: 'Treasure Chest Bank', price: 18.99, emoji: '🏴‍☠️', desc: 'Coins go splash',   cat: 'Building',      stock: 6,  minStock: 2, sku: 'TOY-U06', sales: 8,  active: true, worldId: 'underwater' },
+  { id: 'u7', name: 'Jellyfish Lamp',      price: 24.99, emoji: '🎐', desc: 'Soft glow nightlight', cat: 'Arts & Crafts', stock: 4,  minStock: 2, sku: 'TOY-U07', sales: 5,  active: true, worldId: 'underwater' },
+  { id: 'u8', name: 'Ocean Puzzle',        price: 17.49, emoji: '🐠', desc: '500 piece reef',       cat: 'Puzzles',       stock: 10, minStock: 3, sku: 'TOY-U08', sales: 13, active: true, worldId: 'underwater' },
 ];
 
 export const INIT_CATEGORIES = [
