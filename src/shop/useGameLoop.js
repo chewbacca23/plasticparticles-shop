@@ -479,7 +479,25 @@ export function useGameLoop({
         if (keysRef.current['ArrowLeft'])       { player.vx=-3.2; player.dir=-1; player.moving=true; }
         else if (keysRef.current['ArrowRight']) { player.vx= 3.2; player.dir= 1; player.moving=true; }
         else player.vx *= 0.75;
-        if ((keysRef.current['ArrowUp']||keysRef.current[' ']) && player.onGround) { player.vy=jumpV; player.onGround=false; }
+
+        // Jump-on-cube must run BEFORE the normal jump clears onGround,
+        // otherwise standing-on-top never opens the product.
+        const jumpPressed = keysRef.current['ArrowUp'] || keysRef.current[' '];
+        let openedFromTop = false;
+        if (jumpPressed && player.onGround) {
+          for (const z of activeZones) {
+            if (!z.standingOn || z.hit) continue;
+            z.bumping=true; z.bounceY=-10; z.standingOn=false;
+            player.vy=jumpV*0.8; player.onGround=false;
+            scoreLocal+=100; setScore(scoreLocal);
+            playCubeHitSound();
+            setTimeout(()=>{z.hit=true;z.growing=0;setPopupRef.current?.(z.product);recordDiscoveryRef?.current?.(z.product);},320);
+            openedFromTop = true;
+            break;
+          }
+          if (!openedFromTop) { player.vy=jumpV; player.onGround=false; }
+        }
+
         if (player.moving && player.onGround) { player.frameTimer+=dt; if(player.frameTimer>6){player.frameTimer=0;player.frame=(player.frame+1)%3;} }
         else player.frame = 0;
 
@@ -509,7 +527,18 @@ export function useGameLoop({
               player.y=py-player.h; player.vy=0; player.onGround=true;
             }
           }
-          if (player.y>1300) { player.y=400; player.vy=0; }
+          // Soft respawn onto the nearest asteroid instead of mid-air
+          if (player.y>1100) {
+            let best=ASTEROID_PLATFORMS[0], bestDist=Infinity;
+            const px=player.x+player.w/2;
+            for (const plat of ASTEROID_PLATFORMS) {
+              const d=Math.abs(plat.x+plat.w/2-px);
+              if (d<bestDist) { bestDist=d; best=plat; }
+            }
+            const py=best.baseY+Math.sin(wobbleTime*best.driftSpeed+best.phase)*best.driftRange;
+            player.x=best.x+best.w/2-player.w/2;
+            player.y=py-player.h-2; player.vy=0; player.onGround=true;
+          }
         }
 
         for (const z of activeZones) {
@@ -530,13 +559,6 @@ export function useGameLoop({
           } else {
             if (z.standingOn && !(player.x+player.w>z.x&&player.x<z.x+z.w&&player.y+player.h<=z.y+4))
               z.standingOn=false;
-          }
-          if (z.standingOn&&!z.hit&&(keysRef.current['ArrowUp']||keysRef.current[' '])&&player.onGround) {
-            z.bumping=true; z.bounceY=-10; z.standingOn=false;
-            player.vy=jumpV*0.8; player.onGround=false;
-            scoreLocal+=100; setScore(scoreLocal);
-            playCubeHitSound();
-            setTimeout(()=>{z.hit=true;z.growing=0;setPopupRef.current?.(z.product);recordDiscoveryRef?.current?.(z.product);},320);
           }
           if (z.bumping&&!z.hit) z.bounceY=Math.min(z.bounceY+1.8,0);
           if (z.hit&&z.growing<1) z.growing=Math.min(z.growing+0.05,1);
