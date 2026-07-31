@@ -1479,7 +1479,7 @@ export function useGameLoop({
         const diveSx = divePortal.x-ox;
         if (diveSx>-140&&diveSx<W+140) {
           const glow=divePortal.glow;
-          const cx=diveSx+divePortal.w/2, cy=divePortal.y+divePortal.h*0.45;
+          const cx=diveSx+divePortal.w/2;
           ctx.save();
           ctx.shadowColor=`rgba(60,180,220,${0.5+glow*0.4})`; ctx.shadowBlur=18+glow*14;
           ctx.fillStyle='#c45c26'; ctx.fillRect(cx-5,divePortal.y+20,10,divePortal.h-20);
@@ -1614,5 +1614,7 @@ export function useGameLoop({
 
     animRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animRef.current);
+    // Refs are stable; restart only when world catalog / character / cart UI changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore]);
 }
