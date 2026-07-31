@@ -75,8 +75,8 @@ export const ASTEROID_PLATFORMS = Array.from({ length: 12 }, (_, i) => ({
   x: 180 + i * 310,
   baseY: 650 - (i % 3) * 150,
   w: 140 + (i % 2) * 30, h: 36,
-  driftSpeed: 0.3 + (i % 5) * 0.08,
-  driftRange: 22 + (i % 3) * 8,
+  driftSpeed: 0.18 + (i % 5) * 0.05,
+  driftRange: 10 + (i % 3) * 5,
   phase: i * 0.85,
 }));
 
@@ -102,6 +102,9 @@ export const SPACE_ZONES = (() => {
 
 export const GRAVITY_SPACE = 0.16;
 export const JUMP_SPACE    = -13;
+
+// Walkable lunar regolith floor (moon surface under the rock shelves)
+export const LUNAR_Y = 910;
 
 // ─── Underwater World ───────────────────────────────────────────────────────
 export const UNDERWATER_W_TOTAL = 3600;

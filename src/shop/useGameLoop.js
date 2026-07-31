@@ -7,7 +7,7 @@ import { seededColor, seededLightColor } from '../utils/colors';
 import { playSpringSound, playCubeHitSound, playPickupSound } from './audio';
 import {
   W, H, GRAVITY, JUMP, GROUND_Y, rectsOverlap, PZ, PYRAMID_PLATFORMS,
-  SPACE_W_TOTAL, SPACE_ZONES, ASTEROID_PLATFORMS, GRAVITY_SPACE, JUMP_SPACE,
+  SPACE_W_TOTAL, SPACE_ZONES, ASTEROID_PLATFORMS, GRAVITY_SPACE, JUMP_SPACE, LUNAR_Y,
   UNDERWATER_W_TOTAL, UNDERWATER_ZONES, CORAL_PLATFORMS, GRAVITY_WATER, JUMP_WATER,
   SEABED_Y, WATER_SPRINGBOARDS,
 } from './constants';
@@ -58,7 +58,7 @@ export function useGameLoop({
     const waterCatalog = (underwaterProducts && underwaterProducts.length) ? underwaterProducts : spaceProducts;
 
     const islandSign  = {x:4280, y:160, w:120, h:180, glow:0};
-    const spacePortal = {x:120,  y:600,           w:60,  h:100, glow:0};
+    const spacePortal = {x:120,  y:LUNAR_Y-110, w:60,  h:100, glow:0};
     // Dive buoy near the left shore — enter the underwater toy cove
     const divePortal  = {x:420,  y:GROUND_Y-110,  w:70,  h:90,  glow:0};
     // Surface portal back to the Artist Lounge (island hub)
@@ -123,16 +123,36 @@ export function useGameLoop({
     let breathTimer = 0;
 
     const worldWidthOf = (w) => w==='space' ? SPACE_WIDTH : w==='underwater' ? WATER_WIDTH : ISLAND_WIDTH;
-    const spawnYOf = (w) => w==='space' ? 450 : w==='underwater' ? SEABED_Y-52 : GROUND_Y-35;
+    const spawnYOf = (w) => w==='space' ? LUNAR_Y-52 : w==='underwater' ? SEABED_Y-52 : GROUND_Y-35;
 
-    const stars = Array.from({length:160}, () => ({
-      x: Math.random()*SPACE_WIDTH, y: Math.random()*(H-100),
+    const stars = Array.from({length:140}, () => ({
+      x: Math.random()*SPACE_WIDTH, y: Math.random()*(H*0.55),
       r: 0.6+Math.random()*1.8, tw: Math.random()*Math.PI*2,
-      speed: 0.2+Math.random()*0.5, parallax: 0.3+Math.random()*0.4,
+      speed: 0.2+Math.random()*0.5, parallax: 0.25+Math.random()*0.35,
     }));
-    const nebulae = Array.from({length:6}, (_,i) => ({
-      x: i*(SPACE_WIDTH/6)+Math.random()*300, y: 150+Math.random()*500,
-      r: 180+Math.random()*220, hue: [280,200,320,190,260,310][i], parallax: 0.15,
+    // Distant Earth hanging in the lunar sky
+    const earth = { x: SPACE_WIDTH * 0.72, y: 160, r: 110 };
+    // Rolling moon hills (parallax silhouettes)
+    const lunarHills = Array.from({ length: 14 }, (_, i) => ({
+      x: i * 320 - 40,
+      y: LUNAR_Y - (40 + (i % 4) * 28),
+      w: 280 + (i % 3) * 90,
+      h: 70 + (i % 5) * 22,
+      parallax: 0.45 + (i % 3) * 0.08,
+      shade: 0.55 + (i % 4) * 0.08,
+    }));
+    // Surface craters & rocks on the regolith
+    const lunarCraters = Array.from({ length: 36 }, (_, i) => ({
+      x: 60 + (i * 109) % (SPACE_WIDTH - 80),
+      y: LUNAR_Y + 8 + (i % 5) * 10,
+      rx: 14 + (i % 6) * 7,
+      ry: 5 + (i % 4) * 2,
+    }));
+    const lunarRocks = Array.from({ length: 22 }, (_, i) => ({
+      x: 40 + (i * 173) % (SPACE_WIDTH - 60),
+      y: LUNAR_Y - (6 + (i % 4) * 5),
+      w: 10 + (i % 5) * 6,
+      h: 8 + (i % 4) * 4,
     }));
 
     let transition = null;
@@ -700,17 +720,11 @@ export function useGameLoop({
                 }
               }
             }
-          } else if (player.y>1100) {
-            // Space only: soft respawn onto the nearest asteroid
-            let best=floatPlats[0], bestDist=Infinity;
-            const px=player.x+player.w/2;
-            for (const plat of floatPlats) {
-              const d=Math.abs(plat.x+plat.w/2-px);
-              if (d<bestDist) { bestDist=d; best=plat; }
+          } else if (inSpace) {
+            // Solid lunar regolith — walk the moon surface under the rock shelves
+            if (player.vy>=0 && player.y+player.h>=LUNAR_Y) {
+              player.y=LUNAR_Y-player.h; player.vy=0; player.onGround=true;
             }
-            const py=best.baseY+Math.sin(wobbleTime*best.driftSpeed+best.phase)*best.driftRange;
-            player.x=best.x+best.w/2-player.w/2;
-            player.y=py-player.h-2; player.vy=0; player.onGround=true;
           }
         }
 
@@ -1049,23 +1063,84 @@ export function useGameLoop({
           ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(bx,b.y,b.r,0,Math.PI*2); ctx.stroke();
         }
       } else {
+        // Lunar landscape — starfield sky over grey moon surface
         const skyGrad=ctx.createLinearGradient(0,0,0,H);
-        skyGrad.addColorStop(0,'#0a0420'); skyGrad.addColorStop(0.55,'#160a3a'); skyGrad.addColorStop(1,'#2a0f4a');
+        skyGrad.addColorStop(0,'#050508'); skyGrad.addColorStop(0.45,'#0c0c14');
+        skyGrad.addColorStop(0.72,'#1a1820'); skyGrad.addColorStop(1,'#2a2a30');
         ctx.fillStyle=skyGrad; ctx.fillRect(0,0,W,H);
-        for (const n of nebulae) {
-          const nx=n.x-ox*n.parallax;
-          if (nx<-n.r*2||nx>W+n.r*2) continue;
-          const grad=ctx.createRadialGradient(nx,n.y,0,nx,n.y,n.r);
-          grad.addColorStop(0,`hsla(${n.hue},85%,60%,0.22)`); grad.addColorStop(1,`hsla(${n.hue},85%,60%,0)`);
-          ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(nx,n.y,n.r,0,Math.PI*2); ctx.fill();
-        }
+        // Stars (upper sky only)
         for (const st of stars) {
           const sx=st.x-ox*st.parallax;
           if (sx<-5||sx>W+5) continue;
           st.tw+=st.speed*dt*0.05;
           const tw=0.5+Math.sin(st.tw)*0.5;
-          ctx.fillStyle=`rgba(255,255,255,${0.3+tw*0.7})`;
+          ctx.fillStyle=`rgba(255,255,255,${0.25+tw*0.7})`;
           ctx.beginPath(); ctx.arc(sx,st.y,st.r,0,Math.PI*2); ctx.fill();
+        }
+        // Distant Earth
+        {
+          const ex=earth.x-ox*0.2, ey=earth.y;
+          if (ex>-earth.r*2 && ex<W+earth.r*2) {
+            const eg=ctx.createRadialGradient(ex-18,ey-14,8,ex,ey,earth.r);
+            eg.addColorStop(0,'#7ec8ff'); eg.addColorStop(0.45,'#2a6fd4');
+            eg.addColorStop(0.75,'#1a4a9a'); eg.addColorStop(1,'#0a1a40');
+            ctx.fillStyle=eg;
+            ctx.beginPath(); ctx.arc(ex,ey,earth.r,0,Math.PI*2); ctx.fill();
+            // Soft cloud swirls
+            ctx.fillStyle='rgba(255,255,255,0.28)';
+            ctx.beginPath(); ctx.ellipse(ex-20,ey-10,34,12,-0.3,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(ex+25,ey+18,28,9,0.4,0,Math.PI*2); ctx.fill();
+            // Night side crescent shadow
+            ctx.fillStyle='rgba(0,0,0,0.35)';
+            ctx.beginPath(); ctx.arc(ex+28,ey,earth.r*0.92,0,Math.PI*2); ctx.fill();
+            // Thin atmosphere rim
+            ctx.strokeStyle='rgba(160,210,255,0.45)'; ctx.lineWidth=3;
+            ctx.beginPath(); ctx.arc(ex,ey,earth.r+2,0,Math.PI*2); ctx.stroke();
+          }
+        }
+        // Rolling lunar hills (parallax)
+        for (const hill of lunarHills) {
+          const hx=hill.x-ox*hill.parallax;
+          if (hx<-hill.w||hx>W+hill.w) continue;
+          const shade=Math.floor(55*hill.shade);
+          ctx.fillStyle=`rgb(${shade},${shade},${shade+6})`;
+          ctx.beginPath();
+          ctx.moveTo(hx,LUNAR_Y+20);
+          ctx.quadraticCurveTo(hx+hill.w*0.35,hill.y-hill.h*0.15,hx+hill.w*0.5,hill.y);
+          ctx.quadraticCurveTo(hx+hill.w*0.7,hill.y-hill.h*0.1,hx+hill.w,LUNAR_Y+20);
+          ctx.closePath(); ctx.fill();
+        }
+        // Regolith floor
+        const dustGrad=ctx.createLinearGradient(0,LUNAR_Y-30,0,H);
+        dustGrad.addColorStop(0,'#6a6a72'); dustGrad.addColorStop(0.35,'#8a8a90');
+        dustGrad.addColorStop(1,'#5c5c64');
+        ctx.fillStyle=dustGrad;
+        ctx.fillRect(0,LUNAR_Y,W,H-LUNAR_Y);
+        // Horizon dust line
+        ctx.fillStyle='rgba(180,180,190,0.35)';
+        ctx.fillRect(0,LUNAR_Y-2,W,4);
+        // Craters on the surface
+        for (const c of lunarCraters) {
+          const cx=c.x-ox;
+          if (cx<-50||cx>W+50) continue;
+          ctx.fillStyle='rgba(40,40,48,0.45)';
+          ctx.beginPath(); ctx.ellipse(cx,c.y,c.rx,c.ry,0,0,Math.PI*2); ctx.fill();
+          ctx.strokeStyle='rgba(200,200,210,0.25)'; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.ellipse(cx,c.y-1,c.rx*0.95,c.ry*0.7,0,Math.PI,0); ctx.stroke();
+        }
+        // Scattered surface rocks
+        for (const r of lunarRocks) {
+          const rx=r.x-ox;
+          if (rx<-20||rx>W+20) continue;
+          ctx.fillStyle='#4a4a52';
+          ctx.beginPath();
+          ctx.moveTo(rx,r.y+r.h);
+          ctx.lineTo(rx+r.w*0.15,r.y);
+          ctx.lineTo(rx+r.w*0.85,r.y+2);
+          ctx.lineTo(rx+r.w,r.y+r.h);
+          ctx.closePath(); ctx.fill();
+          ctx.fillStyle='rgba(160,160,170,0.35)';
+          ctx.fillRect(rx+r.w*0.2,r.y+2,r.w*0.45,3);
         }
       }
 
@@ -1076,9 +1151,23 @@ export function useGameLoop({
           const py=plat.baseY+Math.sin(wobbleTime*plat.driftSpeed+plat.phase)*plat.driftRange;
           const sx=plat.x-ox;
           if (sx<-plat.w||sx>W+plat.w) continue;
-          ctx.fillStyle='#5b4a6e'; roundRect(ctx,sx,py,plat.w,plat.h,14); ctx.fill();
-          ctx.fillStyle='rgba(255,255,255,0.12)'; roundRect(ctx,sx+6,py+4,plat.w-12,plat.h*0.35,8); ctx.fill();
-          ctx.strokeStyle='#8a78a8'; ctx.lineWidth=2; roundRect(ctx,sx,py,plat.w,plat.h,14); ctx.stroke();
+          // Lunar rock shelf / crater rim
+          ctx.fillStyle='#5a5a64';
+          roundRect(ctx,sx,py,plat.w,plat.h,10); ctx.fill();
+          ctx.fillStyle='#7a7a84';
+          roundRect(ctx,sx+5,py+3,plat.w-10,plat.h*0.32,6); ctx.fill();
+          // Crater dimples on the ledge
+          ctx.fillStyle='rgba(30,30,36,0.5)';
+          for (let k=0;k<3;k++) {
+            ctx.beginPath();
+            ctx.ellipse(sx+22+k*(plat.w/3.4),py+plat.h*0.55,7,3.5,0,0,Math.PI*2); ctx.fill();
+          }
+          // Lit rim edge
+          ctx.strokeStyle='#a8a8b4'; ctx.lineWidth=2;
+          roundRect(ctx,sx,py,plat.w,plat.h,10); ctx.stroke();
+          // Tiny dust sparkles
+          ctx.fillStyle='rgba(220,220,230,0.35)';
+          ctx.fillRect(sx+12,py+6,3,2); ctx.fillRect(sx+plat.w-18,py+8,2,2);
         }
       } else if (currentWorld==='underwater') {
         for (const plat of CORAL_PLATFORMS) {
@@ -1192,10 +1281,10 @@ export function useGameLoop({
           ctx.translate(cx,islandSign.y+islandSign.h*0.72); ctx.rotate(Math.sin(wobbleTime*1.2)*0.05);
           ctx.fillRect(-52,-22,104,44); ctx.strokeStyle='#4a3320'; ctx.lineWidth=3; ctx.strokeRect(-52,-22,104,44);
           ctx.font='bold 26px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillStyle=`rgba(220,200,255,${0.8+glow*0.2})`; ctx.fillText('🚀',0,0); ctx.restore();
+          ctx.fillStyle=`rgba(220,200,255,${0.8+glow*0.2})`; ctx.fillText('🌕',0,0); ctx.restore();
           ctx.fillStyle=`rgba(220,200,255,${0.85+glow*0.15})`;
           ctx.font="bold 9px 'Press Start 2P',monospace"; ctx.textAlign='center';
-          ctx.fillText('SPACE WORLD',cx,islandSign.y-18);
+          ctx.fillText('LUNAR WORLD',cx,islandSign.y-18);
           ctx.fillStyle=`rgba(255,255,255,${0.6+glow*0.3})`;
           ctx.font="bold 7px 'Press Start 2P',monospace";
           ctx.fillText('WALK IN TO BLAST OFF →',cx,islandSign.y-4);
