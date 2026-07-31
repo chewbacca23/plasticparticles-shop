@@ -137,3 +137,15 @@ export const UNDERWATER_ZONES = (() => {
 
 export const GRAVITY_WATER = 0.12;
 export const JUMP_WATER    = -11;
+
+// Walkable sandy floor (matches the drawn seabed band near H-90)
+export const SEABED_Y = 910;
+
+// Underwater launch pads scattered along the cove floor
+export const WATER_SPRINGBOARDS = [
+  { x: 480,  y: SEABED_Y - 18, w: 56, h: 18 },
+  { x: 1180, y: SEABED_Y - 18, w: 56, h: 18 },
+  { x: 1920, y: SEABED_Y - 18, w: 56, h: 18 },
+  { x: 2680, y: SEABED_Y - 18, w: 56, h: 18 },
+  { x: 3200, y: SEABED_Y - 18, w: 56, h: 18 },
+];

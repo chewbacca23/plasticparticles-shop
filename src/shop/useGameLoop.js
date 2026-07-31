@@ -9,6 +9,7 @@ import {
   W, H, GRAVITY, JUMP, GROUND_Y, rectsOverlap, PZ, PYRAMID_PLATFORMS,
   SPACE_W_TOTAL, SPACE_ZONES, ASTEROID_PLATFORMS, GRAVITY_SPACE, JUMP_SPACE,
   UNDERWATER_W_TOTAL, UNDERWATER_ZONES, CORAL_PLATFORMS, GRAVITY_WATER, JUMP_WATER,
+  SEABED_Y, WATER_SPRINGBOARDS,
 } from './constants';
 
 export function useGameLoop({
@@ -43,6 +44,7 @@ export function useGameLoop({
 
     const player = {x:60, y:GROUND_Y-35, w:36, h:52, vx:0, vy:0, onGround:false, dir:1, frame:0, frameTimer:0, moving:false};
     const springboards = springboardsRef.current;
+    const waterSprings = WATER_SPRINGBOARDS.map(s => ({ ...s, bounced: false }));
 
     let cameraX=0, targetCameraX=0, camWobbleX=0, camWobbleY=0;
     let wobbleTime=0, scoreLocal=0, lastTime=0, introTimer=0, introDone=false;
@@ -72,9 +74,25 @@ export function useGameLoop({
       x: Math.random()*WATER_WIDTH, y: Math.random()*H,
       r: 2+Math.random()*5, speed: 0.4+Math.random()*1.2, wobble: Math.random()*Math.PI*2,
     }));
+    // Shallow-reef plantlife — dense kelp, seagrass, coral fans (decorative, no collision)
+    const seaPlants = Array.from({ length: 280 }, (_, i) => {
+      const kind = i % 5; // 0-1 kelp, 2-3 grass, 4 fan
+      return {
+        kind,
+        x: 20 + (i * 37 + (i % 7) * 19) % (WATER_WIDTH - 40),
+        baseY: SEABED_Y - (kind === 4 ? (i % 3) * 8 : (i % 4) * 4),
+        h: kind < 2 ? 100 + (i % 7) * 26 : kind < 4 ? 36 + (i % 5) * 12 : 50 + (i % 4) * 14,
+        sway: 0.35 + (i % 8) * 0.1,
+        phase: i * 0.37,
+        hue: kind < 2 ? 140 + (i % 6) * 7 : kind < 4 ? 90 + (i % 7) * 9 : 320 + (i % 5) * 12,
+      };
+    });
+    // Breath bubbles from Milo's mask/helmet in space & underwater
+    const breathBubbles = [];
+    let breathTimer = 0;
 
     const worldWidthOf = (w) => w==='space' ? SPACE_WIDTH : w==='underwater' ? WATER_WIDTH : ISLAND_WIDTH;
-    const spawnYOf = (w) => w==='space' ? 450 : w==='underwater' ? 400 : GROUND_Y-35;
+    const spawnYOf = (w) => w==='space' ? 450 : w==='underwater' ? SEABED_Y-52 : GROUND_Y-35;
 
     const stars = Array.from({length:160}, () => ({
       x: Math.random()*SPACE_WIDTH, y: Math.random()*(H-100),
@@ -276,6 +294,36 @@ export function useGameLoop({
       ctx.restore();
 
       const cx = sx + player.w/2;
+      const needsGear = currentWorld === 'space' || currentWorld === 'underwater';
+      if (needsGear) {
+        // Breath helmet / dive mask — glass circle around the head
+        const hx = cx, hy = sy + 12;
+        const hr = currentWorld === 'space' ? 16 : 14;
+        ctx.save();
+        if (currentWorld === 'space') {
+          // Opaque space helmet dome
+          ctx.fillStyle = 'rgba(200,220,255,0.22)';
+          ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.fill();
+          ctx.strokeStyle = 'rgba(230,240,255,0.85)'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(120,140,180,0.7)'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(hx, hy+2, hr+2, 0.15, Math.PI-0.15); ctx.stroke();
+          // Visor glint
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(hx-4, hy-3, hr*0.45, -2.2, -0.6); ctx.stroke();
+        } else {
+          // Clear dive mask + snorkel vibe
+          ctx.fillStyle = 'rgba(160,220,255,0.18)';
+          ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.fill();
+          ctx.strokeStyle = 'rgba(40,90,120,0.85)'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.stroke();
+          ctx.fillStyle = '#2a6a8a';
+          ctx.fillRect(hx + (player.dir === -1 ? -hr-4 : hr-2), hy-2, 6, 4);
+          ctx.fillRect(hx + (player.dir === -1 ? -hr-6 : hr+2), hy-14, 3, 14);
+        }
+        ctx.restore();
+      }
+
       drawHat(cx, sy, color, hat);
       const plateBottom = sy - (hat && hat !== 'none' ? 20 : 6);
       drawNameplate(cx, plateBottom, name, color);
@@ -564,8 +612,22 @@ export function useGameLoop({
               player.y=py-player.h; player.vy=0; player.onGround=true;
             }
           }
-          // Soft respawn onto the nearest floating platform
-          if (player.y>1100) {
+          if (inWater) {
+            // Solid sandy seabed — Milo can walk the cove floor
+            if (player.vy>=0 && player.y+player.h>=SEABED_Y) {
+              player.y=SEABED_Y-player.h; player.vy=0; player.onGround=true;
+            }
+            for (const s of waterSprings) {
+              if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:s.x,y:s.y,w:s.w,h:s.h})) {
+                if (player.vy>=0 && player.y+player.h-s.y<22) {
+                  player.y=s.y-player.h; player.vy=-30; player.onGround=false;
+                  s.bounced=true; playSpringSound();
+                  setTimeout(()=>{s.bounced=false;},300);
+                }
+              }
+            }
+          } else if (player.y>1100) {
+            // Space only: soft respawn onto the nearest asteroid
             let best=floatPlats[0], bestDist=Infinity;
             const px=player.x+player.w/2;
             for (const plat of floatPlats) {
@@ -645,6 +707,28 @@ export function useGameLoop({
         const wi = player.moving?1.2:0.4;
         camWobbleX = Math.sin(wobbleTime*1.3)*wi;
         camWobbleY = Math.sin(wobbleTime*2.1)*wi*0.6;
+
+        // Periodic breath bubbles from the mask/helmet
+        if (inSpace || inWater) {
+          breathTimer += dt;
+          if (breathTimer > 18) {
+            breathTimer = 0;
+            const count = 2 + (Math.random()*2|0);
+            for (let i=0;i<count;i++) {
+              breathBubbles.push({
+                x: player.x + player.w*0.55 + (Math.random()-0.5)*10,
+                y: player.y + 8 + Math.random()*6,
+                r: 2 + Math.random()*3.5,
+                vy: -(0.6 + Math.random()*1.1),
+                life: 50 + Math.random()*30,
+                wobble: Math.random()*Math.PI*2,
+              });
+            }
+          }
+        } else if (breathBubbles.length) {
+          breathBubbles.length = 0;
+          breathTimer = 0;
+        }
       }
 
       if (transition) {
@@ -683,23 +767,91 @@ export function useGameLoop({
           ctx.fillStyle='#87CEEB'; ctx.fillRect(0,0,W,H);
         }
       } else if (currentWorld==='underwater') {
+        // Brighter shallow-lagoon palette (not deep abyss)
         const waterGrad=ctx.createLinearGradient(0,0,0,H);
-        waterGrad.addColorStop(0,'#06314f'); waterGrad.addColorStop(0.45,'#0a4d6e'); waterGrad.addColorStop(1,'#021820');
+        waterGrad.addColorStop(0,'#4db8d9'); waterGrad.addColorStop(0.35,'#2a8fb5');
+        waterGrad.addColorStop(0.7,'#1a6a8a'); waterGrad.addColorStop(1,'#c9b896');
         ctx.fillStyle=waterGrad; ctx.fillRect(0,0,W,H);
-        // Light shafts
-        for (let i=0;i<6;i++) {
-          const lx=((i*260+wobbleTime*18)%(W+200))-100;
-          const shaft=ctx.createLinearGradient(lx,0,lx+40,H);
-          shaft.addColorStop(0,'rgba(120,200,255,0.12)'); shaft.addColorStop(1,'rgba(120,200,255,0)');
+        // Soft sand bed (walkable floor at SEABED_Y)
+        ctx.fillStyle='#d4c09a';
+        ctx.fillRect(0,SEABED_Y,W,H-SEABED_Y);
+        ctx.fillStyle='#e8d7b0';
+        for (let s=0;s<18;s++) {
+          const sx=((s*97-ox*0.3)%(W+40))-20;
+          ctx.beginPath(); ctx.ellipse(sx,SEABED_Y+20+(s%3)*12,18,6,0,0,Math.PI*2); ctx.fill();
+        }
+        // Warm surface light shafts
+        for (let i=0;i<7;i++) {
+          const lx=((i*240+wobbleTime*14)%(W+220))-110;
+          const shaft=ctx.createLinearGradient(lx,0,lx+50,H*0.75);
+          shaft.addColorStop(0,'rgba(255,250,200,0.18)'); shaft.addColorStop(1,'rgba(255,250,200,0)');
           ctx.fillStyle=shaft; ctx.beginPath();
-          ctx.moveTo(lx,0); ctx.lineTo(lx+70,0); ctx.lineTo(lx+20,H); ctx.lineTo(lx-40,H); ctx.closePath(); ctx.fill();
+          ctx.moveTo(lx,0); ctx.lineTo(lx+80,0); ctx.lineTo(lx+30,H*0.75); ctx.lineTo(lx-35,H*0.75); ctx.closePath(); ctx.fill();
+        }
+        // Plantlife — sway gently for a living shallow reef
+        for (const p of seaPlants) {
+          const px=p.x-ox;
+          if (px<-60||px>W+60) continue;
+          const lean=Math.sin(wobbleTime*p.sway+p.phase)*12;
+          if (p.kind < 2) {
+            // Tall kelp ribbons
+            ctx.strokeStyle=`hsla(${p.hue},55%,38%,0.9)`;
+            ctx.lineWidth=5; ctx.lineCap='round';
+            ctx.beginPath();
+            ctx.moveTo(px,p.baseY);
+            ctx.quadraticCurveTo(px+lean*0.6,p.baseY-p.h*0.45,px+lean,p.baseY-p.h);
+            ctx.stroke();
+            ctx.strokeStyle=`hsla(${p.hue},60%,48%,0.85)`;
+            ctx.lineWidth=3;
+            ctx.beginPath();
+            ctx.moveTo(px+6,p.baseY);
+            ctx.quadraticCurveTo(px+6+lean*0.5,p.baseY-p.h*0.5,px+6+lean*0.85,p.baseY-p.h*0.85);
+            ctx.stroke();
+            // Leaf pads along the stalk
+            ctx.fillStyle=`hsla(${p.hue},50%,42%,0.8)`;
+            for (let n=0;n<4;n++) {
+              const t=(n+1)/5;
+              const lx=px+lean*t, ly=p.baseY-p.h*t;
+              ctx.beginPath(); ctx.ellipse(lx+8,ly,14,5,lean*0.04,0,Math.PI*2); ctx.fill();
+            }
+          } else if (p.kind < 4) {
+            // Seagrass tufts
+            ctx.strokeStyle=`hsla(${p.hue},48%,40%,0.85)`;
+            ctx.lineWidth=2.5; ctx.lineCap='round';
+            for (let b=0;b<5;b++) {
+              const ox2=(b-2)*5;
+              ctx.beginPath();
+              ctx.moveTo(px+ox2,p.baseY);
+              ctx.quadraticCurveTo(px+ox2+lean*0.4,p.baseY-p.h*0.55,px+ox2+lean*0.7+(b%2?4:-3),p.baseY-p.h);
+              ctx.stroke();
+            }
+          } else {
+            // Soft coral fan / anemone
+            ctx.fillStyle=`hsla(${p.hue},65%,55%,0.75)`;
+            for (let a=0;a<7;a++) {
+              const ang=-Math.PI/2+(a-3)*0.22+lean*0.01;
+              const len=p.h*(0.7+((a%3)*0.1));
+              ctx.beginPath();
+              ctx.moveTo(px,p.baseY);
+              ctx.quadraticCurveTo(
+                px+Math.cos(ang)*len*0.45,
+                p.baseY+Math.sin(ang)*len*0.45,
+                px+Math.cos(ang)*len,
+                p.baseY+Math.sin(ang)*len
+              );
+              ctx.lineTo(px+Math.cos(ang)*len*0.9+3,p.baseY+Math.sin(ang)*len*0.9);
+              ctx.closePath(); ctx.fill();
+            }
+            ctx.fillStyle=`hsla(${p.hue},70%,62%,0.9)`;
+            ctx.beginPath(); ctx.arc(px,p.baseY-4,8,0,Math.PI*2); ctx.fill();
+          }
         }
         for (const b of bubbles) {
           b.y -= b.speed*dt; b.wobble += dt*0.05;
-          if (b.y < -10) { b.y = H+10; b.x = Math.random()*WATER_WIDTH; }
+          if (b.y < -10) { b.y = H-100; b.x = Math.random()*WATER_WIDTH; }
           const bx=b.x-ox+Math.sin(b.wobble)*6;
           if (bx<-10||bx>W+10) continue;
-          ctx.strokeStyle=`rgba(180,230,255,${0.35+Math.sin(b.wobble)*0.2})`;
+          ctx.strokeStyle=`rgba(220,245,255,${0.4+Math.sin(b.wobble)*0.25})`;
           ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(bx,b.y,b.r,0,Math.PI*2); ctx.stroke();
         }
       } else {
@@ -741,13 +893,35 @@ export function useGameLoop({
           if (sx<-plat.w||sx>W+plat.w) continue;
           ctx.fillStyle='#1f6b63'; roundRect(ctx,sx,py,plat.w,plat.h,12); ctx.fill();
           ctx.fillStyle='#2f9e8f'; roundRect(ctx,sx+6,py+3,plat.w-12,plat.h*0.35,8); ctx.fill();
-          // Coral nubs
+          // Coral nubs + little seagrass tufts on each ledge
           ctx.fillStyle='#d85a70';
           for (let k=0;k<3;k++) {
             ctx.beginPath();
             ctx.ellipse(sx+18+k*(plat.w/3.2),py-6,5,10,0,0,Math.PI*2); ctx.fill();
           }
+          ctx.strokeStyle='#6bcf5a'; ctx.lineWidth=2; ctx.lineCap='round';
+          for (let g=0;g<4;g++) {
+            const gx=sx+14+g*(plat.w/4.2);
+            const lean=Math.sin(wobbleTime*0.9+plat.phase+g)*5;
+            ctx.beginPath(); ctx.moveTo(gx,py); ctx.quadraticCurveTo(gx+lean*0.5,py-18,gx+lean,py-32); ctx.stroke();
+          }
           ctx.strokeStyle='#7fd9c8'; ctx.lineWidth=2; roundRect(ctx,sx,py,plat.w,plat.h,12); ctx.stroke();
+        }
+        // Underwater springboards on the seabed
+        for (const s of waterSprings) {
+          const sx=s.x-ox;
+          if (sx<-s.w||sx>W) continue;
+          ctx.fillStyle='#0d4a5c'; ctx.fillRect(sx,s.y+10,s.w,10);
+          ctx.strokeStyle='#7fd9ff'; ctx.lineWidth=2.5;
+          for (let i=0;i<3;i++){
+            ctx.beginPath();
+            ctx.moveTo(sx+s.w*0.28,s.y+12-i*4);
+            ctx.lineTo(sx+s.w*0.72,s.y+12-i*4);
+            ctx.stroke();
+          }
+          ctx.fillStyle=s.bounced?'#3ecfff':'#1aa6d6';
+          ctx.fillRect(sx,s.y,s.w,8);
+          ctx.fillStyle='rgba(200,245,255,0.45)'; ctx.fillRect(sx,s.y,s.w,3);
         }
       }
       for (let zi=0; zi<zonesToDraw.length; zi++) {
@@ -944,6 +1118,21 @@ export function useGameLoop({
 
       if (introDone) {
         drawCharacter(ox,oy);
+        // Breath bubbles rising from the helmet/mask
+        for (let i=breathBubbles.length-1;i>=0;i--) {
+          const b=breathBubbles[i];
+          b.life -= dt; b.y += b.vy*dt; b.wobble += dt*0.08;
+          b.x += Math.sin(b.wobble)*0.35*dt;
+          if (b.life <= 0 || b.y < -20) { breathBubbles.splice(i,1); continue; }
+          const bx=b.x-ox, by=b.y-oy;
+          if (bx<-20||bx>W+20) continue;
+          const a=Math.max(0.15, Math.min(0.7, b.life/50));
+          ctx.strokeStyle=`rgba(210,235,255,${a})`;
+          ctx.lineWidth=1.4;
+          ctx.beginPath(); ctx.arc(bx,by,b.r,0,Math.PI*2); ctx.stroke();
+          ctx.fillStyle=`rgba(255,255,255,${a*0.25})`;
+          ctx.beginPath(); ctx.arc(bx-b.r*0.25,by-b.r*0.25,b.r*0.35,0,Math.PI*2); ctx.fill();
+        }
         updateToys(dt);
         drawToys(ox,oy);
         if (greetTimer < GREET_DUR) {
