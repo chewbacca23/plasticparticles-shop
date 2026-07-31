@@ -118,19 +118,19 @@ export function useGameLoop({
       }
       return pts[pts.length - 1].y;
     };
-    // Walkable uneven seabed — sand dunes & troughs (not a flat line)
+    // Walkable uneven seabed — bold sand dunes & troughs (not a flat line)
     const seabedTerrain = (() => {
       const pts = [];
       let x = -80;
       while (x < WATER_WIDTH + 160) {
         // Irregular spans so dunes aren't evenly spaced
-        const span = 42 + terrainHash(x * 0.13 + 1.1) * 130;
+        const span = 38 + terrainHash(x * 0.13 + 1.1) * 120;
         const rise =
-          (terrainHash(x * 0.055 + 3.7) - 0.28) * 78 +
-          (terrainHash(x * 0.019 + 8.2) - 0.5) * 44 +
-          (terrainHash(x * 0.006 + 0.9) - 0.5) * 52 +
-          (terrainHash(x * 0.21 + 4.4) - 0.5) * 18; // fine ripples
-        const y = Math.max(SEABED_Y - 110, Math.min(SEABED_Y + 48, SEABED_Y - rise));
+          (terrainHash(x * 0.055 + 3.7) - 0.22) * 110 +
+          (terrainHash(x * 0.019 + 8.2) - 0.5) * 60 +
+          (terrainHash(x * 0.006 + 0.9) - 0.5) * 70 +
+          (terrainHash(x * 0.21 + 4.4) - 0.5) * 22; // fine ripples
+        const y = Math.max(SEABED_Y - 160, Math.min(SEABED_Y + 55, SEABED_Y - rise));
         pts.push({ x, y });
         x += span;
       }
@@ -155,15 +155,15 @@ export function useGameLoop({
       return GROUND_Y - 35;
     };
 
-    // Shallow-reef plantlife — dense kelp, seagrass, coral fans (decorative, no collision)
-    const seaPlants = Array.from({ length: 280 }, (_, i) => {
+    // Shallow-reef plantlife — kelp / grass / fans (thinned so dunes stay readable)
+    const seaPlants = Array.from({ length: 110 }, (_, i) => {
       const kind = i % 5; // 0-1 kelp, 2-3 grass, 4 fan
-      const x = 20 + (i * 37 + (i % 7) * 19) % (WATER_WIDTH - 40);
+      const x = 20 + (i * 79 + (i % 7) * 23) % (WATER_WIDTH - 40);
       return {
         kind,
         x,
         yOff: kind === 4 ? (i % 3) * 8 : (i % 4) * 4,
-        h: kind < 2 ? 100 + (i % 7) * 26 : kind < 4 ? 36 + (i % 5) * 12 : 50 + (i % 4) * 14,
+        h: kind < 2 ? 70 + (i % 7) * 18 : kind < 4 ? 28 + (i % 5) * 10 : 40 + (i % 4) * 12,
         sway: 0.35 + (i % 8) * 0.1,
         phase: i * 0.37,
         hue: kind < 2 ? 140 + (i % 6) * 7 : kind < 4 ? 90 + (i % 7) * 9 : 320 + (i % 5) * 12,
@@ -1118,6 +1118,27 @@ export function useGameLoop({
             ctx.fillStyle=`hsla(${p.hue},70%,62%,0.9)`;
             ctx.beginPath(); ctx.arc(px,baseY-4,8,0,Math.PI*2); ctx.fill();
           }
+        }
+        // Re-stroke the dune crest above plantlife so hills stay readable
+        {
+          ctx.strokeStyle = 'rgba(255,236,190,0.7)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 6) {
+            const sy = seabedSurfaceY(sx + ox);
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(180,140,90,0.35)';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 6) {
+            const sy = seabedSurfaceY(sx + ox) + 3;
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
         }
         // Crabs scuttle along the dunes
         for (const c of seaCrabs) {
