@@ -42,7 +42,9 @@ export function useGameLoop({
       triggered:false, glowTimer:0, active:false, hit:false, growing:0, bounceY:0,
     }));
 
-    const player = {x:60, y:GROUND_Y-35, w:36, h:52, vx:0, vy:0, onGround:false, dir:1, frame:0, frameTimer:0, moving:false};
+    const player = {x:60, y:GROUND_Y-35, w:36, h:52, vx:0, vy:0, onGround:false, dir:1, frame:0, frameTimer:0, moving:false, airPeakY:GROUND_Y};
+    // Sky parachute — deploys on high island falls (springboard / cloud drop)
+    const parachute = { open: false, amount: 0 };
     const springboards = springboardsRef.current;
     const waterSprings = WATER_SPRINGBOARDS.map(s => ({ ...s, bounced: false }));
 
@@ -353,8 +355,51 @@ export function useGameLoop({
         ctx.restore();
       }
 
+      // Parachute canopy + risers when falling from the sky
+      if (parachute.amount > 0.05) {
+        const a = parachute.amount;
+        const top = sy - 6 - 30 * a;
+        const spread = 40 * a;
+        const sway = Math.sin(wobbleTime * 2.4) * 4 * a;
+        ctx.save();
+        // Canopy dome
+        ctx.fillStyle = `rgba(210,55,70,${0.88 * a})`;
+        ctx.beginPath();
+        ctx.moveTo(cx - spread + sway, top + 14 * a);
+        ctx.quadraticCurveTo(cx + sway, top - 20 * a, cx + spread + sway, top + 14 * a);
+        ctx.quadraticCurveTo(cx + sway, top + 24 * a, cx - spread + sway, top + 14 * a);
+        ctx.fill();
+        // Panel stripes
+        ctx.strokeStyle = `rgba(255,230,200,${0.55 * a})`;
+        ctx.lineWidth = 1.5;
+        for (let i = -2; i <= 2; i++) {
+          const px = cx + sway + i * (spread * 0.28);
+          ctx.beginPath();
+          ctx.moveTo(cx + sway, top - 8 * a);
+          ctx.lineTo(px, top + 16 * a);
+          ctx.stroke();
+        }
+        ctx.fillStyle = `rgba(255,210,80,${0.9 * a})`;
+        ctx.beginPath();
+        ctx.arc(cx + sway, top - 6 * a, 3.5 * a, 0, Math.PI * 2); ctx.fill();
+        // Risers to shoulders
+        ctx.strokeStyle = `rgba(50,35,25,${0.6 * a})`;
+        ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - spread * 0.85 + sway, top + 14 * a);
+        ctx.lineTo(cx - 10, sy + 16);
+        ctx.moveTo(cx + spread * 0.85 + sway, top + 14 * a);
+        ctx.lineTo(cx + 10, sy + 16);
+        ctx.moveTo(cx - spread * 0.35 + sway, top + 16 * a);
+        ctx.lineTo(cx - 4, sy + 14);
+        ctx.moveTo(cx + spread * 0.35 + sway, top + 16 * a);
+        ctx.lineTo(cx + 4, sy + 14);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       drawHat(cx, sy, color, hat);
-      const plateBottom = sy - (hat && hat !== 'none' ? 20 : 6);
+      const plateBottom = sy - (hat && hat !== 'none' ? 20 : 6) - (parachute.amount > 0.4 ? 36 * parachute.amount : 0);
       drawNameplate(cx, plateBottom, name, color);
     };
 
@@ -730,6 +775,26 @@ export function useGameLoop({
           if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},loungePortal)) startTransition('island',560);
         }
 
+        // Sky parachute — after landings so we know if feet are planted
+        if (player.onGround) {
+          player.airPeakY = player.y;
+        } else {
+          player.airPeakY = Math.min(player.airPeakY, player.y);
+        }
+        // Only after a true sky peak (springboard / clouds), not a normal ground jump
+        if (inIsland && !player.onGround && player.vy > 1.2 && player.airPeakY < 400) {
+          parachute.open = true;
+        }
+        if (!inIsland || player.onGround) parachute.open = false;
+        if (parachute.open) {
+          parachute.amount = Math.min(1, parachute.amount + 0.09 * dt);
+          if (player.vy > 2.5) player.vy = 2.5;
+          player.x += Math.sin(wobbleTime * 2.2) * 0.4 * dt;
+          player.x = Math.max(0, Math.min(player.x, worldW - player.w));
+        } else {
+          parachute.amount = Math.max(0, parachute.amount - 0.14 * dt);
+        }
+
         targetCameraX = Math.max(0,Math.min(player.x-220,worldW-W));
         cameraX += (targetCameraX-cameraX)*0.08*dt;
         wobbleTime += dt*0.04;
@@ -775,6 +840,8 @@ export function useGameLoop({
             setWorldRef.current?.(t.toWorld);
             player.x=t.targetX; player.y=spawnYOf(t.toWorld);
             player.vx=0; player.vy=0;
+            player.airPeakY=player.y;
+            parachute.open=false; parachute.amount=0;
             const ww=worldWidthOf(t.toWorld);
             cameraX=Math.max(0,Math.min(player.x-220,ww-W)); targetCameraX=cameraX;
             t.phase='arrive'; t.timer=0;
