@@ -150,7 +150,13 @@ export default function GameView({
   const [popupPos] = useState({ left: '30%', top: '20%' });
   const [showCart, setShowCart] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [world, setWorld] = useState('island');
+  const [world, setWorld] = useState(() => {
+    try {
+      const boot = new URLSearchParams(window.location.search).get('world');
+      if (boot === 'underwater' || boot === 'space') return boot;
+    } catch { /* ignore */ }
+    return 'island';
+  });
 
   // Freeze player movement while the cart or passport overlay is open.
   pausedRef.current = showCart || showPassport;

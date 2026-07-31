@@ -141,8 +141,8 @@ export const UNDERWATER_ZONES = (() => {
 export const GRAVITY_WATER = 0.12;
 export const JUMP_WATER    = -11;
 
-// Walkable sandy floor baseline (uneven dunes vary around this in the game loop)
-export const SEABED_Y = 910;
+// Walkable sandy floor baseline (dunes rise/fall around this in the game loop)
+export const SEABED_Y = 820;
 
 // Underwater launch pads scattered along the cove floor
 export const WATER_SPRINGBOARDS = [

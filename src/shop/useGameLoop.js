@@ -118,23 +118,43 @@ export function useGameLoop({
       }
       return pts[pts.length - 1].y;
     };
-    // Walkable uneven seabed — bold sand dunes & troughs (not a flat line)
+    // Walkable uneven seabed — jagged asymmetric ridges (not a smooth sine lip)
     const seabedTerrain = (() => {
       const pts = [];
       let x = -80;
+      let i = 0;
       while (x < WATER_WIDTH + 160) {
-        // Irregular spans so dunes aren't evenly spaced
-        const span = 38 + terrainHash(x * 0.13 + 1.1) * 120;
-        const rise =
-          (terrainHash(x * 0.055 + 3.7) - 0.22) * 110 +
-          (terrainHash(x * 0.019 + 8.2) - 0.5) * 60 +
-          (terrainHash(x * 0.006 + 0.9) - 0.5) * 70 +
-          (terrainHash(x * 0.21 + 4.4) - 0.5) * 22; // fine ripples
-        const y = Math.max(SEABED_Y - 160, Math.min(SEABED_Y + 55, SEABED_Y - rise));
+        // Wildly uneven spans: short cliffs mixed with long shelves
+        const span = 45 + terrainHash(x * 0.09 + 1.1 + i) * 220;
+        // Bias some segments into plateaus / sudden drops
+        const mode = terrainHash(i * 2.7 + 0.3);
+        let rise;
+        if (mode < 0.22) {
+          // High mesa
+          rise = 220 + terrainHash(x * 0.02 + 5) * 90;
+        } else if (mode < 0.4) {
+          // Deep trough
+          rise = -80 - terrainHash(x * 0.03 + 2) * 50;
+        } else {
+          rise =
+            (terrainHash(x * 0.041 + 3.7) - 0.15) * 260 +
+            (terrainHash(x * 0.013 + 8.2) - 0.5) * 140 +
+            (terrainHash(x * 0.005 + 0.9) - 0.5) * 100 +
+            (terrainHash(x * 0.17 + 4.4) - 0.5) * 35;
+        }
+        // Peaks ~500, troughs ~950 — lower third of the frame is clearly hilly
+        const y = Math.max(500, Math.min(950, SEABED_Y - rise));
         pts.push({ x, y });
+        // Extra control point mid-span with independent jitter → asymmetric flanks
+        if (span > 90) {
+          const midX = x + span * (0.35 + terrainHash(i * 1.9) * 0.35);
+          const midY = Math.max(500, Math.min(950, y + (terrainHash(i * 4.1) - 0.5) * 120));
+          pts.push({ x: midX, y: midY });
+        }
         x += span;
+        i += 1;
       }
-      return pts;
+      return pts.sort((a, b) => a.x - b.x);
     })();
     const seabedSurfaceY = (wx) => {
       const pts = seabedTerrain;
@@ -155,15 +175,31 @@ export function useGameLoop({
       return GROUND_Y - 35;
     };
 
-    // Shallow-reef plantlife — kelp / grass / fans (thinned so dunes stay readable)
-    const seaPlants = Array.from({ length: 110 }, (_, i) => {
+    // Optional deep-link: /?world=underwater|space (handy for testing dunes / lunar hills)
+    try {
+      const boot = new URLSearchParams(window.location.search).get('world');
+      if (boot === 'underwater' || boot === 'space') {
+        currentWorld = boot;
+        introDone = true;
+        introTimer = 999;
+        player.x = 280;
+        player.y = spawnYOf(boot, 280);
+        player.airPeakY = player.y;
+        cameraX = Math.max(0, player.x - W * 0.35);
+        targetCameraX = cameraX;
+        setWorldRef.current?.(boot);
+      }
+    } catch { /* ignore */ }
+
+    // Sparse reef plantlife — short tufts so dune silhouette stays obvious
+    const seaPlants = Array.from({ length: 70 }, (_, i) => {
       const kind = i % 5; // 0-1 kelp, 2-3 grass, 4 fan
-      const x = 20 + (i * 79 + (i % 7) * 23) % (WATER_WIDTH - 40);
+      const x = 40 + (i * 97 + (i % 7) * 31) % (WATER_WIDTH - 80);
       return {
         kind,
         x,
-        yOff: kind === 4 ? (i % 3) * 8 : (i % 4) * 4,
-        h: kind < 2 ? 70 + (i % 7) * 18 : kind < 4 ? 28 + (i % 5) * 10 : 40 + (i % 4) * 12,
+        yOff: kind === 4 ? (i % 3) * 6 : (i % 4) * 3,
+        h: kind < 2 ? 48 + (i % 5) * 12 : kind < 4 ? 22 + (i % 4) * 8 : 32 + (i % 3) * 10,
         sway: 0.35 + (i % 8) * 0.1,
         phase: i * 0.37,
         hue: kind < 2 ? 140 + (i % 6) * 7 : kind < 4 ? 90 + (i % 7) * 9 : 320 + (i % 5) * 12,
@@ -812,7 +848,7 @@ export function useGameLoop({
             // Stick to the uneven sandy dunes (walk / soft land)
             const gy = seabedSurfaceY(player.x + player.w * 0.5);
             const feet = player.y + player.h;
-            if (player.vy >= 0 && feet >= gy - 6 && feet - gy < 48) {
+            if (player.vy >= 0 && feet >= gy - 8 && feet - gy < 90) {
               player.y = gy - player.h; player.vy = 0; player.onGround = true;
             }
             for (const s of waterSprings) {
@@ -985,43 +1021,53 @@ export function useGameLoop({
           ctx.fillStyle='#87CEEB'; ctx.fillRect(0,0,W,H);
         }
       } else if (currentWorld==='underwater') {
-        // Brighter shallow-lagoon palette (not deep abyss)
+        // Clear blue water all the way down — sand body draws the dunes on top
         const waterGrad=ctx.createLinearGradient(0,0,0,H);
-        waterGrad.addColorStop(0,'#4db8d9'); waterGrad.addColorStop(0.35,'#2a8fb5');
-        waterGrad.addColorStop(0.7,'#1a6a8a'); waterGrad.addColorStop(1,'#c9b896');
+        waterGrad.addColorStop(0,'#4db8d9'); waterGrad.addColorStop(0.4,'#2a8fb5');
+        waterGrad.addColorStop(0.75,'#176a88'); waterGrad.addColorStop(1,'#0d4a5c');
         ctx.fillStyle=waterGrad; ctx.fillRect(0,0,W,H);
-        // Uneven sandy seabed — dunes & troughs across the viewport
+        // Chunking sand dunes — high-contrast body so hills read at a glance
         {
-          const sandGrad=ctx.createLinearGradient(0,SEABED_Y-90,0,H);
-          sandGrad.addColorStop(0,'#e8d7b0'); sandGrad.addColorStop(0.45,'#d4c09a');
-          sandGrad.addColorStop(1,'#b89a6e');
+          const sandGrad=ctx.createLinearGradient(0,500,0,H);
+          sandGrad.addColorStop(0,'#f0e0b8'); sandGrad.addColorStop(0.35,'#e0c990');
+          sandGrad.addColorStop(0.7,'#c9a86a'); sandGrad.addColorStop(1,'#8f6f3e');
           ctx.fillStyle=sandGrad;
           ctx.beginPath();
           ctx.moveTo(-4, H + 2);
-          for (let sx = -4; sx <= W + 4; sx += 6) {
+          for (let sx = -4; sx <= W + 4; sx += 5) {
             ctx.lineTo(sx, seabedSurfaceY(sx + ox));
           }
           ctx.lineTo(W + 4, H + 2);
           ctx.closePath();
           ctx.fill();
-          // Soft lit ridge along the sand crest
-          ctx.strokeStyle = 'rgba(255,240,210,0.45)';
-          ctx.lineWidth = 2.5;
+          // Bright crest so the silhouette pops against blue water
+          ctx.strokeStyle = 'rgba(255,248,220,0.95)';
+          ctx.lineWidth = 4;
           ctx.beginPath();
-          for (let sx = -4; sx <= W + 4; sx += 6) {
+          for (let sx = -4; sx <= W + 4; sx += 5) {
             const sy = seabedSurfaceY(sx + ox);
             if (sx === -4) ctx.moveTo(sx, sy);
             else ctx.lineTo(sx, sy);
           }
           ctx.stroke();
+          // Dark under-lip for depth
+          ctx.strokeStyle = 'rgba(110,80,40,0.45)';
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 5) {
+            const sy = seabedSurfaceY(sx + ox) + 5;
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
           // Sand mottling that follows the dunes
-          ctx.fillStyle='#e8d7b0';
+          ctx.fillStyle='rgba(255,236,190,0.55)';
           for (let s=0;s<22;s++) {
-            const wx = ((s * 163 + ox * 0.15) % WATER_WIDTH);
+            const wx = ((s * 163 + ox * 0.15) % WATER_WIDTH + WATER_WIDTH) % WATER_WIDTH;
             const sx = wx - ox;
             if (sx < -40 || sx > W + 40) continue;
-            const sy = seabedSurfaceY(wx) + 14 + (s % 4) * 10;
-            ctx.beginPath(); ctx.ellipse(sx, sy, 16 + (s % 3) * 4, 5, 0, 0, Math.PI * 2); ctx.fill();
+            const sy = seabedSurfaceY(wx) + 16 + (s % 4) * 12;
+            ctx.beginPath(); ctx.ellipse(sx, sy, 18 + (s % 3) * 5, 6, 0, 0, Math.PI * 2); ctx.fill();
           }
         }
         // Warm surface light shafts
