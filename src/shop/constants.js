@@ -141,7 +141,7 @@ export const UNDERWATER_ZONES = (() => {
 export const GRAVITY_WATER = 0.12;
 export const JUMP_WATER    = -11;
 
-// Walkable sandy floor (matches the drawn seabed band near H-90)
+// Walkable sandy floor baseline (uneven dunes vary around this in the game loop)
 export const SEABED_Y = 910;
 
 // Underwater launch pads scattered along the cove floor
