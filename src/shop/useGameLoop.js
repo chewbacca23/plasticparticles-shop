@@ -58,7 +58,8 @@ export function useGameLoop({
     const waterCatalog = (underwaterProducts && underwaterProducts.length) ? underwaterProducts : spaceProducts;
 
     const islandSign  = {x:4280, y:160, w:120, h:180, glow:0};
-    const spacePortal = {x:120,  y:LUNAR_Y-110, w:60,  h:100, glow:0};
+    // Portal sits on the uneven moon floor (y filled in after terrain helper exists)
+    const spacePortal = {x:120,  y:0, w:60,  h:100, glow:0};
     // Dive buoy near the left shore — enter the underwater toy cove
     const divePortal  = {x:420,  y:GROUND_Y-110,  w:70,  h:90,  glow:0};
     // Surface portal back to the Artist Lounge (island hub)
@@ -123,7 +124,46 @@ export function useGameLoop({
     let breathTimer = 0;
 
     const worldWidthOf = (w) => w==='space' ? SPACE_WIDTH : w==='underwater' ? WATER_WIDTH : ISLAND_WIDTH;
-    const spawnYOf = (w) => w==='space' ? LUNAR_Y-52 : w==='underwater' ? SEABED_Y-52 : GROUND_Y-35;
+
+    // Deterministic 0..1 hash — keeps the moonscape stable across reloads
+    const lunarHash = (n) => {
+      const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+      return s - Math.floor(s);
+    };
+    // Walkable asymmetric lunar surface (mild hills, uneven spans — not a flat line)
+    const lunarTerrain = (() => {
+      const pts = [];
+      let x = -80;
+      while (x < SPACE_WIDTH + 160) {
+        const span = 50 + lunarHash(x * 0.11 + 0.4) * 145;
+        const rise =
+          (lunarHash(x * 0.061 + 2.1) - 0.32) * 68 +
+          (lunarHash(x * 0.017 + 9.3) - 0.5) * 38 +
+          (lunarHash(x * 0.004 + 1.7) - 0.5) * 48;
+        const y = Math.max(LUNAR_Y - 100, Math.min(LUNAR_Y + 40, LUNAR_Y - rise));
+        pts.push({ x, y });
+        x += span;
+      }
+      return pts;
+    })();
+    const lunarSurfaceY = (wx) => {
+      const pts = lunarTerrain;
+      if (wx <= pts[0].x) return pts[0].y;
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i];
+        if (wx <= b.x) {
+          const t = (wx - a.x) / Math.max(1, b.x - a.x);
+          const s = t * t * (3 - 2 * t);
+          return a.y + (b.y - a.y) * s;
+        }
+      }
+      return pts[pts.length - 1].y;
+    };
+    const spawnYOf = (w, x = 250) => {
+      if (w === 'space') return lunarSurfaceY(x) - 52;
+      if (w === 'underwater') return SEABED_Y - 52;
+      return GROUND_Y - 35;
+    };
 
     const stars = Array.from({length:140}, () => ({
       x: Math.random()*SPACE_WIDTH, y: Math.random()*(H*0.55),
@@ -132,28 +172,39 @@ export function useGameLoop({
     }));
     // Distant Earth hanging in the lunar sky
     const earth = { x: SPACE_WIDTH * 0.72, y: 160, r: 110 };
-    // Rolling moon hills (parallax silhouettes)
-    const lunarHills = Array.from({ length: 14 }, (_, i) => ({
-      x: i * 320 - 40,
-      y: LUNAR_Y - (40 + (i % 4) * 28),
-      w: 280 + (i % 3) * 90,
-      h: 70 + (i % 5) * 22,
-      parallax: 0.45 + (i % 3) * 0.08,
-      shade: 0.55 + (i % 4) * 0.08,
-    }));
-    // Surface craters & rocks on the regolith
-    const lunarCraters = Array.from({ length: 36 }, (_, i) => ({
-      x: 60 + (i * 109) % (SPACE_WIDTH - 80),
-      y: LUNAR_Y + 8 + (i % 5) * 10,
-      rx: 14 + (i % 6) * 7,
-      ry: 5 + (i % 4) * 2,
-    }));
-    const lunarRocks = Array.from({ length: 22 }, (_, i) => ({
-      x: 40 + (i * 173) % (SPACE_WIDTH - 60),
-      y: LUNAR_Y - (6 + (i % 4) * 5),
-      w: 10 + (i % 5) * 6,
-      h: 8 + (i % 4) * 4,
-    }));
+    // Far hills — uneven widths/heights so the skyline stays asymmetric
+    const lunarHills = Array.from({ length: 16 }, (_, i) => {
+      const x = -120 + i * (210 + lunarHash(i * 3.7) * 160);
+      return {
+        x,
+        y: LUNAR_Y - (30 + lunarHash(i * 1.9) * 90),
+        w: 160 + lunarHash(i * 2.3) * 220,
+        h: 40 + lunarHash(i * 4.1) * 95,
+        parallax: 0.38 + lunarHash(i * 0.8) * 0.22,
+        shade: 0.48 + lunarHash(i * 5.2) * 0.28,
+        skew: (lunarHash(i * 6.1) - 0.5) * 0.55,
+      };
+    });
+    // Surface craters & rocks sit on the uneven regolith
+    const lunarCraters = Array.from({ length: 36 }, (_, i) => {
+      const x = 40 + (i * 97 + lunarHash(i) * 80) % (SPACE_WIDTH - 80);
+      return {
+        x,
+        yOff: 6 + (i % 5) * 8,
+        rx: 12 + lunarHash(i + 2) * 22,
+        ry: 4 + lunarHash(i + 5) * 6,
+      };
+    });
+    const lunarRocks = Array.from({ length: 26 }, (_, i) => {
+      const x = 30 + (i * 151 + lunarHash(i + 8) * 70) % (SPACE_WIDTH - 60);
+      return {
+        x,
+        yOff: 4 + lunarHash(i + 3) * 10,
+        w: 8 + lunarHash(i + 4) * 14,
+        h: 6 + lunarHash(i + 6) * 12,
+      };
+    });
+    spacePortal.y = lunarSurfaceY(spacePortal.x) - 100;
 
     let transition = null;
     function startTransition(toWorld, targetX) {
@@ -721,9 +772,11 @@ export function useGameLoop({
               }
             }
           } else if (inSpace) {
-            // Solid lunar regolith — walk the moon surface under the rock shelves
-            if (player.vy>=0 && player.y+player.h>=LUNAR_Y) {
-              player.y=LUNAR_Y-player.h; player.vy=0; player.onGround=true;
+            // Stick to the uneven lunar hills (walk / soft land)
+            const gy = lunarSurfaceY(player.x + player.w * 0.5);
+            const feet = player.y + player.h;
+            if (player.vy >= 0 && feet >= gy - 6 && feet - gy < 42) {
+              player.y = gy - player.h; player.vy = 0; player.onGround = true;
             }
           }
         }
@@ -852,7 +905,7 @@ export function useGameLoop({
           if (t.timer>50) {
             currentWorld=t.toWorld;
             setWorldRef.current?.(t.toWorld);
-            player.x=t.targetX; player.y=spawnYOf(t.toWorld);
+            player.x=t.targetX; player.y=spawnYOf(t.toWorld, t.targetX);
             player.vx=0; player.vy=0;
             player.airPeakY=player.y;
             parachute.open=false; parachute.amount=0;
@@ -1098,49 +1151,69 @@ export function useGameLoop({
             ctx.beginPath(); ctx.arc(ex,ey,earth.r+2,0,Math.PI*2); ctx.stroke();
           }
         }
-        // Rolling lunar hills (parallax)
+        // Far asymmetric hills (parallax skyline)
         for (const hill of lunarHills) {
           const hx=hill.x-ox*hill.parallax;
           if (hx<-hill.w||hx>W+hill.w) continue;
-          const shade=Math.floor(55*hill.shade);
-          ctx.fillStyle=`rgb(${shade},${shade},${shade+6})`;
+          const shade=Math.floor(52*hill.shade);
+          const peakX = hx + hill.w * (0.35 + hill.skew * 0.25);
+          const midX = hx + hill.w * (0.62 + hill.skew * 0.15);
+          ctx.fillStyle=`rgb(${shade},${shade},${shade+8})`;
           ctx.beginPath();
-          ctx.moveTo(hx,LUNAR_Y+20);
-          ctx.quadraticCurveTo(hx+hill.w*0.35,hill.y-hill.h*0.15,hx+hill.w*0.5,hill.y);
-          ctx.quadraticCurveTo(hx+hill.w*0.7,hill.y-hill.h*0.1,hx+hill.w,LUNAR_Y+20);
+          ctx.moveTo(hx, LUNAR_Y + 40);
+          ctx.quadraticCurveTo(hx + hill.w * 0.18, hill.y + hill.h * 0.2, peakX, hill.y);
+          ctx.quadraticCurveTo(midX, hill.y + hill.h * 0.15, hx + hill.w, LUNAR_Y + 40);
           ctx.closePath(); ctx.fill();
         }
-        // Regolith floor
-        const dustGrad=ctx.createLinearGradient(0,LUNAR_Y-30,0,H);
-        dustGrad.addColorStop(0,'#6a6a72'); dustGrad.addColorStop(0.35,'#8a8a90');
-        dustGrad.addColorStop(1,'#5c5c64');
-        ctx.fillStyle=dustGrad;
-        ctx.fillRect(0,LUNAR_Y,W,H-LUNAR_Y);
-        // Horizon dust line
-        ctx.fillStyle='rgba(180,180,190,0.35)';
-        ctx.fillRect(0,LUNAR_Y-2,W,4);
-        // Craters on the surface
+        // Walkable hilly regolith — sample the asymmetric surface across the viewport
+        {
+          const dustGrad=ctx.createLinearGradient(0,LUNAR_Y-80,0,H);
+          dustGrad.addColorStop(0,'#6e6e76'); dustGrad.addColorStop(0.4,'#8a8a92');
+          dustGrad.addColorStop(1,'#585860');
+          ctx.fillStyle=dustGrad;
+          ctx.beginPath();
+          ctx.moveTo(-4, H + 2);
+          for (let sx = -4; sx <= W + 4; sx += 6) {
+            ctx.lineTo(sx, lunarSurfaceY(sx + ox));
+          }
+          ctx.lineTo(W + 4, H + 2);
+          ctx.closePath();
+          ctx.fill();
+          // Lit ridge edge along the hills
+          ctx.strokeStyle = 'rgba(190,190,200,0.42)';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 6) {
+            const sy = lunarSurfaceY(sx + ox);
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+        }
+        // Craters on the uneven surface
         for (const c of lunarCraters) {
           const cx=c.x-ox;
           if (cx<-50||cx>W+50) continue;
+          const cy = lunarSurfaceY(c.x) + c.yOff;
           ctx.fillStyle='rgba(40,40,48,0.45)';
-          ctx.beginPath(); ctx.ellipse(cx,c.y,c.rx,c.ry,0,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(cx,cy,c.rx,c.ry,0,0,Math.PI*2); ctx.fill();
           ctx.strokeStyle='rgba(200,200,210,0.25)'; ctx.lineWidth=1.5;
-          ctx.beginPath(); ctx.ellipse(cx,c.y-1,c.rx*0.95,c.ry*0.7,0,Math.PI,0); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(cx,cy-1,c.rx*0.95,c.ry*0.7,0,Math.PI,0); ctx.stroke();
         }
         // Scattered surface rocks
         for (const r of lunarRocks) {
           const rx=r.x-ox;
           if (rx<-20||rx>W+20) continue;
+          const ry = lunarSurfaceY(r.x) - r.yOff;
           ctx.fillStyle='#4a4a52';
           ctx.beginPath();
-          ctx.moveTo(rx,r.y+r.h);
-          ctx.lineTo(rx+r.w*0.15,r.y);
-          ctx.lineTo(rx+r.w*0.85,r.y+2);
-          ctx.lineTo(rx+r.w,r.y+r.h);
+          ctx.moveTo(rx,ry+r.h);
+          ctx.lineTo(rx+r.w*0.15,ry);
+          ctx.lineTo(rx+r.w*0.85,ry+2);
+          ctx.lineTo(rx+r.w,ry+r.h);
           ctx.closePath(); ctx.fill();
           ctx.fillStyle='rgba(160,160,170,0.35)';
-          ctx.fillRect(rx+r.w*0.2,r.y+2,r.w*0.45,3);
+          ctx.fillRect(rx+r.w*0.2,ry+2,r.w*0.45,3);
         }
       }
 
