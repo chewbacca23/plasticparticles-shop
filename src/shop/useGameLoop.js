@@ -87,6 +87,35 @@ export function useGameLoop({
         hue: kind < 2 ? 140 + (i % 6) * 7 : kind < 4 ? 90 + (i % 7) * 9 : 320 + (i % 5) * 12,
       };
     });
+    // Reef critters — fish, seabed crabs, occasional jellyfish (decorative)
+    const seaFish = Array.from({ length: 28 }, (_, i) => ({
+      x: (i * 127 + 40) % WATER_WIDTH,
+      y: 180 + (i % 7) * 85 + (i % 3) * 20,
+      vx: (i % 2 === 0 ? 1 : -1) * (0.55 + (i % 5) * 0.18),
+      amp: 6 + (i % 4) * 3,
+      phase: i * 0.7,
+      size: 10 + (i % 4) * 3,
+      hue: [28, 195, 45, 320, 210, 55][i % 6],
+    }));
+    const seaCrabs = Array.from({ length: 10 }, (_, i) => ({
+      x: 120 + i * 340 + (i % 3) * 40,
+      y: SEABED_Y - 6,
+      vx: (i % 2 === 0 ? 1 : -1) * (0.35 + (i % 4) * 0.12),
+      range: 90 + (i % 5) * 30,
+      home: 120 + i * 340 + (i % 3) * 40,
+      phase: i * 1.1,
+      size: 11 + (i % 3) * 2,
+    }));
+    const seaJellies = Array.from({ length: 5 }, (_, i) => ({
+      x: 280 + i * 650,
+      y: 120 + (i % 3) * 160,
+      vy: -0.18 - (i % 3) * 0.05,
+      drift: 0.25 + (i % 2) * 0.1,
+      phase: i * 1.4,
+      size: 16 + (i % 3) * 6,
+      pulse: 0.8 + (i % 4) * 0.15,
+    }));
+
     // Breath bubbles from Milo's mask/helmet in space & underwater
     const breathBubbles = [];
     let breathTimer = 0;
@@ -844,6 +873,104 @@ export function useGameLoop({
             }
             ctx.fillStyle=`hsla(${p.hue},70%,62%,0.9)`;
             ctx.beginPath(); ctx.arc(px,p.baseY-4,8,0,Math.PI*2); ctx.fill();
+          }
+        }
+        // Crabs scuttle along the sand
+        for (const c of seaCrabs) {
+          c.x += c.vx * dt;
+          if (c.x > c.home + c.range || c.x < c.home - c.range) c.vx *= -1;
+          const cx = c.x - ox;
+          if (cx < -40 || cx > W + 40) continue;
+          const bob = Math.abs(Math.sin(wobbleTime * 6 + c.phase)) * 1.5;
+          const s = c.size;
+          const dir = c.vx >= 0 ? 1 : -1;
+          // Body
+          ctx.fillStyle = '#c45a2e';
+          ctx.beginPath(); ctx.ellipse(cx, c.y - bob, s, s * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#e07840';
+          ctx.beginPath(); ctx.ellipse(cx, c.y - bob - 2, s * 0.7, s * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+          // Eyes
+          ctx.fillStyle = '#1a1208';
+          ctx.beginPath(); ctx.arc(cx - 4, c.y - bob - s * 0.55, 1.8, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx + 4, c.y - bob - s * 0.55, 1.8, 0, Math.PI * 2); ctx.fill();
+          // Claws
+          ctx.strokeStyle = '#a84820'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(cx - s * 0.7, c.y - bob);
+          ctx.quadraticCurveTo(cx - s * 1.3, c.y - bob - 8, cx - s * 1.1 + dir * 2, c.y - bob - 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx + s * 0.7, c.y - bob);
+          ctx.quadraticCurveTo(cx + s * 1.3, c.y - bob - 8, cx + s * 1.1 + dir * 2, c.y - bob - 2);
+          ctx.stroke();
+          // Legs
+          ctx.strokeStyle = '#8a3a18'; ctx.lineWidth = 2;
+          for (let L = 0; L < 3; L++) {
+            const lx = cx + (L - 1) * 5;
+            const kick = Math.sin(wobbleTime * 7 + c.phase + L) * 3 * dir;
+            ctx.beginPath();
+            ctx.moveTo(lx, c.y - bob + 2);
+            ctx.lineTo(lx + kick, c.y + 5);
+            ctx.stroke();
+          }
+        }
+        // Fish swim mid-water
+        for (const f of seaFish) {
+          f.x += f.vx * dt;
+          if (f.x < -40) f.x = WATER_WIDTH + 20;
+          if (f.x > WATER_WIDTH + 40) f.x = -20;
+          const fy = f.y + Math.sin(wobbleTime * 1.4 + f.phase) * f.amp;
+          const fx = f.x - ox;
+          if (fx < -50 || fx > W + 50) continue;
+          const s = f.size;
+          const dir = f.vx >= 0 ? 1 : -1;
+          ctx.fillStyle = `hsl(${f.hue},70%,55%)`;
+          ctx.beginPath();
+          ctx.ellipse(fx, fy, s, s * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+          // Tail
+          ctx.beginPath();
+          ctx.moveTo(fx - dir * s * 0.85, fy);
+          ctx.lineTo(fx - dir * s * 1.45, fy - s * 0.45);
+          ctx.lineTo(fx - dir * s * 1.45, fy + s * 0.45);
+          ctx.closePath(); ctx.fill();
+          // Fin
+          ctx.fillStyle = `hsl(${f.hue},65%,45%)`;
+          ctx.beginPath();
+          ctx.moveTo(fx - dir * 2, fy);
+          ctx.lineTo(fx + dir * 2, fy - s * 0.75);
+          ctx.lineTo(fx + dir * 6, fy);
+          ctx.closePath(); ctx.fill();
+          // Eye + stripe
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(fx + dir * s * 0.35, fy - 2, 2.2, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#111';
+          ctx.beginPath(); ctx.arc(fx + dir * s * 0.4, fy - 2, 1.1, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = `hsla(${f.hue},80%,35%,0.5)`; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(fx - dir * 2, fy + 2); ctx.lineTo(fx + dir * s * 0.2, fy + 2); ctx.stroke();
+        }
+        // Occasional jellyfish — slow pulse drift
+        for (const j of seaJellies) {
+          j.y += j.vy * dt;
+          j.x += Math.sin(wobbleTime * j.drift + j.phase) * 0.35 * dt;
+          if (j.y < 40) { j.y = SEABED_Y - 120; j.x = (j.x + 400) % WATER_WIDTH; }
+          const jx = j.x - ox;
+          if (jx < -60 || jx > W + 60) continue;
+          const pulse = 1 + Math.sin(wobbleTime * j.pulse + j.phase) * 0.12;
+          const bell = j.size * pulse;
+          ctx.fillStyle = 'rgba(255,180,220,0.35)';
+          ctx.beginPath();
+          ctx.ellipse(jx, j.y, bell, bell * 0.65, 0, Math.PI, 0); ctx.fill();
+          ctx.fillStyle = 'rgba(255,210,235,0.45)';
+          ctx.beginPath();
+          ctx.ellipse(jx, j.y + 2, bell * 0.7, bell * 0.4, 0, Math.PI, 0); ctx.fill();
+          ctx.strokeStyle = 'rgba(255,200,230,0.55)'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+          for (let t = 0; t < 5; t++) {
+            const tx = jx + (t - 2) * (bell * 0.28);
+            const sway = Math.sin(wobbleTime * 1.6 + j.phase + t) * 4;
+            ctx.beginPath();
+            ctx.moveTo(tx, j.y + 2);
+            ctx.quadraticCurveTo(tx + sway, j.y + bell * 0.9, tx - sway * 0.5, j.y + bell * 1.6);
+            ctx.stroke();
           }
         }
         for (const b of bubbles) {
