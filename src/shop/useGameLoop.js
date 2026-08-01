@@ -118,43 +118,51 @@ export function useGameLoop({
       }
       return pts[pts.length - 1].y;
     };
-    // Walkable uneven seabed — jagged asymmetric ridges (not a smooth sine lip)
+    // Walkable uneven seabed — deliberately ASYMMETRIC ridges
+    // (steep cliff one side, long gentle run-out the other — not mirrored dunes)
     const seabedTerrain = (() => {
       const pts = [];
-      let x = -80;
+      let x = -100;
       let i = 0;
-      while (x < WATER_WIDTH + 160) {
-        // Wildly uneven spans: short cliffs mixed with long shelves
-        const span = 45 + terrainHash(x * 0.09 + 1.1 + i) * 220;
-        // Bias some segments into plateaus / sudden drops
-        const mode = terrainHash(i * 2.7 + 0.3);
-        let rise;
-        if (mode < 0.22) {
-          // High mesa
-          rise = 220 + terrainHash(x * 0.02 + 5) * 90;
-        } else if (mode < 0.4) {
-          // Deep trough
-          rise = -80 - terrainHash(x * 0.03 + 2) * 50;
-        } else {
-          rise =
-            (terrainHash(x * 0.041 + 3.7) - 0.15) * 260 +
-            (terrainHash(x * 0.013 + 8.2) - 0.5) * 140 +
-            (terrainHash(x * 0.005 + 0.9) - 0.5) * 100 +
-            (terrainHash(x * 0.17 + 4.4) - 0.5) * 35;
+      pts.push({ x, y: SEABED_Y + 40 });
+      while (x < WATER_WIDTH + 200) {
+        const h = terrainHash(i * 2.17 + 0.4);
+        const h2 = terrainHash(i * 5.91 + 1.2);
+        const h3 = terrainHash(i * 0.73 + 8.8);
+        // Feature type: tall peak / low hump / shelf / hole
+        let peakY;
+        if (h < 0.2) peakY = 510 + h2 * 50;          // tall ridge
+        else if (h < 0.45) peakY = 620 + h2 * 70;     // medium dune
+        else if (h < 0.65) peakY = 740 + h2 * 40;     // low shelf
+        else if (h < 0.82) peakY = 880 + h2 * 50;     // shallow dip
+        else peakY = 920 + h2 * 30;                   // deep trough floor
+
+        // KEY: left flank width ≠ right flank width (often wildly)
+        const steepLeft = h3 < 0.55;
+        const steepW = 28 + h2 * 55;                  // short cliff face
+        const gentleW = 120 + h * 260;                // long run-out
+        const leftW = steepLeft ? steepW : gentleW;
+        const rightW = steepLeft ? gentleW : steepW;
+
+        const approachY = Math.min(950, Math.max(peakY + 40, 780 + h2 * 140));
+        x += 20 + h * 50;
+        pts.push({ x, y: approachY });
+
+        x += leftW;
+        pts.push({ x, y: peakY });
+
+        const exitY = Math.min(950, Math.max(peakY + 30, 800 + h3 * 140));
+        x += rightW;
+        pts.push({ x, y: exitY });
+
+        // Occasional flat ledge before next feature (breaks rhythm)
+        if (h2 > 0.6) {
+          x += 40 + h3 * 90;
+          pts.push({ x, y: exitY + (h - 0.5) * 20 });
         }
-        // Peaks ~500, troughs ~950 — lower third of the frame is clearly hilly
-        const y = Math.max(500, Math.min(950, SEABED_Y - rise));
-        pts.push({ x, y });
-        // Extra control point mid-span with independent jitter → asymmetric flanks
-        if (span > 90) {
-          const midX = x + span * (0.35 + terrainHash(i * 1.9) * 0.35);
-          const midY = Math.max(500, Math.min(950, y + (terrainHash(i * 4.1) - 0.5) * 120));
-          pts.push({ x: midX, y: midY });
-        }
-        x += span;
         i += 1;
       }
-      return pts.sort((a, b) => a.x - b.x);
+      return pts;
     })();
     const seabedSurfaceY = (wx) => {
       const pts = seabedTerrain;
@@ -163,7 +171,9 @@ export function useGameLoop({
         const a = pts[i - 1], b = pts[i];
         if (wx <= b.x) {
           const t = (wx - a.x) / Math.max(1, b.x - a.x);
-          const s = t * t * (3 - 2 * t);
+          // Cliffs stay linear (sharp); gentle flanks use smoothstep
+          const steep = Math.abs(b.y - a.y) / Math.max(1, b.x - a.x) > 0.65;
+          const s = steep ? t : t * t * (3 - 2 * t);
           return a.y + (b.y - a.y) * s;
         }
       }
@@ -1060,6 +1070,24 @@ export function useGameLoop({
             else ctx.lineTo(sx, sy);
           }
           ctx.stroke();
+          // Cliff faces — shade only the STEEP flank so left/right asymmetry reads
+          for (let sx = 0; sx < W; sx += 4) {
+            const y0 = seabedSurfaceY(sx + ox);
+            const y1 = seabedSurfaceY(sx + ox + 8);
+            const slope = (y1 - y0) / 8; // + = dropping to the right
+            if (Math.abs(slope) < 0.7) continue;
+            const depth = Math.min(70, Math.abs(slope) * 36);
+            ctx.fillStyle = slope > 0
+              ? 'rgba(90,60,30,0.38)'   // right-facing cliff (drop to the right)
+              : 'rgba(90,60,30,0.28)';  // left-facing cliff
+            ctx.beginPath();
+            ctx.moveTo(sx, y0);
+            ctx.lineTo(sx + 8, y1);
+            ctx.lineTo(sx + 8, y1 + depth);
+            ctx.lineTo(sx, y0 + depth);
+            ctx.closePath();
+            ctx.fill();
+          }
           // Sand mottling that follows the dunes
           ctx.fillStyle='rgba(255,236,190,0.55)';
           for (let s=0;s<22;s++) {
