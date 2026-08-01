@@ -55,9 +55,10 @@ const NumBadge = ({ num, size = 'md' }) => {
 
 // ── Worlds config ─────────────────────────────────────────────────────────────
 const WORLDS = [
-  { id: 'jungle', name: 'Jungle World',    emoji: '🌴', color: '#1D9E75', bgColor: '#E1F5EE', maxItems: 150, desc: 'The original island paradise' },
-  { id: 'planet', name: 'Space Planet',    emoji: '🪐', color: '#7F77DD', bgColor: '#EEEDFE', maxItems: 180, desc: 'Reach for the stars' },
-  { id: 'artist', name: "Artist's Island", emoji: '🎨', color: '#D85A30', bgColor: '#FAECE7', maxItems: 200, desc: 'A masterpiece world' },
+  { id: 'jungle',     name: 'Jungle World',    emoji: '🌴', color: '#1D9E75', bgColor: '#E1F5EE', maxItems: 150, desc: 'The original island paradise' },
+  { id: 'planet',     name: 'Space Planet',    emoji: '🪐', color: '#7F77DD', bgColor: '#EEEDFE', maxItems: 180, desc: 'Reach for the stars' },
+  { id: 'artist',     name: "Artist's Island", emoji: '🎨', color: '#D85A30', bgColor: '#FAECE7', maxItems: 200, desc: 'A masterpiece world' },
+  { id: 'underwater', name: 'Underwater Cove', emoji: '🫧', color: '#0B6E99', bgColor: '#E0F4FB', maxItems: 160, desc: 'Dive for sunken toys' },
 ];
 
 // ── Password Gate ─────────────────────────────────────────────────────────────

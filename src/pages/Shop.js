@@ -5,11 +5,15 @@ import LandingScreen from '../shop/LandingScreen';
 import QuickShop from '../shop/QuickShop';
 import CharacterSelect from '../shop/CharacterSelect';
 import GameView from '../shop/GameView';
+import { saveCharacter } from '../shop/characterStore';
 
 export default function Shop() {
-  const { islandProducts, spaceProducts, quickShopProducts, syncedAt } = useShopCatalog();
+  const { islandProducts, spaceProducts, underwaterProducts, quickShopProducts, syncedAt } = useShopCatalog();
   const [mode, setMode] = useState(null);
+  // `character` holds the full personalization: { id, name, color, hat }.
   const [character, setCharacter] = useState(null);
+
+  const chooseCharacter = (choice) => setCharacter(saveCharacter(choice));
 
   if (!mode) {
     return (
@@ -29,14 +33,16 @@ export default function Shop() {
   }
 
   if (!character) {
-    return <CharacterSelect onSelect={setCharacter} onBack={() => setMode(null)} />;
+    return <CharacterSelect onSelect={chooseCharacter} onBack={() => setMode(null)} />;
   }
 
   return (
     <GameView
-      character={character}
+      character={character.id}
+      customization={character}
       islandProducts={islandProducts}
       spaceProducts={spaceProducts}
+      underwaterProducts={underwaterProducts}
       onSwitchCharacter={() => setCharacter(null)}
     />
   );

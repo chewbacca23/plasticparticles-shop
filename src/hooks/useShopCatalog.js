@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SYNC_EVENT, resolveShopCatalog } from '../data/productStore';
 
 export function useShopCatalog() {
-  const [catalog, setCatalog] = useState(resolveShopCatalog);
+  const [catalog, setCatalog] = useState(() => resolveShopCatalog());
 
   const refresh = useCallback(() => {
     setCatalog(resolveShopCatalog());
@@ -25,6 +25,7 @@ export function useShopCatalog() {
     catalog,
     islandProducts: catalog.islandProducts,
     spaceProducts: catalog.spaceProducts,
+    underwaterProducts: catalog.underwaterProducts || [],
     quickShopProducts: catalog.quickShopProducts,
     zoneAssignments: catalog.zoneAssignments,
     syncedAt: catalog.syncedAt,

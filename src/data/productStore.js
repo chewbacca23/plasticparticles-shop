@@ -1,4 +1,4 @@
-import { ISLAND_PRODUCTS, SPACE_PRODUCTS } from './products';
+import { ISLAND_PRODUCTS, SPACE_PRODUCTS, UNDERWATER_PRODUCTS } from './products';
 
 export const SHOP_SYNC_KEY = 'islandstore_shop_sync';
 export const WAWI_STATE_KEY = 'islandstore_wawi_state';
@@ -6,6 +6,7 @@ export const SYNC_EVENT = 'islandstore-sync';
 
 const FALLBACK_ISLAND = ISLAND_PRODUCTS;
 const FALLBACK_SPACE = SPACE_PRODUCTS;
+const FALLBACK_UNDERWATER = UNDERWATER_PRODUCTS;
 
 export function wawiToShopProduct(p) {
   return {
@@ -31,13 +32,15 @@ function buildZoneMap(zones) {
 export function buildCatalogFromWaWi(wawiProducts, zones) {
   const active = wawiProducts.filter(p => p.active !== false);
   const shopProducts = active.map(wawiToShopProduct);
-  const islandProducts = shopProducts.filter(p => p.worldId !== 'planet');
   const spaceProducts = shopProducts.filter(p => p.worldId === 'planet');
+  const underwaterProducts = shopProducts.filter(p => p.worldId === 'underwater');
+  const islandProducts = shopProducts.filter(p => p.worldId !== 'planet' && p.worldId !== 'underwater');
 
   return {
     islandProducts: islandProducts.length ? islandProducts : FALLBACK_ISLAND,
     spaceProducts: spaceProducts.length ? spaceProducts : FALLBACK_SPACE,
-    quickShopProducts: shopProducts.length ? shopProducts : FALLBACK_ISLAND,
+    underwaterProducts: underwaterProducts.length ? underwaterProducts : FALLBACK_UNDERWATER,
+    quickShopProducts: shopProducts.length ? shopProducts : [...FALLBACK_ISLAND, ...FALLBACK_UNDERWATER],
     zoneAssignments: buildZoneMap(zones),
     syncedAt: new Date().toISOString(),
   };
@@ -47,7 +50,8 @@ export function getDefaultCatalog() {
   return {
     islandProducts: FALLBACK_ISLAND,
     spaceProducts: FALLBACK_SPACE,
-    quickShopProducts: FALLBACK_ISLAND,
+    underwaterProducts: FALLBACK_UNDERWATER,
+    quickShopProducts: [...FALLBACK_ISLAND, ...FALLBACK_UNDERWATER],
     zoneAssignments: null,
     syncedAt: null,
   };
@@ -62,7 +66,16 @@ export function loadShopCatalog() {
 }
 
 export function resolveShopCatalog() {
-  return loadShopCatalog() || getDefaultCatalog();
+  const loaded = loadShopCatalog();
+  if (!loaded) return getDefaultCatalog();
+  // Older sync payloads may lack underwater — fill from fallbacks
+  return {
+    ...getDefaultCatalog(),
+    ...loaded,
+    underwaterProducts: (loaded.underwaterProducts && loaded.underwaterProducts.length)
+      ? loaded.underwaterProducts
+      : FALLBACK_UNDERWATER,
+  };
 }
 
 export function syncWaWiToShop(wawiProducts, zones) {
