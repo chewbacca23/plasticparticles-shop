@@ -77,59 +77,18 @@ export function useGameLoop({
       x: Math.random()*WATER_WIDTH, y: Math.random()*H,
       r: 2+Math.random()*5, speed: 0.4+Math.random()*1.2, wobble: Math.random()*Math.PI*2,
     }));
-    // Shallow-reef plantlife — dense kelp, seagrass, coral fans (decorative, no collision)
-    const seaPlants = Array.from({ length: 280 }, (_, i) => {
-      const kind = i % 5; // 0-1 kelp, 2-3 grass, 4 fan
-      return {
-        kind,
-        x: 20 + (i * 37 + (i % 7) * 19) % (WATER_WIDTH - 40),
-        baseY: SEABED_Y - (kind === 4 ? (i % 3) * 8 : (i % 4) * 4),
-        h: kind < 2 ? 100 + (i % 7) * 26 : kind < 4 ? 36 + (i % 5) * 12 : 50 + (i % 4) * 14,
-        sway: 0.35 + (i % 8) * 0.1,
-        phase: i * 0.37,
-        hue: kind < 2 ? 140 + (i % 6) * 7 : kind < 4 ? 90 + (i % 7) * 9 : 320 + (i % 5) * 12,
-      };
-    });
-    // Reef critters — fish, seabed crabs, occasional jellyfish (decorative)
-    const seaFish = Array.from({ length: 28 }, (_, i) => ({
-      x: (i * 127 + 40) % WATER_WIDTH,
-      y: 180 + (i % 7) * 85 + (i % 3) * 20,
-      vx: (i % 2 === 0 ? 1 : -1) * (0.55 + (i % 5) * 0.18),
-      amp: 6 + (i % 4) * 3,
-      phase: i * 0.7,
-      size: 10 + (i % 4) * 3,
-      hue: [28, 195, 45, 320, 210, 55][i % 6],
-    }));
-    const seaCrabs = Array.from({ length: 10 }, (_, i) => ({
-      x: 120 + i * 340 + (i % 3) * 40,
-      y: SEABED_Y - 6,
-      vx: (i % 2 === 0 ? 1 : -1) * (0.35 + (i % 4) * 0.12),
-      range: 90 + (i % 5) * 30,
-      home: 120 + i * 340 + (i % 3) * 40,
-      phase: i * 1.1,
-      size: 11 + (i % 3) * 2,
-    }));
-    const seaJellies = Array.from({ length: 5 }, (_, i) => ({
-      x: 280 + i * 650,
-      y: 120 + (i % 3) * 160,
-      vy: -0.18 - (i % 3) * 0.05,
-      drift: 0.25 + (i % 2) * 0.1,
-      phase: i * 1.4,
-      size: 16 + (i % 3) * 6,
-      pulse: 0.8 + (i % 4) * 0.15,
-    }));
-
     // Breath bubbles from Milo's mask/helmet in space & underwater
     const breathBubbles = [];
     let breathTimer = 0;
 
     const worldWidthOf = (w) => w==='space' ? SPACE_WIDTH : w==='underwater' ? WATER_WIDTH : ISLAND_WIDTH;
 
-    // Deterministic 0..1 hash — keeps the moonscape stable across reloads
-    const lunarHash = (n) => {
+    // Deterministic 0..1 hash — keeps terrain stable across reloads
+    const terrainHash = (n) => {
       const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
       return s - Math.floor(s);
     };
+    const lunarHash = terrainHash;
     // Walkable asymmetric lunar surface (mild hills, uneven spans — not a flat line)
     const lunarTerrain = (() => {
       const pts = [];
@@ -159,11 +118,149 @@ export function useGameLoop({
       }
       return pts[pts.length - 1].y;
     };
+    // Walkable uneven seabed — deliberately ASYMMETRIC ridges
+    // (steep cliff one side, long gentle run-out the other — not mirrored dunes)
+    const seabedTerrain = (() => {
+      const pts = [];
+      let x = -100;
+      let i = 0;
+      pts.push({ x, y: SEABED_Y + 40 });
+      while (x < WATER_WIDTH + 200) {
+        const h = terrainHash(i * 2.17 + 0.4);
+        const h2 = terrainHash(i * 5.91 + 1.2);
+        const h3 = terrainHash(i * 0.73 + 8.8);
+        // Feature type: tall peak / low hump / shelf / hole
+        let peakY;
+        if (h < 0.2) peakY = 510 + h2 * 50;          // tall ridge
+        else if (h < 0.45) peakY = 620 + h2 * 70;     // medium dune
+        else if (h < 0.65) peakY = 740 + h2 * 40;     // low shelf
+        else if (h < 0.82) peakY = 880 + h2 * 50;     // shallow dip
+        else peakY = 920 + h2 * 30;                   // deep trough floor
+
+        // KEY: left flank width ≠ right flank width (often wildly)
+        const steepLeft = h3 < 0.55;
+        const steepW = 28 + h2 * 55;                  // short cliff face
+        const gentleW = 120 + h * 260;                // long run-out
+        const leftW = steepLeft ? steepW : gentleW;
+        const rightW = steepLeft ? gentleW : steepW;
+
+        const approachY = Math.min(950, Math.max(peakY + 40, 780 + h2 * 140));
+        x += 20 + h * 50;
+        pts.push({ x, y: approachY });
+
+        x += leftW;
+        pts.push({ x, y: peakY });
+
+        const exitY = Math.min(950, Math.max(peakY + 30, 800 + h3 * 140));
+        x += rightW;
+        pts.push({ x, y: exitY });
+
+        // Occasional flat ledge before next feature (breaks rhythm)
+        if (h2 > 0.6) {
+          x += 40 + h3 * 90;
+          pts.push({ x, y: exitY + (h - 0.5) * 20 });
+        }
+        i += 1;
+      }
+      return pts;
+    })();
+    const seabedSurfaceY = (wx) => {
+      const pts = seabedTerrain;
+      if (wx <= pts[0].x) return pts[0].y;
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i];
+        if (wx <= b.x) {
+          const t = (wx - a.x) / Math.max(1, b.x - a.x);
+          // Cliffs stay linear (sharp); gentle flanks use smoothstep
+          const steep = Math.abs(b.y - a.y) / Math.max(1, b.x - a.x) > 0.65;
+          const s = steep ? t : t * t * (3 - 2 * t);
+          return a.y + (b.y - a.y) * s;
+        }
+      }
+      return pts[pts.length - 1].y;
+    };
     const spawnYOf = (w, x = 250) => {
       if (w === 'space') return lunarSurfaceY(x) - 52;
-      if (w === 'underwater') return SEABED_Y - 52;
+      if (w === 'underwater') return seabedSurfaceY(x) - 52;
       return GROUND_Y - 35;
     };
+
+    // Optional deep-link: /?world=underwater|space (handy for testing dunes / lunar hills)
+    try {
+      const boot = new URLSearchParams(window.location.search).get('world');
+      if (boot === 'underwater' || boot === 'space') {
+        currentWorld = boot;
+        introDone = true;
+        introTimer = 999;
+        player.x = 280;
+        player.y = spawnYOf(boot, 280);
+        player.airPeakY = player.y;
+        cameraX = Math.max(0, player.x - W * 0.35);
+        targetCameraX = cameraX;
+        setWorldRef.current?.(boot);
+      }
+    } catch { /* ignore */ }
+
+    // Sparse reef plantlife — short tufts so dune silhouette stays obvious
+    const seaPlants = Array.from({ length: 70 }, (_, i) => {
+      const kind = i % 5; // 0-1 kelp, 2-3 grass, 4 fan
+      const x = 40 + (i * 97 + (i % 7) * 31) % (WATER_WIDTH - 80);
+      return {
+        kind,
+        x,
+        yOff: kind === 4 ? (i % 3) * 6 : (i % 4) * 3,
+        h: kind < 2 ? 48 + (i % 5) * 12 : kind < 4 ? 22 + (i % 4) * 8 : 32 + (i % 3) * 10,
+        sway: 0.35 + (i % 8) * 0.1,
+        phase: i * 0.37,
+        hue: kind < 2 ? 140 + (i % 6) * 7 : kind < 4 ? 90 + (i % 7) * 9 : 320 + (i % 5) * 12,
+      };
+    });
+    // Reef critters — fish, seabed crabs, occasional jellyfish (decorative)
+    const seaFish = Array.from({ length: 28 }, (_, i) => ({
+      x: (i * 127 + 40) % WATER_WIDTH,
+      y: 180 + (i % 7) * 85 + (i % 3) * 20,
+      vx: (i % 2 === 0 ? 1 : -1) * (0.55 + (i % 5) * 0.18),
+      amp: 6 + (i % 4) * 3,
+      phase: i * 0.7,
+      size: 10 + (i % 4) * 3,
+      hue: [28, 195, 45, 320, 210, 55][i % 6],
+    }));
+    const seaCrabs = Array.from({ length: 10 }, (_, i) => {
+      const home = 120 + i * 340 + (i % 3) * 40;
+      return {
+        x: home,
+        yOff: 6,
+        vx: (i % 2 === 0 ? 1 : -1) * (0.35 + (i % 4) * 0.12),
+        range: 90 + (i % 5) * 30,
+        home,
+        phase: i * 1.1,
+        size: 11 + (i % 3) * 2,
+      };
+    });
+    const seaJellies = Array.from({ length: 5 }, (_, i) => ({
+      x: 280 + i * 650,
+      y: 120 + (i % 3) * 160,
+      vy: -0.18 - (i % 3) * 0.05,
+      drift: 0.25 + (i % 2) * 0.1,
+      phase: i * 1.4,
+      size: 16 + (i % 3) * 6,
+      pulse: 0.8 + (i % 4) * 0.15,
+    }));
+    // Shells & pebbles scattered along the uneven sand
+    const seaDebris = Array.from({ length: 40 }, (_, i) => {
+      const x = 50 + (i * 89 + terrainHash(i * 2.1) * 60) % (WATER_WIDTH - 80);
+      return {
+        x,
+        yOff: 4 + terrainHash(i + 3) * 14,
+        kind: i % 3, // 0 shell, 1 pebble, 2 starfish
+        w: 6 + terrainHash(i + 5) * 10,
+        rot: terrainHash(i + 7) * Math.PI,
+      };
+    });
+    // Seat springboards on the dunes
+    for (const s of waterSprings) {
+      s.y = seabedSurfaceY(s.x + s.w * 0.5) - s.h;
+    }
 
     const stars = Array.from({length:140}, () => ({
       x: Math.random()*SPACE_WIDTH, y: Math.random()*(H*0.55),
@@ -758,11 +855,15 @@ export function useGameLoop({
             }
           }
           if (inWater) {
-            // Solid sandy seabed — Milo can walk the cove floor
-            if (player.vy>=0 && player.y+player.h>=SEABED_Y) {
-              player.y=SEABED_Y-player.h; player.vy=0; player.onGround=true;
+            // Stick to the uneven sandy dunes (walk / soft land)
+            const gy = seabedSurfaceY(player.x + player.w * 0.5);
+            const feet = player.y + player.h;
+            if (player.vy >= 0 && feet >= gy - 8 && feet - gy < 90) {
+              player.y = gy - player.h; player.vy = 0; player.onGround = true;
             }
             for (const s of waterSprings) {
+              // Keep pads seated on the dunes as the surface undulates under them
+              s.y = seabedSurfaceY(s.x + s.w * 0.5) - s.h;
               if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:s.x,y:s.y,w:s.w,h:s.h})) {
                 if (player.vy>=0 && player.y+player.h-s.y<22) {
                   player.y=s.y-player.h; player.vy=-30; player.onGround=false;
@@ -930,18 +1031,72 @@ export function useGameLoop({
           ctx.fillStyle='#87CEEB'; ctx.fillRect(0,0,W,H);
         }
       } else if (currentWorld==='underwater') {
-        // Brighter shallow-lagoon palette (not deep abyss)
+        // Clear blue water all the way down — sand body draws the dunes on top
         const waterGrad=ctx.createLinearGradient(0,0,0,H);
-        waterGrad.addColorStop(0,'#4db8d9'); waterGrad.addColorStop(0.35,'#2a8fb5');
-        waterGrad.addColorStop(0.7,'#1a6a8a'); waterGrad.addColorStop(1,'#c9b896');
+        waterGrad.addColorStop(0,'#4db8d9'); waterGrad.addColorStop(0.4,'#2a8fb5');
+        waterGrad.addColorStop(0.75,'#176a88'); waterGrad.addColorStop(1,'#0d4a5c');
         ctx.fillStyle=waterGrad; ctx.fillRect(0,0,W,H);
-        // Soft sand bed (walkable floor at SEABED_Y)
-        ctx.fillStyle='#d4c09a';
-        ctx.fillRect(0,SEABED_Y,W,H-SEABED_Y);
-        ctx.fillStyle='#e8d7b0';
-        for (let s=0;s<18;s++) {
-          const sx=((s*97-ox*0.3)%(W+40))-20;
-          ctx.beginPath(); ctx.ellipse(sx,SEABED_Y+20+(s%3)*12,18,6,0,0,Math.PI*2); ctx.fill();
+        // Chunking sand dunes — high-contrast body so hills read at a glance
+        {
+          const sandGrad=ctx.createLinearGradient(0,500,0,H);
+          sandGrad.addColorStop(0,'#f0e0b8'); sandGrad.addColorStop(0.35,'#e0c990');
+          sandGrad.addColorStop(0.7,'#c9a86a'); sandGrad.addColorStop(1,'#8f6f3e');
+          ctx.fillStyle=sandGrad;
+          ctx.beginPath();
+          ctx.moveTo(-4, H + 2);
+          for (let sx = -4; sx <= W + 4; sx += 5) {
+            ctx.lineTo(sx, seabedSurfaceY(sx + ox));
+          }
+          ctx.lineTo(W + 4, H + 2);
+          ctx.closePath();
+          ctx.fill();
+          // Bright crest so the silhouette pops against blue water
+          ctx.strokeStyle = 'rgba(255,248,220,0.95)';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 5) {
+            const sy = seabedSurfaceY(sx + ox);
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+          // Dark under-lip for depth
+          ctx.strokeStyle = 'rgba(110,80,40,0.45)';
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 5) {
+            const sy = seabedSurfaceY(sx + ox) + 5;
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+          // Cliff faces — shade only the STEEP flank so left/right asymmetry reads
+          for (let sx = 0; sx < W; sx += 4) {
+            const y0 = seabedSurfaceY(sx + ox);
+            const y1 = seabedSurfaceY(sx + ox + 8);
+            const slope = (y1 - y0) / 8; // + = dropping to the right
+            if (Math.abs(slope) < 0.7) continue;
+            const depth = Math.min(70, Math.abs(slope) * 36);
+            ctx.fillStyle = slope > 0
+              ? 'rgba(90,60,30,0.38)'   // right-facing cliff (drop to the right)
+              : 'rgba(90,60,30,0.28)';  // left-facing cliff
+            ctx.beginPath();
+            ctx.moveTo(sx, y0);
+            ctx.lineTo(sx + 8, y1);
+            ctx.lineTo(sx + 8, y1 + depth);
+            ctx.lineTo(sx, y0 + depth);
+            ctx.closePath();
+            ctx.fill();
+          }
+          // Sand mottling that follows the dunes
+          ctx.fillStyle='rgba(255,236,190,0.55)';
+          for (let s=0;s<22;s++) {
+            const wx = ((s * 163 + ox * 0.15) % WATER_WIDTH + WATER_WIDTH) % WATER_WIDTH;
+            const sx = wx - ox;
+            if (sx < -40 || sx > W + 40) continue;
+            const sy = seabedSurfaceY(wx) + 16 + (s % 4) * 12;
+            ctx.beginPath(); ctx.ellipse(sx, sy, 18 + (s % 3) * 5, 6, 0, 0, Math.PI * 2); ctx.fill();
+          }
         }
         // Warm surface light shafts
         for (let i=0;i<7;i++) {
@@ -951,30 +1106,59 @@ export function useGameLoop({
           ctx.fillStyle=shaft; ctx.beginPath();
           ctx.moveTo(lx,0); ctx.lineTo(lx+80,0); ctx.lineTo(lx+30,H*0.75); ctx.lineTo(lx-35,H*0.75); ctx.closePath(); ctx.fill();
         }
+        // Shells & pebbles on the dunes
+        for (const d of seaDebris) {
+          const dx = d.x - ox;
+          if (dx < -30 || dx > W + 30) continue;
+          const dy = seabedSurfaceY(d.x) + d.yOff;
+          if (d.kind === 0) {
+            ctx.fillStyle = '#f0e0c8';
+            ctx.beginPath(); ctx.ellipse(dx, dy, d.w, d.w * 0.55, d.rot, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(180,140,100,0.5)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(dx, dy, d.w * 0.55, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+          } else if (d.kind === 1) {
+            ctx.fillStyle = '#9a8a70';
+            ctx.beginPath();
+            ctx.moveTo(dx, dy + 3);
+            ctx.lineTo(dx + d.w * 0.3, dy - d.w * 0.4);
+            ctx.lineTo(dx + d.w, dy + 2);
+            ctx.closePath(); ctx.fill();
+          } else {
+            ctx.fillStyle = '#e87850';
+            for (let a = 0; a < 5; a++) {
+              const ang = d.rot + a * (Math.PI * 2 / 5);
+              ctx.beginPath();
+              ctx.ellipse(dx + Math.cos(ang) * 4, dy + Math.sin(ang) * 3, 4, 2, ang, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.beginPath(); ctx.arc(dx, dy, 2.5, 0, Math.PI * 2); ctx.fill();
+          }
+        }
         // Plantlife — sway gently for a living shallow reef
         for (const p of seaPlants) {
           const px=p.x-ox;
           if (px<-60||px>W+60) continue;
+          const baseY = seabedSurfaceY(p.x) - p.yOff;
           const lean=Math.sin(wobbleTime*p.sway+p.phase)*12;
           if (p.kind < 2) {
             // Tall kelp ribbons
             ctx.strokeStyle=`hsla(${p.hue},55%,38%,0.9)`;
             ctx.lineWidth=5; ctx.lineCap='round';
             ctx.beginPath();
-            ctx.moveTo(px,p.baseY);
-            ctx.quadraticCurveTo(px+lean*0.6,p.baseY-p.h*0.45,px+lean,p.baseY-p.h);
+            ctx.moveTo(px,baseY);
+            ctx.quadraticCurveTo(px+lean*0.6,baseY-p.h*0.45,px+lean,baseY-p.h);
             ctx.stroke();
             ctx.strokeStyle=`hsla(${p.hue},60%,48%,0.85)`;
             ctx.lineWidth=3;
             ctx.beginPath();
-            ctx.moveTo(px+6,p.baseY);
-            ctx.quadraticCurveTo(px+6+lean*0.5,p.baseY-p.h*0.5,px+6+lean*0.85,p.baseY-p.h*0.85);
+            ctx.moveTo(px+6,baseY);
+            ctx.quadraticCurveTo(px+6+lean*0.5,baseY-p.h*0.5,px+6+lean*0.85,baseY-p.h*0.85);
             ctx.stroke();
             // Leaf pads along the stalk
             ctx.fillStyle=`hsla(${p.hue},50%,42%,0.8)`;
             for (let n=0;n<4;n++) {
               const t=(n+1)/5;
-              const lx=px+lean*t, ly=p.baseY-p.h*t;
+              const lx=px+lean*t, ly=baseY-p.h*t;
               ctx.beginPath(); ctx.ellipse(lx+8,ly,14,5,lean*0.04,0,Math.PI*2); ctx.fill();
             }
           } else if (p.kind < 4) {
@@ -984,8 +1168,8 @@ export function useGameLoop({
             for (let b=0;b<5;b++) {
               const ox2=(b-2)*5;
               ctx.beginPath();
-              ctx.moveTo(px+ox2,p.baseY);
-              ctx.quadraticCurveTo(px+ox2+lean*0.4,p.baseY-p.h*0.55,px+ox2+lean*0.7+(b%2?4:-3),p.baseY-p.h);
+              ctx.moveTo(px+ox2,baseY);
+              ctx.quadraticCurveTo(px+ox2+lean*0.4,baseY-p.h*0.55,px+ox2+lean*0.7+(b%2?4:-3),baseY-p.h);
               ctx.stroke();
             }
           } else {
@@ -995,47 +1179,69 @@ export function useGameLoop({
               const ang=-Math.PI/2+(a-3)*0.22+lean*0.01;
               const len=p.h*(0.7+((a%3)*0.1));
               ctx.beginPath();
-              ctx.moveTo(px,p.baseY);
+              ctx.moveTo(px,baseY);
               ctx.quadraticCurveTo(
                 px+Math.cos(ang)*len*0.45,
-                p.baseY+Math.sin(ang)*len*0.45,
+                baseY+Math.sin(ang)*len*0.45,
                 px+Math.cos(ang)*len,
-                p.baseY+Math.sin(ang)*len
+                baseY+Math.sin(ang)*len
               );
-              ctx.lineTo(px+Math.cos(ang)*len*0.9+3,p.baseY+Math.sin(ang)*len*0.9);
+              ctx.lineTo(px+Math.cos(ang)*len*0.9+3,baseY+Math.sin(ang)*len*0.9);
               ctx.closePath(); ctx.fill();
             }
             ctx.fillStyle=`hsla(${p.hue},70%,62%,0.9)`;
-            ctx.beginPath(); ctx.arc(px,p.baseY-4,8,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px,baseY-4,8,0,Math.PI*2); ctx.fill();
           }
         }
-        // Crabs scuttle along the sand
+        // Re-stroke the dune crest above plantlife so hills stay readable
+        {
+          ctx.strokeStyle = 'rgba(255,236,190,0.7)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 6) {
+            const sy = seabedSurfaceY(sx + ox);
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(180,140,90,0.35)';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          for (let sx = -4; sx <= W + 4; sx += 6) {
+            const sy = seabedSurfaceY(sx + ox) + 3;
+            if (sx === -4) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+        }
+        // Crabs scuttle along the dunes
         for (const c of seaCrabs) {
           c.x += c.vx * dt;
           if (c.x > c.home + c.range || c.x < c.home - c.range) c.vx *= -1;
           const cx = c.x - ox;
           if (cx < -40 || cx > W + 40) continue;
+          const cy = seabedSurfaceY(c.x) - c.yOff;
           const bob = Math.abs(Math.sin(wobbleTime * 6 + c.phase)) * 1.5;
           const s = c.size;
           const dir = c.vx >= 0 ? 1 : -1;
           // Body
           ctx.fillStyle = '#c45a2e';
-          ctx.beginPath(); ctx.ellipse(cx, c.y - bob, s, s * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(cx, cy - bob, s, s * 0.55, 0, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = '#e07840';
-          ctx.beginPath(); ctx.ellipse(cx, c.y - bob - 2, s * 0.7, s * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(cx, cy - bob - 2, s * 0.7, s * 0.35, 0, 0, Math.PI * 2); ctx.fill();
           // Eyes
           ctx.fillStyle = '#1a1208';
-          ctx.beginPath(); ctx.arc(cx - 4, c.y - bob - s * 0.55, 1.8, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(cx + 4, c.y - bob - s * 0.55, 1.8, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx - 4, cy - bob - s * 0.55, 1.8, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx + 4, cy - bob - s * 0.55, 1.8, 0, Math.PI * 2); ctx.fill();
           // Claws
           ctx.strokeStyle = '#a84820'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
           ctx.beginPath();
-          ctx.moveTo(cx - s * 0.7, c.y - bob);
-          ctx.quadraticCurveTo(cx - s * 1.3, c.y - bob - 8, cx - s * 1.1 + dir * 2, c.y - bob - 2);
+          ctx.moveTo(cx - s * 0.7, cy - bob);
+          ctx.quadraticCurveTo(cx - s * 1.3, cy - bob - 8, cx - s * 1.1 + dir * 2, cy - bob - 2);
           ctx.stroke();
           ctx.beginPath();
-          ctx.moveTo(cx + s * 0.7, c.y - bob);
-          ctx.quadraticCurveTo(cx + s * 1.3, c.y - bob - 8, cx + s * 1.1 + dir * 2, c.y - bob - 2);
+          ctx.moveTo(cx + s * 0.7, cy - bob);
+          ctx.quadraticCurveTo(cx + s * 1.3, cy - bob - 8, cx + s * 1.1 + dir * 2, cy - bob - 2);
           ctx.stroke();
           // Legs
           ctx.strokeStyle = '#8a3a18'; ctx.lineWidth = 2;
@@ -1043,8 +1249,8 @@ export function useGameLoop({
             const lx = cx + (L - 1) * 5;
             const kick = Math.sin(wobbleTime * 7 + c.phase + L) * 3 * dir;
             ctx.beginPath();
-            ctx.moveTo(lx, c.y - bob + 2);
-            ctx.lineTo(lx + kick, c.y + 5);
+            ctx.moveTo(lx, cy - bob + 2);
+            ctx.lineTo(lx + kick, cy + 5);
             ctx.stroke();
           }
         }
@@ -1086,7 +1292,7 @@ export function useGameLoop({
         for (const j of seaJellies) {
           j.y += j.vy * dt;
           j.x += Math.sin(wobbleTime * j.drift + j.phase) * 0.35 * dt;
-          if (j.y < 40) { j.y = SEABED_Y - 120; j.x = (j.x + 400) % WATER_WIDTH; }
+          if (j.y < 40) { j.y = seabedSurfaceY(j.x) - 120; j.x = (j.x + 400) % WATER_WIDTH; }
           const jx = j.x - ox;
           if (jx < -60 || jx > W + 60) continue;
           const pulse = 1 + Math.sin(wobbleTime * j.pulse + j.phase) * 0.12;
@@ -1368,7 +1574,7 @@ export function useGameLoop({
         const diveSx = divePortal.x-ox;
         if (diveSx>-140&&diveSx<W+140) {
           const glow=divePortal.glow;
-          const cx=diveSx+divePortal.w/2, cy=divePortal.y+divePortal.h*0.45;
+          const cx=diveSx+divePortal.w/2;
           ctx.save();
           ctx.shadowColor=`rgba(60,180,220,${0.5+glow*0.4})`; ctx.shadowBlur=18+glow*14;
           ctx.fillStyle='#c45c26'; ctx.fillRect(cx-5,divePortal.y+20,10,divePortal.h-20);
@@ -1503,5 +1709,7 @@ export function useGameLoop({
 
     animRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animRef.current);
+    // Refs are stable; restart only when world catalog / character / cart UI changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore]);
 }
