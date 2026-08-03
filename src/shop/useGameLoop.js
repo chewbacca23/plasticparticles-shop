@@ -301,6 +301,21 @@ export function useGameLoop({
         h: 6 + lunarHash(i + 6) * 12,
       };
     });
+    // Little alien critters that wander the uneven moon surface (decorative)
+    const lunarAliens = Array.from({ length: 14 }, (_, i) => {
+      const x = 80 + (i * 240 + lunarHash(i * 1.3) * 120) % (SPACE_WIDTH - 120);
+      return {
+        x,
+        home: x,
+        target: x + (lunarHash(i + 2) - 0.5) * 220,
+        vx: 0,
+        pause: Math.floor(lunarHash(i + 4) * 40),
+        phase: i * 1.3,
+        size: 9 + (i % 4) * 2,
+        kind: i % 3, // 0 green antenna, 1 purple blob, 2 grey big-eyes
+        hop: 0,
+      };
+    });
     spacePortal.y = lunarSurfaceY(spacePortal.x) - 100;
 
     let transition = null;
@@ -1420,6 +1435,100 @@ export function useGameLoop({
           ctx.closePath(); ctx.fill();
           ctx.fillStyle='rgba(160,160,170,0.35)';
           ctx.fillRect(rx+r.w*0.2,ry+2,r.w*0.45,3);
+        }
+        // Little aliens wander the lunar hills at random
+        for (const a of lunarAliens) {
+          if (a.pause > 0) {
+            a.pause -= dt;
+            a.vx *= 0.85;
+          } else {
+            const dx = a.target - a.x;
+            if (Math.abs(dx) < 6) {
+              // Arrived — chill, then pick a new random stroll
+              a.pause = 50 + lunarHash(a.x * 0.02 + wobbleTime * 0.01) * 90;
+              const roam = 80 + lunarHash(a.phase + wobbleTime * 0.02) * 200;
+              a.target = Math.max(40, Math.min(SPACE_WIDTH - 40, a.home + (lunarHash(a.x + a.pause) - 0.5) * 2 * roam));
+              a.vx = 0;
+            } else {
+              const speed = 0.35 + (a.size % 5) * 0.08;
+              a.vx = Math.sign(dx) * speed;
+              a.x += a.vx * dt;
+            }
+          }
+          // Tiny hop when cresting a steep bit
+          const gy = lunarSurfaceY(a.x);
+          const gyNext = lunarSurfaceY(a.x + a.vx * 8);
+          if (Math.abs(gyNext - gy) > 10) a.hop = Math.min(1, a.hop + 0.15 * dt);
+          else a.hop = Math.max(0, a.hop - 0.08 * dt);
+
+          const ax = a.x - ox;
+          if (ax < -40 || ax > W + 40) continue;
+          const bob = Math.abs(Math.sin(wobbleTime * 5 + a.phase)) * 1.2 + a.hop * 6;
+          const ay = gy - 4 - bob;
+          const s = a.size;
+          const dir = a.vx >= 0 ? 1 : -1;
+
+          if (a.kind === 0) {
+            // Classic little green — round head, antenna, stubby legs
+            ctx.strokeStyle = '#6ecf5a'; ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(ax, ay - s * 1.1);
+            ctx.lineTo(ax, ay - s * 1.55);
+            ctx.stroke();
+            ctx.fillStyle = '#8dff6a';
+            ctx.beginPath(); ctx.arc(ax, ay - s * 1.6, 2.2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#5bbf48';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.35, s * 0.55, s * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#7ae868';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.85, s * 0.5, s * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a2a10';
+            ctx.beginPath(); ctx.ellipse(ax - 2.5 * dir, ay - s * 0.9, 2.4, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(ax + 1.5 * dir, ay - s * 0.9, 2.4, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(ax - 2.2 * dir, ay - s * 0.95, 0.9, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 1.8 * dir, ay - s * 0.95, 0.9, 0, Math.PI * 2); ctx.fill();
+            // Legs
+            ctx.strokeStyle = '#4a9a3a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+            const kick = Math.sin(wobbleTime * 6 + a.phase) * 3 * (Math.abs(a.vx) > 0.05 ? dir : 0);
+            ctx.beginPath(); ctx.moveTo(ax - 3, ay); ctx.lineTo(ax - 3 + kick, ay + 5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + 3, ay); ctx.lineTo(ax + 3 - kick, ay + 5); ctx.stroke();
+          } else if (a.kind === 1) {
+            // Purple hop-blob with twin antennae
+            ctx.fillStyle = '#9b6bdb';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.35, s * 0.7, s * 0.55 + a.hop * 2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#c49bff';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.55, s * 0.45, s * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#b88aef'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(ax - 4, ay - s * 0.7); ctx.quadraticCurveTo(ax - 8, ay - s * 1.3, ax - 5, ay - s * 1.45); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + 4, ay - s * 0.7); ctx.quadraticCurveTo(ax + 8, ay - s * 1.3, ax + 5, ay - s * 1.45); ctx.stroke();
+            ctx.fillStyle = '#ffb0ef';
+            ctx.beginPath(); ctx.arc(ax - 5, ay - s * 1.45, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 5, ay - s * 1.45, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a1028';
+            ctx.beginPath(); ctx.arc(ax - 3, ay - s * 0.45, 2.2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 3, ay - s * 0.45, 2.2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(ax - 2.5, ay - s * 0.5, 0.8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 3.5, ay - s * 0.5, 0.8, 0, Math.PI * 2); ctx.fill();
+          } else {
+            // Tiny grey — big eyes, skinny limbs
+            ctx.fillStyle = '#c8c8d0';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.55, s * 0.4, s * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#e8e8f0';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 1.05, s * 0.55, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a1a28';
+            ctx.beginPath(); ctx.ellipse(ax - 3 * dir, ay - s * 1.05, 3.2, 3.8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(ax + 2 * dir, ay - s * 1.05, 3.2, 3.8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#7ec8ff';
+            ctx.beginPath(); ctx.arc(ax - 2.5 * dir, ay - s * 1.1, 1.2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 2.5 * dir, ay - s * 1.1, 1.2, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#a0a0aa'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+            const kick = Math.sin(wobbleTime * 5.5 + a.phase) * 4 * (Math.abs(a.vx) > 0.05 ? 1 : 0.2);
+            ctx.beginPath(); ctx.moveTo(ax - 2, ay - s * 0.2); ctx.lineTo(ax - 5, ay - s * 0.6); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + 2, ay - s * 0.2); ctx.lineTo(ax + 5, ay - s * 0.6); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax - 2, ay); ctx.lineTo(ax - 2 + kick * dir, ay + 5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + 2, ay); ctx.lineTo(ax + 2 - kick * dir, ay + 5); ctx.stroke();
+          }
         }
       }
 
