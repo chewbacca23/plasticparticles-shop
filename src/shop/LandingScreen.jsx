@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isWorldUnlocked } from './worldUnlockStore';
 
 const WORLDS = [
   { id: 'island',     emoji: '🌴', label: 'ISLAND',     col: '#1D9E75' },
@@ -6,9 +7,11 @@ const WORLDS = [
   { id: 'underwater', emoji: '🫧', label: 'UNDERWATER', col: '#0B6E99' },
 ];
 
-export default function LandingScreen({ onGame, onShop }) {
+export default function LandingScreen({ onGame, onShop, visitedWorlds }) {
   const [hovered, setHovered] = useState(null);
   const [warpHov, setWarpHov] = useState(null);
+
+  const unlockedExtra = isWorldUnlocked(visitedWorlds, 'space') || isWorldUnlocked(visitedWorlds, 'underwater');
 
   return (
     <div style={{
@@ -76,33 +79,37 @@ export default function LandingScreen({ onGame, onShop }) {
         })}
       </div>
 
-      {/* Instant warp — skip the long walk / cloud flight */}
+      {/* Warp only for worlds you've already reached in-game */}
       <div style={{ marginTop: '2.75rem', textAlign: 'center', zIndex: 1 }}>
         <div style={{ fontSize: '0.4rem', letterSpacing: '0.2em', color: '#666', marginBottom: '0.9rem' }}>
-          ⚡ WARP STRAIGHT TO A WORLD
+          {unlockedExtra ? '⚡ WARP TO A WORLD YOU\'VE VISITED' : '🔒 EXPLORE TO UNLOCK WORLD WARPS'}
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           {WORLDS.map(w => {
-            const hot = warpHov === w.id;
+            const unlocked = isWorldUnlocked(visitedWorlds, w.id);
+            const hot = warpHov === w.id && unlocked;
             return (
               <button
                 key={w.id}
                 type="button"
-                onMouseEnter={() => setWarpHov(w.id)}
+                disabled={!unlocked}
+                title={unlocked ? `Warp to ${w.label}` : `Reach ${w.label} in-game first`}
+                onMouseEnter={() => unlocked && setWarpHov(w.id)}
                 onMouseLeave={() => setWarpHov(null)}
-                onClick={() => onGame(w.id)}
+                onClick={() => unlocked && onGame(w.id)}
                 style={{
-                  cursor: 'pointer', fontFamily: 'inherit',
+                  cursor: unlocked ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
                   padding: '0.85rem 1.1rem', minWidth: 120,
                   background: hot ? `${w.col}33` : 'rgba(255,255,255,0.03)',
-                  border: `2px solid ${hot ? w.col : '#333'}`,
-                  color: hot ? '#fff' : '#bbb',
+                  border: `2px solid ${hot ? w.col : unlocked ? '#333' : '#222'}`,
+                  color: unlocked ? (hot ? '#fff' : '#bbb') : '#444',
                   boxShadow: hot ? `0 0 18px ${w.col}55` : 'none',
                   transition: 'all 0.15s',
+                  opacity: unlocked ? 1 : 0.55,
                 }}
               >
-                <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>{w.emoji}</div>
-                <div style={{ fontSize: '0.45rem', letterSpacing: '0.12em', color: w.col }}>{w.label}</div>
+                <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>{unlocked ? w.emoji : '🔒'}</div>
+                <div style={{ fontSize: '0.45rem', letterSpacing: '0.12em', color: unlocked ? w.col : '#555' }}>{w.label}</div>
               </button>
             );
           })}

@@ -15,7 +15,7 @@ import {
 export function useGameLoop({
   canvasRef, keysRef, animRef, springboardsRef,
   setPopupRef, setWorldRef, cartRef, customizationRef,
-  recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef,
+  recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef, visitWorldRef, visitedRef,
   character, loading, islandProducts, spaceProducts, underwaterProducts = [],
   showCart, setScore, startWorld = 'island',
 }) {
@@ -186,15 +186,17 @@ export function useGameLoop({
       return GROUND_Y - 35;
     };
 
-    // Boot world from prop or ?world= query (skip the long trek)
+    // Boot world from prop or ?world= — only if already unlocked by prior visits
     try {
+      const visitedNow = () => (visitedRef && visitedRef.current) || { island: true };
+      const unlocked = (id) => id === 'island' || !!visitedNow()[id];
       const bootQ = new URLSearchParams(window.location.search).get('world');
       const boot = (bootQ === 'underwater' || bootQ === 'space' || bootQ === 'island')
         ? bootQ
         : (startWorld === 'underwater' || startWorld === 'space' || startWorld === 'island')
           ? startWorld
           : 'island';
-      if (boot !== 'island') {
+      if (boot !== 'island' && unlocked(boot)) {
         currentWorld = boot;
         introDone = true;
         introTimer = 999;
@@ -209,6 +211,8 @@ export function useGameLoop({
 
     function warpTo(to) {
       if (!to || to === currentWorld) return;
+      const visitedNow = (visitedRef && visitedRef.current) || { island: true };
+      if (to !== 'island' && !visitedNow[to]) return;
       currentWorld = to;
       introDone = true;
       introTimer = 999;
@@ -1059,6 +1063,7 @@ export function useGameLoop({
           if (t.timer>50) {
             currentWorld=t.toWorld;
             setWorldRef.current?.(t.toWorld);
+            visitWorldRef?.current?.(t.toWorld);
             player.x=t.targetX; player.y=spawnYOf(t.toWorld, t.targetX);
             player.vx=0; player.vy=0;
             player.airPeakY=player.y;

@@ -8,5 +8,5 @@ test('renders island store landing', () => {
   render(<App />);
   expect(screen.getByText(/choose your path/i)).toBeInTheDocument();
   expect(screen.getByText(/play the game/i)).toBeInTheDocument();
-  expect(screen.getByText(/warp straight to a world/i)).toBeInTheDocument();
+  expect(screen.getByText(/explore to unlock world warps/i)).toBeInTheDocument();
 });

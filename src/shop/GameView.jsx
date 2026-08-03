@@ -11,6 +11,7 @@ import {
   loadPassport, savePassport, withDiscovery, withReward, withSeen, isDiscovered,
   isRewardUnlocked, countDiscovered, hasUnseenStamps, REWARDS,
 } from './passportStore';
+import { isWorldUnlocked, withWorldVisit } from './worldUnlockStore';
 
 // Milestone reward copy shown in the celebratory toast.
 const REWARD_TOASTS = {
@@ -32,6 +33,8 @@ export default function GameView({
   spaceProducts,
   underwaterProducts = [],
   startWorld = 'island',
+  visitedWorlds,
+  onWorldVisit,
   onSwitchCharacter,
 }) {
   const canvasRef = useRef(null);
@@ -155,17 +158,31 @@ export default function GameView({
   const [world, setWorld] = useState(() => {
     try {
       const boot = new URLSearchParams(window.location.search).get('world');
-      if (boot === 'underwater' || boot === 'space' || boot === 'island') return boot;
+      if ((boot === 'underwater' || boot === 'space' || boot === 'island') && isWorldUnlocked(visitedWorlds, boot)) {
+        return boot;
+      }
     } catch { /* ignore */ }
-    if (startWorld === 'underwater' || startWorld === 'space') return startWorld;
+    if ((startWorld === 'underwater' || startWorld === 'space') && isWorldUnlocked(visitedWorlds, startWorld)) {
+      return startWorld;
+    }
     return 'island';
   });
 
   const requestWarp = (to) => {
     if (!to || to === world) return;
+    if (!isWorldUnlocked(visitedWorlds, to)) return;
     warpRef.current = to;
     setWorld(to);
   };
+
+  const markWorldVisited = (worldId) => {
+    const next = withWorldVisit(visitedWorlds, worldId);
+    if (next !== visitedWorlds) onWorldVisit?.(next);
+  };
+  const visitWorldRef = useRef(markWorldVisited);
+  visitWorldRef.current = markWorldVisited;
+  const visitedRef = useRef(visitedWorlds);
+  visitedRef.current = visitedWorlds;
 
   // Freeze player movement while the cart or passport overlay is open.
   pausedRef.current = showCart || showPassport;
@@ -187,7 +204,7 @@ export default function GameView({
   useGameLoop({
     canvasRef, keysRef, animRef, springboardsRef,
     setPopupRef, setWorldRef, cartRef, customizationRef,
-    recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef,
+    recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef, visitWorldRef, visitedRef,
     character, loading, islandProducts, spaceProducts, underwaterProducts,
     showCart, setScore, startWorld,
   });
@@ -247,22 +264,28 @@ export default function GameView({
           <div style={{ position: 'absolute', top: 10, left: 10, right: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', pointerEvents: 'all' }}>
               <div style={{ background: 'rgba(0,0,0,0.6)', color: '#FFD700', padding: '6px 10px', fontSize: 8, border: '2px solid #26215C' }}>SCORE: {score}</div>
-              {PASSPORT_WORLDS.map(w => (
-                <button
-                  key={w.id}
-                  type="button"
-                  title={`Warp to ${w.label}`}
-                  onClick={() => requestWarp(w.id)}
-                  style={{
-                    background: world === w.id ? w.color : 'rgba(0,0,0,0.55)',
-                    color: world === w.id ? '#000' : '#ddd',
-                    border: `2px solid ${world === w.id ? '#FFD700' : '#26215C'}`,
-                    padding: '5px 8px', fontFamily: 'inherit', fontSize: 7, cursor: 'pointer',
-                  }}
-                >
-                  {w.emoji} {w.label.toUpperCase()}
-                </button>
-              ))}
+              {PASSPORT_WORLDS.map(w => {
+                const unlocked = isWorldUnlocked(visitedWorlds, w.id);
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    disabled={!unlocked}
+                    title={unlocked ? `Warp to ${w.label}` : `Reach ${w.label} first`}
+                    onClick={() => requestWarp(w.id)}
+                    style={{
+                      background: world === w.id ? w.color : 'rgba(0,0,0,0.55)',
+                      color: !unlocked ? '#555' : world === w.id ? '#000' : '#ddd',
+                      border: `2px solid ${world === w.id ? '#FFD700' : '#26215C'}`,
+                      padding: '5px 8px', fontFamily: 'inherit', fontSize: 7,
+                      cursor: unlocked ? 'pointer' : 'not-allowed',
+                      opacity: unlocked ? 1 : 0.45,
+                    }}
+                  >
+                    {unlocked ? w.emoji : '🔒'} {w.label.toUpperCase()}
+                  </button>
+                );
+              })}
             </div>
             <div style={{ display: 'flex', gap: '8px', pointerEvents: 'all' }}>
               <div style={{ background: charColor, color: '#000', padding: '6px 10px', fontSize: 7, fontWeight: 'bold', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
