@@ -15,8 +15,9 @@ import {
 export function useGameLoop({
   canvasRef, keysRef, animRef, springboardsRef,
   setPopupRef, setWorldRef, cartRef, customizationRef,
-  recordDiscoveryRef, pausedRef, celebrateRef, finaleRef,
-  character, loading, islandProducts, spaceProducts, underwaterProducts = [], showCart, setScore,
+  recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef,
+  character, loading, islandProducts, spaceProducts, underwaterProducts = [],
+  showCart, setScore, startWorld = 'island',
 }) {
   useEffect(() => {
     if (!character || loading || islandProducts.length === 0) return;
@@ -185,10 +186,15 @@ export function useGameLoop({
       return GROUND_Y - 35;
     };
 
-    // Optional deep-link: /?world=underwater|space (handy for testing dunes / lunar hills)
+    // Boot world from prop or ?world= query (skip the long trek)
     try {
-      const boot = new URLSearchParams(window.location.search).get('world');
-      if (boot === 'underwater' || boot === 'space') {
+      const bootQ = new URLSearchParams(window.location.search).get('world');
+      const boot = (bootQ === 'underwater' || bootQ === 'space' || bootQ === 'island')
+        ? bootQ
+        : (startWorld === 'underwater' || startWorld === 'space' || startWorld === 'island')
+          ? startWorld
+          : 'island';
+      if (boot !== 'island') {
         currentWorld = boot;
         introDone = true;
         introTimer = 999;
@@ -200,6 +206,23 @@ export function useGameLoop({
         setWorldRef.current?.(boot);
       }
     } catch { /* ignore */ }
+
+    function warpTo(to) {
+      if (!to || to === currentWorld) return;
+      currentWorld = to;
+      introDone = true;
+      introTimer = 999;
+      transition = null;
+      player.x = to === 'island' ? 560 : 280;
+      player.y = spawnYOf(to, player.x);
+      player.vx = 0; player.vy = 0;
+      player.airPeakY = player.y;
+      player.onGround = true;
+      parachute.open = false; parachute.amount = 0;
+      cameraX = Math.max(0, player.x - W * 0.35);
+      targetCameraX = cameraX;
+      setWorldRef.current?.(to);
+    }
 
     // Sparse reef plantlife — short tufts so dune silhouette stays obvious
     const seaPlants = Array.from({ length: 70 }, (_, i) => {
@@ -798,6 +821,13 @@ export function useGameLoop({
 
     const loop = (ts) => {
       const dt = Math.min((ts-lastTime)/16.67,3); lastTime = ts;
+
+      // HUD / landing warp requests
+      if (warpRef && warpRef.current) {
+        const to = warpRef.current;
+        warpRef.current = null;
+        warpTo(to);
+      }
 
       if (!introDone) {
         const SHORE_X = 500+4;
@@ -1829,5 +1859,5 @@ export function useGameLoop({
     return () => cancelAnimationFrame(animRef.current);
     // Refs are stable; restart only when world catalog / character / cart UI changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore]);
+  }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore, startWorld]);
 }

@@ -12,8 +12,14 @@ export default function Shop() {
   const [mode, setMode] = useState(null);
   // `character` holds the full personalization: { id, name, color, hat }.
   const [character, setCharacter] = useState(null);
+  const [startWorld, setStartWorld] = useState('island');
 
   const chooseCharacter = (choice) => setCharacter(saveCharacter(choice));
+
+  const startAdventure = (world = 'island') => {
+    setStartWorld(world === 'space' || world === 'underwater' ? world : 'island');
+    setMode('game');
+  };
 
   if (!mode) {
     return (
@@ -23,7 +29,7 @@ export default function Shop() {
             ✓ Synced from WaWi · {new Date(syncedAt).toLocaleString()}
           </div>
         )}
-        <LandingScreen onGame={() => setMode('game')} onShop={() => setMode('shop')} />
+        <LandingScreen onGame={startAdventure} onShop={() => setMode('shop')} />
       </>
     );
   }
@@ -43,6 +49,7 @@ export default function Shop() {
       islandProducts={islandProducts}
       spaceProducts={spaceProducts}
       underwaterProducts={underwaterProducts}
+      startWorld={startWorld}
       onSwitchCharacter={() => setCharacter(null)}
     />
   );

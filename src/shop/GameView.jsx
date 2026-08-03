@@ -31,6 +31,7 @@ export default function GameView({
   islandProducts,
   spaceProducts,
   underwaterProducts = [],
+  startWorld = 'island',
   onSwitchCharacter,
 }) {
   const canvasRef = useRef(null);
@@ -39,6 +40,7 @@ export default function GameView({
   const springboardsRef = useRef([{ x: 1672, y: 962, w: 60, h: 18, bounced: false }]);
   const setPopupRef = useRef(null);
   const setWorldRef = useRef(null);
+  const warpRef = useRef(null);
   const { cart, addToCart, cartCount } = useCart();
 
   // Live cart snapshot for the RAF game loop (avoids restarting the loop on every add)
@@ -153,10 +155,17 @@ export default function GameView({
   const [world, setWorld] = useState(() => {
     try {
       const boot = new URLSearchParams(window.location.search).get('world');
-      if (boot === 'underwater' || boot === 'space') return boot;
+      if (boot === 'underwater' || boot === 'space' || boot === 'island') return boot;
     } catch { /* ignore */ }
+    if (startWorld === 'underwater' || startWorld === 'space') return startWorld;
     return 'island';
   });
+
+  const requestWarp = (to) => {
+    if (!to || to === world) return;
+    warpRef.current = to;
+    setWorld(to);
+  };
 
   // Freeze player movement while the cart or passport overlay is open.
   pausedRef.current = showCart || showPassport;
@@ -178,8 +187,9 @@ export default function GameView({
   useGameLoop({
     canvasRef, keysRef, animRef, springboardsRef,
     setPopupRef, setWorldRef, cartRef, customizationRef,
-    recordDiscoveryRef, pausedRef, celebrateRef, finaleRef,
-    character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore,
+    recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef,
+    character, loading, islandProducts, spaceProducts, underwaterProducts,
+    showCart, setScore, startWorld,
   });
 
   useEffect(() => {
@@ -235,7 +245,25 @@ export default function GameView({
             : <canvas ref={canvasRef} width={1400} height={H} style={{ display: 'block', width: '100%', height: 'auto', imageRendering: 'pixelated' }} />
           }
           <div style={{ position: 'absolute', top: 10, left: 10, right: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none' }}>
-            <div style={{ background: 'rgba(0,0,0,0.6)', color: '#FFD700', padding: '6px 10px', fontSize: 8, border: '2px solid #26215C' }}>SCORE: {score}</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', pointerEvents: 'all' }}>
+              <div style={{ background: 'rgba(0,0,0,0.6)', color: '#FFD700', padding: '6px 10px', fontSize: 8, border: '2px solid #26215C' }}>SCORE: {score}</div>
+              {PASSPORT_WORLDS.map(w => (
+                <button
+                  key={w.id}
+                  type="button"
+                  title={`Warp to ${w.label}`}
+                  onClick={() => requestWarp(w.id)}
+                  style={{
+                    background: world === w.id ? w.color : 'rgba(0,0,0,0.55)',
+                    color: world === w.id ? '#000' : '#ddd',
+                    border: `2px solid ${world === w.id ? '#FFD700' : '#26215C'}`,
+                    padding: '5px 8px', fontFamily: 'inherit', fontSize: 7, cursor: 'pointer',
+                  }}
+                >
+                  {w.emoji} {w.label.toUpperCase()}
+                </button>
+              ))}
+            </div>
             <div style={{ display: 'flex', gap: '8px', pointerEvents: 'all' }}>
               <div style={{ background: charColor, color: '#000', padding: '6px 10px', fontSize: 7, fontWeight: 'bold', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {character === 'cat' ? '🐱' : '🧑'} {charName.toUpperCase()}
