@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
+import { isWorldUnlocked } from './worldUnlockStore';
 
-export default function LandingScreen({ onGame, onShop }) {
+const WORLDS = [
+  { id: 'island',     emoji: '🌴', label: 'ISLAND',     col: '#1D9E75' },
+  { id: 'space',      emoji: '🌕', label: 'LUNAR',      col: '#9A9AAA' },
+  { id: 'underwater', emoji: '🫧', label: 'UNDERWATER', col: '#0B6E99' },
+];
+
+export default function LandingScreen({ onGame, onShop, visitedWorlds }) {
   const [hovered, setHovered] = useState(null);
+  const [warpHov, setWarpHov] = useState(null);
+
+  const unlockedExtra = isWorldUnlocked(visitedWorlds, 'space') || isWorldUnlocked(visitedWorlds, 'underwater');
 
   return (
     <div style={{
@@ -47,7 +57,7 @@ export default function LandingScreen({ onGame, onShop }) {
             <div key={card.id}
               onMouseEnter={() => setHovered(card.id)}
               onMouseLeave={() => setHovered(null)}
-              onClick={() => card.id === 'game' ? onGame() : onShop()}
+              onClick={() => card.id === 'game' ? onGame('island') : onShop()}
               style={{
                 cursor: 'pointer', width: 220,
                 background: isHov ? `linear-gradient(145deg,${card.col}22,${card.col}44)` : 'rgba(255,255,255,0.03)',
@@ -67,6 +77,43 @@ export default function LandingScreen({ onGame, onShop }) {
             </div>
           );
         })}
+      </div>
+
+      {/* Warp only for worlds you've already reached in-game */}
+      <div style={{ marginTop: '2.75rem', textAlign: 'center', zIndex: 1 }}>
+        <div style={{ fontSize: '0.4rem', letterSpacing: '0.2em', color: '#666', marginBottom: '0.9rem' }}>
+          {unlockedExtra ? '⚡ WARP TO A WORLD YOU\'VE VISITED' : '🔒 EXPLORE TO UNLOCK WORLD WARPS'}
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {WORLDS.map(w => {
+            const unlocked = isWorldUnlocked(visitedWorlds, w.id);
+            const hot = warpHov === w.id && unlocked;
+            return (
+              <button
+                key={w.id}
+                type="button"
+                disabled={!unlocked}
+                title={unlocked ? `Warp to ${w.label}` : `Reach ${w.label} in-game first`}
+                onMouseEnter={() => unlocked && setWarpHov(w.id)}
+                onMouseLeave={() => setWarpHov(null)}
+                onClick={() => unlocked && onGame(w.id)}
+                style={{
+                  cursor: unlocked ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
+                  padding: '0.85rem 1.1rem', minWidth: 120,
+                  background: hot ? `${w.col}33` : 'rgba(255,255,255,0.03)',
+                  border: `2px solid ${hot ? w.col : unlocked ? '#333' : '#222'}`,
+                  color: unlocked ? (hot ? '#fff' : '#bbb') : '#444',
+                  boxShadow: hot ? `0 0 18px ${w.col}55` : 'none',
+                  transition: 'all 0.15s',
+                  opacity: unlocked ? 1 : 0.55,
+                }}
+              >
+                <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>{unlocked ? w.emoji : '🔒'}</div>
+                <div style={{ fontSize: '0.45rem', letterSpacing: '0.12em', color: unlocked ? w.col : '#555' }}>{w.label}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div style={{ color: '#333', fontSize: '0.35rem', marginTop: '3rem', letterSpacing: '0.15em' }}>

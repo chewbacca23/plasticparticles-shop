@@ -6,14 +6,24 @@ import QuickShop from '../shop/QuickShop';
 import CharacterSelect from '../shop/CharacterSelect';
 import GameView from '../shop/GameView';
 import { saveCharacter } from '../shop/characterStore';
+import { isWorldUnlocked, loadVisitedWorlds } from '../shop/worldUnlockStore';
 
 export default function Shop() {
   const { islandProducts, spaceProducts, underwaterProducts, quickShopProducts, syncedAt } = useShopCatalog();
   const [mode, setMode] = useState(null);
   // `character` holds the full personalization: { id, name, color, hat }.
   const [character, setCharacter] = useState(null);
+  const [startWorld, setStartWorld] = useState('island');
+  const [visitedWorlds, setVisitedWorlds] = useState(loadVisitedWorlds);
 
   const chooseCharacter = (choice) => setCharacter(saveCharacter(choice));
+
+  const startAdventure = (world = 'island') => {
+    const wanted = world === 'space' || world === 'underwater' ? world : 'island';
+    // Only warp to worlds you've already reached the long way
+    setStartWorld(isWorldUnlocked(visitedWorlds, wanted) ? wanted : 'island');
+    setMode('game');
+  };
 
   if (!mode) {
     return (
@@ -23,7 +33,11 @@ export default function Shop() {
             ✓ Synced from WaWi · {new Date(syncedAt).toLocaleString()}
           </div>
         )}
-        <LandingScreen onGame={() => setMode('game')} onShop={() => setMode('shop')} />
+        <LandingScreen
+          onGame={startAdventure}
+          onShop={() => setMode('shop')}
+          visitedWorlds={visitedWorlds}
+        />
       </>
     );
   }
@@ -43,6 +57,9 @@ export default function Shop() {
       islandProducts={islandProducts}
       spaceProducts={spaceProducts}
       underwaterProducts={underwaterProducts}
+      startWorld={startWorld}
+      visitedWorlds={visitedWorlds}
+      onWorldVisit={setVisitedWorlds}
       onSwitchCharacter={() => setCharacter(null)}
     />
   );

@@ -15,8 +15,9 @@ import {
 export function useGameLoop({
   canvasRef, keysRef, animRef, springboardsRef,
   setPopupRef, setWorldRef, cartRef, customizationRef,
-  recordDiscoveryRef, pausedRef, celebrateRef, finaleRef,
-  character, loading, islandProducts, spaceProducts, underwaterProducts = [], showCart, setScore,
+  recordDiscoveryRef, pausedRef, celebrateRef, finaleRef, warpRef, visitWorldRef, visitedRef,
+  character, loading, islandProducts, spaceProducts, underwaterProducts = [],
+  showCart, setScore, startWorld = 'island',
 }) {
   useEffect(() => {
     if (!character || loading || islandProducts.length === 0) return;
@@ -185,10 +186,17 @@ export function useGameLoop({
       return GROUND_Y - 35;
     };
 
-    // Optional deep-link: /?world=underwater|space (handy for testing dunes / lunar hills)
+    // Boot world from prop or ?world= — only if already unlocked by prior visits
     try {
-      const boot = new URLSearchParams(window.location.search).get('world');
-      if (boot === 'underwater' || boot === 'space') {
+      const visitedNow = () => (visitedRef && visitedRef.current) || { island: true };
+      const unlocked = (id) => id === 'island' || !!visitedNow()[id];
+      const bootQ = new URLSearchParams(window.location.search).get('world');
+      const boot = (bootQ === 'underwater' || bootQ === 'space' || bootQ === 'island')
+        ? bootQ
+        : (startWorld === 'underwater' || startWorld === 'space' || startWorld === 'island')
+          ? startWorld
+          : 'island';
+      if (boot !== 'island' && unlocked(boot)) {
         currentWorld = boot;
         introDone = true;
         introTimer = 999;
@@ -200,6 +208,25 @@ export function useGameLoop({
         setWorldRef.current?.(boot);
       }
     } catch { /* ignore */ }
+
+    function warpTo(to) {
+      if (!to || to === currentWorld) return;
+      const visitedNow = (visitedRef && visitedRef.current) || { island: true };
+      if (to !== 'island' && !visitedNow[to]) return;
+      currentWorld = to;
+      introDone = true;
+      introTimer = 999;
+      transition = null;
+      player.x = to === 'island' ? 560 : 280;
+      player.y = spawnYOf(to, player.x);
+      player.vx = 0; player.vy = 0;
+      player.airPeakY = player.y;
+      player.onGround = true;
+      parachute.open = false; parachute.amount = 0;
+      cameraX = Math.max(0, player.x - W * 0.35);
+      targetCameraX = cameraX;
+      setWorldRef.current?.(to);
+    }
 
     // Sparse reef plantlife — short tufts so dune silhouette stays obvious
     const seaPlants = Array.from({ length: 70 }, (_, i) => {
@@ -299,6 +326,29 @@ export function useGameLoop({
         yOff: 4 + lunarHash(i + 3) * 10,
         w: 8 + lunarHash(i + 4) * 14,
         h: 6 + lunarHash(i + 6) * 12,
+      };
+    });
+    // Little (and not-so-little) alien critters that wander the uneven moon surface
+    const lunarAliens = Array.from({ length: 14 }, (_, i) => {
+      const x = 80 + (i * 240 + lunarHash(i * 1.3) * 120) % (SPACE_WIDTH - 120);
+      // Size mix: tiny → medium, plus one absolute unit
+      let size;
+      if (i === 0) size = 38;                         // the big one 👾
+      else if (i === 7) size = 26;                     // chunky buddy
+      else {
+        const tier = Math.floor(lunarHash(i * 3.1 + 0.7) * 4); // 0..3
+        size = [7, 10, 13, 17][tier];
+      }
+      return {
+        x,
+        home: x,
+        target: x + (lunarHash(i + 2) - 0.5) * 220,
+        vx: 0,
+        pause: Math.floor(lunarHash(i + 4) * 40),
+        phase: i * 1.3,
+        size,
+        kind: i % 3, // 0 green antenna, 1 purple blob, 2 grey big-eyes
+        hop: 0,
       };
     });
     spacePortal.y = lunarSurfaceY(spacePortal.x) - 100;
@@ -417,13 +467,14 @@ export function useGameLoop({
     }
 
     // Grand-finale aura: a rotating rainbow shimmer wrapped in a pulsing golden
-    // glow. Only drawn once the player has discovered EVERY toy (gated by
-    // finaleRef, set from React). Sits behind the sprite like the normal aura.
+    // glow. Shown briefly after every toy is found (finaleRef holds an "until" timestamp).
     const FINALE_RAINBOW = ['#FF6EB4','#FFD700','#1D9E75','#4FC3F7','#7F77DD','#D85A30'];
-    function drawFinaleAura(sx, sy) {
+    function drawFinaleAura(sx, sy, fade = 1) {
+      if (fade <= 0.02) return;
       const cx = sx + player.w/2, cy = sy + player.h*0.55;
       const pulse = 0.5 + Math.sin(wobbleTime*4)*0.5;
       ctx.save();
+      ctx.globalAlpha = fade;
       // Pulsing golden halo.
       const glow = ctx.createRadialGradient(cx, cy, 3, cx, cy, player.w*1.6);
       glow.addColorStop(0, `rgba(255,215,0,${0.30+pulse*0.18})`);
@@ -436,13 +487,13 @@ export function useGameLoop({
       for (let i = 0; i < FINALE_RAINBOW.length; i++) {
         const a = wobbleTime*2.4 + i*(Math.PI*2/FINALE_RAINBOW.length);
         ctx.strokeStyle = FINALE_RAINBOW[i];
-        ctx.globalAlpha = 0.5 + pulse*0.3;
+        ctx.globalAlpha = fade * (0.5 + pulse*0.3);
         ctx.beginPath();
         ctx.ellipse(cx, cy, player.w*1.12, player.h*0.72, a, a, a + Math.PI*0.7);
         ctx.stroke();
       }
       // Sparkle motes orbiting the character.
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = fade * 0.85;
       for (let s = 0; s < 6; s++) {
         const ang = wobbleTime*3 + s*(Math.PI*2/6);
         const rad = player.w*1.15 + Math.sin(wobbleTime*5 + s)*4;
@@ -461,7 +512,13 @@ export function useGameLoop({
       const frameOk = frame && frame.complete && frame.naturalWidth > 0;
       const { name, color, hat } = currentCustom();
 
-      if (finaleRef && finaleRef.current) drawFinaleAura(sx, sy);
+      // finaleRef.current = expiry timestamp (ms); fades out in the last 2s
+      const finaleUntil = finaleRef && finaleRef.current;
+      if (finaleUntil && typeof finaleUntil === 'number' && performance.now() < finaleUntil) {
+        const remaining = finaleUntil - performance.now();
+        const fade = remaining < 2000 ? remaining / 2000 : 1;
+        drawFinaleAura(sx, sy, fade);
+      }
 
       // Soft aura in the chosen theme color behind the sprite (reads on both worlds).
       ctx.save();
@@ -495,30 +552,30 @@ export function useGameLoop({
       const cx = sx + player.w/2;
       const needsGear = currentWorld === 'space' || currentWorld === 'underwater';
       if (needsGear) {
-        // Breath helmet / dive mask — glass circle around the head
-        const hx = cx, hy = sy + 12;
-        const hr = currentWorld === 'space' ? 16 : 14;
+        // Bigger breath helmet / dive mask — glass circle around the whole head
+        const hx = cx, hy = sy + 14;
+        const hr = currentWorld === 'space' ? 26 : 24;
         ctx.save();
         if (currentWorld === 'space') {
           // Opaque space helmet dome
           ctx.fillStyle = 'rgba(200,220,255,0.22)';
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.fill();
-          ctx.strokeStyle = 'rgba(230,240,255,0.85)'; ctx.lineWidth = 2.5;
+          ctx.strokeStyle = 'rgba(230,240,255,0.9)'; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.stroke();
-          ctx.strokeStyle = 'rgba(120,140,180,0.7)'; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(hx, hy+2, hr+2, 0.15, Math.PI-0.15); ctx.stroke();
+          ctx.strokeStyle = 'rgba(120,140,180,0.75)'; ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.arc(hx, hy+3, hr+3, 0.15, Math.PI-0.15); ctx.stroke();
           // Visor glint
-          ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.arc(hx-4, hy-3, hr*0.45, -2.2, -0.6); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(hx-6, hy-5, hr*0.45, -2.2, -0.6); ctx.stroke();
         } else {
           // Clear dive mask + snorkel vibe
           ctx.fillStyle = 'rgba(160,220,255,0.18)';
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.fill();
-          ctx.strokeStyle = 'rgba(40,90,120,0.85)'; ctx.lineWidth = 2.5;
+          ctx.strokeStyle = 'rgba(40,90,120,0.9)'; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.stroke();
           ctx.fillStyle = '#2a6a8a';
-          ctx.fillRect(hx + (player.dir === -1 ? -hr-4 : hr-2), hy-2, 6, 4);
-          ctx.fillRect(hx + (player.dir === -1 ? -hr-6 : hr+2), hy-14, 3, 14);
+          ctx.fillRect(hx + (player.dir === -1 ? -hr-5 : hr-2), hy-3, 7, 5);
+          ctx.fillRect(hx + (player.dir === -1 ? -hr-7 : hr+3), hy-18, 3.5, 18);
         }
         ctx.restore();
       }
@@ -776,6 +833,13 @@ export function useGameLoop({
     const loop = (ts) => {
       const dt = Math.min((ts-lastTime)/16.67,3); lastTime = ts;
 
+      // HUD / landing warp requests
+      if (warpRef && warpRef.current) {
+        const to = warpRef.current;
+        warpRef.current = null;
+        warpTo(to);
+      }
+
       if (!introDone) {
         const SHORE_X = 500+4;
         introTimer += dt;
@@ -1006,6 +1070,7 @@ export function useGameLoop({
           if (t.timer>50) {
             currentWorld=t.toWorld;
             setWorldRef.current?.(t.toWorld);
+            visitWorldRef?.current?.(t.toWorld);
             player.x=t.targetX; player.y=spawnYOf(t.toWorld, t.targetX);
             player.vx=0; player.vy=0;
             player.airPeakY=player.y;
@@ -1421,6 +1486,101 @@ export function useGameLoop({
           ctx.fillStyle='rgba(160,160,170,0.35)';
           ctx.fillRect(rx+r.w*0.2,ry+2,r.w*0.45,3);
         }
+        // Little aliens wander the lunar hills at random
+        for (const a of lunarAliens) {
+          if (a.pause > 0) {
+            a.pause -= dt;
+            a.vx *= 0.85;
+          } else {
+            const dx = a.target - a.x;
+            if (Math.abs(dx) < 6) {
+              // Arrived — chill, then pick a new random stroll
+              a.pause = 50 + lunarHash(a.x * 0.02 + wobbleTime * 0.01) * 90;
+              const roam = 80 + lunarHash(a.phase + wobbleTime * 0.02) * 200;
+              a.target = Math.max(40, Math.min(SPACE_WIDTH - 40, a.home + (lunarHash(a.x + a.pause) - 0.5) * 2 * roam));
+              a.vx = 0;
+            } else {
+              // Big lumber, tiny scurry
+              const speed = Math.max(0.18, 0.55 - a.size * 0.008);
+              a.vx = Math.sign(dx) * speed;
+              a.x += a.vx * dt;
+            }
+          }
+          // Tiny hop when cresting a steep bit
+          const gy = lunarSurfaceY(a.x);
+          const gyNext = lunarSurfaceY(a.x + a.vx * 8);
+          if (Math.abs(gyNext - gy) > 10) a.hop = Math.min(1, a.hop + 0.15 * dt);
+          else a.hop = Math.max(0, a.hop - 0.08 * dt);
+
+          const ax = a.x - ox;
+          if (ax < -40 || ax > W + 40) continue;
+          const bob = Math.abs(Math.sin(wobbleTime * 5 + a.phase)) * (1.2 + a.size * 0.04) + a.hop * (4 + a.size * 0.15);
+          const s = a.size;
+          const ay = gy - Math.max(3, s * 0.12) - bob;
+          const dir = a.vx >= 0 ? 1 : -1;
+
+          if (a.kind === 0) {
+            // Classic little green — round head, antenna, stubby legs
+            ctx.strokeStyle = '#6ecf5a'; ctx.lineWidth = Math.max(1.5, s * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(ax, ay - s * 1.1);
+            ctx.lineTo(ax, ay - s * 1.55);
+            ctx.stroke();
+            ctx.fillStyle = '#8dff6a';
+            ctx.beginPath(); ctx.arc(ax, ay - s * 1.6, Math.max(2, s * 0.12), 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#5bbf48';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.35, s * 0.55, s * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#7ae868';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.85, s * 0.5, s * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a2a10';
+            ctx.beginPath(); ctx.ellipse(ax - 0.28 * s * dir, ay - s * 0.9, s * 0.14, s * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(ax + 0.16 * s * dir, ay - s * 0.9, s * 0.14, s * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(ax - 0.24 * s * dir, ay - s * 0.95, Math.max(0.8, s * 0.05), 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 0.2 * s * dir, ay - s * 0.95, Math.max(0.8, s * 0.05), 0, Math.PI * 2); ctx.fill();
+            // Legs
+            ctx.strokeStyle = '#4a9a3a'; ctx.lineWidth = Math.max(2, s * 0.1); ctx.lineCap = 'round';
+            const kick = Math.sin(wobbleTime * 6 + a.phase) * (s * 0.2) * (Math.abs(a.vx) > 0.05 ? dir : 0);
+            ctx.beginPath(); ctx.moveTo(ax - s * 0.2, ay); ctx.lineTo(ax - s * 0.2 + kick, ay + s * 0.35); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + s * 0.2, ay); ctx.lineTo(ax + s * 0.2 - kick, ay + s * 0.35); ctx.stroke();
+          } else if (a.kind === 1) {
+            // Purple hop-blob with twin antennae
+            ctx.fillStyle = '#9b6bdb';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.35, s * 0.7, s * 0.55 + a.hop * 2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#c49bff';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.55, s * 0.45, s * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#b88aef'; ctx.lineWidth = Math.max(1.5, s * 0.08);
+            ctx.beginPath(); ctx.moveTo(ax - s * 0.25, ay - s * 0.7); ctx.quadraticCurveTo(ax - s * 0.5, ay - s * 1.3, ax - s * 0.3, ay - s * 1.45); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + s * 0.25, ay - s * 0.7); ctx.quadraticCurveTo(ax + s * 0.5, ay - s * 1.3, ax + s * 0.3, ay - s * 1.45); ctx.stroke();
+            ctx.fillStyle = '#ffb0ef';
+            ctx.beginPath(); ctx.arc(ax - s * 0.3, ay - s * 1.45, Math.max(2, s * 0.12), 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + s * 0.3, ay - s * 1.45, Math.max(2, s * 0.12), 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a1028';
+            ctx.beginPath(); ctx.arc(ax - s * 0.2, ay - s * 0.45, Math.max(2, s * 0.12), 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + s * 0.2, ay - s * 0.45, Math.max(2, s * 0.12), 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(ax - s * 0.16, ay - s * 0.5, Math.max(0.7, s * 0.04), 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + s * 0.24, ay - s * 0.5, Math.max(0.7, s * 0.04), 0, Math.PI * 2); ctx.fill();
+          } else {
+            // Tiny grey — big eyes, skinny limbs
+            ctx.fillStyle = '#c8c8d0';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 0.55, s * 0.4, s * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#e8e8f0';
+            ctx.beginPath(); ctx.ellipse(ax, ay - s * 1.05, s * 0.55, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a1a28';
+            ctx.beginPath(); ctx.ellipse(ax - 0.2 * s * dir, ay - s * 1.05, s * 0.2, s * 0.24, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(ax + 0.14 * s * dir, ay - s * 1.05, s * 0.2, s * 0.24, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#7ec8ff';
+            ctx.beginPath(); ctx.arc(ax - 0.16 * s * dir, ay - s * 1.1, Math.max(1, s * 0.07), 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ax + 0.16 * s * dir, ay - s * 1.1, Math.max(1, s * 0.07), 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#a0a0aa'; ctx.lineWidth = Math.max(1.5, s * 0.08); ctx.lineCap = 'round';
+            const kick = Math.sin(wobbleTime * 5.5 + a.phase) * (s * 0.25) * (Math.abs(a.vx) > 0.05 ? 1 : 0.2);
+            ctx.beginPath(); ctx.moveTo(ax - s * 0.12, ay - s * 0.2); ctx.lineTo(ax - s * 0.35, ay - s * 0.6); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + s * 0.12, ay - s * 0.2); ctx.lineTo(ax + s * 0.35, ay - s * 0.6); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax - s * 0.12, ay); ctx.lineTo(ax - s * 0.12 + kick * dir, ay + s * 0.35); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ax + s * 0.12, ay); ctx.lineTo(ax + s * 0.12 - kick * dir, ay + s * 0.35); ctx.stroke();
+          }
+        }
       }
 
       // ── Draw zones ──
@@ -1711,5 +1871,5 @@ export function useGameLoop({
     return () => cancelAnimationFrame(animRef.current);
     // Refs are stable; restart only when world catalog / character / cart UI changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore]);
+  }, [character, loading, islandProducts, spaceProducts, underwaterProducts, showCart, setScore, startWorld]);
 }
