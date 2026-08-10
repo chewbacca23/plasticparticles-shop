@@ -467,13 +467,14 @@ export function useGameLoop({
     }
 
     // Grand-finale aura: a rotating rainbow shimmer wrapped in a pulsing golden
-    // glow. Only drawn once the player has discovered EVERY toy (gated by
-    // finaleRef, set from React). Sits behind the sprite like the normal aura.
+    // glow. Shown briefly after every toy is found (finaleRef holds an "until" timestamp).
     const FINALE_RAINBOW = ['#FF6EB4','#FFD700','#1D9E75','#4FC3F7','#7F77DD','#D85A30'];
-    function drawFinaleAura(sx, sy) {
+    function drawFinaleAura(sx, sy, fade = 1) {
+      if (fade <= 0.02) return;
       const cx = sx + player.w/2, cy = sy + player.h*0.55;
       const pulse = 0.5 + Math.sin(wobbleTime*4)*0.5;
       ctx.save();
+      ctx.globalAlpha = fade;
       // Pulsing golden halo.
       const glow = ctx.createRadialGradient(cx, cy, 3, cx, cy, player.w*1.6);
       glow.addColorStop(0, `rgba(255,215,0,${0.30+pulse*0.18})`);
@@ -486,13 +487,13 @@ export function useGameLoop({
       for (let i = 0; i < FINALE_RAINBOW.length; i++) {
         const a = wobbleTime*2.4 + i*(Math.PI*2/FINALE_RAINBOW.length);
         ctx.strokeStyle = FINALE_RAINBOW[i];
-        ctx.globalAlpha = 0.5 + pulse*0.3;
+        ctx.globalAlpha = fade * (0.5 + pulse*0.3);
         ctx.beginPath();
         ctx.ellipse(cx, cy, player.w*1.12, player.h*0.72, a, a, a + Math.PI*0.7);
         ctx.stroke();
       }
       // Sparkle motes orbiting the character.
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = fade * 0.85;
       for (let s = 0; s < 6; s++) {
         const ang = wobbleTime*3 + s*(Math.PI*2/6);
         const rad = player.w*1.15 + Math.sin(wobbleTime*5 + s)*4;
@@ -511,7 +512,13 @@ export function useGameLoop({
       const frameOk = frame && frame.complete && frame.naturalWidth > 0;
       const { name, color, hat } = currentCustom();
 
-      if (finaleRef && finaleRef.current) drawFinaleAura(sx, sy);
+      // finaleRef.current = expiry timestamp (ms); fades out in the last 2s
+      const finaleUntil = finaleRef && finaleRef.current;
+      if (finaleUntil && typeof finaleUntil === 'number' && performance.now() < finaleUntil) {
+        const remaining = finaleUntil - performance.now();
+        const fade = remaining < 2000 ? remaining / 2000 : 1;
+        drawFinaleAura(sx, sy, fade);
+      }
 
       // Soft aura in the chosen theme color behind the sprite (reads on both worlds).
       ctx.save();
@@ -545,30 +552,30 @@ export function useGameLoop({
       const cx = sx + player.w/2;
       const needsGear = currentWorld === 'space' || currentWorld === 'underwater';
       if (needsGear) {
-        // Breath helmet / dive mask — glass circle around the head
-        const hx = cx, hy = sy + 12;
-        const hr = currentWorld === 'space' ? 16 : 14;
+        // Bigger breath helmet / dive mask — glass circle around the whole head
+        const hx = cx, hy = sy + 14;
+        const hr = currentWorld === 'space' ? 26 : 24;
         ctx.save();
         if (currentWorld === 'space') {
           // Opaque space helmet dome
           ctx.fillStyle = 'rgba(200,220,255,0.22)';
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.fill();
-          ctx.strokeStyle = 'rgba(230,240,255,0.85)'; ctx.lineWidth = 2.5;
+          ctx.strokeStyle = 'rgba(230,240,255,0.9)'; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.stroke();
-          ctx.strokeStyle = 'rgba(120,140,180,0.7)'; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(hx, hy+2, hr+2, 0.15, Math.PI-0.15); ctx.stroke();
+          ctx.strokeStyle = 'rgba(120,140,180,0.75)'; ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.arc(hx, hy+3, hr+3, 0.15, Math.PI-0.15); ctx.stroke();
           // Visor glint
-          ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.arc(hx-4, hy-3, hr*0.45, -2.2, -0.6); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(hx-6, hy-5, hr*0.45, -2.2, -0.6); ctx.stroke();
         } else {
           // Clear dive mask + snorkel vibe
           ctx.fillStyle = 'rgba(160,220,255,0.18)';
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.fill();
-          ctx.strokeStyle = 'rgba(40,90,120,0.85)'; ctx.lineWidth = 2.5;
+          ctx.strokeStyle = 'rgba(40,90,120,0.9)'; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI*2); ctx.stroke();
           ctx.fillStyle = '#2a6a8a';
-          ctx.fillRect(hx + (player.dir === -1 ? -hr-4 : hr-2), hy-2, 6, 4);
-          ctx.fillRect(hx + (player.dir === -1 ? -hr-6 : hr+2), hy-14, 3, 14);
+          ctx.fillRect(hx + (player.dir === -1 ? -hr-5 : hr-2), hy-3, 7, 5);
+          ctx.fillRect(hx + (player.dir === -1 ? -hr-7 : hr+3), hy-18, 3.5, 18);
         }
         ctx.restore();
       }

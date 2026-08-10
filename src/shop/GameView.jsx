@@ -17,7 +17,7 @@ import { isWorldUnlocked, withWorldVisit } from './worldUnlockStore';
 const REWARD_TOASTS = {
   [REWARDS.ISLAND_HAT]:  { icon: '🎩', title: 'TOP HAT UNLOCKED!', msg: 'Wear it from the character select screen.' },
   [REWARDS.SPACE_TRACK]: { icon: '🌟', title: 'BONUS TRACK UNLOCKED!', msg: 'Pick "Starlight" from the music menu.' },
-  [REWARDS.FINALE]:      { icon: '🏆', title: 'ISLAND MASTER! You found every toy!', msg: 'A rainbow finale aura now shines around you!' },
+  [REWARDS.FINALE]:      { icon: '🏆', title: 'ISLAND MASTER! You found every toy!', msg: 'A rainbow finale aura shines around you — then fades away.' },
 };
 
 const PASSPORT_WORLDS = [
@@ -63,7 +63,8 @@ export default function GameView({
   const recordDiscoveryRef = useRef(null);   // loop calls this when a popup reveals
   const pausedRef = useRef(false);            // freeze player movement behind overlays
   const celebrateRef = useRef({ pending: 0, finale: 0 }); // loop-drawn confetti requests
-  const finaleRef = useRef(false);            // gates the grand-finale aura in the loop
+  // finaleRef holds an expiry timestamp (ms) while the temporary rainbow aura is up
+  const finaleRef = useRef(0);
 
   const worlds = PASSPORT_WORLDS.map(w => ({
     ...w,
@@ -78,9 +79,6 @@ export default function GameView({
   // Feature 1: pulse the HUD badge when there are stamps the player hasn't
   // looked at in the book yet. Opening the book clears it (see openPassport).
   const hasUnseen = hasUnseenStamps(passport);
-
-  // Feature 2: gate the in-canvas finale aura behind the fully-completed reward.
-  finaleRef.current = isRewardUnlocked(passport, REWARDS.FINALE);
 
   // Open the book: play the page-flip SFX and clear the "NEW!" pulse watermark.
   const openPassport = () => {
@@ -122,8 +120,10 @@ export default function GameView({
       savePassport(next);
       if (finaleJustUnlocked) {
         // Bigger, longer celebration — supersedes the per-world toast/burst.
+        // Rainbow aura sticks around for a bit, then fades out.
         playUnlockSound();
         if (celebrateRef.current) celebrateRef.current.finale += 1;
+        finaleRef.current = performance.now() + 12000;
         setTimeout(() => setToast(REWARD_TOASTS[REWARDS.FINALE]), 0);
       } else if (unlocked.length) {
         playUnlockSound();
