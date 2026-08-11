@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('journal', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout
+  title="Journal"
+  description="Essays and notes from The Soul Searchers — for dreamers learning to trust their own path."
+>
+  <section class="section">
+    <div class="site-shell">
+      <p class="eyebrow">Journal</p>
+      <h1 class="section-title">All the pages so far</h1>
+      <p class="section-lead">
+        A growing collection of reflections. Write new posts as Markdown in
+        <code>src/content/journal</code> — they appear here automatically.
+      </p>
+      <div class="post-list">
+        {
+          posts.map((post) => (
+            <PostCard
+              href={`/journal/${post.id}`}
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.pubDate}
+              label={post.data.heroLabel}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .post-list {
+    display: grid;
+  }
+
+  code {
+    font-size: 0.9em;
+    color: var(--amber-hot);
+  }
+</style>

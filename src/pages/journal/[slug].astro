@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('journal', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} ogType="article">
+  <article class="section">
+    <div class="site-shell article-shell">
+      <header class="article-header">
+        {post.data.heroLabel && <p class="eyebrow">{post.data.heroLabel}</p>}
+        <h1>{post.data.title}</h1>
+        <p class="dek">{post.data.description}</p>
+        <time datetime={post.data.pubDate.toISOString()}>{formatted}</time>
+      </header>
+      <div class="prose">
+        <Content />
+      </div>
+      <p class="back">
+        <a href="/journal">← Back to the journal</a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .article-shell {
+    max-width: 44rem;
+  }
+
+  .article-header {
+    margin-bottom: 2.25rem;
+  }
+
+  h1 {
+    margin: 0 0 0.85rem;
+    font-size: clamp(2rem, 4.5vw, 3rem);
+  }
+
+  .dek {
+    margin: 0 0 1rem;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 1.1rem;
+  }
+
+  time {
+    color: var(--amber);
+    font-size: 0.86rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .back {
+    margin-top: 3rem;
+  }
+
+  .back a {
+    color: var(--amber-hot);
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>

@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site.config';
+---
+
+<BaseLayout
+  title="About"
+  description={`About ${site.name} — a self-owned journal for dreamers, believers, and the hopeful.`}
+>
+  <section class="section">
+    <div class="site-shell about">
+      <p class="eyebrow">About</p>
+      <h1 class="section-title">{site.name}</h1>
+      <p class="lead">{site.tagline}</p>
+
+      <div class="prose">
+        <p>
+          We all need a little nudge sometimes — a push in a braver direction. Too often we wait
+          for someone else to hand us the map. This journal is a reminder that the map is already
+          in your hands.
+        </p>
+        <p>
+          Consider the rest of your life a present, wrapped neatly, sitting just out of reach. The
+          card says “do not touch.” Of course you want to open it. Maybe waiting — and taking a
+          small peek now and then — is enough.
+        </p>
+        <blockquote>
+          Be confident in your choices. Sometimes walking the wrong path helps you in ways you
+          never imagined.
+        </blockquote>
+        <p>
+          This site lives on our own stack now: a landing page, a journal, and room to grow —
+          connected to the domain we already own. No missing Jetpack menu. Just the writing, and
+          the search.
+        </p>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/journal">Start reading</a>
+        <a class="btn btn-ghost" href="/contact">Get in touch</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about {
+    max-width: 44rem;
+  }
+
+  .lead {
+    margin: 0 0 2rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+    color: rgba(238, 243, 247, 0.9);
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 2.5rem;
+  }
+</style>
