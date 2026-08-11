@@ -1,6 +1,6 @@
 # The Soul Searchers
 
-Self-owned blog for **The Soul Searchers** — landing page, journal, about, and contact.
+Self-owned blog for **The Soul Searchers** — landing page, journal, path, about, and contact.
 
 > For the dreamers, the believers and the hopeful.
 
@@ -20,6 +20,17 @@ Open [http://localhost:4321](http://localhost:4321).
 | `npm run build` | Production build → `dist/` |
 | `npm run preview` | Preview the production build |
 
+## Site map
+
+- `/` — landing
+- `/journal` — all posts
+- `/journal/[slug]` — single post
+- `/path` — markers for the road
+- `/about` — who we are
+- `/contact` — say hello
+- `/rss.xml` — RSS feed
+- auto sitemap via `@astrojs/sitemap`
+
 ## Write a post
 
 Add a Markdown file in `src/content/journal/`:
@@ -37,11 +48,13 @@ Your words here.
 
 ## Deploy to your domain
 
-1. Run `npm run build` inside `soul-searchers/`.
-2. Upload / connect the `dist/` folder to any static host (Netlify, Cloudflare Pages, Vercel, nginx, etc.).
-3. Point `thesoulsearchers.de` (or your domain) DNS at that host.
-4. Update `site.url` in `src/site.config.ts` and `site` in `astro.config.mjs` if the final domain differs.
+Configured for static hosting (Netlify / Cloudflare Pages / Vercel / any nginx/static host):
+
+1. From `soul-searchers/`: `npm run build`
+2. Publish the `dist/` folder (Netlify reads `netlify.toml`; Vercel reads `vercel.json`)
+3. Point DNS for `thesoulsearchers.de` (or your domain) at the host
+4. If the final domain differs, update `src/site.config.ts` and `astro.config.mjs`
 
 ## Stack
 
-Astro 7 · Markdown content collections · no WordPress, no Jetpack — analytics can be added later with Plausible, Umami, or similar.
+Astro 7 · Markdown content collections · RSS · sitemap · no WordPress.

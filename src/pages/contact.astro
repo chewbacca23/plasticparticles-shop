@@ -16,7 +16,15 @@ import { site } from '../site.config';
         from you.
       </p>
 
-      <form class="form" method="post" action={`mailto:${site.email}`} enctype="text/plain">
+      <div id="form-success" class="success" hidden>
+        <h2>Message ready</h2>
+        <p>
+          Your mail client should open with the note. If it doesn’t, email
+          <a href={`mailto:${site.email}`}>{site.email}</a> directly.
+        </p>
+      </div>
+
+      <form id="contact-form" class="form" method="post" action={`mailto:${site.email}`} enctype="text/plain">
         <label>
           <span>Name</span>
           <input type="text" name="name" required autocomplete="name" />
@@ -33,12 +41,23 @@ import { site } from '../site.config';
       </form>
 
       <p class="alt">
-        Or email directly:
+        Prefer a direct line?
         <a href={`mailto:${site.email}`}>{site.email}</a>
       </p>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  const form = document.getElementById('contact-form');
+  const success = document.getElementById('form-success');
+  form?.addEventListener('submit', () => {
+    window.setTimeout(() => {
+      success?.removeAttribute('hidden');
+      form?.setAttribute('hidden', '');
+    }, 200);
+  });
+</script>
 
 <style>
   .contact {
@@ -86,7 +105,26 @@ import { site } from '../site.config';
     color: rgba(215, 224, 232, 0.7);
   }
 
-  .alt a {
+  .alt a,
+  .success a {
     color: var(--amber-hot);
+  }
+
+  .success {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.35rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    border-radius: 1rem;
+    background: rgba(30, 58, 69, 0.35);
+  }
+
+  .success h2 {
+    margin: 0 0 0.45rem;
+    font-size: 1.25rem;
+  }
+
+  .success p {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.82);
   }
 </style>

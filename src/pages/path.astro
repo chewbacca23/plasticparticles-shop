@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="The path"
+  description="How The Soul Searchers thinks about choosing, waiting, and walking without a full map."
+>
+  <section class="section">
+    <div class="site-shell path">
+      <p class="eyebrow">The path</p>
+      <h1 class="section-title">A few markers for the road</h1>
+      <p class="section-lead">
+        Not rules — reminders. Keep what fits. Leave the rest on the trail for someone else.
+      </p>
+
+      <ol class="markers">
+        <li>
+          <h2>Trust the next honest step</h2>
+          <p>You don’t need the whole map. You need the ground under one foot.</p>
+        </li>
+        <li>
+          <h2>Peek, don’t panic</h2>
+          <p>
+            Curiosity is allowed. Tear the wrapping only when you’re ready — small peeks count.
+          </p>
+        </li>
+        <li>
+          <h2>Wrong turns still teach</h2>
+          <p>Sometimes the “wrong” path is the only one that could have shown you the door.</p>
+        </li>
+        <li>
+          <h2>Write it down</h2>
+          <p>The journal is part of the search. A sentence today can steady a year.</p>
+        </li>
+      </ol>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/journal">Read the journal</a>
+        <a class="btn btn-ghost" href="/about">About the search</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .path {
+    max-width: 42rem;
+  }
+
+  .markers {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: marker;
+  }
+
+  .markers li {
+    position: relative;
+    padding: 1.5rem 0 1.5rem 3.25rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+    counter-increment: marker;
+  }
+
+  .markers li::before {
+    content: counter(marker, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1.55rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--amber);
+  }
+
+  .markers h2 {
+    margin: 0 0 0.45rem;
+    font-size: 1.35rem;
+  }
+
+  .markers p {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 2.25rem;
+  }
+</style>
