@@ -7,4 +7,6 @@ export const site = {
   url: 'https://thesoulsearchers.de',
   email: 'hello@thesoulsearchers.de',
   locale: 'en',
+  /** Alternate hostnames you may point here later */
+  domains: ['thesoulsearchers.de', 'www.thesoulsearchers.de'],
 };

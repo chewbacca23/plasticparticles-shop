@@ -69,7 +69,10 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
           posts, and everything else under our own roof.
         </p>
       </div>
-      <a class="btn btn-primary" href="/contact">Say hello</a>
+      <div class="invite-actions">
+        <a class="btn btn-primary" href="/contact">Say hello</a>
+        <a class="btn btn-ghost" href="/path">Walk the path</a>
+      </div>
     </div>
   </section>
 </BaseLayout>
@@ -206,6 +209,12 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
     background:
       linear-gradient(135deg, rgba(30, 58, 69, 0.45), rgba(12, 18, 24, 0.2)),
       rgba(26, 36, 48, 0.55);
+  }
+
+  .invite-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .invite .section-title,

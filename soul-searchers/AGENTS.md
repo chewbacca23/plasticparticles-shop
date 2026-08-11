@@ -12,9 +12,11 @@ npm run dev
 
 Dev server defaults to **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
 
-### Content
+### Content & routes
 
-Journal posts live in `src/content/journal/*.md`. Site name/domain/email: `src/site.config.ts`.
+- Posts: `src/content/journal/*.md`
+- Config: `src/site.config.ts` (name, domain, email)
+- Key routes: `/`, `/journal`, `/path`, `/about`, `/contact`, `/rss.xml`
 
 ### Do not confuse with the shop
 

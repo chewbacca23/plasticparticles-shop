@@ -15,4 +15,5 @@ Do not mix their installs: root `npm install` for the shop; `npm install` inside
 
 - Posts: `soul-searchers/src/content/journal/*.md`
 - Site/domain config: `soul-searchers/src/site.config.ts`
+- Routes: `/`, `/journal`, `/path`, `/about`, `/contact`, `/rss.xml`
 - See `soul-searchers/README.md` and `soul-searchers/AGENTS.md` for deploy and content details.

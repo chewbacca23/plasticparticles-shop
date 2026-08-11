@@ -1,0 +1,7 @@
+# Cloudflare Pages / static hosts
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+# Pretty URLs without trailing slash already match Astro static output folders.
