@@ -6,8 +6,8 @@
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "www.thesoulsearchers.de" }],
-      "destination": "https://thesoulsearchers.de/$1",
+      "has": [{ "type": "host", "value": "www.thenewsoulsearchers.de" }],
+      "destination": "https://thenewsoulsearchers.de/$1",
       "permanent": true
     }
   ],

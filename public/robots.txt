@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://thesoulsearchers.de/sitemap-index.xml
+Sitemap: https://thenewsoulsearchers.de/sitemap-index.xml

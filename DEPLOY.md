@@ -1,4 +1,4 @@
-# Wire `thesoulsearchers.de` to The Soul Searchers blog
+# Wire `thenewsoulsearchers.de` to The Soul Searchers blog
 
 This site is a static Astro build in `soul-searchers/`. Pick **one** host below, then point DNS.
 
@@ -9,12 +9,15 @@ This site is a static Astro build in `soul-searchers/`. Pick **one** host below,
 ## Before you start
 
 1. Merge [PR #5](https://github.com/chewbacca23/plasticparticles-shop/pull/5) (or ensure `soul-searchers/` is on `main`).
-2. Confirm domain spelling: **`thesoulsearchers.de`** (no “new” in the name).
-3. Domain settings live at your registrar (IONOS, Strato, Namecheap, etc.) or Cloudflare.
+2. Confirm domain: **`thenewsoulsearchers.de`** (with **new** in the name).
+
+**Current DNS (Aug 2026):** apex A → `81.169.145.150` (Strato / `rzone.de` nameservers). The domain still serves **WordPress on Apache** today (`wp-json` in headers). When you switch to this Astro site, you either upload the static `dist/` folder to Strato **or** point DNS at Cloudflare Pages / GitHub Pages instead.
+
+3. Domain settings live at your registrar (likely **Strato** given `rzone.de` NS) or Cloudflare.
 
 Site URL is already set in:
 
-- `soul-searchers/astro.config.mjs` → `site: 'https://thesoulsearchers.de'`
+- `soul-searchers/astro.config.mjs` → `site: 'https://thenewsoulsearchers.de'`
 - `soul-searchers/src/site.config.ts` → `url` and `email`
 
 ---
@@ -24,7 +27,7 @@ Site URL is already set in:
 ### 1. Add the site to Cloudflare
 
 1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com)
-2. **Add a site** → enter `thesoulsearchers.de`
+2. **Add a site** → enter `thenewsoulsearchers.de`
 3. Cloudflare shows **two nameservers** — set those at your registrar (replace old NS).
 4. Wait until Cloudflare shows the domain as **Active** (often 5–30 minutes).
 
@@ -47,16 +50,16 @@ Site URL is already set in:
 ### 3. Attach custom domain (in Cloudflare)
 
 1. Pages project → **Custom domains** → **Set up a custom domain**
-2. Add `thesoulsearchers.de`
-3. Add `www.thesoulsearchers.de` (optional; Cloudflare can redirect www → apex)
+2. Add `thenewsoulsearchers.de`
+3. Add `www.thenewsoulsearchers.de` (optional; Cloudflare can redirect www → apex)
 
 Cloudflare creates DNS records automatically when the domain is on their nameservers.
 
 ### 4. Check
 
-- https://thesoulsearchers.de/
-- https://thesoulsearchers.de/journal
-- https://thesoulsearchers.de/rss.xml
+- https://thenewsoulsearchers.de/
+- https://thenewsoulsearchers.de/journal
+- https://thenewsoulsearchers.de/rss.xml
 
 ---
 
@@ -73,14 +76,14 @@ The workflow `.github/workflows/deploy-soul-searchers.yml` builds `soul-searcher
 ### 2. Custom domain in GitHub
 
 1. **Settings** → **Pages** → **Custom domain**
-2. Enter: `thesoulsearchers.de`
+2. Enter: `thenewsoulsearchers.de`
 3. Enable **Enforce HTTPS** once the certificate is ready.
 
-`public/CNAME` in the repo already contains `thesoulsearchers.de`.
+`public/CNAME` in the repo already contains `thenewsoulsearchers.de`.
 
 ### 3. DNS at your registrar (if not using Cloudflare)
 
-**Apex** `thesoulsearchers.de` — four **A** records:
+**Apex** `thenewsoulsearchers.de` — four **A** records:
 
 | Type | Name | Value |
 | --- | --- | --- |
@@ -95,7 +98,7 @@ The workflow `.github/workflows/deploy-soul-searchers.yml` builds `soul-searcher
 | --- | --- | --- |
 | CNAME | `www` | `chewbacca23.github.io` |
 
-Then in GitHub Pages custom domain, you can also add `www.thesoulsearchers.de`.
+Then in GitHub Pages custom domain, you can also add `www.thenewsoulsearchers.de`.
 
 ---
 
@@ -106,10 +109,25 @@ Then in GitHub Pages custom domain, you can also add `www.thesoulsearchers.de`.
 3. **Base directory:** `soul-searchers`
 4. **Build command:** `npm run build`
 5. **Publish directory:** `soul-searchers/dist` (or `dist` if base dir is set)
-6. **Site settings** → **Domain management** → **Add custom domain** → `thesoulsearchers.de`
+6. **Site settings** → **Domain management** → **Add custom domain** → `thenewsoulsearchers.de`
 7. Netlify shows the DNS records to add at your registrar (usually CNAME or A + ALIAS).
 
 `netlify.toml` in `soul-searchers/` is already configured.
+
+---
+
+## Option D — Keep Strato (domain already there)
+
+Your domain already points at Strato (`81.169.145.150`) and runs WordPress today. To swap in this site **without changing DNS**:
+
+1. Log in at [Strato](https://www.strato.de) → **Login** → your package
+2. Open **FTP & SSH** (or **File Manager**) for `thenewsoulsearchers.de`
+3. Locally: `cd soul-searchers && npm run build`
+4. **Back up** the current web folder (WordPress files)
+5. Upload **everything inside** `soul-searchers/dist/` to the web root (`/` or `htdocs/`) — overwrite old `index.html`
+6. Ensure Apache serves `index.html` for folders (journal links use `/journal/slug/` directories)
+
+To use Strato **and** Git deploy later, switch DNS to Cloudflare Pages (Option A) instead — simpler long term.
 
 ---
 
@@ -120,8 +138,8 @@ Typical wait: **5 minutes to 48 hours** (often under an hour).
 Verify:
 
 ```sh
-dig thesoulsearchers.de A +short
-curl -I https://thesoulsearchers.de/
+dig thenewsoulsearchers.de A +short
+curl -I https://thenewsoulsearchers.de/
 ```
 
 You should see **200** and the Soul Searchers landing page.

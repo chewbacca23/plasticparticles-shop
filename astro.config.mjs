@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://thesoulsearchers.de',
+  site: 'https://thenewsoulsearchers.de',
   trailingSlash: 'never',
   integrations: [sitemap()],
 });
