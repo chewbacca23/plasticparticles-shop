@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found" description="This path wandered off the map.">
+  <section class="section">
+    <div class="site-shell lost">
+      <p class="eyebrow">404</p>
+      <h1 class="section-title">This path isn’t marked.</h1>
+      <p class="section-lead">
+        The page you’re looking for may have moved, or it was never written. The search continues —
+        try the journal, or head home.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/">Back home</a>
+        <a class="btn btn-ghost" href="/journal">Browse the journal</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lost {
+    max-width: 36rem;
+    padding-block: 2rem 4rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+</style>

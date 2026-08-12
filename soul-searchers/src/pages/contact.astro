@@ -1,0 +1,130 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site.config';
+---
+
+<BaseLayout
+  title="Contact"
+  description={`Contact ${site.name}. Say hello, share a story, or point your domain at this home.`}
+>
+  <section class="section">
+    <div class="site-shell contact">
+      <p class="eyebrow">Contact</p>
+      <h1 class="section-title">Say hello</h1>
+      <p class="section-lead">
+        Ideas, guest notes, domain help, or just a wave from another searcher — we’d love to hear
+        from you.
+      </p>
+
+      <div id="form-success" class="success" hidden>
+        <h2>Message ready</h2>
+        <p>
+          Your mail client should open with the note. If it doesn’t, email
+          <a href={`mailto:${site.email}`}>{site.email}</a> directly.
+        </p>
+      </div>
+
+      <form id="contact-form" class="form" method="post" action={`mailto:${site.email}`} enctype="text/plain">
+        <label>
+          <span>Name</span>
+          <input type="text" name="name" required autocomplete="name" />
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+        <label>
+          <span>Message</span>
+          <textarea name="message" rows="6" required></textarea>
+        </label>
+        <button class="btn btn-primary" type="submit">Send message</button>
+      </form>
+
+      <p class="alt">
+        Prefer a direct line?
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('contact-form');
+  const success = document.getElementById('form-success');
+  form?.addEventListener('submit', () => {
+    window.setTimeout(() => {
+      success?.removeAttribute('hidden');
+      form?.setAttribute('hidden', '');
+    }, 200);
+  });
+</script>
+
+<style>
+  .contact {
+    max-width: 36rem;
+  }
+
+  .form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  label {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  label span {
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(215, 224, 232, 0.18);
+    border-radius: 0.85rem;
+    background: rgba(26, 36, 48, 0.7);
+    color: var(--paper);
+    font: inherit;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: 2px solid rgba(212, 163, 90, 0.55);
+    outline-offset: 2px;
+    border-color: var(--amber);
+  }
+
+  .alt {
+    margin-top: 1.75rem;
+    color: rgba(215, 224, 232, 0.7);
+  }
+
+  .alt a,
+  .success a {
+    color: var(--amber-hot);
+  }
+
+  .success {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.35rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    border-radius: 1rem;
+    background: rgba(30, 58, 69, 0.35);
+  }
+
+  .success h2 {
+    margin: 0 0 0.45rem;
+    font-size: 1.25rem;
+  }
+
+  .success p {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.82);
+  }
+</style>
