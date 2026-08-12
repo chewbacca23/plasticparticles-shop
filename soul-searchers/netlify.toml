@@ -3,8 +3,8 @@
   publish = "dist"
 
 [[redirects]]
-  from = "https://www.thesoulsearchers.de/*"
-  to = "https://thesoulsearchers.de/:splat"
+  from = "https://www.thenewsoulsearchers.de/*"
+  to = "https://thenewsoulsearchers.de/:splat"
   status = 301
   force = true
 

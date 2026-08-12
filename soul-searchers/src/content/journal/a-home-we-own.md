@@ -18,6 +18,6 @@ So we built a home.
 
 ## What you can do next
 
-Point `thesoulsearchers.de` (or your preferred domain) at the host that serves this site. Deploy the `dist` folder from `npm run build`. Add a new `.md` file under `src/content/journal` whenever a note wants out.
+Point `thenewsoulsearchers.de` (or your preferred domain) at the host that serves this site. Deploy the `dist` folder from `npm run build`. Add a new `.md` file under `src/content/journal` whenever a note wants out.
 
 This is not a theme rented by the month. It is ours.
