@@ -3,6 +3,12 @@
   publish = "dist"
 
 [[redirects]]
+  from = "https://www.thesoulsearchers.de/*"
+  to = "https://thesoulsearchers.de/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/404.html"
   status = 404
