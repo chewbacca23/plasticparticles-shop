@@ -10,10 +10,10 @@ In [Strato Login](https://www.strato.de/apps/CustomerLogin) → your package →
 
 | Setting | Example | Where |
 | --- | --- | --- |
-| FTP host | `ftp.strato.de` or `schaltplan.strato.de` | FTP & SSH page |
-| Username | your Strato FTP user | same |
-| Password | (you set this) | same |
-| Remote folder | `/` or `/htdocs/` | often web root for the domain |
+| FTP host | `stu672058243` | FTP & SSH page |
+| Username | `thenewsoulsearchers` | same |
+| Password | *(you set this — never share it)* | same |
+| Remote folder | `/` | web root for the domain |
 
 Also useful: **SFTP** on port 22 if FTP is blocked (FileZilla: SFTP protocol).
 
