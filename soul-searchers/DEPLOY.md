@@ -160,7 +160,7 @@ Add one of these later (no Jetpack needed):
 
 | Problem | Fix |
 | --- | --- |
-| Old WordPress still shows | Remove old A/CNAME records pointing at WordPress.com |
+| Old WordPress still shows | On Strato: replace web root with `dist/` contents; or change A record away from `81.169.145.150` |
 | SSL certificate pending | Wait up to 24h; ensure DNS points only to the new host |
 | 404 on journal links | Host must serve `dist/` at domain **root**, not `/soul-searchers/` |
 | www works but apex doesn’t | Add apex A/ALIAS records or move DNS to Cloudflare |
