@@ -48,12 +48,15 @@ Your words here.
 
 ## Deploy to your domain
 
-Configured for static hosting (Netlify / Cloudflare Pages / Vercel / any nginx/static host):
+**Full wiring guide:** [`DEPLOY.md`](./DEPLOY.md) — Cloudflare Pages (recommended), GitHub Pages, or Netlify + exact DNS for `thesoulsearchers.de`.
 
-1. From `soul-searchers/`: `npm run build`
-2. Publish the `dist/` folder (Netlify reads `netlify.toml`; Vercel reads `vercel.json`)
-3. Point DNS for `thesoulsearchers.de` (or your domain) at the host
-4. If the final domain differs, update `src/site.config.ts` and `astro.config.mjs`
+Quick summary:
+
+1. Merge to `main` and connect the repo to your host (root directory: `soul-searchers`)
+2. Build: `npm run build` → publish `dist/`
+3. Point DNS for `thesoulsearchers.de` at the host (see `DEPLOY.md`)
+
+GitHub Actions workflow: `.github/workflows/deploy-soul-searchers.yml` (Pages source = GitHub Actions).
 
 ## Stack
 

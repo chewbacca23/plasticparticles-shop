@@ -15,5 +15,6 @@ Do not mix their installs: root `npm install` for the shop; `npm install` inside
 
 - Posts: `soul-searchers/src/content/journal/*.md`
 - Site/domain config: `soul-searchers/src/site.config.ts`
-- Routes: `/`, `/journal`, `/path`, `/about`, `/contact`, `/rss.xml`
-- See `soul-searchers/README.md` and `soul-searchers/AGENTS.md` for deploy and content details.
+### Domain deploy
+
+See `soul-searchers/DEPLOY.md` for wiring `thesoulsearchers.de` (Cloudflare Pages recommended). CI: `.github/workflows/deploy-soul-searchers.yml` after Pages is enabled on the repo.
