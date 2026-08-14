@@ -1,13 +1,14 @@
 # The Soul Searchers
 
-Self-owned blog for **The Soul Searchers** — landing page, journal, path, about, and contact.
+Self-owned blog for **thenewsoulsearchers.de** — landing page, journal, path, about, and contact.
 
 > For the dreamers, the believers and the hopeful.
+
+**Game shop (separate repo):** [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop)
 
 ## Quick start
 
 ```sh
-cd soul-searchers
 npm install
 npm run dev
 ```
@@ -18,46 +19,39 @@ Open [http://localhost:4321](http://localhost:4321).
 | --- | --- |
 | `npm run dev` | Dev server |
 | `npm run build` | Production build → `dist/` |
-| `npm run preview` | Preview the production build |
-
-## Site map
-
-- `/` — landing
-- `/journal` — all posts
-- `/journal/[slug]` — single post
-- `/path` — markers for the road
-- `/about` — who we are
-- `/contact` — say hello
-- `/rss.xml` — RSS feed
-- auto sitemap via `@astrojs/sitemap`
+| `npm run preview` | Preview production build |
 
 ## Write a post
 
-Add a Markdown file in `src/content/journal/`:
+Add Markdown in `src/content/journal/`:
 
 ```md
 ---
 title: Your title
 description: One-line summary
-pubDate: 2026-08-11
+pubDate: 2026-08-14
 heroLabel: Essay
 ---
 
 Your words here.
 ```
 
-## Deploy to your domain
+## Deploy
 
-**Full wiring guide:** [`DEPLOY.md`](./DEPLOY.md) — Cloudflare Pages (recommended), GitHub Pages, or Netlify + exact DNS for `thenewsoulsearchers.de`.
+| Host | Guide |
+| --- | --- |
+| **Cloudflare Pages** (recommended) | [`CLOUDFLARE.md`](./CLOUDFLARE.md) |
+| Strato FTP | [`STRATO.md`](./STRATO.md) |
+| Other / DNS | [`DEPLOY.md`](./DEPLOY.md) |
 
-Quick summary:
+Domain: **https://thenewsoulsearchers.de**
 
-1. Merge to `main` and connect the repo to your host (root directory: `soul-searchers`)
-2. Build: `npm run build` → publish `dist/`
-3. Point DNS for `thenewsoulsearchers.de` at the host (see `DEPLOY.md`)
+## Customize
 
-GitHub Actions workflow: `.github/workflows/deploy-soul-searchers.yml` (Pages source = GitHub Actions).
-
-## Stack
-
-Astro 7 · Markdown content collections · RSS · sitemap · no WordPress.
+| Change | File |
+| --- | --- |
+| Site name / tagline | `src/site.config.ts` |
+| Home headline | `src/pages/index.astro` |
+| Colours | `src/styles/global.css` |
+| Hero background | `src/pages/index.astro` (`.sky` styles) |
+| About page | `src/pages/about.astro` |

@@ -1,14 +1,8 @@
-# Cloudflare Pages (monorepo)
-# Connect repo in dashboard; these values match the UI.
+# Cloudflare Pages (optional wrangler config)
+# Prefer dashboard setup — see CLOUDFLARE.md
 
-name = soul-searchers
+name = thenewsoulsearchers
 pages_build_output_dir = "dist"
 
 [build]
 command = "npm run build"
-cwd = "soul-searchers"
-
-# In Cloudflare Pages UI also set:
-# - Production branch: main
-# - Root directory: soul-searchers
-# - Environment: NODE_VERSION = 22

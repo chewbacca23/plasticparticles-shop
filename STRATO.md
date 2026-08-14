@@ -24,16 +24,15 @@ Also useful: **SFTP** on port 22 if FTP is blocked (FileZilla: SFTP protocol).
 1. **Back up WordPress**  
    Download the current web folder via File Manager or FileZilla (zip on your PC).
 
-2. **Build the new site** (on your Mac/PC or after merging the PR):
+2. Locally:
    ```sh
-   cd soul-searchers
    npm install
    npm run build
    ```
 
 3. **Upload**  
    Open FileZilla (or Strato File Manager).  
-   Local side: open folder `soul-searchers/dist/`  
+   Local side: open folder **`dist/`**  
    Remote side: web root for `thenewsoulsearchers.de`  
    Upload **everything inside `dist/`** (not the `dist` folder itself):
    - `index.html`
@@ -68,11 +67,10 @@ Workflow file: `.github/workflows/deploy-strato-ftp.yml`
 ## Local script (password in terminal only)
 
 ```sh
-cd soul-searchers
 chmod +x scripts/deploy-strato.sh
-FTP_SERVER=ftp.strato.de \
-FTP_USERNAME=your-user \
-FTP_PASSWORD=your-pass \
+FTP_SERVER=stu672058243 \
+FTP_USERNAME=thenewsoulsearchers \
+FTP_PASSWORD=YOUR_PASSWORD \
 FTP_REMOTE_DIR=/ \
 ./scripts/deploy-strato.sh
 ```

@@ -1,23 +1,26 @@
 ## Cursor Cloud specific instructions
 
-This folder is **The Soul Searchers** self-owned blog (Astro), separate from the React shop at the repo root.
+**The Soul Searchers** blog — standalone repo for **thenewsoulsearchers.de** (Astro).
+
+The Plastic Particles game shop lives in a separate repo: `chewbacca23/plasticparticles-shop`.
 
 ### Run
 
 ```sh
-cd soul-searchers
 npm install
 npm run dev
 ```
 
-Dev server defaults to **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
+Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
 
 ### Content & routes
 
 - Posts: `src/content/journal/*.md`
-- Config: `src/site.config.ts` (name, domain, email)
-- Key routes: `/`, `/journal`, `/path`, `/about`, `/contact`, `/rss.xml`
+- Config: `src/site.config.ts`
+- Routes: `/`, `/journal`, `/path`, `/about`, `/contact`, `/rss.xml`
 
-### Do not confuse with the shop
+### Deploy
 
-Root `npm start` is the plasticparticles CRA game shop on port 3000. This blog is only under `soul-searchers/`.
+- Cloudflare Pages: see `CLOUDFLARE.md`
+- Strato FTP: see `STRATO.md`
+- General DNS: see `DEPLOY.md`
