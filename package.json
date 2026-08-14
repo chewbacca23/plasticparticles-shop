@@ -16,10 +16,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "blog:dev": "npm --prefix soul-searchers run dev",
-    "blog:build": "npm --prefix soul-searchers run build",
-    "blog:preview": "npm --prefix soul-searchers run preview"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
