@@ -1,20 +1,27 @@
-# Plastic Particles Shop & The Soul Searchers
+# Plastic Particles Shop
+
+React island shop / game (Create React App).
+
+**Blog (separate):** [thenewsoulsearchers](https://github.com/chewbacca23/plasticparticles-shop/tree/thenewsoulsearchers) — branch `thenewsoulsearchers` on this repo until you create a dedicated GitHub repo (see `REPO_SPLIT.md`).
 
 ## Cursor Cloud specific instructions
 
-### Two apps in this repo
+### Run the shop
 
-| App | Path | Dev command | Port |
-| --- | --- | --- | --- |
-| Island shop (CRA) | repo root | `npm start` | 3000 |
-| Soul Searchers blog (Astro) | `soul-searchers/` | `cd soul-searchers && npm run dev` (or `npm run blog:dev`) | 4321 |
+```sh
+npm install
+npm start
+```
 
-Do not mix their installs: root `npm install` for the shop; `npm install` inside `soul-searchers/` for the blog.
+Dev server: **http://localhost:3000**
 
-### Blog notes
+### Tests & build
 
-- Posts: `soul-searchers/src/content/journal/*.md`
-- Site/domain config: `soul-searchers/src/site.config.ts`
-### Domain deploy
+```sh
+CI=true npm test
+CI=true npm run build
+```
 
-See `soul-searchers/DEPLOY.md` for wiring `thenewsoulsearchers.de` (Cloudflare Pages recommended). CI: `.github/workflows/deploy-soul-searchers.yml` after Pages is enabled on the repo.
+### Blog is not in this repo anymore
+
+The Soul Searchers site lives on branch **`thenewsoulsearchers`** or clone the standalone copy — see **`REPO_SPLIT.md`**.

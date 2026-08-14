@@ -11,8 +11,6 @@ soul-searchers/node_modules
 
 # production
 /build
-soul-searchers/dist
-soul-searchers/.astro
 
 # misc
 .DS_Store

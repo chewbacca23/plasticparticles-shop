@@ -1,5 +1,7 @@
 # Getting Started with Create React App
 
+Plastic Particles island shop. **Blog moved out** — see [`REPO_SPLIT.md`](./REPO_SPLIT.md).
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
