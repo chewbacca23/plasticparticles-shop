@@ -1,13 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/PostCard.astro';
 import LogoBackdrop from '../components/LogoBackdrop.astro';
 import { site } from '../site.config';
-import { getCollection } from 'astro:content';
-
-const posts = (await getCollection('journal', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 3);
 ---
 
 <BaseLayout watermark={false}>
@@ -27,55 +21,15 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
       <p class="brand-hero reveal reveal-delay-1">{site.name}</p>
       <h1 class="reveal reveal-delay-2">Walk your own path — the net will appear.</h1>
       <p class="hero-lead reveal reveal-delay-3">
-        {site.tagline} Essays, notes, and quiet nudges for anyone learning to trust their own choices.
+        {site.tagline} Six pictures. Six stories. Click through when you’re ready.
       </p>
       <div class="hero-actions reveal reveal-delay-3">
-        <a class="btn btn-primary" href="/journal">Read the journal</a>
+        <a class="btn btn-primary" href="/stories">Enter the stories</a>
         <a class="btn btn-ghost" href="/about">Meet the search</a>
       </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="site-shell">
-      <p class="eyebrow">From the journal</p>
-      <h2 class="section-title">Latest notes</h2>
-      <p class="section-lead">
-        Fresh pages from a home we own — written for the dreamers still peeking at the wrapped box.
+      <p class="scroll-hint reveal reveal-delay-3">
+        <a href="/stories">Scroll on — or tap to open the gallery ↓</a>
       </p>
-      <div class="post-list">
-        {
-          posts.map((post) => (
-            <PostCard
-              href={`/journal/${post.id}`}
-              title={post.data.title}
-              description={post.data.description}
-              date={post.data.pubDate}
-              label={post.data.heroLabel}
-            />
-          ))
-        }
-      </div>
-      <p class="more">
-        <a href="/journal">Browse every entry →</a>
-      </p>
-    </div>
-  </section>
-
-  <section class="section invite">
-    <div class="site-shell invite-inner">
-      <div>
-        <p class="eyebrow">Stay close</p>
-        <h2 class="section-title">This site is ours now.</h2>
-        <p class="section-lead">
-          No rented dashboard. No missing stats menu. Just a journal we can shape — landing page,
-          posts, and everything else under our own roof.
-        </p>
-      </div>
-      <div class="invite-actions">
-        <a class="btn btn-primary" href="/contact">Say hello</a>
-        <a class="btn btn-ghost" href="/path">Walk the path</a>
-      </div>
     </div>
   </section>
 </BaseLayout>
@@ -83,7 +37,8 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
 <style>
   .hero {
     position: relative;
-    min-height: min(100vh, 54rem);
+    min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     align-items: end;
     overflow: hidden;
@@ -150,7 +105,7 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
 
   .hero-copy {
     position: relative;
-    padding: 7rem 0 4.5rem;
+    padding: 7rem 0 5.5rem;
     max-width: 44rem;
   }
 
@@ -165,9 +120,9 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
   .brand-hero {
     margin: 0 0 1rem;
     font-family: var(--font-display);
-    font-size: clamp(2.4rem, 7vw, 4.4rem);
+    font-size: clamp(2.6rem, 8vw, 5rem);
     font-weight: 500;
-    line-height: 0.98;
+    line-height: 0.96;
     letter-spacing: -0.03em;
     color: var(--paper);
     text-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
@@ -175,8 +130,8 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
 
   h1 {
     margin: 0 0 1rem;
-    max-width: 16ch;
-    font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+    max-width: 18ch;
+    font-size: clamp(1.35rem, 2.8vw, 1.9rem);
     font-weight: 500;
     color: rgba(238, 243, 247, 0.92);
   }
@@ -194,48 +149,17 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
     gap: 0.85rem;
   }
 
-  .post-list {
-    display: grid;
+  .scroll-hint {
+    margin: 2.25rem 0 0;
+    font-size: 0.88rem;
   }
 
-  .more {
-    margin: 1.5rem 0 0;
-  }
-
-  .more a {
-    color: var(--amber-hot);
+  .scroll-hint a {
+    color: rgba(215, 224, 232, 0.55);
     text-decoration: none;
-    font-weight: 600;
   }
 
-  .invite {
-    padding-top: 0;
-  }
-
-  .invite-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding: 2.25rem;
-    border: 1px solid rgba(215, 224, 232, 0.1);
-    border-radius: 1.35rem;
-    background:
-      linear-gradient(135deg, rgba(30, 58, 69, 0.35), rgba(12, 18, 24, 0.15)),
-      rgba(20, 28, 38, 0.45);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
-  }
-
-  .invite-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .invite .section-title,
-  .invite .section-lead {
-    margin-bottom: 0.75rem;
+  .scroll-hint a:hover {
+    color: var(--amber-hot);
   }
 </style>

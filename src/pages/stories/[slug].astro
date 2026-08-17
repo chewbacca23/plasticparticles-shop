@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const stories = await getCollection('stories', ({ data }) => !data.draft);
+  return stories.map((story) => ({
+    params: { slug: story.id },
+    props: { story },
+  }));
+}
+
+const { story } = Astro.props;
+const { Content } = await render(story);
+const gallery = story.data.gallery.length ? story.data.gallery : [story.data.cover];
+---
+
+<BaseLayout title={story.data.title} description={story.data.description} ogType="article">
+  <article class="section">
+    <div class="site-shell article">
+      <p class="eyebrow">Story</p>
+      <h1>{story.data.headline}</h1>
+      <p class="dek">{story.data.description}</p>
+
+      <div class="gallery">
+        {
+          gallery.map((src, i) => (
+            <figure>
+              <img src={src} alt="" width="1200" height="900" loading={i === 0 ? 'eager' : 'lazy'} />
+            </figure>
+          ))
+        }
+      </div>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      <p class="back">
+        <a href="/stories">← Back to the six frames</a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .article {
+    max-width: 48rem;
+  }
+
+  h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(2rem, 4.5vw, 3.1rem);
+  }
+
+  .dek {
+    margin: 0 0 1.75rem;
+    color: rgba(215, 224, 232, 0.75);
+    font-size: 1.1rem;
+  }
+
+  .gallery {
+    display: grid;
+    gap: 1rem;
+    margin: 0 0 2.5rem;
+  }
+
+  figure {
+    margin: 0;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .back {
+    margin-top: 2.75rem;
+  }
+
+  .back a {
+    color: var(--amber-hot);
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>

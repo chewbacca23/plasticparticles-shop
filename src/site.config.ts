@@ -14,4 +14,15 @@ export const site = {
   /** Large faint mark behind pages (0 = off, 0.04–0.12 = subtle) */
   logoWatermarkOpacity: 0.07,
   logoWatermarkBlur: '0.5px',
+
+  /** Impressum — fill in your real details (required on .de sites) */
+  imprint: {
+    legalName: 'The Soul Searchers',
+    responsible: 'Henrik Kürschner',
+    street: '[Street / house number]',
+    zipCity: '[PLZ] [City]',
+    country: 'Germany',
+    phone: '[Phone — optional]',
+    email: 'hello@thenewsoulsearchers.de',
+  },
 };

@@ -17,7 +17,7 @@ Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run
 
 - Posts: `src/content/journal/*.md`
 - Config: `src/site.config.ts`
-- Routes: `/`, `/journal`, `/path`, `/about`, `/contact`, `/rss.xml`
+- Routes: `/`, `/stories`, `/journal`, `/about`, `/contact`, `/impressum`, `/rss.xml`
 
 ### Deploy
 

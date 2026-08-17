@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const stories = (await getCollection('stories', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<BaseLayout
+  title="Stories"
+  description="Six pictures. Six stories. Click a frame to read what lives behind it."
+>
+  <section class="section">
+    <div class="site-shell">
+      <p class="eyebrow">Stories</p>
+      <h1 class="section-title">Six frames</h1>
+      <p class="section-lead">
+        Large pictures, a headline underneath. Hit one to open the story — more photos, more text.
+      </p>
+
+      <div class="grid">
+        {
+          stories.map((story) => (
+            <a class="tile" href={`/stories/${story.id}`}>
+              <span class="frame">
+                <img src={story.data.cover} alt="" width="800" height="600" loading="lazy" />
+              </span>
+              <h2>{story.data.headline}</h2>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grid {
+    display: grid;
+    gap: 1.75rem 1.25rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 700px) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .grid {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+
+  .tile {
+    display: grid;
+    gap: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .frame {
+    display: block;
+    overflow: hidden;
+    border-radius: 0.85rem;
+    aspect-ratio: 4 / 3;
+    background: #121820;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  }
+
+  .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tile:hover img {
+    transform: scale(1.04);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+</style>

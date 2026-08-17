@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site.config';
+
+const { imprint } = site;
+---
+
+<BaseLayout
+  title="Imprint / Impressum"
+  description={`Legal notice (Impressum) for ${site.name}.`}
+>
+  <section class="section">
+    <div class="site-shell legal">
+      <p class="eyebrow">Legal</p>
+      <h1 class="section-title">Imprint / Impressum</h1>
+      <p class="section-lead">
+        Angaben gemäß § 5 TMG — details you can edit in <code>src/site.config.ts</code>.
+      </p>
+
+      <h2>Angaben zum Anbieter</h2>
+      <p>
+        {imprint.legalName}<br />
+        {imprint.responsible}<br />
+        {imprint.street}<br />
+        {imprint.zipCity}<br />
+        {imprint.country}
+      </p>
+
+      <h2>Kontakt</h2>
+      <p>
+        E-Mail: <a href={`mailto:${imprint.email}`}>{imprint.email}</a>
+      </p>
+
+      <h2>Verantwortlich für den Inhalt</h2>
+      <p>
+        {imprint.responsible}<br />
+        {imprint.street}<br />
+        {imprint.zipCity}
+      </p>
+
+      <h2>Haftung für Inhalte</h2>
+      <p>
+        Die Inhalte dieser Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit,
+        Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+      </p>
+
+      <h2>Haftung für Links</h2>
+      <p>
+        Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen
+        Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen.
+      </p>
+
+      <h2>Urheberrecht</h2>
+      <p>
+        Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem
+        deutschen Urheberrecht.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal {
+    max-width: 40rem;
+  }
+
+  h2 {
+    margin: 2rem 0 0.65rem;
+    font-size: 1.25rem;
+  }
+
+  code {
+    color: var(--amber-hot);
+    font-size: 0.9em;
+  }
+</style>
