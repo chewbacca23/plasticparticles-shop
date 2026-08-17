@@ -38,12 +38,25 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--fog);
-  background: var(--ink);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(30, 58, 69, 0.35), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(212, 163, 90, 0.04), transparent 50%),
+    var(--ink);
   font-family: var(--font-body);
   font-size: 1.0625rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 main {
@@ -166,7 +179,15 @@ p {
 .section-lead {
   max-width: 34rem;
   margin: 0 0 2rem;
-  color: rgba(215, 224, 232, 0.78);
+  color: rgba(215, 224, 232, 0.72);
+  line-height: 1.7;
+}
+
+.glass-panel {
+  border: 1px solid rgba(215, 224, 232, 0.08);
+  border-radius: 1.15rem;
+  background: rgba(18, 26, 34, 0.42);
+  backdrop-filter: blur(10px);
 }
 
 .reveal {

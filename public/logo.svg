@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- Placeholder  replace this file with your own logo (same filename) -->
+  <defs>
+    <radialGradient id="g" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 180) rotate(55) scale(280)">
+      <stop stop-color="#fff6e4"/>
+      <stop offset="0.45" stop-color="#d4a35a"/>
+      <stop offset="1" stop-color="#3d6b7a"/>
+    </radialGradient>
+    <linearGradient id="path" x1="96" y1="320" x2="416" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d4a35a" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#3d6b7a" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="220" r="120" fill="url(#g)" opacity="0.95"/>
+  <path d="M120 340 Q256 280 392 340" stroke="url(#path)" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.85"/>
+  <path d="M160 380 Q256 340 352 380" stroke="url(#path)" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.45"/>
+  <circle cx="256" cy="220" r="40" fill="#0c1218" fill-opacity="0.15"/>
+</svg>

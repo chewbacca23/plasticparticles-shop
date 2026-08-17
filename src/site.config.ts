@@ -7,6 +7,11 @@ export const site = {
   url: 'https://thenewsoulsearchers.de',
   email: 'hello@thenewsoulsearchers.de',
   locale: 'en',
-  /** Alternate hostnames you may point here later */
   domains: ['thenewsoulsearchers.de', 'www.thenewsoulsearchers.de'],
+
+  /** Replace `public/logo.svg` or add `public/logo.png` — see LOGO.md */
+  logo: '/logo.svg',
+  /** Large faint mark behind pages (0 = off, 0.04–0.12 = subtle) */
+  logoWatermarkOpacity: 0.07,
+  logoWatermarkBlur: '0.5px',
 };

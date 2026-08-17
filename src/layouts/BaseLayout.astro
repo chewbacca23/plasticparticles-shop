@@ -3,17 +3,21 @@ import '../styles/global.css';
 import { site } from '../site.config';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import LogoBackdrop from '../components/LogoBackdrop.astro';
 
 interface Props {
   title?: string;
   description?: string;
   ogType?: string;
+  /** Set false on home — hero has its own logo layer */
+  watermark?: boolean;
 }
 
 const {
   title,
   description = site.description,
   ogType = 'website',
+  watermark = true,
 } = Astro.props;
 
 const pageTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.tagline}`;
@@ -47,10 +51,27 @@ const canonical = new URL(Astro.url.pathname, site.url).toString();
     />
   </head>
   <body>
-    <SiteHeader />
-    <main>
-      <slot />
-    </main>
-    <SiteFooter />
+    {watermark && <LogoBackdrop />}
+    <div class="site-canvas">
+      <SiteHeader />
+      <main>
+        <slot />
+      </main>
+      <SiteFooter />
+    </div>
   </body>
 </html>
+
+<style>
+  .site-canvas {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .site-canvas main {
+    flex: 1;
+  }
+</style>

@@ -50,8 +50,9 @@ Domain: **https://thenewsoulsearchers.de**
 
 | Change | File |
 | --- | --- |
+| **Your logo** | Replace `public/logo.svg` — see [`LOGO.md`](./LOGO.md) |
 | Site name / tagline | `src/site.config.ts` |
+| Watermark strength | `logoWatermarkOpacity` in `site.config.ts` |
 | Home headline | `src/pages/index.astro` |
 | Colours | `src/styles/global.css` |
-| Hero background | `src/pages/index.astro` (`.sky` styles) |
 | About page | `src/pages/about.astro` |

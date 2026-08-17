@@ -26,18 +26,23 @@ const formatted = date.toLocaleDateString('en-GB', {
 
 <style>
   .card {
-    border-top: 1px solid rgba(215, 224, 232, 0.14);
+    border-top: 1px solid rgba(215, 224, 232, 0.1);
   }
 
   .card-link {
     display: block;
-    padding: 1.35rem 0.15rem 1.45rem;
+    padding: 1.35rem 1rem 1.45rem;
+    margin-inline: -1rem;
+    border-radius: 0.85rem;
     text-decoration: none;
-    transition: padding-left 180ms ease;
+    transition:
+      padding-left 180ms ease,
+      background 180ms ease;
   }
 
   .card-link:hover {
-    padding-left: 0.45rem;
+    padding-left: 1.35rem;
+    background: rgba(22, 32, 42, 0.45);
   }
 
   h3 {

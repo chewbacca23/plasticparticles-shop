@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
+import LogoBackdrop from '../components/LogoBackdrop.astro';
 import { site } from '../site.config';
 import { getCollection } from 'astro:content';
 
@@ -9,9 +10,10 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
   .slice(0, 3);
 ---
 
-<BaseLayout>
+<BaseLayout watermark={false}>
   <section class="hero" aria-label="Welcome">
     <div class="sky" aria-hidden="true">
+      <LogoBackdrop variant="hero" />
       <div class="sky-aurora"></div>
       <div class="sky-stars">
         <span></span><span></span><span></span><span></span><span></span>
@@ -21,9 +23,10 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
     </div>
 
     <div class="site-shell hero-copy">
-      <p class="brand-hero reveal">{site.name}</p>
-      <h1 class="reveal reveal-delay-1">Walk your own path — the net will appear.</h1>
-      <p class="hero-lead reveal reveal-delay-2">
+      <img class="hero-logo reveal" src={site.logo} alt="" width="88" height="88" decoding="async" />
+      <p class="brand-hero reveal reveal-delay-1">{site.name}</p>
+      <h1 class="reveal reveal-delay-2">Walk your own path — the net will appear.</h1>
+      <p class="hero-lead reveal reveal-delay-3">
         {site.tagline} Essays, notes, and quiet nudges for anyone learning to trust their own choices.
       </p>
       <div class="hero-actions reveal reveal-delay-3">
@@ -92,9 +95,13 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
     inset: 0;
     z-index: -1;
     background:
-      radial-gradient(ellipse 80% 55% at 70% 15%, rgba(61, 107, 122, 0.45), transparent 60%),
-      radial-gradient(ellipse 60% 45% at 18% 30%, rgba(212, 163, 90, 0.18), transparent 55%),
-      linear-gradient(180deg, #070b10 0%, #101923 42%, #1a3140 72%, #3a2a1c 100%);
+      radial-gradient(ellipse 85% 60% at 72% 18%, rgba(61, 107, 122, 0.38), transparent 62%),
+      radial-gradient(ellipse 55% 50% at 12% 28%, rgba(212, 163, 90, 0.14), transparent 58%),
+      linear-gradient(180deg, #080c11 0%, #0f1820 45%, #182a36 70%, #2a2218 100%);
+  }
+
+  .sky :global(.logo-backdrop) {
+    position: absolute;
   }
 
   .sky-aurora {
@@ -145,6 +152,14 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
     position: relative;
     padding: 7rem 0 4.5rem;
     max-width: 44rem;
+  }
+
+  .hero-logo {
+    width: clamp(3.5rem, 10vw, 5.5rem);
+    height: auto;
+    margin-bottom: 1.25rem;
+    opacity: 0.92;
+    filter: drop-shadow(0 12px 32px rgba(212, 163, 90, 0.25));
   }
 
   .brand-hero {
@@ -204,11 +219,13 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft))
     justify-content: space-between;
     gap: 1.5rem;
     padding: 2.25rem;
-    border: 1px solid rgba(215, 224, 232, 0.12);
-    border-radius: 1.25rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1.35rem;
     background:
-      linear-gradient(135deg, rgba(30, 58, 69, 0.45), rgba(12, 18, 24, 0.2)),
-      rgba(26, 36, 48, 0.55);
+      linear-gradient(135deg, rgba(30, 58, 69, 0.35), rgba(12, 18, 24, 0.15)),
+      rgba(20, 28, 38, 0.45);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
   }
 
   .invite-actions {

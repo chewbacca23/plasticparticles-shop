@@ -1,0 +1,74 @@
+---
+import { site } from '../site.config';
+
+interface Props {
+  /** Hero uses a slightly stronger watermark */
+  variant?: 'hero' | 'default';
+}
+
+const { variant = 'default' } = Astro.props;
+const opacity =
+  variant === 'hero' ? Math.min(site.logoWatermarkOpacity + 0.03, 0.14) : site.logoWatermarkOpacity;
+---
+
+<div
+  class="logo-backdrop"
+  style={`--wm-opacity: ${opacity}; --wm-blur: ${site.logoWatermarkBlur}`}
+  aria-hidden="true"
+>
+  <img class="logo-backdrop__mark" src={site.logo} alt="" width="512" height="512" decoding="async" />
+  <div class="logo-backdrop__veil"></div>
+</div>
+
+<style>
+  .logo-backdrop {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .logo-backdrop__mark {
+    position: absolute;
+    right: clamp(-4rem, -2vw, 2rem);
+    top: 50%;
+    width: min(62vw, 36rem);
+    height: auto;
+    transform: translateY(-48%);
+    opacity: var(--wm-opacity, 0.07);
+    filter: blur(var(--wm-blur, 0.5px)) saturate(0.75) brightness(1.08);
+    mix-blend-mode: soft-light;
+    animation: logo-float 22s ease-in-out infinite;
+  }
+
+  .logo-backdrop__veil {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 72% 42%, transparent 30%, var(--ink) 78%);
+  }
+
+  @keyframes logo-float {
+    0%,
+    100% {
+      transform: translateY(-48%) translateX(0) scale(1);
+    }
+    50% {
+      transform: translateY(-50%) translateX(-1.5%) scale(1.02);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .logo-backdrop__mark {
+      right: -18%;
+      width: min(85vw, 22rem);
+      opacity: calc(var(--wm-opacity, 0.07) * 0.85);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo-backdrop__mark {
+      animation: none;
+    }
+  }
+</style>
