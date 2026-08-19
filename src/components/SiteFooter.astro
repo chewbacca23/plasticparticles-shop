@@ -1,7 +1,6 @@
 ---
 import { site } from '../site.config';
 const year = new Date().getFullYear();
-const showAdminLink = import.meta.env.DEV;
 ---
 
 <footer class="footer">
@@ -17,7 +16,7 @@ const showAdminLink = import.meta.env.DEV;
       <a href="/contact">Contact</a>
       <a href="/impressum">Imprint</a>
       <a href="/rss.xml">RSS</a>
-      {showAdminLink && <a class="admin-link" href="/admin">Admin</a>}
+      <a class="admin-link" href="/admin/index.html">Edit content</a>
     </div>
     <p class="footer-copy">© {year} {site.name}. Built to own — not rented.</p>
   </div>
