@@ -1,6 +1,7 @@
 ---
 import { site } from '../site.config';
 const year = new Date().getFullYear();
+const showAdminLink = import.meta.env.DEV;
 ---
 
 <footer class="footer">
@@ -16,6 +17,7 @@ const year = new Date().getFullYear();
       <a href="/contact">Contact</a>
       <a href="/impressum">Imprint</a>
       <a href="/rss.xml">RSS</a>
+      {showAdminLink && <a class="admin-link" href="/admin">Admin</a>}
     </div>
     <p class="footer-copy">© {year} {site.name}. Built to own — not rented.</p>
   </div>
@@ -61,6 +63,10 @@ const year = new Date().getFullYear();
 
   .footer-links a:hover {
     color: var(--amber-hot);
+  }
+
+  .footer-links .admin-link {
+    opacity: 0.75;
   }
 
   @media (min-width: 800px) {
