@@ -20,6 +20,7 @@ Open [http://localhost:4321](http://localhost:4321).
 | `npm run dev` | Dev server |
 | `npm run build` | Production build → `dist/` |
 | `npm run preview` | Preview production build |
+| `npm run cms:proxy` | Local Decap CMS proxy |
 
 ## Write a post
 
@@ -35,6 +36,29 @@ heroLabel: Essay
 
 Your words here.
 ```
+
+## Decap CMS (easy editor)
+
+You can edit stories and journal posts in a browser UI:
+
+1. Terminal A:
+   ```sh
+   npm run cms:proxy
+   ```
+2. Terminal B:
+   ```sh
+   npm run dev
+   ```
+3. Open:
+   - `http://localhost:4321/admin`
+   - (fallback) `http://localhost:4321/admin/index.html`
+
+In the CMS:
+- **Stories** = six big photo tiles and story pages
+- **Journal** = blog-style posts
+- image uploads go into `public/stories/`
+
+Then deploy as usual (`npm run build` + FTP upload of `dist/`).
 
 ## Deploy
 

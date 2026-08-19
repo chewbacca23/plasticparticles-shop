@@ -12,13 +12,14 @@ npm run dev
 ```
 
 Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
+Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `/admin`.
 
 ### Content & routes
 
 - Stories (six photo tiles): `src/content/stories/*.md` and `public/stories/`
 - Journal posts: `src/content/journal/*.md`
 - Config / Impressum fields: `src/site.config.ts`
-- Routes: `/`, `/stories`, `/journal`, `/about`, `/contact`, `/impressum`, `/rss.xml`
+- Routes: `/`, `/stories`, `/journal`, `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
 
 ### Live domain
 

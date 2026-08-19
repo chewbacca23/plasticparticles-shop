@@ -1,0 +1,65 @@
+backend:
+  name: github
+  repo: chewbacca23/plasticparticles-shop
+  branch: thenewsoulsearchers
+
+local_backend: true
+publish_mode: simple
+
+media_folder: public/stories
+public_folder: /stories
+
+site_url: https://thenewsoulsearchers.de
+display_url: https://thenewsoulsearchers.de
+logo_url: /logo.svg
+
+collections:
+  - name: stories
+    label: Stories
+    label_singular: Story
+    folder: src/content/stories
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: stories/{{slug}}
+    fields:
+      - { label: Title, name: title, widget: string }
+      - { label: Headline, name: headline, widget: string }
+      - { label: Description, name: description, widget: text }
+      - label: Cover image
+        name: cover
+        widget: image
+        choose_url: false
+        media_library:
+          config:
+            multiple: false
+      - label: Gallery images
+        name: gallery
+        widget: list
+        summary: "{{fields.image}}"
+        field:
+          label: Image
+          name: image
+          widget: image
+          choose_url: false
+      - { label: Order (1-6), name: order, widget: number, value_type: int, min: 1, max: 99, step: 1 }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false }
+      - { label: Story text, name: body, widget: markdown }
+
+  - name: journal
+    label: Journal
+    label_singular: Journal post
+    folder: src/content/journal
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: journal/{{slug}}
+    fields:
+      - { label: Title, name: title, widget: string }
+      - { label: Description, name: description, widget: text }
+      - { label: Published date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - { label: Hero label, name: heroLabel, widget: string, required: false }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false }
+      - { label: Post text, name: body, widget: markdown }
