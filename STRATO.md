@@ -77,6 +77,38 @@ FTP_REMOTE_DIR=/ \
 
 ---
 
+## Edit content (Decap) — working path
+
+**Do not use “Login with GitHub” on the live Strato site.**  
+That flow needs a separate OAuth app + server. Without it you get:
+
+`Authentication Error … Invalid state key`
+
+That message means the GitHub login handshake lost its security token (no OAuth backend for this host). It is **not** a bad password and **not** a broken `config.yml`.
+
+### What to do instead
+
+1. On your Mac, in the blog folder:
+   ```sh
+   cd ~/thenewsoulsearchers
+   git pull
+   npm install
+   ```
+2. **Terminal 1:** `npm run cms:proxy`  
+3. **Terminal 2:** `npm run dev`  
+4. Browser: **http://localhost:4321/admin/**  
+5. Click **Login to Local Backend** (not GitHub).  
+6. Edit stories / journal / photos.  
+7. Publish locally, then:
+   ```sh
+   npm run build
+   ```
+8. Cyberduck: upload **everything inside `dist/`** to Strato `/` (overwrite).
+
+Live `/admin` can open the CMS UI, but saving via GitHub login will keep failing until OAuth is set up later (optional).
+
+---
+
 ## After go-live
 
 - Email `hello@thenewsoulsearchers.de` only works if you set up mail in Strato (optional).

@@ -11,24 +11,65 @@
         color: #eef3f7;
         font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       }
-      .hint {
-        max-width: 52rem;
+      .banner {
+        max-width: 40rem;
         margin: 1rem auto 0;
-        padding: 0 1rem;
-        color: #9fb0be;
-        font-size: 0.9rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid rgba(240, 194, 122, 0.35);
+        border-radius: 10px;
+        background: rgba(30, 40, 48, 0.92);
+        color: #d7e0e8;
+        font-size: 0.95rem;
+        line-height: 1.45;
       }
-      code {
+      .banner strong {
         color: #f0c27a;
+      }
+      .banner ol {
+        margin: 0.6rem 0 0;
+        padding-left: 1.2rem;
+      }
+      .banner code {
+        color: #f0c27a;
+        font-size: 0.88em;
+      }
+      .banner.hidden {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <p class="hint">
-      Prefer editing locally: run <code>npm run cms:proxy</code> and
-      <code>npm run dev</code>, then open <code>http://localhost:4321/admin/</code>.
-      On Strato (HTTP), this page needs the polyfill below — that is not a config.yml problem.
-    </p>
+    <div id="local-banner" class="banner hidden">
+      <strong>Local editing (this works)</strong>
+      <ol>
+        <li>Terminal 1: <code>npm run cms:proxy</code></li>
+        <li>Terminal 2: <code>npm run dev</code></li>
+        <li>Open this page at <code>http://localhost:4321/admin/</code></li>
+        <li>Click <strong>Login to Local Backend</strong> — do <em>not</em> use GitHub login</li>
+      </ol>
+      After edits: <code>npm run build</code>, then upload everything inside <code>dist/</code> to Strato via Cyberduck.
+    </div>
+    <div id="live-banner" class="banner hidden">
+      <strong>Live Strato admin cannot save yet</strong>
+      <p style="margin: 0.55rem 0 0">
+        “Login with GitHub” fails with <em>Invalid state key</em> because this host has no
+        GitHub OAuth server. That is expected — not a broken password.
+      </p>
+      <p style="margin: 0.55rem 0 0">
+        Edit on your Mac at <code>http://localhost:4321/admin/</code> (see steps in the repo
+        <code>STRATO.md</code>), then rebuild and upload <code>dist/</code>.
+      </p>
+    </div>
+    <script>
+      (function () {
+        var host = window.location.hostname;
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        var localBanner = document.getElementById('local-banner');
+        var liveBanner = document.getElementById('live-banner');
+        if (isLocal) localBanner.classList.remove('hidden');
+        else liveBanner.classList.remove('hidden');
+      })();
+    </script>
     <script>
       // Decap uses crypto.randomUUID(), which browsers only expose in secure
       // contexts (HTTPS or localhost). Strato currently serves plain HTTP, so
