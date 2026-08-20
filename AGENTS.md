@@ -1,8 +1,12 @@
+# The Soul Searchers
+
+Self-owned Astro journal for **thenewsoulsearchers.de**.
+
+The Plastic Particles shop is a **different GitHub repo**: [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop). Do not mix them. This tree is the blog only.
+
+Until `chewbacca23/thenewsoulsearchers` is published, this code also lives as branch `thenewsoulsearchers` of the shop repo. Publish with `./scripts/publish-thenewsoulsearchers-repo.sh` from the shop checkout (must run as GitHub user **chewbacca23**).
+
 ## Cursor Cloud specific instructions
-
-This checkout is **The Soul Searchers** blog (Astro) when you are on branch **`thenewsoulsearchers`** (files at repo root).
-
-The Plastic Particles **shop** is the same GitHub repo on branch **`main`** (`npm start`, port 3000). Do not mix them: `git checkout thenewsoulsearchers` for the blog, `git checkout main` for the game.
 
 ### Run (blog)
 
@@ -24,4 +28,4 @@ Live Strato is plain HTTP; `/admin` includes a `crypto.randomUUID` polyfill. **G
 
 ### Live domain
 
-`thenewsoulsearchers.de` is hosted at **Strato**. Until `dist/` is uploaded over FTP, the public site can still be WordPress. Deploy steps: `STRATO.md`. Cloudflare Pages is optional (`CLOUDFLARE.md`).
+`http://thenewsoulsearchers.de` is hosted at **Strato**. HTTPS currently fails TLS until Strato SSL is enabled. Deploy steps: `STRATO.md`. Cloudflare Pages is optional (`CLOUDFLARE.md`).

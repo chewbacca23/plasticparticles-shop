@@ -6,7 +6,16 @@ Self-owned blog for **thenewsoulsearchers.de** — landing page, journal, path, 
 
 **Game shop (separate repo):** [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop)
 
+```sh
+git clone https://github.com/chewbacca23/thenewsoulsearchers.git
+cd thenewsoulsearchers
+npm install
+npm run dev
+```
+
 ## Quick start
+
+If you already have this folder:
 
 ```sh
 npm install
