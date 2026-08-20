@@ -53,9 +53,12 @@ EOF
 }
 
 login="$(gh api user --jq .login 2>/dev/null || true)"
-if [[ -z "$login" || "$login" == "cursor" ]]; then
+if [[ ! "$login" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  login=""
+fi
+if [[ "$login" != "$OWNER" ]]; then
   if [[ "$DRY_RUN" == "1" ]]; then
-    log "Dry run: skipping GitHub repo create (login=${login:-unknown})"
+    log "Dry run: skipping GitHub repo create (login=${login:-not-${OWNER}})"
   else
     cannot_create_user_repos
     exit 1
@@ -128,7 +131,7 @@ git remote add origin "$NEW_URL"
 if [[ "$DRY_RUN" == "1" ]]; then
   log "Dry run. Would push main to ${NEW_URL}"
   git log --oneline -5
-  git remote -v
+  log "origin $(git remote get-url origin | sed -E 's#https://[^@]+@#https://#')"
   exit 0
 fi
 
@@ -136,13 +139,18 @@ if gh repo view "$FULL_NAME" >/dev/null 2>&1; then
   log "Repo ${FULL_NAME} already exists — pushing main"
 else
   log "Creating ${FULL_NAME}"
-  gh repo create "$FULL_NAME" \
+  if ! gh repo create "$FULL_NAME" \
     --public \
     --description "The Soul Searchers — journal at thenewsoulsearchers.de" \
     --homepage "http://thenewsoulsearchers.de" \
-    --disable-wiki
+    --disable-wiki; then
+    cannot_create_user_repos
+    exit 1
+  fi
 fi
 
-git push -u origin main
+if ! git push -u origin main; then
+  die "git push to ${NEW_URL} failed. On GitHub: grant this account push access, or run the script as ${OWNER}."
+fi
 log "Published ${NEW_URL}"
 log "Shop repo is unchanged. After you confirm the new repo, you can ignore branch thenewsoulsearchers on plasticparticles-shop."
