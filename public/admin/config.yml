@@ -1,7 +1,7 @@
 backend:
   name: github
-  repo: chewbacca23/plasticparticles-shop
-  branch: thenewsoulsearchers
+  repo: chewbacca23/thenewsoulsearchers
+  branch: main
 
 local_backend: true
 publish_mode: simple
