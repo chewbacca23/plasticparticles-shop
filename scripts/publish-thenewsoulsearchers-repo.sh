@@ -39,15 +39,19 @@ On your Mac, in Terminal (logged into GitHub as ${OWNER}):
   1. Create the empty repo (no README, no .gitignore, no license):
      https://github.com/new?name=${REPO_NAME}&description=The+Soul+Searchers+journal&visibility=public
 
-  2. Clone this shop, then publish:
+  2. Publish from the shop (the script is on this branch until it is merged):
 
      git clone https://github.com/chewbacca23/plasticparticles-shop.git
      cd plasticparticles-shop
+     git checkout kuerschner-soulsearchers-own-repo-f04c
      ./scripts/publish-thenewsoulsearchers-repo.sh
+
+     If you already have the shop folder, skip clone and start at cd / git checkout.
 
   One-shot if gh is already authenticated as ${OWNER}:
 
      gh repo create ${FULL_NAME} --public --description "The Soul Searchers — journal at thenewsoulsearchers.de" --homepage "http://thenewsoulsearchers.de"
+     git checkout kuerschner-soulsearchers-own-repo-f04c
      ./scripts/publish-thenewsoulsearchers-repo.sh
 EOF
 }
