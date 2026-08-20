@@ -13,6 +13,7 @@ npm run dev
 
 Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
 Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `/admin`.
+Live Strato is plain HTTP; `/admin` includes a `crypto.randomUUID` polyfill so Decap can load without HTTPS. Prefer local CMS for saves (`local_backend`); production GitHub login still needs OAuth setup.
 
 ### Content & routes
 

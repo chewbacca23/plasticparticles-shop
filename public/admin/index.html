@@ -25,8 +25,45 @@
   </head>
   <body>
     <p class="hint">
-      If login fails locally, run <code>npm run cms:proxy</code> in another terminal first.
+      Prefer editing locally: run <code>npm run cms:proxy</code> and
+      <code>npm run dev</code>, then open <code>http://localhost:4321/admin/</code>.
+      On Strato (HTTP), this page needs the polyfill below — that is not a config.yml problem.
     </p>
+    <script>
+      // Decap uses crypto.randomUUID(), which browsers only expose in secure
+      // contexts (HTTPS or localhost). Strato currently serves plain HTTP, so
+      // we polyfill it before loading the CMS.
+      (function () {
+        var c = typeof globalThis !== 'undefined' && globalThis.crypto;
+        if (!c) return;
+        if (typeof c.randomUUID === 'function') return;
+        c.randomUUID = function () {
+          var bytes = new Uint8Array(16);
+          if (typeof c.getRandomValues === 'function') {
+            c.getRandomValues(bytes);
+          } else {
+            for (var i = 0; i < 16; i++) bytes[i] = (Math.random() * 256) | 0;
+          }
+          bytes[6] = (bytes[6] & 0x0f) | 0x40;
+          bytes[8] = (bytes[8] & 0x3f) | 0x80;
+          var hex = [];
+          for (var j = 0; j < 16; j++) {
+            hex.push((bytes[j] + 0x100).toString(16).slice(1));
+          }
+          return (
+            hex.slice(0, 4).join('') +
+            '-' +
+            hex.slice(4, 6).join('') +
+            '-' +
+            hex.slice(6, 8).join('') +
+            '-' +
+            hex.slice(8, 10).join('') +
+            '-' +
+            hex.slice(10, 16).join('')
+          );
+        };
+      })();
+    </script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
   </body>
 </html>
