@@ -12,8 +12,7 @@ npm run dev
 ```
 
 Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
-Decap editor: `npm run cms` (proxy + site together), then open `http://localhost:4321/admin/index.html`. Do not edit on `thenewsoulsearchers.de/admin` while the site is on Strato HTTP. Cloudflare Pages is the easier “save = live site” path (`CLOUDFLARE.md`).
-Live Strato `/admin` does not load the editor. Edit locally → `npm run build` → upload `dist/` (see `STRATO.md`).
+Decap editor: `npm run cms`, then `http://localhost:4321/admin/index.html`. After Cloudflare Pages is connected (`CLOUDFLARE.md`), `git push` on branch `thenewsoulsearchers` updates the live site. Until then, `npm run build` + Strato upload (`STRATO.md`).
 
 ### Content & routes
 
@@ -24,4 +23,4 @@ Live Strato `/admin` does not load the editor. Edit locally → `npm run build` 
 
 ### Live domain
 
-`thenewsoulsearchers.de` is hosted at **Strato**. Until `dist/` is uploaded over FTP, the public site can still be WordPress. Deploy steps: `STRATO.md`. Cloudflare Pages is optional (`CLOUDFLARE.md`).
+Live domain: **https://thenewsoulsearchers.de** on **Cloudflare Pages** (see `CLOUDFLARE.md`). Domain registration can stay at Strato. Old FTP path: `STRATO.md`.

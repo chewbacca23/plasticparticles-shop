@@ -7,8 +7,4 @@ export default defineConfig({
   site: 'https://thenewsoulsearchers.de',
   trailingSlash: 'ignore',
   integrations: [sitemap()],
-  redirects: {
-    '/admin': '/admin/index.html',
-    '/admin/': '/admin/index.html',
-  },
 });
