@@ -15,9 +15,14 @@ The shop repo is still `plasticparticles-shop`. The blog is branch **`thenewsoul
 
 ## 2. Create the Pages project
 
-1. [Workers & Pages](https://dash.cloudflare.com) → **Create** → **Pages** → **Connect to Git**
-2. Sign in with **GitHub** and allow **`chewbacca23/plasticparticles-shop`**
-3. Use these exact settings:
+The sidebar often shows only **Workers**. That is normal. Pages is a small extra click.
+
+1. Left menu: **Compute** (or **Workers**) → **Workers & Pages**
+2. Top right: **Create** / **Create application**
+3. Do **not** stay on the big Workers form. Look near the bottom for **Looking to deploy Pages?** → **Get started**
+4. Or open this: [Create a Pages project](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/pages)
+5. Choose **Connect to Git** → **GitHub** → allow **`chewbacca23/plasticparticles-shop`**
+6. Use these exact settings:
 
 | Setting | Value |
 | --- | --- |
@@ -28,8 +33,8 @@ The shop repo is still `plasticparticles-shop`. The blog is branch **`thenewsoul
 | Build output directory | `dist` |
 | Environment variable | `NODE_VERSION` = `22` |
 
-4. **Save and Deploy**
-5. Wait until it is green. Open the `*.pages.dev` URL they give you — that is already your new site (HTTPS).
+7. **Save and Deploy**
+8. Wait until it is green. Open the `*.pages.dev` URL they give you — that is already your new site (HTTPS).
 
 If an old project still points at folder `soul-searchers`, delete it or change it to the table above.
 
