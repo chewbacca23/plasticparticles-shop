@@ -2,8 +2,8 @@
 # Publish branch thenewsoulsearchers of plasticparticles-shop as its own GitHub repo:
 #   https://github.com/chewbacca23/thenewsoulsearchers
 #
-# Run this on a machine logged into GitHub as chewbacca23 (your Mac).
-# Cursor Cloud cannot create that repo: its GitHub App token is limited to this shop.
+# Git only — you do not need the GitHub CLI (gh).
+# Create an empty repo in the browser first, then run this script on your Mac.
 
 set -euo pipefail
 
@@ -13,6 +13,7 @@ SRC_REPO="${SRC_REPO:-https://github.com/chewbacca23/plasticparticles-shop.git}"
 SRC_BRANCH="${SRC_BRANCH:-thenewsoulsearchers}"
 FULL_NAME="${OWNER}/${REPO_NAME}"
 NEW_URL="https://github.com/${FULL_NAME}.git"
+NEW_PAGE="https://github.com/new?name=${REPO_NAME}&description=The+Soul+Searchers+journal&visibility=public"
 DRY_RUN="${DRY_RUN:-0}"
 
 if [[ "${1:-}" == "--dry-run" ]]; then
@@ -27,47 +28,29 @@ need_cmd() {
 }
 
 need_cmd git
-need_cmd gh
+need_cmd python3
 
-cannot_create_user_repos() {
+need_empty_github_repo() {
   cat >&2 <<EOF
-This GitHub login cannot create ${FULL_NAME}
-(Cursor Cloud uses an app token limited to plasticparticles-shop).
+Create the empty GitHub repo in your browser (no README, no .gitignore, no license):
 
-On your Mac, in Terminal (logged into GitHub as ${OWNER}):
+  ${NEW_PAGE}
 
-  1. Create the empty repo (no README, no .gitignore, no license):
-     https://github.com/new?name=${REPO_NAME}&description=The+Soul+Searchers+journal&visibility=public
+Then run this again:
 
-  2. Publish from the shop (the script is on this branch until it is merged):
+  ./scripts/publish-thenewsoulsearchers-repo.sh
 
-     git clone https://github.com/chewbacca23/plasticparticles-shop.git
-     cd plasticparticles-shop
-     git checkout kuerschner-soulsearchers-own-repo-f04c
-     ./scripts/publish-thenewsoulsearchers-repo.sh
+Or, after the empty repo exists, push with git only:
 
-     If you already have the shop folder, skip clone and start at cd / git checkout.
+  git clone --branch thenewsoulsearchers --single-branch ${SRC_REPO} thenewsoulsearchers-repo
+  cd thenewsoulsearchers-repo
+  git checkout -B main
+  git remote set-url origin ${NEW_URL}
+  git push -u origin main
 
-  One-shot if gh is already authenticated as ${OWNER}:
-
-     gh repo create ${FULL_NAME} --public --description "The Soul Searchers — journal at thenewsoulsearchers.de" --homepage "http://thenewsoulsearchers.de"
-     git checkout kuerschner-soulsearchers-own-repo-f04c
-     ./scripts/publish-thenewsoulsearchers-repo.sh
+You do not need the gh command.
 EOF
 }
-
-login="$(gh api user --jq .login 2>/dev/null || true)"
-if [[ ! "$login" =~ ^[A-Za-z0-9_-]+$ ]]; then
-  login=""
-fi
-if [[ "$login" != "$OWNER" ]]; then
-  if [[ "$DRY_RUN" == "1" ]]; then
-    log "Dry run: skipping GitHub repo create (login=${login:-not-${OWNER}})"
-  else
-    cannot_create_user_repos
-    exit 1
-  fi
-fi
 
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/thenewsoulsearchers-publish.XXXXXX")"
 cleanup() { rm -rf "$WORKDIR"; }
@@ -78,7 +61,6 @@ git clone --branch "$SRC_BRANCH" --single-branch "$SRC_REPO" "$WORKDIR/repo"
 cd "$WORKDIR/repo"
 git checkout -B main
 
-# Point Decap at the standalone repo (idempotent).
 if [[ -f public/admin/config.yml ]]; then
   python3 - <<'PY'
 from pathlib import Path
@@ -139,22 +121,14 @@ if [[ "$DRY_RUN" == "1" ]]; then
   exit 0
 fi
 
-if gh repo view "$FULL_NAME" >/dev/null 2>&1; then
-  log "Repo ${FULL_NAME} already exists — pushing main"
-else
-  log "Creating ${FULL_NAME}"
-  if ! gh repo create "$FULL_NAME" \
-    --public \
-    --description "The Soul Searchers — journal at thenewsoulsearchers.de" \
-    --homepage "http://thenewsoulsearchers.de" \
-    --disable-wiki; then
-    cannot_create_user_repos
-    exit 1
-  fi
+if ! git ls-remote "$NEW_URL" >/dev/null 2>&1; then
+  need_empty_github_repo
+  exit 1
 fi
 
+log "Pushing main to ${NEW_URL}"
 if ! git push -u origin main; then
-  die "git push to ${NEW_URL} failed. On GitHub: grant this account push access, or run the script as ${OWNER}."
+  die "git push to ${NEW_URL} failed. Confirm the empty repo exists and you can push as ${OWNER}."
 fi
 log "Published ${NEW_URL}"
 log "Shop repo is unchanged. After you confirm the new repo, you can ignore branch thenewsoulsearchers on plasticparticles-shop."

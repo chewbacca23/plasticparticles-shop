@@ -7,13 +7,16 @@ The Soul Searchers blog must not live in this shop repository. Agents and humans
 | **Plastic Particles shop** | This repo (`main`) |
 | **The Soul Searchers blog** | Dedicated repo **[chewbacca23/thenewsoulsearchers](https://github.com/chewbacca23/thenewsoulsearchers)** |
 
-Until that dedicated repo exists, the blog *source* is still branch `thenewsoulsearchers` in this repo. Publish it once from a Mac logged into GitHub as **chewbacca23** (Cursor Cloud cannot create user repositories):
+Until that dedicated repo exists, the blog *source* is still branch `thenewsoulsearchers` in this repo. Cursor Cloud cannot create the GitHub repo. You do **not** need `gh`.
+
+1. Empty repo (no README): [create thenewsoulsearchers](https://github.com/new?name=thenewsoulsearchers&description=The+Soul+Searchers+journal&visibility=public)
+2. On your Mac, in the shop folder:
 
 ```sh
+git checkout kuerschner-soulsearchers-own-repo-f04c
+git pull
 ./scripts/publish-thenewsoulsearchers-repo.sh
 ```
-
-Empty-repo click path (no README): [create thenewsoulsearchers](https://github.com/new?name=thenewsoulsearchers&description=The+Soul+Searchers+journal&visibility=public) then run the same script.
 
 ## Day-to-day after publish
 
