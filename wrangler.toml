@@ -1,5 +1,5 @@
-# Used by Cloudflare Pages and by Workers “Import a repository”.
-name = "thenewsoulsearchers"
+# Cloudflare Worker / Pages. `name` must match the dashboard project name.
+name = "thenewsoulsearchersblog"
 compatibility_date = "2026-08-23"
 pages_build_output_dir = "dist"
 
