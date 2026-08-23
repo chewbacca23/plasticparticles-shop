@@ -1,3 +1,7 @@
-# Cloudflare Pages — dashboard setup is enough (see CLOUDFLARE.md)
+# Used by Cloudflare Pages and by Workers “Import a repository”.
 name = "thenewsoulsearchers"
+compatibility_date = "2026-08-23"
 pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"

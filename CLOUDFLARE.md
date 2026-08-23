@@ -13,9 +13,33 @@ The shop repo is still `plasticparticles-shop`. The blog is branch **`thenewsoul
 
 ---
 
-## 2. Create the Pages project
+## 2. Get out of “Workers and Routes”
 
-The sidebar often shows only **Workers**. That is normal. Pages is a small extra click.
+If the page only says **Workers** and **Routes**, you are **inside one Worker**, not on the list of sites. That screen cannot host the blog.
+
+1. Click the **Cloudflare logo** (top left) or **Workers & Pages** in the left menu — you want the **list** of projects, not Routes
+2. Top right: **Create** / **Create application**
+3. Prefer **Import a repository** / **Connect to Git** (this is the new free website path). GitHub → `plasticparticles-shop`
+4. If you see a tiny **Looking to deploy Pages?** link, that works too
+
+Project settings for either path:
+
+| Setting | Value |
+| --- | --- |
+| Project / Worker name | `thenewsoulsearchers` |
+| Production branch | **`thenewsoulsearchers`** (not `main`) |
+| Root directory | *(leave empty)* |
+| Build command | `npm run build` |
+| Build output / assets | `dist` |
+| Environment variable | `NODE_VERSION` = `22` |
+
+Then **Save and Deploy**. Open the `*.pages.dev` or `*.workers.dev` URL.
+
+Direct Pages link if you want that screen: [Create Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/pages)
+
+---
+
+## 2b. Old “Pages only” clicks
 
 1. Left menu: **Compute** (or **Workers**) → **Workers & Pages**
 2. Top right: **Create** / **Create application**
