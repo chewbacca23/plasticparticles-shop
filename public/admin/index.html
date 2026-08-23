@@ -40,31 +40,31 @@
   </head>
   <body>
     <div id="local-banner" class="banner hidden">
-      <strong>Local editing — no GitHub</strong>
-      <ol>
-        <li>Keep Terminal 1 running: <code>npm run cms:proxy</code></li>
-        <li>Keep Terminal 2 running: <code>npm run dev</code></li>
-        <li>Stay on <code>http://localhost:4321/admin/index.html</code></li>
-      </ol>
-      The editor talks to your Mac only. Opening the live site
-      (<code>thenewsoulsearchers.de/admin</code>) cannot save — that is expected.
-      After edits: <code>npm run build</code>, then upload everything inside <code>dist/</code> via Cyberduck.
+      <strong>You are in the Mac editor</strong>
+      <p style="margin: 0.55rem 0 0">
+        One terminal: <code>npm run cms</code> — then stay on
+        <code>http://localhost:4321/admin/index.html</code>.
+        When it looks right: <code>npm run build</code> and upload <code>dist/</code>.
+      </p>
     </div>
     <div id="live-banner" class="banner hidden">
-      <strong>This live page cannot save</strong>
+      <strong>This is the public site, not the editor</strong>
       <p style="margin: 0.55rem 0 0">
-        Editing happens on your Mac, not on Strato. GitHub login is disabled on purpose.
+        Strato only shows the last upload. To write: on your Mac run
+        <code>npm run cms</code> and open
+        <code>http://localhost:4321/admin/index.html</code>.
       </p>
       <p style="margin: 0.55rem 0 0">
-        On your Mac: <code>npm run cms:proxy</code> and <code>npm run dev</code>, then open
-        <code>http://localhost:4321/admin/index.html</code>. Rebuild and upload <code>dist/</code>
-        when you want the public site updated.
+        Easier later: put the site on <strong>Cloudflare Pages</strong> (HTTPS). Then
+        saving in the editor can update the real website by itself — no Cyberduck.
+        See <code>CLOUDFLARE.md</code>.
       </p>
     </div>
     <script>
       window.__SS_CMS_LOCAL__ =
         window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '4321';
       (function () {
         var isLocal = window.__SS_CMS_LOCAL__;
         var localBanner = document.getElementById('local-banner');

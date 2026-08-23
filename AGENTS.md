@@ -12,7 +12,7 @@ npm run dev
 ```
 
 Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
-Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `http://localhost:4321/admin/index.html`. It uses the local proxy only — no GitHub login. Do not edit on `thenewsoulsearchers.de/admin`.
+Decap editor: `npm run cms` (proxy + site together), then open `http://localhost:4321/admin/index.html`. Do not edit on `thenewsoulsearchers.de/admin` while the site is on Strato HTTP. Cloudflare Pages is the easier “save = live site” path (`CLOUDFLARE.md`).
 Live Strato `/admin` does not load the editor. Edit locally → `npm run build` → upload `dist/` (see `STRATO.md`).
 
 ### Content & routes

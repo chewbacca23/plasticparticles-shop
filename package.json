@@ -9,6 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "cms": "concurrently -k -n proxy,web -c cyan,magenta \"npm run cms:proxy\" \"npm run dev\"",
     "cms:proxy": "decap-server",
     "cms:dev": "astro dev",
     "astro": "astro"
@@ -19,6 +20,7 @@
     "astro": "^7.2.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.4",
     "decap-server": "^3.10.0"
   }
 }
