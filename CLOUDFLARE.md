@@ -15,12 +15,17 @@ The shop repo is still `plasticparticles-shop`. The blog is branch **`thenewsoul
 
 ## 2. Get out of “Workers and Routes”
 
-If the page only says **Workers** and **Routes**, you are **inside one Worker**, not on the list of sites. That screen cannot host the blog.
+If the page only says **Workers** and **Routes**, you are **inside one Worker** (or the domain’s Workers Routes). That screen cannot host the blog.
 
-1. Click the **Cloudflare logo** (top left) or **Workers & Pages** in the left menu — you want the **list** of projects, not Routes
-2. Top right: **Create** / **Create application**
-3. Prefer **Import a repository** / **Connect to Git** (this is the new free website path). GitHub → `plasticparticles-shop`
-4. If you see a tiny **Looking to deploy Pages?** link, that works too
+From the **account home** (search bar, Domains tile, Workers tile):
+
+1. Left menu, under **Build**: click **Compute**
+2. Then **Workers & Pages** — this is the project **list**
+3. Top right: **Create** / **Create application**
+4. **Import a repository** / **Connect to Git** → GitHub → `plasticparticles-shop`
+5. If you see a tiny **Looking to deploy Pages?** link, that works too
+
+Do not click the domain `thenewsoulsearchers.de` and then Workers Routes. That is the wrong door.
 
 Project settings for either path:
 
