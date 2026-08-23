@@ -2,7 +2,21 @@
 
 You keep the **domain at Strato**. Cloudflare only **serves** the site. The Free plan is **$0**. Ignore upgrade ads.
 
-The shop repo is still `plasticparticles-shop`. The blog is branch **`thenewsoulsearchers`** (files at the repo root). Do not use branch `main` — that is the game.
+**Hard split (do this first if you can):** put the blog in its own GitHub repo `chewbacca23/thenewsoulsearchers`, then import **that** in Cloudflare. Do not import `plasticparticles-shop` — that name is the shop and it is why the dashboard feels mixed.
+
+Until that repo exists, Cloudflare can still build branch `thenewsoulsearchers` of `plasticparticles-shop`. That works, but it stays confusing. Create the empty blog repo here (no README): [github.com/new?name=thenewsoulsearchers](https://github.com/new?name=thenewsoulsearchers&description=The+Soul+Searchers+journal&visibility=public)
+
+Then on your Mac:
+
+```sh
+git clone --branch thenewsoulsearchers --single-branch https://github.com/chewbacca23/plasticparticles-shop.git thenewsoulsearchers-repo
+cd thenewsoulsearchers-repo
+git checkout -B main
+git remote set-url origin https://github.com/chewbacca23/thenewsoulsearchers.git
+git push -u origin main
+```
+
+After that, Cloudflare → Compute → Create → Import **`thenewsoulsearchers`**. Ignore the old `plasticparticles-shop` Workers.
 
 ---
 
@@ -22,7 +36,7 @@ From the **account home** (search bar, Domains tile, Workers tile):
 1. Left menu, under **Build**: click **Compute**
 2. Then **Workers & Pages** — this is the project **list**
 3. Top right: **Create** / **Create application**
-4. **Import a repository** / **Connect to Git** → GitHub → `plasticparticles-shop`
+4. **Import a repository** / **Connect to Git** → GitHub → **`thenewsoulsearchers`** if that repo exists, otherwise `plasticparticles-shop` and branch `thenewsoulsearchers`
 5. If you see a tiny **Looking to deploy Pages?** link, that works too
 
 Do not click the domain `thenewsoulsearchers.de` and then Workers Routes. That is the wrong door.
