@@ -40,30 +40,33 @@
   </head>
   <body>
     <div id="local-banner" class="banner hidden">
-      <strong>Local editing (this works)</strong>
+      <strong>Local editing — no GitHub</strong>
       <ol>
-        <li>Terminal 1: <code>npm run cms:proxy</code></li>
-        <li>Terminal 2: <code>npm run dev</code></li>
-        <li>Open this page at <code>http://localhost:4321/admin/index.html</code></li>
-        <li>Click <strong>Login to Local Backend</strong> — do <em>not</em> use GitHub login</li>
+        <li>Keep Terminal 1 running: <code>npm run cms:proxy</code></li>
+        <li>Keep Terminal 2 running: <code>npm run dev</code></li>
+        <li>Stay on <code>http://localhost:4321/admin/index.html</code></li>
       </ol>
-      After edits: <code>npm run build</code>, then upload everything inside <code>dist/</code> to Strato via Cyberduck.
+      The editor talks to your Mac only. Opening the live site
+      (<code>thenewsoulsearchers.de/admin</code>) cannot save — that is expected.
+      After edits: <code>npm run build</code>, then upload everything inside <code>dist/</code> via Cyberduck.
     </div>
     <div id="live-banner" class="banner hidden">
-      <strong>Live Strato admin cannot save yet</strong>
+      <strong>This live page cannot save</strong>
       <p style="margin: 0.55rem 0 0">
-        “Login with GitHub” fails with <em>Invalid state key</em> because this host has no
-        GitHub OAuth server. That is expected — not a broken password.
+        Editing happens on your Mac, not on Strato. GitHub login is disabled on purpose.
       </p>
       <p style="margin: 0.55rem 0 0">
-        Edit on your Mac at <code>http://localhost:4321/admin/index.html</code> (see steps in the repo
-        <code>STRATO.md</code>), then rebuild and upload <code>dist/</code>.
+        On your Mac: <code>npm run cms:proxy</code> and <code>npm run dev</code>, then open
+        <code>http://localhost:4321/admin/index.html</code>. Rebuild and upload <code>dist/</code>
+        when you want the public site updated.
       </p>
     </div>
     <script>
+      window.__SS_CMS_LOCAL__ =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
       (function () {
-        var host = window.location.hostname;
-        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        var isLocal = window.__SS_CMS_LOCAL__;
         var localBanner = document.getElementById('local-banner');
         var liveBanner = document.getElementById('live-banner');
         if (isLocal) localBanner.classList.remove('hidden');
@@ -105,6 +108,13 @@
         };
       })();
     </script>
-    <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
+    <script>
+      // Live Strato: do not load Decap (it would offer GitHub login that cannot save).
+      if (window.__SS_CMS_LOCAL__) {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js';
+        document.body.appendChild(s);
+      }
+    </script>
   </body>
 </html>

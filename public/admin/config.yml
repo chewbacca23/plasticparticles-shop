@@ -1,17 +1,16 @@
+# Proxy-only: no GitHub login. Requires `npm run cms:proxy` (port 8081).
 backend:
-  name: github
-  repo: chewbacca23/plasticparticles-shop
+  name: proxy
+  proxy_url: http://localhost:8081/api/v1
   branch: thenewsoulsearchers
 
-local_backend: true
 publish_mode: simple
 
 media_folder: public/stories
 public_folder: /stories
 
-# Match live Strato (plain HTTP). HTTPS here while visiting http:// breaks OAuth state.
-site_url: http://thenewsoulsearchers.de
-display_url: http://thenewsoulsearchers.de
+site_url: http://localhost:4321
+display_url: http://localhost:4321
 logo_url: /logo.svg
 
 
