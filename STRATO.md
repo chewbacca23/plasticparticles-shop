@@ -96,7 +96,7 @@ That message means the GitHub login handshake lost its security token (no OAuth 
    ```
 2. **Terminal 1:** `npm run cms:proxy`  
 3. **Terminal 2:** `npm run dev`  
-4. Browser: **http://localhost:4321/admin/**  
+4. Browser: **http://localhost:4321/admin/index.html**  
 5. Click **Login to Local Backend** (not GitHub).  
 6. Edit stories / journal / photos.  
 7. Publish locally, then:
