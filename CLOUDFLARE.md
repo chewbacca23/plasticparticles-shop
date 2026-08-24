@@ -1,39 +1,148 @@
-# Cloudflare Pages — thenewsoulsearchers.de
+# Cloudflare Pages — free, for thenewsoulsearchers.de
 
-Use this repo **`chewbacca23/thenewsoulsearchers`** (blog only — no subfolder).
+You keep the **domain at Strato**. Cloudflare only **serves** the site. The Free plan is **$0**. Ignore upgrade ads.
 
-## New project (or reconnect existing)
+**Hard split (do this first if you can):** put the blog in its own GitHub repo `chewbacca23/thenewsoulsearchers`, then import **that** in Cloudflare. Do not import `plasticparticles-shop` — that name is the shop and it is why the dashboard feels mixed.
 
-1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → your project (or **Create**)
-2. **Settings** → **Builds & deployments** → **Connect to Git**
-3. Repository: **`chewbacca23/thenewsoulsearchers`**
-4. Production branch: **`main`**
+Until that repo exists, Cloudflare can still build branch `thenewsoulsearchers` of `plasticparticles-shop`. That works, but it stays confusing. Create the empty blog repo here (no README): [github.com/new?name=thenewsoulsearchers](https://github.com/new?name=thenewsoulsearchers&description=The+Soul+Searchers+journal&visibility=public)
+
+Then on your Mac:
+
+```sh
+git clone --branch thenewsoulsearchers --single-branch https://github.com/chewbacca23/plasticparticles-shop.git thenewsoulsearchers-repo
+cd thenewsoulsearchers-repo
+git checkout -B main
+git remote set-url origin https://github.com/chewbacca23/thenewsoulsearchers.git
+git push -u origin main
+```
+
+After that, Cloudflare → Compute → Create → Import **`thenewsoulsearchers`**. Ignore the old `plasticparticles-shop` Workers.
+
+---
+
+## 1. Cloudflare account
+
+1. Open [dash.cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up)
+2. Use your email. Stay on the **Free** plan.
+
+---
+
+## 2. Get out of “Workers and Routes”
+
+If the page only says **Workers** and **Routes**, you are **inside one Worker** (or the domain’s Workers Routes). That screen cannot host the blog.
+
+From the **account home** (search bar, Domains tile, Workers tile):
+
+1. Left menu, under **Build**: click **Compute**
+2. Then **Workers & Pages** — this is the project **list**
+3. Top right: **Create** / **Create application**
+4. **Import a repository** / **Connect to Git** → GitHub → **`thenewsoulsearchers`** if that repo exists, otherwise `plasticparticles-shop` and branch `thenewsoulsearchers`
+5. If you see a tiny **Looking to deploy Pages?** link, that works too
+
+Do not click the domain `thenewsoulsearchers.de` and then Workers Routes. That is the wrong door.
+
+Project settings for either path:
 
 | Setting | Value |
 | --- | --- |
+| Project / Worker name | `thenewsoulsearchers` |
+| Production branch | **`thenewsoulsearchers`** (not `main`) |
+| Root directory | *(leave empty)* |
+| Build command | `npm run build` |
+| Build output / assets | `dist` |
+| Environment variable | `NODE_VERSION` = `22` |
+
+Then **Save and Deploy**. Open the `*.pages.dev` or `*.workers.dev` URL.
+
+Direct Pages link if you want that screen: [Create Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/pages)
+
+---
+
+## 2b. Old “Pages only” clicks
+
+1. Left menu: **Compute** (or **Workers**) → **Workers & Pages**
+2. Top right: **Create** / **Create application**
+3. Do **not** stay on the big Workers form. Look near the bottom for **Looking to deploy Pages?** → **Get started**
+4. Or open this: [Create a Pages project](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/pages)
+5. Choose **Connect to Git** → **GitHub** → allow **`chewbacca23/plasticparticles-shop`**
+6. Use these exact settings:
+
+| Setting | Value |
+| --- | --- |
+| Project name | `thenewsoulsearchers` |
+| Production branch | **`thenewsoulsearchers`** (not `main`) |
 | Root directory | *(leave empty)* |
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 | Environment variable | `NODE_VERSION` = `22` |
 
-5. **Save** → trigger deploy
-6. **Custom domains** → `thenewsoulsearchers.de` (+ optional `www`)
+7. **Save and Deploy**
+8. Wait until it is green. Open the `*.pages.dev` URL they give you — that is already your new site (HTTPS).
 
-## If you already deployed from plasticparticles-shop
+If an old project still points at folder `soul-searchers`, delete it or change it to the table above.
 
-Your old project pointed at repo `plasticparticles-shop` with root directory **`soul-searchers`**.
+---
 
-**Switch it:**
+## 3. Point the real domain (keep it at Strato)
 
-1. Pages project → **Settings** → **Build**
-2. Change repo to **`thenewsoulsearchers`**
-3. Clear **root directory** (blank)
-4. Build output: **`dist`**
-5. Redeploy
+Apex domains (`thenewsoulsearchers.de`) need the domain added as a Cloudflare **zone**, then Strato nameservers.
 
-Or create a fresh Pages project on this repo and delete the old one — same result.
+### If you use Strato email
 
-## Verify
+Before you change nameservers, open Strato DNS and **photo the MX records**. After the domain is in Cloudflare → **DNS** → add the same MX records so mail keeps working.
+
+### Add the zone and nameservers
+
+1. Cloudflare → **Add a site** → `thenewsoulsearchers.de` → **Free**
+2. Cloudflare shows two nameservers (like `ada.ns.cloudflare.com` and `bob.ns.cloudflare.com`)
+3. Strato login → your domain → **Nameserver** (or DNS) → use **Cloudflare’s two nameservers**
+4. Back in Cloudflare, wait until the zone is **Active** (can take from a few minutes to a few hours)
+
+### Attach Pages to the domain
+
+1. Pages project `thenewsoulsearchers` → **Custom domains** → **Set up a domain**
+2. Add `thenewsoulsearchers.de` and `www.thenewsoulsearchers.de`
+3. Cloudflare will create the CNAME for you once nameservers are active
+4. Wait for the SSL certificate (usually short)
+
+Then open **https://thenewsoulsearchers.de** — HTTPS should work. You can stop uploading with Cyberduck.
+
+---
+
+## 4. Day to day (this is the easy bit)
+
+On your Mac, blog branch:
+
+```sh
+git checkout thenewsoulsearchers
+npm run cms
+```
+
+Edit at http://localhost:4321/admin/index.html then:
+
+```sh
+git add -A
+git commit -m "Update journal"
+git push
+```
+
+Cloudflare rebuilds by itself. No FTP.
+
+---
+
+## 5. Check
 
 - https://thenewsoulsearchers.de/
 - https://thenewsoulsearchers.de/journal
+- https://thenewsoulsearchers.de/stories
+
+Live `/admin` on HTTPS still cannot GitHub-save until we add OAuth later. Writing on the Mac + `git push` is enough.
+
+---
+
+## If something is red
+
+- Production branch was `main` → change it to **`thenewsoulsearchers`** and Retry
+- Build says old Node → set `NODE_VERSION` = `22`
+- Domain stuck → nameservers at Strato must match Cloudflare exactly
+- Site still shows the old Strato page → DNS not switched yet; use the `*.pages.dev` URL in the meantime

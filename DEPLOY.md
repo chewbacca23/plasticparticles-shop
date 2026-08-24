@@ -2,7 +2,7 @@
 
 Static Astro site — deploy `dist/` to your host, then point DNS.
 
-**Recommended:** Cloudflare Pages (see [`CLOUDFLARE.md`](./CLOUDFLARE.md)).
+**Recommended:** Cloudflare Pages (see [`CLOUDFLARE.md`](./CLOUDFLARE.md)) — Git branch `thenewsoulsearchers` of `plasticparticles-shop`, not `main`.
 
 Domain config: `astro.config.mjs` and `src/site.config.ts`.
 

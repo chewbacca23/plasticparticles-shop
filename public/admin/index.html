@@ -40,30 +40,33 @@
   </head>
   <body>
     <div id="local-banner" class="banner hidden">
-      <strong>Local editing (this works)</strong>
-      <ol>
-        <li>Terminal 1: <code>npm run cms:proxy</code></li>
-        <li>Terminal 2: <code>npm run dev</code></li>
-        <li>Open this page at <code>http://localhost:4321/admin/</code></li>
-        <li>Click <strong>Login to Local Backend</strong> — do <em>not</em> use GitHub login</li>
-      </ol>
-      After edits: <code>npm run build</code>, then upload everything inside <code>dist/</code> to Strato via Cyberduck.
+      <strong>You are in the Mac editor</strong>
+      <p style="margin: 0.55rem 0 0">
+        One terminal: <code>npm run cms</code> — then stay on
+        <code>http://localhost:4321/admin/index.html</code>.
+        When it looks right: <code>npm run build</code> and upload <code>dist/</code>.
+      </p>
     </div>
     <div id="live-banner" class="banner hidden">
-      <strong>Live Strato admin cannot save yet</strong>
+      <strong>This is the public site, not the editor</strong>
       <p style="margin: 0.55rem 0 0">
-        “Login with GitHub” fails with <em>Invalid state key</em> because this host has no
-        GitHub OAuth server. That is expected — not a broken password.
+        Strato only shows the last upload. To write: on your Mac run
+        <code>npm run cms</code> and open
+        <code>http://localhost:4321/admin/index.html</code>.
       </p>
       <p style="margin: 0.55rem 0 0">
-        Edit on your Mac at <code>http://localhost:4321/admin/</code> (see steps in the repo
-        <code>STRATO.md</code>), then rebuild and upload <code>dist/</code>.
+        Easier later: put the site on <strong>Cloudflare Pages</strong> (HTTPS). Then
+        saving in the editor can update the real website by itself — no Cyberduck.
+        See <code>CLOUDFLARE.md</code>.
       </p>
     </div>
     <script>
+      window.__SS_CMS_LOCAL__ =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '4321';
       (function () {
-        var host = window.location.hostname;
-        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        var isLocal = window.__SS_CMS_LOCAL__;
         var localBanner = document.getElementById('local-banner');
         var liveBanner = document.getElementById('live-banner');
         if (isLocal) localBanner.classList.remove('hidden');
@@ -105,6 +108,13 @@
         };
       })();
     </script>
-    <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
+    <script>
+      // Live Strato: do not load Decap (it would offer GitHub login that cannot save).
+      if (window.__SS_CMS_LOCAL__) {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js';
+        document.body.appendChild(s);
+      }
+    </script>
   </body>
 </html>

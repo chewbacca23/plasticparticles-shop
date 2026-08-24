@@ -49,9 +49,7 @@ You can edit stories and journal posts in a browser UI:
    ```sh
    npm run dev
    ```
-3. Open:
-   - `http://localhost:4321/admin`
-   - (fallback) `http://localhost:4321/admin/index.html`
+3. Open `http://localhost:4321/admin/index.html` (no GitHub login).
 
 In the CMS:
 - **Stories** = six big photo tiles and story pages
