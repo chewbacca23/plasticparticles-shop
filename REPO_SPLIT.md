@@ -1,38 +1,24 @@
 # Two repos: shop + blog
 
-The **Soul Searchers blog** was split out of this monorepo so the game and blog are not mixed together.
-
-## Where things live now
+The Soul Searchers blog must not live in this shop repository. Agents and humans mix them up when both projects share `plasticparticles-shop`.
 
 | Project | Location |
 | --- | --- |
-| **Plastic Particles shop** | This repo, branch **`main`** |
-| **The Soul Searchers blog** | Branch **`thenewsoulsearchers`** (blog files at repo **root** on that branch) |
+| **Plastic Particles shop** | This repo (`main`) |
+| **The Soul Searchers blog** | Dedicated repo **[chewbacca23/thenewsoulsearchers](https://github.com/chewbacca23/thenewsoulsearchers)** |
 
-Blog branch URL: https://github.com/chewbacca23/plasticparticles-shop/tree/thenewsoulsearchers
+Until that dedicated repo exists, the blog *source* is still branch `thenewsoulsearchers` in this repo. Cursor Cloud cannot create the GitHub repo. You do **not** need `gh`.
 
----
-
-## Create a dedicated GitHub repo (recommended)
-
-On your Mac, once:
+1. Empty repo (no README): [create thenewsoulsearchers](https://github.com/new?name=thenewsoulsearchers&description=The+Soul+Searchers+journal&visibility=public)
+2. On your Mac, in the shop folder:
 
 ```sh
-git clone -b thenewsoulsearchers https://github.com/chewbacca23/plasticparticles-shop.git thenewsoulsearchers
-cd thenewsoulsearchers
-git remote remove origin
-git remote add origin https://github.com/YOUR_USER/thenewsoulsearchers.git
-git push -u origin main
+git checkout kuerschner-soulsearchers-own-repo-f04c
+git pull
+./scripts/publish-thenewsoulsearchers-repo.sh
 ```
 
-1. First create an **empty** repo on GitHub named **`thenewsoulsearchers`** (no README).
-2. Replace `YOUR_USER` with your GitHub username (`chewbacca23`).
-3. Update **Cloudflare Pages** → connect **`thenewsoulsearchers`** repo, **no** root subfolder, output **`dist`**.  
-   See `CLOUDFLARE.md` on the blog branch.
-
----
-
-## Day-to-day
+## Day-to-day after publish
 
 ```sh
 # Game
@@ -40,10 +26,14 @@ git clone https://github.com/chewbacca23/plasticparticles-shop.git
 cd plasticparticles-shop
 npm install && npm start
 
-# Blog (after separate clone)
-git clone -b thenewsoulsearchers https://github.com/chewbacca23/plasticparticles-shop.git thenewsoulsearchers
+# Blog
+git clone https://github.com/chewbacca23/thenewsoulsearchers.git
 cd thenewsoulsearchers
 npm install && npm run dev
 ```
 
-No more `cd soul-searchers` inside the shop repo.
+Open the blog in Cursor as **its own repo**. Do not `git checkout thenewsoulsearchers` inside the shop.
+
+## Cloudflare Pages
+
+Connect **`chewbacca23/thenewsoulsearchers`**, production branch **`main`**, no root subfolder, output **`dist`**. See `CLOUDFLARE.md` in the blog repo.

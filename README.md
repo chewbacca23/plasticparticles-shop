@@ -1,6 +1,6 @@
 # Getting Started with Create React App
 
-Plastic Particles island shop. **Blog moved out** — see [`REPO_SPLIT.md`](./REPO_SPLIT.md).
+Plastic Particles island shop. **The Soul Searchers blog is a separate GitHub repo** ([thenewsoulsearchers](https://github.com/chewbacca23/thenewsoulsearchers)) — see [`REPO_SPLIT.md`](./REPO_SPLIT.md).
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

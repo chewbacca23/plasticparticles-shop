@@ -2,7 +2,17 @@
 
 React island shop / game (Create React App).
 
-**Blog (separate):** [thenewsoulsearchers](https://github.com/chewbacca23/plasticparticles-shop/tree/thenewsoulsearchers) — branch `thenewsoulsearchers` on this repo until you create a dedicated GitHub repo (see `REPO_SPLIT.md`).
+This checkout is **only the shop**. Do not add Soul Searchers blog files here.
+
+**The Soul Searchers** is a separate GitHub repo: [chewbacca23/thenewsoulsearchers](https://github.com/chewbacca23/thenewsoulsearchers). If that repo is not on GitHub yet, create an empty repo in the browser (no README), then on your Mac:
+
+```sh
+git checkout kuerschner-soulsearchers-own-repo-f04c
+git pull
+./scripts/publish-thenewsoulsearchers-repo.sh
+```
+
+You do not need the `gh` command. See `REPO_SPLIT.md`.
 
 ## Cursor Cloud specific instructions
 
@@ -21,7 +31,3 @@ Dev server: **http://localhost:3000**
 CI=true npm test
 CI=true npm run build
 ```
-
-### Blog is not in this repo anymore
-
-The Soul Searchers site lives on branch **`thenewsoulsearchers`** or clone the standalone copy — see **`REPO_SPLIT.md`**.
