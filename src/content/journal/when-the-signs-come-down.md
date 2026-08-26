@@ -1,24 +1,21 @@
 ---
-title: When the signs come down
-description: What to do when the arrows on the road — and in life — have been taken away.
+title: Riding when the signs are gone
+description: GPS drops. Cue sheet tears. You still have tyres, a junction, and the next kilometre.
 pubDate: 2026-01-18
-heroLabel: Essay
+heroLabel: On the road
 ---
 
-There are seasons when the route is lit like a runway — every turn labeled, every risk explained. Then there are seasons when someone has taken the signs down overnight.
+Some days the route is painted on the tarmac: arrows, a bunch, a feed station. Some days the signs are gone — wet forest road, no village name, GPS spinning.
 
-No right. No wrong. Only weather, and the sound of your own freehub.
+That is still a bike ride.
 
-## Don’t wait for a replacement map
+## What to do
 
-The urge is to freeze until a clearer board appears. That freeze can last years. A better move: pick the next honest kilometre that still feels like you, then roll it while the light is only half there.
+Do not freeze in the junction until a perfect map appears. Pick a road that still feels right. Ride it. Recalculate at the next town.
 
-GPS can lie. Paper can tear. Your legs still know how to go.
+- Slow at forks. Look for a spire, a river, tyre tracks.
+- Phone in a bag that does not drown in rain.
+- Tell one person you are out and roughly when you will unclip.
+- Lights if the trees close in.
 
-## Keep one riding mate
-
-Tell one trusted person what you’re trying. Not for permission — for company. The search is quieter when someone knows you are still out there.
-
-## Come back to the page
-
-Write three lines after you unclip. Tomorrow, write three more. The journal will not decide the road for you, but it will keep you from disappearing into the fog between trips.
+Write three lines when you sit down. The cycling blog will not choose the road, but it will keep the kilometres from disappearing.

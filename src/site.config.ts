@@ -1,9 +1,9 @@
 export const site = {
   name: 'The Soul Searchers',
   shortName: 'Soul Searchers',
-  tagline: 'For riders who travel, and travellers who pedal this wonderful planet.',
+  tagline: 'A cycling blog — tours, roads, and travel by bike.',
   description:
-    'A cycling journal for dreamers, believers, and the hopeful — roads, rest days, and the next honest kilometre around this planet.',
+    'The Soul Searchers is a cycling blog: climbs, coast roads, café stops, bikes on trains, and seeing this planet from the saddle.',
   url: 'https://thenewsoulsearchers.de',
   email: 'hello@thenewsoulsearchers.de',
   locale: 'en',

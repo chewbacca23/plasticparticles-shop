@@ -1,7 +1,7 @@
 ---
-title: Shoreline
-headline: Shoreline
-description: Wrong turns still teach. Salt on the bars. The water keeps the rest.
+title: Coast road
+headline: Coast road
+description: Salt on the bars, wind in the spokes, a gold line on the water — kilometres that smell like the sea.
 cover: /stories/shoreline.png
 gallery:
   - /stories/shoreline.png
@@ -9,14 +9,14 @@ gallery:
 order: 4
 ---
 
-Sometimes we ride the “wrong” road and it is the only one that could have shown you the water.
+A coast road is a different kind of cycling. Crosswinds. Salt on the bars and in the drivetrain. The sea on one side, a town every so often with fish and coffee.
 
-The shoreline does not argue. It takes the kilometres you bring and returns them quieter — salt on the bars, sand in the drivetrain, a gold line on the sea.
+You do not have to be a triathlete. A tourer with bags, a gravel bike, a road bike with 32s — if it rolls on the tarmac (or the packed sand track beside it), it counts.
 
-## Leave some of it
+## Ride notes
 
-Not every lesson needs a speech. Some of it can stay in the stones, in the wind off the water, in the slow roll home.
+- Lower the gear and accept the wind. Fighting it on the hoods all day is a waste.
+- Rinse the bike later. Salt eats chains.
+- Stop. Look at the water. That is the point of travelling by bike, not a Strava segment.
 
-Travel is this too: a coast you did not plan, a language on a café window, the feeling that the planet is bigger than your training calendar.
-
-Be confident in your choices. Sometimes riding the wrong road helps you in ways you never imagined.
+Sometimes the “wrong” road is the one that dumps you at the shoreline. Keep it.

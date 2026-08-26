@@ -1,7 +1,7 @@
 ---
-title: Dawn on the ridge
-headline: Dawn on the ridge
-description: First light on the climb. No map yet — only the next honest kilometre.
+title: Dawn climb
+headline: Dawn climb
+description: First light on the pass. Cold hands, quiet tarmac, the climb before traffic.
 cover: /stories/dawn-ridge.png
 gallery:
   - /stories/dawn-ridge.png
@@ -9,14 +9,12 @@ gallery:
 order: 1
 ---
 
-You don’t need the whole tour. You need the tarmac under one tyre.
+Leave before the cars. Lights on if you need them. Jacket zipped. The ridge is still half dark and the road is yours.
 
-This is the hour before traffic, before anyone asks how far you are going. The ridge is quiet. The light is only half there. You can still choose the road without a committee.
+This is the start of a tour day: a climb while the valley is in mist, gold on the horizon, no café open yet. You do not need the whole route in your head. You need the next hairpin and a gear that still spins.
 
-## What this picture holds
+## On the bike
 
-A beginning that does not shout. Gold on the horizon is enough. Mist in the valley is allowed.
+Easy cadence until the legs wake up. Drink. Look up from the stem — that is why you came. The descent will be cold; keep the layer on until the sun hits the tarmac.
 
-Clip in. Take the smallest honest pedal stroke toward the pass you have been postponing. Leave the rest of the wrap intact until tomorrow.
-
-The search is not a race to empty the box. It is learning to ride beside it — hopeful, awake, and still rolling.
+A cycling day can be this simple: one pass, first light, then breakfast in the next village.

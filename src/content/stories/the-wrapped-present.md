@@ -1,7 +1,7 @@
 ---
-title: The wrapped present
-headline: The wrapped present
-description: The next tour sits packed. The card says do not touch. A look around the bend still counts.
+title: The night before a tour
+headline: The night before a tour
+description: Bags packed. Bike checked. The next tour sitting by the door like a gift you finally get to open.
 cover: /stories/wrapped-box.png
 gallery:
   - /stories/wrapped-box.png
@@ -9,14 +9,16 @@ gallery:
 order: 2
 ---
 
-Consider the rest of the ride a present, packed neatly, sitting slightly out of reach. Bags by the door. A perfect bow. A small card. In cursive it says: **do not touch**.
+The night before a tour the bike leans in the hall. Bags are packed: tubes, multi-tool, a spare layer, lights, a lock that is not a brick. The route is a gift you have been staring at for weeks.
 
-You are tempted. Of course you are. Maybe it is a coast you have never seen. Maybe a climb that hurts in a good way. Like most presents, what is inside remains a surprise.
+You can fuss the packing forever. Or you can check tyres, charge the lights, set an early alarm, and sleep.
 
-## Peek, don’t panic
+## What actually goes in the bags
 
-Curiosity is allowed. Unfold the map only when you’re ready — small peeks count.
+- Two inner tubes, patches, tyre levers, a pump you have tested
+- Multi-tool, a spare chain link if you know how to use it
+- Rain jacket, one warm layer, a cap
+- Passport or ID, a bit of cash, the train ticket if you start with Deutsche Bahn
+- Enough food for the first hours until a bakery appears
 
-A sentence in the café notebook. A spin without headphones. A conversation that ends without a verdict.
-
-Waiting is not the same as hiding. Sometimes a look around the next bend is all we need before we clip in for real.
+Leave the “maybe” kit at home. Grams add up. Tomorrow you clip in. The box gets opened on the road.

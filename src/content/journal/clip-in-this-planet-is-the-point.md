@@ -1,26 +1,27 @@
 ---
-title: Clip in — this planet is the point
-description: Why this journal is for cyclists who travel, and travellers who want to see the world from the saddle.
+title: This is a cycling blog
+description: The Soul Searchers is a cycling blog — we ride to travel, and we write it down.
 pubDate: 2026-08-26
 heroLabel: Welcome
 ---
 
-Brother, sister, fellow searcher: this place is for people who like bikes, and for people who like to go and look.
+Let’s be plain. **This is a cycling blog.**
 
-Not only race days. Not only the local loop. The slow stuff too — a pass at dawn, a coastal road with salt on the bars, a café window in a town you cannot spell yet, an overnight train with the bike in the luggage car.
+We ride bikes. We travel with bikes. We write about roads, climbs, coast kilometres, café stops, punctures, packing, and putting a bike on a train. If you came for that, you are home.
 
-## What we ride for
+Not only race days. Not only the Tuesday club run. The slow stuff too: a pass at dawn, a B-road with no traffic, a gravel shortcut, an overnight with bags, a ferry, a bakery you only found because you were hungry at kilometre 70.
 
-We ride because the planet is generous if you give it kilometres. Landscapes change at the speed of a pedal stroke. You smell bakeries before you see them. You meet people because you are moving at a human pace, not behind glass.
+## What we ride
 
-We also ride because the search is easier on two wheels. When the signs come down, the next honest kilometre is still there. When the map is a mess, the tyre still knows tarmac.
+Road, tourer, gravel — whatever you clip into. Loaded or naked. From Germany and out into Europe when the calendar allows. The bike is how we look at this planet.
 
-## Who this is for
+## What you will read
 
-- Cyclists who want to travel, even if the first trip is only a long weekend
-- Travellers who would rather pedal than queue at a rental desk
-- Dreamers, believers, and the hopeful who need a nudge to clip in
+- Ride stories with pictures
+- How we pack and what we leave at home
+- Bikes on trains (Deutsche Bahn and the rest)
+- Café kilometres, rest days, empty tarmac
 
-You do not need a perfect bike. You do not need the whole tour planned. You need the ground under one tyre, and the willingness to look around.
+You do not need a carbon race machine. You need tyres with air, a way to fix a puncture, and the will to leave the driveway.
 
-Take a leap. The net will appear. See you on the road.
+Clip in. See you on the road.

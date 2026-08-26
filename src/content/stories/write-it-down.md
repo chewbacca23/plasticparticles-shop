@@ -1,7 +1,7 @@
 ---
-title: Write it down
-headline: Write it down
-description: A sentence after the ride can steady a year of tours.
+title: Café notes
+headline: Café notes
+description: Unclip. Order coffee. Write the ride down before the kilometres fade.
 cover: /stories/notebook.png
 gallery:
   - /stories/notebook.png
@@ -9,14 +9,14 @@ gallery:
 order: 6
 ---
 
-The journal is part of the ride. A sentence today can steady a year of tours.
+After the ride: notebook on the table, bike outside or in the hall, coffee, maybe a cake that you earned.
 
-Write three lines after you unclip. Tomorrow, write three more. The page will not choose the road for you, but it will keep you from disappearing into the fog between trips.
+Three lines are enough. Road surface. Weather. Where you ate. A puncture at kilometre 40. The pass that was harder than the map. That is how a cycling blog stays true — not from the sofa, from the café after you unclip.
 
-## Practice
+## A simple template
 
-1. Name one ride or place you have been postponing.
-2. Take the smallest honest step toward it today — a date, a train ticket, a tyre check.
-3. Leave the rest of the wrap intact until tomorrow.
+1. Where you rode (and how many kilometres, roughly)
+2. Bike and bags — what worked, what rattled
+3. One thing you saw that a car would have missed
 
-Come back to the page. The search continues — hopeful, awake, and still rolling across this wonderful planet.
+Come back tomorrow. The next tour is already waiting in the notebook.

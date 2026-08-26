@@ -1,28 +1,20 @@
 ---
-title: Be your own being
-description: Nobody else pedals your bike — confidence, trial and error, and the courage to choose the road.
+title: Ride your own route
+description: Nobody else pedals your bike — skip the KOM chase and choose the road you actually want.
 pubDate: 2024-03-12
-heroLabel: Essay
+heroLabel: On the road
 ---
 
-We all need a little nudge now and again. We expect people to guide us, to tell us where we are going wrong, to name the correct path. And when the people we love will not hand us those answers, we get frustrated.
+Cycling is full of people who will tell you the “right” bike, the right watts, the right loop. Club rides have a pace. Strava has a crown. Friends have an opinion about your touring bags.
 
-I would encourage you to be your own being. Be confident in the choices you make for yourself. Have an independent, stubborn mindset — because you are the only one who can pedal those choices. And let’s face it: we all miss a turn sometimes.
+Ride your own route.
 
-Many friends say, and I have been guilty of this too: “I wish someone would tell me the right thing to do,” or “I wish I knew how the tour works out years from now.” Sorry — we do not get that luxury. Trial and error is the only way. The planet is full of roads that forgive a wrong turn.
+You are the one on the bike. You choose the pass, the café, the train, the rest day. You will miss a turn. You will pick a gear that is too hard. Trial and error is how every tourer learns a country.
 
-## The wrapped present
+## The night before
 
-Consider the rest of the ride to be a present, packed neatly, sitting slightly out of reach. A perfect bow sits on top. A small card hangs off the side. In beautiful cursive it says: **do not touch**.
+The next tour sits packed by the door. You can wait for a perfect weather window forever. Or you check tyres, set the alarm, and go.
 
-You are tempted. You cannot wait to see what is inside. Maybe it is a coast you need. Maybe a climb you did not expect. Like most presents, what is inside remains a surprise.
+A small peek counts: a weekend overnighter before the two-week trip. A 40 km spin with the bags on, to see what rattles.
 
-Sometimes waiting — and getting a small peek around the next bend — is all we need.
-
-## Take the leap
-
-Sometimes we make mistakes. Sometimes we make the right choices at the right time. Sometimes the signs pointing right or wrong have been taken down, so we try our best. They say it all happens for a reason, right?
-
-What I am saying is this: no one can decide for you. Be confident in your choices. Sometimes riding the wrong road helps you in ways you never imagined.
-
-In reality, I do not think you need that nudge. I do not think you need to see inside that box. You know what you want. Clip in — take a leap — and the net will appear.
+Nobody else can clip in for you. Choose the road. Pedal it.

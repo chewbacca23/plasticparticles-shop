@@ -50,8 +50,8 @@ collections:
       - { label: Ride text, name: body, widget: markdown }
 
   - name: journal
-    label: Journal
-    label_singular: Journal post
+    label: Ride notes
+    label_singular: Ride note
     folder: src/content/journal
     create: true
     slug: "{{slug}}"

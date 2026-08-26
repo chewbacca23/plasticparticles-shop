@@ -18,9 +18,9 @@ Live Strato is plain HTTP; `/admin` includes a `crypto.randomUUID` polyfill. **G
 ### Content & routes
 
 - Rides (six photo tiles): `src/content/stories/*.md` and `public/stories/`
-- Journal posts: `src/content/journal/*.md`
+- Ride notes: `src/content/journal/*.md`
 - Config / Impressum fields: `src/site.config.ts`
-- Routes: `/`, `/stories` (Rides), `/journal`, `/path` (The road), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
+- Routes: `/`, `/stories` (Rides), `/journal` (Ride notes), `/path` (How we ride), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
 
 ### Live domain
 
