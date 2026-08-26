@@ -17,8 +17,8 @@ logo_url: /logo.svg
 
 collections:
   - name: stories
-    label: Stories
-    label_singular: Story
+    label: Rides
+    label_singular: Ride
     folder: src/content/stories
     create: true
     slug: "{{slug}}"
@@ -47,7 +47,7 @@ collections:
           choose_url: false
       - { label: Order (1-6), name: order, widget: number, value_type: int, min: 1, max: 99, step: 1 }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Story text, name: body, widget: markdown }
+      - { label: Ride text, name: body, widget: markdown }
 
   - name: journal
     label: Journal

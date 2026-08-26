@@ -1,9 +1,9 @@
 export const site = {
   name: 'The Soul Searchers',
   shortName: 'Soul Searchers',
-  tagline: 'For the dreamers, the believers and the hopeful.',
+  tagline: 'For riders who travel, and travellers who pedal this wonderful planet.',
   description:
-    'A home-owned journal for the dreamers, the believers, and the hopeful — essays, notes, and quiet pushes toward a braver path.',
+    'A cycling journal for dreamers, believers, and the hopeful — roads, rest days, and the next honest kilometre around this planet.',
   url: 'https://thenewsoulsearchers.de',
   email: 'hello@thenewsoulsearchers.de',
   locale: 'en',

@@ -10,15 +10,15 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft)).sort(
 
 <BaseLayout
   title="Journal"
-  description="Essays and notes from The Soul Searchers — for dreamers learning to trust their own path."
+  description="Notes from the saddle — cycling, travel, and looking closer at this wonderful planet."
 >
   <section class="section">
     <div class="site-shell">
       <p class="eyebrow">Journal</p>
-      <h1 class="section-title">All the pages so far</h1>
+      <h1 class="section-title">Notes from the saddle</h1>
       <p class="section-lead">
-        A growing collection of reflections. Write new posts as Markdown in
-        <code>src/content/journal</code> — they appear here automatically.
+        Ride thoughts, travel notes, and the search that keeps you clipping in. Come back after the
+        kilometres — the page will wait.
       </p>
       <div class="post-list">
         {
@@ -40,10 +40,5 @@ const posts = (await getCollection('journal', ({ data }) => !data.draft)).sort(
 <style>
   .post-list {
     display: grid;
-  }
-
-  code {
-    font-size: 0.9em;
-    color: var(--amber-hot);
   }
 </style>

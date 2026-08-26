@@ -1,8 +1,8 @@
 # The Soul Searchers
 
-Self-owned blog for **thenewsoulsearchers.de** — landing page, journal, path, about, and contact.
+Self-owned cycling journal for **thenewsoulsearchers.de** — rides, notes from the saddle, about, and contact.
 
-> For the dreamers, the believers and the hopeful.
+> For riders who travel, and travellers who pedal this wonderful planet.
 
 **Game shop (separate repo):** [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop)
 
@@ -54,8 +54,8 @@ You can edit stories and journal posts in a browser UI:
    - (fallback) `http://localhost:4321/admin/index.html`
 
 In the CMS:
-- **Stories** = six big photo tiles and story pages
-- **Journal** = blog-style posts
+- **Rides** = six big photo tiles and ride pages
+- **Journal** = notes from the saddle
 - image uploads go into `public/stories/`
 
 Then deploy as usual (`npm run build` + FTP upload of `dist/`).
