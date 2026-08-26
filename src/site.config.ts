@@ -9,7 +9,7 @@ export const site = {
   locale: 'en',
   domains: ['thenewsoulsearchers.de', 'www.thenewsoulsearchers.de'],
 
-  /** Replace `public/logo.svg` or add `public/logo.png` — see LOGO.md */
+  /** Crest lives at `public/logo.svg` (lowercase — Linux/Cloudflare is case-sensitive) */
   logo: '/logo.svg',
   /** Large faint mark behind pages (0 = off, 0.04–0.12 = subtle) */
   logoWatermarkOpacity: 0.07,
