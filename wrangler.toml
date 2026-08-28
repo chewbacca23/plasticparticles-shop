@@ -1,8 +1,7 @@
-# Cloudflare Pages (optional wrangler config)
-# Prefer dashboard setup — see CLOUDFLARE.md
-
-name = thenewsoulsearchers
+# Cloudflare Worker (thenewsoulsearchersblog) — keep this in sync with the live repo.
+name = "thenewsoulsearchersblog"
+compatibility_date = "2026-08-23"
 pages_build_output_dir = "dist"
 
-[build]
-command = "npm run build"
+[assets]
+directory = "./dist"

@@ -9,9 +9,8 @@ publish_mode: simple
 media_folder: public/stories
 public_folder: /stories
 
-# Match live Strato (plain HTTP). HTTPS here while visiting http:// breaks OAuth state.
-site_url: http://thenewsoulsearchers.de
-display_url: http://thenewsoulsearchers.de
+site_url: https://thenewsoulsearchers.de
+display_url: https://thenewsoulsearchers.de
 logo_url: /logo.svg
 
 
