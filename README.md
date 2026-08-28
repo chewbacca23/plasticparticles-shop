@@ -39,26 +39,20 @@ Your words here.
 
 ## Decap CMS (easy editor)
 
-You can edit stories and journal posts in a browser UI:
+**Live:** [https://thenewsoulsearchers.de/admin/](https://thenewsoulsearchers.de/admin/) → **Login with GitHub**.  
+First-time OAuth clicks: [`CLOUDFLARE.md`](./CLOUDFLARE.md).
 
-1. Terminal A:
-   ```sh
-   npm run cms:proxy
-   ```
-2. Terminal B:
-   ```sh
-   npm run dev
-   ```
-3. Open:
-   - `http://localhost:4321/admin`
-   - (fallback) `http://localhost:4321/admin/index.html`
+**On your Mac** (optional):
+
+1. Terminal A: `npm run cms:proxy`
+2. Terminal B: `npm run dev`
+3. Open `http://localhost:4321/admin/`
+4. Click **Login to Local Backend** (not GitHub)
 
 In the CMS:
 - **Rides** = six photo tiles and ride pages
 - **Ride notes** = packing, trains, café kilometres, touring posts
 - image uploads go into `public/stories/`
-
-Then deploy as usual (`npm run build` + FTP upload of `dist/`).
 
 ## Deploy
 

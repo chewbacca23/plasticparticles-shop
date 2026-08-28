@@ -45,19 +45,21 @@
         <li>Terminal 1: <code>npm run cms:proxy</code></li>
         <li>Terminal 2: <code>npm run dev</code></li>
         <li>Open this page at <code>http://localhost:4321/admin/</code></li>
-        <li>Click <strong>Login to Local Backend</strong> — do <em>not</em> use GitHub login</li>
+        <li>Click <strong>Login to Local Backend</strong> — do <em>not</em> use GitHub login here</li>
       </ol>
-      After edits: <code>npm run build</code>, then upload everything inside <code>dist/</code> to Strato via Cyberduck.
+      After edits: <code>npm run build</code>. Live saving is
+      <code>https://thenewsoulsearchers.de/admin/</code> (Login with GitHub).
     </div>
     <div id="live-banner" class="banner hidden">
-      <strong>Live Strato admin cannot save yet</strong>
+      <strong>Login with GitHub to add rides and notes</strong>
       <p style="margin: 0.55rem 0 0">
-        “Login with GitHub” fails with <em>Invalid state key</em> because this host has no
-        GitHub OAuth server. That is expected — not a broken password.
+        Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). After
+        <strong>Publish</strong>, wait about a minute for Cloudflare to rebuild, then hard-refresh
+        the public site.
       </p>
       <p style="margin: 0.55rem 0 0">
-        Edit on your Mac at <code>http://localhost:4321/admin/</code> (see steps in the repo
-        <code>STRATO.md</code>), then rebuild and upload <code>dist/</code>.
+        First time only: you still need one GitHub OAuth app and two Cloudflare secrets — the
+        popup will show the clicks if those are missing. Details in <code>CLOUDFLARE.md</code>.
       </p>
     </div>
     <script>
@@ -72,8 +74,7 @@
     </script>
     <script>
       // Decap uses crypto.randomUUID(), which browsers only expose in secure
-      // contexts (HTTPS or localhost). Strato currently serves plain HTTP, so
-      // we polyfill it before loading the CMS.
+      // contexts (HTTPS or localhost). Keep a polyfill for odd hosts.
       (function () {
         var c = typeof globalThis !== 'undefined' && globalThis.crypto;
         if (!c) return;

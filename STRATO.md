@@ -79,8 +79,9 @@ FTP_REMOTE_DIR=/ \
 
 ## Edit content (Decap) — working path
 
-**Do not use “Login with GitHub” on the live Strato site.**  
-That flow needs a separate OAuth app + server. Without it you get:
+The live journal is on **Cloudflare** now (`thenewsoulsearchers.de`). Use **https://thenewsoulsearchers.de/admin/** with GitHub login — see **`CLOUDFLARE.md`**. The old Strato admin message (“Invalid state key”) does not apply there.
+
+**If you still upload over FTP to Strato:** do not use “Login with GitHub” on a Strato copy of `/admin`. That host has no OAuth server. Without it you get:
 
 `Authentication Error … Invalid state key`
 

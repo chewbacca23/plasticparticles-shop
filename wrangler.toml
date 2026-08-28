@@ -1,7 +1,10 @@
 # Cloudflare Worker (thenewsoulsearchersblog) — keep this in sync with the live repo.
 name = "thenewsoulsearchersblog"
+main = "cloudflare/cms-oauth-worker.js"
 compatibility_date = "2026-08-23"
-pages_build_output_dir = "dist"
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+# OAuth routes must hit the Worker before the static admin files.
+run_worker_first = ["/auth", "/callback"]

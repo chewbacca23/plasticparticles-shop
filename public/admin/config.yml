@@ -1,7 +1,10 @@
 backend:
   name: github
-  repo: chewbacca23/plasticparticles-shop
-  branch: thenewsoulsearchers
+  repo: chewbacca23/thenewsoulsearchersblog
+  branch: main
+  base_url: https://thenewsoulsearchers.de
+  auth_endpoint: auth
+  site_domain: thenewsoulsearchers.de
 
 local_backend: true
 publish_mode: simple
@@ -12,6 +15,13 @@ public_folder: /stories
 site_url: https://thenewsoulsearchers.de
 display_url: https://thenewsoulsearchers.de
 logo_url: /logo.svg
+
+commit_messages:
+  create: Create {{collection}} “{{slug}}”
+  update: Update {{collection}} “{{slug}}”
+  delete: Delete {{collection}} “{{slug}}”
+  uploadMedia: Upload “{{path}}”
+  deleteMedia: Delete “{{path}}”
 
 
 collections:
