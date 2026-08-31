@@ -2,10 +2,10 @@
 title: Nice
 headline: Nice
 description: Where the Alps meet the sea — Promenade des Anglais, Vieux Nice, Matisse light, and Niçoise cooking that tastes like nowhere else in France.
-cover: /stories/shoreline.png
+cover: /stories/nice-baie-des-anges.jpg
 gallery:
-  - /stories/shoreline.png
-  - /stories/shore-detail.png
+  - /stories/nice-baie-des-anges.jpg
+  - /stories/nice-promenade-detail.jpg
 order: 4
 ---
 

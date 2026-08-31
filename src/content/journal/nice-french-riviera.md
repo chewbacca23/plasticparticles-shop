@@ -5,6 +5,8 @@ pubDate: 2026-08-31
 heroLabel: Côte d'Azur
 ---
 
+![Dusk over the Baie des Anges, Nice](/stories/nice-baie-des-anges.jpg)
+
 Ask a Parisian to name France's greatest city and you'll get Paris, obviously — loyalty runs deep in the capital. But ask anyone who has actually stood on the Promenade des Anglais at sunset, watched the Baie des Anges turn gold, and felt the Mediterranean breeze roll in off the water, and you'll get a different answer entirely. Nice isn't just another French city with nice weather and a pretty coastline. It is, in almost every way that matters, the most complete city France has to offer — a place where geography, history, culture, and daily life align in a way few other cities manage.
 
 ## A setting no other city can claim
