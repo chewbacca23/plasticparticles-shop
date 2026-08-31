@@ -1,8 +1,12 @@
 ---
-title: Nice — the unrivaled jewel of the French Riviera
+title: Nice
+headline: Nice
 description: Where the Alps meet the sea — Promenade des Anglais, Vieux Nice, Matisse light, and Niçoise cooking that tastes like nowhere else in France.
-pubDate: 2026-08-31
-heroLabel: Côte d'Azur
+cover: /stories/shoreline.png
+gallery:
+  - /stories/shoreline.png
+  - /stories/shore-detail.png
+order: 4
 ---
 
 Ask a Parisian to name France's greatest city and you'll get Paris, obviously — loyalty runs deep in the capital. But ask anyone who has actually stood on the Promenade des Anglais at sunset, watched the Baie des Anges turn gold, and felt the Mediterranean breeze roll in off the water, and you'll get a different answer entirely. Nice isn't just another French city with nice weather and a pretty coastline. It is, in almost every way that matters, the most complete city France has to offer — a place where geography, history, culture, and daily life align in a way few other cities manage.
@@ -36,5 +40,3 @@ Beyond the postcard version, Nice functions extraordinarily well as an actual pl
 Every French city has its partisans. Lyon has its gastronomy, Bordeaux its wine, Marseille its grit and its bouillabaisse, Paris its endless self-mythology. Nice doesn't need to compete on those terms, because it already has its own: mountains and sea in the same afternoon, an old town that feels authentically Mediterranean rather than curated, an art history that punches far above its size, a cuisine found nowhere else, and a climate that makes daily life feel less like a grind and more like something worth savoring.
 
 Superb isn't too strong a word for it. Nice doesn't just belong among France's great cities — it makes a quiet, confident case for being the best of them.
-
-Also in the ride gallery: [Nice](/stories/nice).
