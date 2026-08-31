@@ -27,6 +27,7 @@ describe('GET /auth', () => {
     const html = await res.text();
     assert.match(html, /GITHUB_OAUTH_CLIENT_SECRET/);
     assert.match(html, /thenewsoulsearchers\.de\/callback/);
+    assert.match(html, /thenewsoulsearchersblogc/);
   });
 
   it('redirects to GitHub authorize with the live callback', async () => {

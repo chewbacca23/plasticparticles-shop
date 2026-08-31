@@ -1,6 +1,6 @@
 # Cloudflare — thenewsoulsearchers.de
 
-Live Worker: **`thenewsoulsearchersblog`**  
+Live Worker: **`thenewsoulsearchersblogc`** (journal; Git/repo name is still `thenewsoulsearchersblog`)  
 Git source: **`chewbacca23/thenewsoulsearchersblog`** (`main`)  
 Admin: **https://thenewsoulsearchers.de/admin/** (not `www`)
 
@@ -29,7 +29,7 @@ The public site is on Cloudflare. `/admin` saves Markdown into GitHub; Cloudflar
 ### B. Cloudflare secrets
 
 1. [dash.cloudflare.com](https://dash.cloudflare.com)
-2. **Workers & Pages** → **`thenewsoulsearchersblog`** (the journal — not `plasticparticles-shop`)
+2. **Workers & Pages** → **`thenewsoulsearchersblogc`** (the live journal Worker, the one with a **c** — not the shop)
 3. **Settings** → **Variables and Secrets** → **Add**
 4. Name `GITHUB_OAUTH_CLIENT_ID` · type **Text** · paste the Client ID → Save
 5. **Add** again: name `GITHUB_OAUTH_CLIENT_SECRET` · type **Secret** · paste the secret → Save

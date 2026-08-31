@@ -2,7 +2,7 @@
  * GitHub OAuth proxy for Decap CMS on the Soul Searchers Worker.
  * Handles /auth and /callback, then serves the static Astro site.
  *
- * Secrets (Cloudflare dashboard → thenewsoulsearchersblog → Settings →
+ * Secrets (Cloudflare dashboard → thenewsoulsearchersblogc → Settings →
  * Variables and Secrets):
  *   GITHUB_OAUTH_CLIENT_ID
  *   GITHUB_OAUTH_CLIENT_SECRET
@@ -83,7 +83,7 @@ function missingSecretsPage() {
   <p><strong>B. Cloudflare secrets</strong></p>
   <ol>
     <li>Open <a href="https://dash.cloudflare.com">dash.cloudflare.com</a></li>
-    <li><strong>Workers &amp; Pages</strong> → <strong>thenewsoulsearchersblog</strong> (the journal, not the shop)</li>
+    <li><strong>Workers &amp; Pages</strong> → <strong>thenewsoulsearchersblogc</strong> (the live journal Worker — the one with a <code>c</code>, not the shop)</li>
     <li><strong>Settings</strong> → <strong>Variables and Secrets</strong> → <strong>Add</strong></li>
     <li>Name <code>GITHUB_OAUTH_CLIENT_ID</code>, type Text, paste the Client ID → Save</li>
     <li><strong>Add</strong> again: name <code>GITHUB_OAUTH_CLIENT_SECRET</code>, type <strong>Secret</strong>, paste the secret → Save</li>
