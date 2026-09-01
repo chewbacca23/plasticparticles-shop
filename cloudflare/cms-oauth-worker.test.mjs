@@ -87,6 +87,32 @@ describe('GET /cms-status', () => {
     assert.deepEqual(body.textBindingsVisibleToWorker, []);
   });
 
+  it('warns when the client secret was pasted into the client id slot', async () => {
+    const body = JSON.parse(
+      await (
+        await statusPage({
+          // 40 hex characters: the shape of a GitHub client secret.
+          GITHUB_OAUTH_CLIENT_ID: 'a'.repeat(40),
+          GITHUB_OAUTH_CLIENT_SECRET: 'b'.repeat(40),
+        })
+      ).text(),
+    );
+    assert.match(body.clientIdShape, /client SECRET/);
+    assert.match(body.clientIdShape, /rotate/);
+  });
+
+  it('accepts a real-shaped GitHub client id but not a 40-hex string', async () => {
+    const ok = JSON.parse(
+      await (
+        await statusPage({
+          GITHUB_OAUTH_CLIENT_ID: 'Ov23li8qq16feoZZ0VOo',
+          GITHUB_OAUTH_CLIENT_SECRET: 'b'.repeat(40),
+        })
+      ).text(),
+    );
+    assert.equal(ok.clientIdShape, 'looks like a GitHub client id');
+  });
+
   it('flags a client id that is not shaped like GitHub', async () => {
     const body = JSON.parse(
       await (

@@ -58,6 +58,22 @@ function oauthCreds(env) {
 }
 
 /**
+ * GitHub OAuth app client ids are public and fixed-length; client secrets are
+ * 40 hex characters. Pasting the secret into the client id slot publishes it
+ * in every /auth redirect, so name that mistake explicitly.
+ * @param {string} id
+ */
+function describeClientId(id) {
+  if (/^[0-9a-f]{40}$/i.test(id)) {
+    return 'WARNING: this is 40 hex characters, the shape of a GitHub client SECRET, not a client id. Replace it, then rotate the secret on GitHub — it has been exposed in redirect URLs.';
+  }
+  if (/^Ov23[A-Za-z0-9]{16}$/.test(id)) return 'looks like a GitHub client id';
+  if (/^Iv1\.[0-9a-f]{16}$/i.test(id)) return 'looks like a GitHub client id';
+  if (/^[0-9a-f]{20}$/i.test(id)) return 'looks like a GitHub client id';
+  return 'does NOT look like a GitHub client id';
+}
+
+/**
  * Report which binding names this Worker can actually see. Names only — no
  * values — so it is safe to open in a browser and paste into a chat.
  * @param {Record<string, unknown>} env
@@ -71,9 +87,7 @@ function statusPage(env) {
     .filter((key) => typeof env[key] !== 'string')
     .sort();
 
-  // GitHub OAuth app client ids are public and prefixed, so this is a safe
-  // way to confirm the right value landed in the right binding.
-  const idShape = creds ? (/^(Ov23|Iv1\.|[0-9a-f]{20})/.test(creds.id) ? 'looks like a GitHub client id' : 'does NOT look like a GitHub client id') : 'n/a';
+  const idShape = creds ? describeClientId(creds.id) : 'n/a';
 
   const body = {
     loginWired: Boolean(creds),
