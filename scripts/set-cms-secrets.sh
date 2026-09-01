@@ -24,8 +24,13 @@ echo "Account: $ACCOUNT"
 echo
 
 if ! $WRANGLER whoami >/dev/null 2>&1; then
-  echo "Logging in to Cloudflare — a browser window will open. Click Allow."
-  $WRANGLER login
+  # Device flow instead of the default localhost:8976 callback: that callback
+  # server only lives while the command waits, so any pause before clicking
+  # Authorize ends in ERR_CONNECTION_REFUSED. Device codes last 5 minutes.
+  echo "Logging in to Cloudflare."
+  echo "A code will appear below — type it into the page that opens."
+  echo
+  $WRANGLER login --device
   echo
 fi
 

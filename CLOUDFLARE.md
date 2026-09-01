@@ -34,7 +34,9 @@ Five Workers are Git-connected to this repo, so the dashboard offers five wrong 
 sh scripts/set-cms-secrets.sh
 ```
 
-It logs you in through the browser, asks for the Client ID and the secret, then lists what landed on `thenewsoulsearchersblogc`.
+It logs you in, asks for the Client ID and the secret, then lists what landed on `thenewsoulsearchersblogc`.
+
+Login uses `wrangler login --device`, which prints a code you type into Cloudflare. The default flow instead waits on a `localhost:8976` callback server that exists only while the command runs, so pausing before you click **Authorize** ends in `ERR_CONNECTION_REFUSED`.
 
 To check any time, without revealing values:
 
