@@ -26,11 +26,27 @@ The public site is on Cloudflare. `/admin` saves Markdown into GitHub; Cloudflar
 7. Copy **Client ID**
 8. **Generate a new client secret** → copy it (GitHub shows it once)
 
-### B. Cloudflare secrets
+### B. Cloudflare secrets — from the terminal (recommended)
+
+Five Workers are Git-connected to this repo, so the dashboard offers five wrong places to paste the keys. The CLI targets one Worker by name:
+
+```sh
+sh scripts/set-cms-secrets.sh
+```
+
+It logs you in through the browser, asks for the Client ID and the secret, then lists what landed on `thenewsoulsearchersblogc`.
+
+To check any time, without revealing values:
+
+```sh
+npx wrangler secret list --name thenewsoulsearchersblogc
+```
+
+### B2. Cloudflare secrets — via the dashboard
 
 1. [dash.cloudflare.com](https://dash.cloudflare.com)
-2. **Workers & Pages** → **`thenewsoulsearchersblogc`** (the live journal Worker, the one with a **c** — not the shop)
-3. **Settings** → **Variables and Secrets** → **Add**
+2. **Workers & Pages** → **`thenewsoulsearchersblogc`** (the live journal Worker, the one with a **c** — not the shop, and not `thenewsoulsearchersblog` without the `c`)
+3. **Settings** → **Variables and Secrets** — the runtime section. Values added under **Build** never reach the running site.
 4. Name `GITHUB_OAUTH_CLIENT_ID` · type **Text** · paste the Client ID → Save
 5. **Add** again: name `GITHUB_OAUTH_CLIENT_SECRET` · type **Secret** · paste the secret → Save
 
