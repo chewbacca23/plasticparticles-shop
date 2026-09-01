@@ -117,7 +117,32 @@ function originAllowed(origin) {
   }
 }
 
-function missingSecretsPage() {
+/**
+ * Say which of the two likely mistakes this actually is, rather than
+ * repeating generic setup steps the reader has already followed.
+ * @param {Record<string, unknown>} env
+ */
+function diagnosisHtml(env) {
+  const names = Object.keys(env).filter((key) => typeof env[key] === 'string' && env[key] !== '');
+
+  if (names.length === 0) {
+    return `<p class="diag"><strong>What this Worker sees:</strong> no variables or secrets at all.</p>
+  <p class="diag">So the two keys are somewhere else. Either they went on a different Worker
+  (the dashboard also lists <code>thenewsoulsearchersblog</code> without the <code>c</code>,
+  plus <code>bloga</code>, <code>blogb</code>, <code>bl</code>, <code>blo</code> — only
+  <code>thenewsoulsearchersblogc</code> is on the domain), or they were added under
+  <strong>Build</strong> variables, which never reach the running site.</p>`;
+  }
+
+  return `<p class="diag"><strong>What this Worker sees:</strong>
+  <code>${names.map((n) => n.replace(/[<>&]/g, '')).join('</code>, <code>')}</code></p>
+  <p class="diag">The right Worker has the values, but the names did not match a client id
+  <em>and</em> a client secret. Rename them to <code>GITHUB_OAUTH_CLIENT_ID</code> and
+  <code>GITHUB_OAUTH_CLIENT_SECRET</code>.</p>`;
+}
+
+/** @param {Record<string, unknown>} env */
+function missingSecretsPage(env = {}) {
   return new Response(
     `<!doctype html>
 <html lang="en">
@@ -132,10 +157,13 @@ function missingSecretsPage() {
     ol { padding-left: 1.2rem; }
     code { color: #f0c27a; }
     a { color: #8ec8ff; }
+    .diag { background: rgba(30, 40, 48, 0.92); border: 1px solid rgba(240, 194, 122, 0.35);
+      border-radius: 8px; padding: 0.7rem 0.9rem; margin: 0.6rem 0; }
   </style>
 </head>
 <body>
   <h1>One GitHub app, then two Cloudflare secrets</h1>
+  ${diagnosisHtml(env)}
   <p>The editor is ready. GitHub login still needs credentials (not in git — you add them in the dashboards).</p>
   <p><strong>A. GitHub OAuth app</strong></p>
   <ol>
@@ -294,7 +322,7 @@ export default {
 
     if (url.pathname === '/auth' || url.pathname === '/callback') {
       const creds = oauthCreds(env);
-      if (!creds) return missingSecretsPage();
+      if (!creds) return missingSecretsPage(env);
       if (url.pathname === '/auth') return handleAuth(url, creds);
       return handleCallback(url, creds);
     }

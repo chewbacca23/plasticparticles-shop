@@ -118,6 +118,27 @@ describe('GET /auth', () => {
     assert.match(html, /thenewsoulsearchersblogc/);
   });
 
+  it('says "no variables at all" when the keys went to another Worker', async () => {
+    const res = await worker.fetch(
+      new Request('https://thenewsoulsearchers.de/auth?provider=github'),
+      { ASSETS: {} },
+    );
+    const html = await res.text();
+    assert.match(html, /no variables or secrets at all/);
+    assert.match(html, /Build/);
+  });
+
+  it('names the bindings it found when only the names are wrong', async () => {
+    const res = await worker.fetch(
+      new Request('https://thenewsoulsearchers.de/auth?provider=github'),
+      { GITHUB_TOKEN_THING: 'value-should-not-appear' },
+    );
+    const html = await res.text();
+    assert.match(html, /GITHUB_TOKEN_THING/);
+    assert.doesNotMatch(html, /value-should-not-appear/);
+    assert.doesNotMatch(html, /no variables or secrets at all/);
+  });
+
   it('redirects to GitHub authorize with the live callback', async () => {
     const res = await worker.fetch(
       new Request('https://thenewsoulsearchers.de/auth?provider=github'),
