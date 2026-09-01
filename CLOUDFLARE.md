@@ -43,6 +43,19 @@ The public site is on Cloudflare. `/admin` saves Markdown into GitHub; Cloudflar
 
 If the GitHub popup says login is not wired yet, secrets from **B** are missing.
 
+### Stuck? Ask the Worker instead of guessing
+
+Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names the live Worker can see — never the values.
+
+| What it says | What it means |
+| --- | --- |
+| `"textBindingsVisibleToWorker": []` | The Worker sees nothing. Keys went to another Worker, or under **Build** variables instead of runtime **Variables and Secrets**. |
+| Names listed but `"loginWired": false` | Names are close but unmatched. Rename to `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET`. |
+| `"clientIdShape": "does NOT look like a GitHub client id"` | The Client **ID** box holds the wrong value (GitHub ids start `Ov23`). |
+| `"loginWired": true` | Login is ready. Go to `/admin/`. |
+
+Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
+
 Do not force-push over `thenewsoulsearchersblog` `main` after using the editor — that would wipe those posts.
 
 ---

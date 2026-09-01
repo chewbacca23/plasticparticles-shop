@@ -7,4 +7,4 @@ compatibility_date = "2026-08-23"
 directory = "./dist"
 binding = "ASSETS"
 # OAuth routes must hit the Worker before the static admin files.
-run_worker_first = ["/auth", "/callback"]
+run_worker_first = ["/auth", "/callback", "/cms-status"]

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 import worker, { testables } from './cms-oauth-worker.js';
 
-const { handleAuth, handleCallback, oauthCreds } = testables;
+const { handleAuth, handleCallback, oauthCreds, statusPage } = testables;
 
 const creds = { id: 'client-id-test', secret: 'client-secret-test' };
 
@@ -10,13 +10,101 @@ describe('oauthCreds', () => {
   it('reads GITHUB_OAUTH_* names', () => {
     assert.deepEqual(
       oauthCreds({ GITHUB_OAUTH_CLIENT_ID: 'abc', GITHUB_OAUTH_CLIENT_SECRET: 'xyz' }),
-      { id: 'abc', secret: 'xyz' },
+      {
+        id: 'abc',
+        secret: 'xyz',
+        idKey: 'GITHUB_OAUTH_CLIENT_ID',
+        secretKey: 'GITHUB_OAUTH_CLIENT_SECRET',
+      },
     );
   });
 
   it('returns null when secrets are missing', () => {
     assert.equal(oauthCreds({}), null);
     assert.equal(oauthCreds({ GITHUB_OAUTH_CLIENT_ID: 'abc' }), null);
+  });
+
+  it('tolerates hand-typed name variants', () => {
+    const creds = oauthCreds({ GITHUB_OAUTH_ID: 'abc', GITHUB_OAUTH_SECRET: 'xyz' });
+    assert.deepEqual({ id: creds.id, secret: creds.secret }, { id: 'abc', secret: 'xyz' });
+
+    const bare = oauthCreds({ CLIENT_ID: 'abc', CLIENT_SECRET: 'xyz' });
+    assert.deepEqual({ id: bare.id, secret: bare.secret }, { id: 'abc', secret: 'xyz' });
+  });
+
+  it('never reuses the secret as the client id', () => {
+    assert.equal(oauthCreds({ GITHUB_OAUTH_CLIENT_SECRET: 'xyz' }), null);
+  });
+
+  it('ignores blank and non-string bindings', () => {
+    assert.equal(
+      oauthCreds({ GITHUB_OAUTH_CLIENT_ID: '  ', GITHUB_OAUTH_CLIENT_SECRET: 'xyz' }),
+      null,
+    );
+    assert.equal(oauthCreds({ ASSETS: {}, GITHUB_OAUTH_CLIENT_SECRET: 'xyz' }), null);
+  });
+
+  it('prefers the documented names over fuzzy matches', () => {
+    const creds = oauthCreds({
+      SOME_CLIENT_ID: 'wrong',
+      GITHUB_OAUTH_CLIENT_ID: 'right',
+      GITHUB_OAUTH_CLIENT_SECRET: 'xyz',
+    });
+    assert.equal(creds.id, 'right');
+    assert.equal(creds.idKey, 'GITHUB_OAUTH_CLIENT_ID');
+  });
+});
+
+describe('GET /cms-status', () => {
+  it('lists binding names without leaking values', async () => {
+    const res = await statusPage({
+      ASSETS: {},
+      GITHUB_OAUTH_CLIENT_ID: 'Ov23abcdefghijklmnop',
+      GITHUB_OAUTH_CLIENT_SECRET: 'super-secret-value',
+    });
+    assert.equal(res.status, 200);
+    const raw = await res.text();
+    assert.doesNotMatch(raw, /super-secret-value/);
+    assert.doesNotMatch(raw, /Ov23abcdefghijklmnop/);
+
+    const body = JSON.parse(raw);
+    assert.equal(body.loginWired, true);
+    assert.equal(body.clientIdBinding, 'GITHUB_OAUTH_CLIENT_ID');
+    assert.equal(body.clientSecretBinding, 'GITHUB_OAUTH_CLIENT_SECRET');
+    assert.equal(body.clientSecretLength, 'super-secret-value'.length);
+    assert.match(body.clientIdShape, /looks like a GitHub client id/);
+    assert.deepEqual(body.textBindingsVisibleToWorker, [
+      'GITHUB_OAUTH_CLIENT_ID',
+      'GITHUB_OAUTH_CLIENT_SECRET',
+    ]);
+    assert.deepEqual(body.otherBindingsVisibleToWorker, ['ASSETS']);
+  });
+
+  it('shows an empty binding list when secrets landed on another Worker', async () => {
+    const body = JSON.parse(await (await statusPage({ ASSETS: {} })).text());
+    assert.equal(body.loginWired, false);
+    assert.equal(body.clientIdBinding, null);
+    assert.deepEqual(body.textBindingsVisibleToWorker, []);
+  });
+
+  it('flags a client id that is not shaped like GitHub', async () => {
+    const body = JSON.parse(
+      await (
+        await statusPage({
+          GITHUB_OAUTH_CLIENT_ID: 'pasted-the-wrong-thing',
+          GITHUB_OAUTH_CLIENT_SECRET: 'xyz',
+        })
+      ).text(),
+    );
+    assert.match(body.clientIdShape, /does NOT look like/);
+  });
+
+  it('is reachable through the Worker entrypoint', async () => {
+    const res = await worker.fetch(new Request('https://thenewsoulsearchers.de/cms-status'), {
+      ASSETS: { fetch: async () => new Response('should not be used') },
+    });
+    assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
+    assert.equal(JSON.parse(await res.text()).loginWired, false);
   });
 });
 

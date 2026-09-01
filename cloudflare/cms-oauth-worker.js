@@ -11,15 +11,84 @@
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
 
+const ID_PATTERNS = [
+  /^GITHUB_OAUTH_CLIENT_ID$/i,
+  /^GITHUB_CLIENT_ID$/i,
+  /^(GITHUB|OAUTH).*(CLIENT_?)?ID$/i,
+  /CLIENT_?ID$/i,
+];
+
+const SECRET_PATTERNS = [
+  /^GITHUB_OAUTH_CLIENT_SECRET$/i,
+  /^GITHUB_CLIENT_SECRET$/i,
+  /^(GITHUB|OAUTH).*SECRET$/i,
+  /CLIENT_?SECRET$/i,
+];
+
 /**
- * @param {unknown} env
- * @returns {{ id: string, secret: string } | null}
+ * Names drift when secrets are typed by hand, so match the documented names
+ * first and fall back to anything unambiguous.
+ * @param {Record<string, unknown>} env
+ * @param {RegExp[]} patterns
+ */
+function pickByName(env, patterns) {
+  const entries = Object.entries(env).filter(
+    ([, value]) => typeof value === 'string' && value.trim() !== '',
+  );
+  for (const pattern of patterns) {
+    const hit = entries.find(([key]) => pattern.test(key));
+    if (hit) return { key: hit[0], value: String(hit[1]).trim() };
+  }
+  return null;
+}
+
+/**
+ * @param {Record<string, unknown>} env
+ * @returns {{ id: string, secret: string, idKey: string, secretKey: string } | null}
  */
 function oauthCreds(env) {
-  const id = String(env.GITHUB_OAUTH_CLIENT_ID || env.GITHUB_CLIENT_ID || '').trim();
-  const secret = String(env.GITHUB_OAUTH_CLIENT_SECRET || env.GITHUB_CLIENT_SECRET || '').trim();
+  const secret = pickByName(env, SECRET_PATTERNS);
+  const id = pickByName(
+    // Never let the secret double as the client id.
+    Object.fromEntries(Object.entries(env).filter(([key]) => key !== secret?.key)),
+    ID_PATTERNS,
+  );
   if (!id || !secret) return null;
-  return { id, secret };
+  return { id: id.value, secret: secret.value, idKey: id.key, secretKey: secret.key };
+}
+
+/**
+ * Report which binding names this Worker can actually see. Names only — no
+ * values — so it is safe to open in a browser and paste into a chat.
+ * @param {Record<string, unknown>} env
+ */
+function statusPage(env) {
+  const creds = oauthCreds(env);
+  const stringKeys = Object.keys(env)
+    .filter((key) => typeof env[key] === 'string')
+    .sort();
+  const otherKeys = Object.keys(env)
+    .filter((key) => typeof env[key] !== 'string')
+    .sort();
+
+  // GitHub OAuth app client ids are public and prefixed, so this is a safe
+  // way to confirm the right value landed in the right binding.
+  const idShape = creds ? (/^(Ov23|Iv1\.|[0-9a-f]{20})/.test(creds.id) ? 'looks like a GitHub client id' : 'does NOT look like a GitHub client id') : 'n/a';
+
+  const body = {
+    loginWired: Boolean(creds),
+    clientIdBinding: creds ? creds.idKey : null,
+    clientIdShape: idShape,
+    clientSecretBinding: creds ? creds.secretKey : null,
+    clientSecretLength: creds ? creds.secret.length : 0,
+    textBindingsVisibleToWorker: stringKeys,
+    otherBindingsVisibleToWorker: otherKeys,
+  };
+
+  return new Response(JSON.stringify(body, null, 2), {
+    status: 200,
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+  });
 }
 
 /** @param {string} origin */
@@ -83,11 +152,12 @@ function missingSecretsPage() {
   <p><strong>B. Cloudflare secrets</strong></p>
   <ol>
     <li>Open <a href="https://dash.cloudflare.com">dash.cloudflare.com</a></li>
-    <li><strong>Workers &amp; Pages</strong> → <strong>thenewsoulsearchersblogc</strong> (the live journal Worker — the one with a <code>c</code>, not the shop)</li>
-    <li><strong>Settings</strong> → <strong>Variables and Secrets</strong> → <strong>Add</strong></li>
+    <li><strong>Workers</strong> → <strong>thenewsoulsearchersblogc</strong> (the live journal Worker — the one with a <code>c</code>, not the shop)</li>
+    <li><strong>Settings</strong> → <strong>Variables and Secrets</strong> — the runtime one. Values added under <strong>Build</strong> do not reach the live site.</li>
     <li>Name <code>GITHUB_OAUTH_CLIENT_ID</code>, type Text, paste the Client ID → Save</li>
     <li><strong>Add</strong> again: name <code>GITHUB_OAUTH_CLIENT_SECRET</code>, type <strong>Secret</strong>, paste the secret → Save</li>
   </ol>
+  <p><strong>Stuck?</strong> Open <a href="/cms-status">/cms-status</a>. It lists the binding names this Worker can actually see — never the values — so you can tell “wrong Worker” from “wrong name” instead of guessing.</p>
   <p>Then close this window, open <a href="https://thenewsoulsearchers.de/admin/">thenewsoulsearchers.de/admin/</a> (not www), and click <strong>Login with GitHub</strong> again.</p>
 </body>
 </html>`,
@@ -220,6 +290,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/cms-status') return statusPage(env);
+
     if (url.pathname === '/auth' || url.pathname === '/callback') {
       const creds = oauthCreds(env);
       if (!creds) return missingSecretsPage();
@@ -239,4 +311,6 @@ export const testables = {
   handleAuth,
   handleCallback,
   missingSecretsPage,
+  statusPage,
+  pickByName,
 };
