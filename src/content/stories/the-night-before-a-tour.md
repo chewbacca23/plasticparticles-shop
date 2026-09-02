@@ -1,7 +1,7 @@
 ---
 title: The Tour de France Femmes ! they are harder than most of the boys !
 headline: Riding in 45 degrees heat in the Sun
-description: Riding up the Hill but only 4 times that is ;)
+description: "Riding up the Hill but only 4 times that is ;) "
 cover: /stories/img_6344.jpg
 gallery: []
 order: 2
