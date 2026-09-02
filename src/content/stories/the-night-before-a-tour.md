@@ -8,7 +8,7 @@ gallery:
   - /stories/img_5940.jpg
   - /stories/img_6072.jpg
   - /stories/img_6125.jpg
-order: 1
+order: 4
 draft: false
 ---
 # Chasing the Peloton to the Sea: The Weekend at the Tour de France Femmes Finale in Nice
