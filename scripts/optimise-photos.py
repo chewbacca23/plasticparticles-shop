@@ -28,14 +28,17 @@ try:
 except ImportError:  # pragma: no cover - dependency guidance only
     sys.exit("Pillow is required: pip install Pillow")
 
-# GitHub's limit is 1 MB (1,048,576 bytes). Leave headroom so a photo that
-# lands just under does not creep back over on a later re-encode.
+# Not a preference — GitHub's contents API returns no body above 1 MB, and
+# that is what the CMS media library previews through. Raising this number
+# does not raise theirs; it just stops photos being resized and puts the
+# broken thumbnails back. Headroom is for re-encodes creeping upward.
 MAX_BYTES = 950_000
 
-# Long-edge sizes to try, largest first. 2000px is generous for a full-width
-# photo on this blog; the smaller steps are fallbacks for very busy images.
-EDGE_STEPS = (2000, 1600, 1400, 1200, 1000)
-QUALITY_STEPS = (82, 78, 74, 70)
+# Largest first, so a photo keeps as much detail as the byte ceiling allows.
+# A 12 MP phone photo lands near 880 KB at 3000px/q86, so most arrive close
+# to full resolution; the smaller steps are fallbacks for very busy images.
+EDGE_STEPS = (3000, 2600, 2200, 1800, 1400, 1000)
+QUALITY_STEPS = (86, 82, 78, 74, 70)
 
 RASTER_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 

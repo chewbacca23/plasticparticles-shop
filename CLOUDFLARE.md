@@ -56,6 +56,8 @@ npx wrangler secret list --name thenewsoulsearchersblogc
 
 The media library previews images through the GitHub contents API, which returns `"encoding": "none"` and no body for files over 1 MB. The upload still commits, so the photo works on the site while the thumbnail in the editor stays broken. iPhone photos are 2–5 MB and always hit this.
 
+**The 1 MB is GitHub's, not a setting we chose.** Raising `MAX_BYTES` in `scripts/optimise-photos.py` does not raise GitHub's limit — it only stops photos being resized and brings the broken thumbnails back. To get better-looking photos, raise the *pixel* size instead: `EDGE_STEPS` tries the largest first and stops at the biggest that fits, so a 12 MP phone photo lands near 3000px at quality 86 (~880 KB).
+
 **You do not have to think about it.** `.github/workflows/keep-photos-small.yml` runs on every push that touches a photo, resizes anything over the limit, and commits the result. Upload straight from your phone; the next preview loads.
 
 One-time repo setting for the robot to be able to commit: **Settings → Actions → General → Workflow permissions → Read and write permissions**.
