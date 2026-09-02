@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
-import { existingMedia } from '../../lib/media';
+import { galleryMedia } from '../../lib/media';
 
 export async function getStaticPaths() {
   const stories = await getCollection('stories', ({ data }) => !data.draft);
@@ -13,8 +13,7 @@ export async function getStaticPaths() {
 
 const { story } = Astro.props;
 const { Content } = await render(story);
-const declared = story.data.gallery.length ? story.data.gallery : [story.data.cover];
-const gallery = existingMedia(declared);
+const gallery = galleryMedia(story.data.cover, story.data.gallery);
 ---
 
 <BaseLayout title={story.data.title} description={story.data.description} ogType="article">

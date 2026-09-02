@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { existingMedia, mediaExists } from './media.ts';
+import { existingMedia, galleryMedia, mediaExists } from './media.ts';
 
 // Run from the repo root, so public/ holds the committed Nice photos.
 const present = '/stories/nice-baie-des-anges.jpg';
@@ -57,5 +57,29 @@ describe('existingMedia', () => {
 
   it('returns an empty list when every photo was deleted', () => {
     assert.deepEqual(existingMedia(['/stories/notebook.png', '/stories/window-light.png']), []);
+  });
+});
+
+describe('galleryMedia', () => {
+  it('shows a new cover even when the gallery lists deleted photos', () => {
+    assert.deepEqual(
+      galleryMedia('/stories/img_6344.jpg', [
+        '/stories/packed-bike.jpg',
+        '/stories/packed-bike-detail.jpg',
+      ]),
+      ['/stories/img_6344.jpg'],
+    );
+  });
+
+  it('puts the cover first and does not repeat it', () => {
+    assert.deepEqual(galleryMedia(present, [present, '/stories/nice-promenade-detail.jpg']), [
+      present,
+      '/stories/nice-promenade-detail.jpg',
+    ]);
+  });
+
+  it('is empty only when nothing survives', () => {
+    assert.deepEqual(galleryMedia('/stories/notebook.png', ['/stories/notebook-detail.png']), []);
+    assert.deepEqual(galleryMedia(undefined, []), []);
   });
 });

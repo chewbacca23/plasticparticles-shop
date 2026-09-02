@@ -46,3 +46,22 @@ export function mediaExists(mediaPath?: string | null): boolean {
 export function existingMedia(paths: readonly (string | null | undefined)[]): string[] {
   return paths.filter((entry): entry is string => mediaExists(entry));
 }
+
+/**
+ * Photos for a ride page, cover first. The cover is included because a ride
+ * whose gallery still lists deleted files would otherwise show nothing even
+ * after a new cover is chosen in the editor.
+ */
+export function galleryMedia(
+  cover: string | null | undefined,
+  gallery: readonly (string | null | undefined)[] = [],
+): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const entry of existingMedia([cover, ...gallery])) {
+    if (seen.has(entry)) continue;
+    seen.add(entry);
+    unique.push(entry);
+  }
+  return unique;
+}
