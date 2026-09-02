@@ -52,17 +52,28 @@ npx wrangler secret list --name thenewsoulsearchersblogc
 4. Name `GITHUB_OAUTH_CLIENT_ID` · type **Text** · paste the Client ID → Save
 5. **Add** again: name `GITHUB_OAUTH_CLIENT_SECRET` · type **Secret** · paste the secret → Save
 
-### Photos must be under 1 MB
+### Photos are kept under 1 MB automatically
 
 The media library previews images through the GitHub contents API, which returns `"encoding": "none"` and no body for files over 1 MB. The upload still commits, so the photo works on the site while the thumbnail in the editor stays broken. iPhone photos are 2–5 MB and always hit this.
+
+**You do not have to think about it.** `.github/workflows/keep-photos-small.yml` runs on every push that touches a photo, resizes anything over the limit, and commits the result. Upload straight from your phone; the next preview loads.
+
+One-time repo setting for the robot to be able to commit: **Settings → Actions → General → Workflow permissions → Read and write permissions**.
+
+Locally:
+
+```sh
+npm run photos:check   # report anything too big
+npm run photos:fix     # resize them in place
+```
+
+Before uploading, on a Mac:
 
 ```sh
 sh scripts/shrink-photo.sh ~/Desktop/IMG_1234.HEIC
 ```
 
-Upload the resulting `-web.jpg`. It converts HEIC and caps the long edge at 2000px.
-
-Two things to know about iPhone photos: they carry your **GPS location** in EXIF, and they store the image sideways with an orientation flag. Strip the metadata without rotating the pixels first and the photo shows up rotated 90° in every browser.
+Two things to know about iPhone photos: they carry your **GPS location** in EXIF, and they store the image sideways with an orientation flag. The resizer rotates the pixels before stripping metadata — do it the other way round and the photo appears rotated 90° in every browser.
 
 ### C. Write a post
 

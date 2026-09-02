@@ -1,0 +1,57 @@
+name: Keep photos under 1 MB
+
+# Photos uploaded in the CMS land here straight from a phone, at 2-5 MB. The
+# media library previews images through the GitHub contents API, which returns
+# no body above 1 MB, so the upload succeeds while its thumbnail stays broken.
+# This resizes them in the repo so the next preview works.
+#
+# No infinite loop: the bot's own commit re-triggers this workflow, but by then
+# nothing is oversized, so it makes no commit and stops.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**.jpg'
+      - 'public/**.jpeg'
+      - 'public/**.JPG'
+      - 'public/**.JPEG'
+      - 'public/**.png'
+      - 'public/**.PNG'
+      - 'public/**.webp'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keep-photos-small
+  cancel-in-progress: false
+
+jobs:
+  resize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow
+        run: python -m pip install --quiet --upgrade Pillow
+
+      - name: Resize anything over the limit
+        run: python3 scripts/optimise-photos.py
+
+      - name: Commit resized photos
+        run: |
+          if git diff --quiet; then
+            echo "Nothing needed resizing."
+            exit 0
+          fi
+          git config user.name 'soul-searchers-bot'
+          git config user.email 'bot@users.noreply.github.com'
+          git add -A
+          git commit -m 'Resize photos to fit the editor preview limit'
+          git push

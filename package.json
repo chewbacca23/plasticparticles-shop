@@ -11,6 +11,8 @@
     "preview": "astro preview",
     "cms:proxy": "decap-server",
     "test": "node --test cloudflare/cms-oauth-worker.test.mjs && node --experimental-strip-types --test src/lib/media.test.mts",
+    "photos:check": "python3 scripts/optimise-photos.py --check",
+    "photos:fix": "python3 scripts/optimise-photos.py",
     "cms:dev": "astro dev",
     "astro": "astro"
   },

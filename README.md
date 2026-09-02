@@ -21,6 +21,9 @@ Open [http://localhost:4321](http://localhost:4321).
 | `npm run build` | Production build → `dist/` |
 | `npm run preview` | Preview production build |
 | `npm run cms:proxy` | Local Decap CMS proxy |
+| `npm run photos:check` | Report photos too big for the editor preview |
+| `npm run photos:fix` | Resize those photos in place |
+| `npm test` | Worker OAuth + media checks |
 
 ## Write a post
 

@@ -58,10 +58,10 @@
         the public site.
       </p>
       <p style="margin: 0.55rem 0 0">
-        <strong>Photos: keep them under 1 MB.</strong> GitHub returns no content for bigger files,
-        so an upload can succeed while the thumbnail here stays broken. Straight-off-the-iPhone
-        photos are 2–5 MB. On your Mac: <code>sh scripts/shrink-photo.sh ~/Desktop/IMG_1234.HEIC</code>,
-        then upload the <code>-web.jpg</code>. That also removes the GPS location.
+        <strong>Photos:</strong> upload straight from your phone. Anything over 1 MB is resized
+        automatically after the commit, because GitHub will not serve bigger files to this
+        preview. If a new thumbnail looks broken, wait a minute and reload — the resizer is
+        still running. It also strips the GPS location out of phone photos.
       </p>
     </div>
     <script>
