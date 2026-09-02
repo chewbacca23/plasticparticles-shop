@@ -1,10 +1,17 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { mediaExists } from '../../lib/media';
+import { site } from '../../site.config';
 
 const stories = (await getCollection('stories', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order,
 );
+
+const tiles = stories.map((story) => ({
+  story,
+  cover: mediaExists(story.data.cover) ? story.data.cover : null,
+}));
 ---
 
 <BaseLayout
@@ -22,10 +29,19 @@ const stories = (await getCollection('stories', ({ data }) => !data.draft)).sort
 
       <div class="grid">
         {
-          stories.map((story) => (
+          tiles.map(({ story, cover }) => (
             <a class="tile" href={`/stories/${story.id}`}>
               <span class="frame">
-                <img src={story.data.cover} alt="" width="800" height="600" loading="lazy" />
+                {
+                  cover ? (
+                    <img src={cover} alt="" width="800" height="600" loading="lazy" />
+                  ) : (
+                    <span class="awaiting">
+                      <img src={site.logo} alt="" width="56" height="71" loading="lazy" />
+                      <span>Photo coming</span>
+                    </span>
+                  )
+                }
               </span>
               <h2>{story.data.headline}</h2>
             </a>
@@ -78,8 +94,32 @@ const stories = (await getCollection('stories', ({ data }) => !data.draft)).sort
     transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .tile:hover img {
+  .tile:hover .frame img {
     transform: scale(1.04);
+  }
+
+  .awaiting {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #121820 0%, #1b2530 100%);
+  }
+
+  .awaiting img {
+    width: 3.5rem;
+    height: auto;
+    opacity: 0.32;
+    transition: none;
+  }
+
+  .awaiting span {
+    color: rgba(215, 224, 232, 0.5);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   h2 {

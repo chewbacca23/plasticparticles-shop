@@ -41,6 +41,7 @@ collections:
       - label: Cover image
         name: cover
         widget: image
+        required: false
         choose_url: false
         media_library:
           config:

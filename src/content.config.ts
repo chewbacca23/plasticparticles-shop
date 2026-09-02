@@ -20,7 +20,8 @@ const stories = defineCollection({
     title: z.string(),
     headline: z.string(),
     description: z.string(),
-    cover: z.string(),
+    // Optional: deleting a photo in the CMS must not fail the whole build.
+    cover: z.string().optional(),
     gallery: z.array(z.string()).default([]),
     order: z.number(),
     draft: z.boolean().default(false),
