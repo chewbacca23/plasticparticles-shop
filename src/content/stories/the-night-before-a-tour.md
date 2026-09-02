@@ -7,6 +7,7 @@ gallery:
   - /stories/img_2878.jpg
   - /stories/img_5940.jpg
   - /stories/img_6072.jpg
+  - /stories/img_6125.jpg
 order: 1
 draft: false
 ---
