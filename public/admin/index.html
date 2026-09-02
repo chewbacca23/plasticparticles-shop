@@ -58,8 +58,10 @@
         the public site.
       </p>
       <p style="margin: 0.55rem 0 0">
-        First time only: you still need one GitHub OAuth app and two Cloudflare secrets — the
-        popup will show the clicks if those are missing. Details in <code>CLOUDFLARE.md</code>.
+        <strong>Photos: keep them under 1 MB.</strong> GitHub returns no content for bigger files,
+        so an upload can succeed while the thumbnail here stays broken. Straight-off-the-iPhone
+        photos are 2–5 MB. On your Mac: <code>sh scripts/shrink-photo.sh ~/Desktop/IMG_1234.HEIC</code>,
+        then upload the <code>-web.jpg</code>. That also removes the GPS location.
       </p>
     </div>
     <script>
