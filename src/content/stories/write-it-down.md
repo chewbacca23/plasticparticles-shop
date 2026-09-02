@@ -2,10 +2,7 @@
 title: Café notes
 headline: Café notes
 description: Unclip. Order coffee. Write the ride down before the kilometres fade.
-cover: /stories/notebook.png
-gallery:
-  - /stories/notebook.png
-  - /stories/notebook-detail.png
+gallery: []
 order: 6
 ---
 

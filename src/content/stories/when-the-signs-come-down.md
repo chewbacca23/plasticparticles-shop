@@ -2,10 +2,7 @@
 title: Empty tarmac
 headline: Empty tarmac
 description: No arrows, no bunch, no café yet — just wet road, trees, and the sound of the freehub.
-cover: /stories/empty-road.png
-gallery:
-  - /stories/empty-road.png
-  - /stories/road-detail.png
+gallery: []
 order: 3
 ---
 

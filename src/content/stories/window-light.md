@@ -2,10 +2,7 @@
 title: Rest day
 headline: Rest day
 description: Bike in the hall. Coffee. Light on the floor. Tomorrow you clip in again.
-cover: /stories/window-light.png
-gallery:
-  - /stories/window-light.png
-  - /stories/window-detail.png
+gallery: []
 order: 5
 ---
 
