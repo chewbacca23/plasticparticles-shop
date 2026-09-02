@@ -1,5 +1,8 @@
-# Cloudflare Worker (thenewsoulsearchersblog) — keep this in sync with the live repo.
-name = "thenewsoulsearchersblog"
+# Must name the Worker that owns thenewsoulsearchers.de and holds the GitHub
+# OAuth secrets. `wrangler deploy` targets this name, so pointing it at the
+# repo name instead sent deploys to a Worker nobody visits, leaving the live
+# site stale while sibling Workers built fine.
+name = "thenewsoulsearchersblogc"
 main = "cloudflare/cms-oauth-worker.js"
 compatibility_date = "2026-08-23"
 
