@@ -58,10 +58,9 @@
         the public site.
       </p>
       <p style="margin: 0.55rem 0 0">
-        <strong>Photos:</strong> upload straight from your phone. Anything over 1 MB is resized
-        automatically after the commit, because GitHub will not serve bigger files to this
-        preview. If a new thumbnail looks broken, wait a minute and reload — the resizer is
-        still running. It also strips the GPS location out of phone photos.
+        <strong>Photos:</strong> upload straight from your phone, any size. Big ones are shrunk
+        here in the browser before uploading, so the thumbnail is right away. GitHub refuses to
+        serve files over 1 MB to this preview, which is why that matters.
       </p>
     </div>
     <script>
@@ -108,6 +107,7 @@
         };
       })();
     </script>
+    <script src="/admin/shrink-on-pick.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
   </body>
 </html>
