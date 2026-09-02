@@ -12,16 +12,16 @@ npm run dev
 ```
 
 Dev server: **http://localhost:4321**. Production: `npm run build` then `npm run preview`.
+Decap editor (live): `https://thenewsoulsearchers.de/admin/` → Login with GitHub (OAuth Worker at `/auth` + `/callback`; first-time secrets in `CLOUDFLARE.md`).
 Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `http://localhost:4321/admin/` and use **Login to Local Backend** (not GitHub).
-Live Strato is plain HTTP; `/admin` includes a `crypto.randomUUID` polyfill. **GitHub login on Strato fails with “Invalid state key”** until a custom OAuth provider exists — expected. Edit locally → `npm run build` → upload `dist/` (see `STRATO.md`).
 
 ### Content & routes
 
-- Stories (six photo tiles): `src/content/stories/*.md` and `public/stories/`
-- Journal posts: `src/content/journal/*.md`
+- Rides (six photo tiles): `src/content/stories/*.md` and `public/stories/`
+- Ride notes: `src/content/journal/*.md`
 - Config / Impressum fields: `src/site.config.ts`
-- Routes: `/`, `/stories`, `/journal`, `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
+- Routes: `/`, `/stories` (Rides), `/journal` (Ride notes), `/path` (How we ride), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
 
 ### Live domain
 
-`thenewsoulsearchers.de` is hosted at **Strato**. Until `dist/` is uploaded over FTP, the public site can still be WordPress. Deploy steps: `STRATO.md`. Cloudflare Pages is optional (`CLOUDFLARE.md`).
+`thenewsoulsearchers.de` is the Cloudflare Worker **`thenewsoulsearchersblog`** (Git repo `chewbacca23/thenewsoulsearchersblog`). See `CLOUDFLARE.md`.

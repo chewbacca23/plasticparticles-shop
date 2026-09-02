@@ -1,22 +1,17 @@
 ---
-title: Window light
-headline: Window light
-description: Take a leap — and the net will appear.
-cover: /stories/window-light.png
-gallery:
-  - /stories/window-light.png
-  - /stories/window-detail.png
+title: Rest day
+headline: Rest day
+description: Bike in the hall. Coffee. Light on the floor. Tomorrow you clip in again.
+gallery: []
 order: 5
 ---
 
-In reality, I do not think you need that nudge. I do not think you need to see inside the box.
+Touring is not only climbing. A rest day is part of the ride: bike leaning in the hall, kit drying, a chair in the window light, coffee, a look at the map for tomorrow.
 
-You know what you want. Take a leap — and the net will appear.
+If it is raining sideways, sit. If the legs are cooked, sit. You did not come this far to smash yourself into a hole.
 
-## The quiet room
+## What a rest day is for
 
-Light on the floor is enough of a sign. An empty chair is an invitation, not a verdict.
+Wash the chain if you can. Check the tyre cuts. Eat a real meal. Walk the town without clipless shoes. Write three lines about yesterday’s kilometres.
 
-Many friends say they wish someone would tell them the right thing to do. We do not get that luxury. Trial and error is the only way.
-
-Be your own being. Have an independent, stubborn mindset — because you are the only one who can make those choices.
+Tomorrow you pack the bags again. The net appears when you clip in — but you clip in better after a night that was actually rest.

@@ -1,8 +1,8 @@
 # The Soul Searchers
 
-Self-owned blog for **thenewsoulsearchers.de** — landing page, journal, path, about, and contact.
+Cycling blog for **thenewsoulsearchers.de** — rides, ride notes, how we ride, about, contact.
 
-> For the dreamers, the believers and the hopeful.
+> A cycling blog — tours, roads, and travel by bike.
 
 **Game shop (separate repo):** [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop)
 
@@ -21,6 +21,9 @@ Open [http://localhost:4321](http://localhost:4321).
 | `npm run build` | Production build → `dist/` |
 | `npm run preview` | Preview production build |
 | `npm run cms:proxy` | Local Decap CMS proxy |
+| `npm run photos:check` | Report photos too big for the editor preview |
+| `npm run photos:fix` | Resize those photos in place |
+| `npm test` | Worker OAuth + media checks |
 
 ## Write a post
 
@@ -39,26 +42,20 @@ Your words here.
 
 ## Decap CMS (easy editor)
 
-You can edit stories and journal posts in a browser UI:
+**Live:** [https://thenewsoulsearchers.de/admin/](https://thenewsoulsearchers.de/admin/) → **Login with GitHub**.  
+First-time OAuth clicks: [`CLOUDFLARE.md`](./CLOUDFLARE.md).
 
-1. Terminal A:
-   ```sh
-   npm run cms:proxy
-   ```
-2. Terminal B:
-   ```sh
-   npm run dev
-   ```
-3. Open:
-   - `http://localhost:4321/admin`
-   - (fallback) `http://localhost:4321/admin/index.html`
+**On your Mac** (optional):
+
+1. Terminal A: `npm run cms:proxy`
+2. Terminal B: `npm run dev`
+3. Open `http://localhost:4321/admin/`
+4. Click **Login to Local Backend** (not GitHub)
 
 In the CMS:
-- **Stories** = six big photo tiles and story pages
-- **Journal** = blog-style posts
+- **Rides** = six photo tiles and ride pages
+- **Ride notes** = packing, trains, café kilometres, touring posts
 - image uploads go into `public/stories/`
-
-Then deploy as usual (`npm run build` + FTP upload of `dist/`).
 
 ## Deploy
 

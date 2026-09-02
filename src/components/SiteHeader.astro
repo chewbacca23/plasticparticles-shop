@@ -4,8 +4,9 @@ import { site } from '../site.config';
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/stories', label: 'Stories' },
-  { href: '/journal', label: 'Journal' },
+  { href: '/stories', label: 'Rides' },
+  { href: '/journal', label: 'Ride notes' },
+  { href: '/path', label: 'How we ride' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
@@ -14,7 +15,7 @@ const links = [
 <header class="header">
   <div class="site-shell header-inner">
     <a class="brand" href="/">
-      <img class="brand-logo" src={site.logo} alt="" width="32" height="32" decoding="async" />
+      <img class="brand-logo" src={site.logo} alt="" width="40" height="51" decoding="async" />
       <span class="brand-text">{site.name}</span>
     </a>
     <nav class="nav" aria-label="Primary">
@@ -60,10 +61,9 @@ const links = [
   }
 
   .brand-logo {
-    width: 2rem;
-    height: 2rem;
+    width: 2.4rem;
+    height: auto;
     object-fit: contain;
-    border-radius: 50%;
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
   }
 

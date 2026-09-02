@@ -1,18 +1,18 @@
 ---
-title: First note on our own roof
-description: Hello-world entry — the first journal post published on the self-owned Soul Searchers site.
+title: First ride note from base camp
+description: Hello from the cycling blog’s own roof — bikes, maps, and a page that belongs to us.
 pubDate: 2026-08-11
 heroLabel: Hello
 ---
 
-This is the first note written on **our** stack.
+First note on **our** stack: a roof over the bikes, a table for the maps, a cycling blog that is not someone else’s dashboard.
 
-No WordPress.com sidebar. No hunting for Jetpack. Just a Markdown file that became a live journal page.
+No rented menu. A ride note that went live.
 
-## What we did today
+## What is here
 
-1. Stood up a landing page that leads with **The Soul Searchers**.
-2. Wired a journal that picks up every `.md` file in `src/content/journal`.
-3. Published this hello-world post to prove the path works.
+1. A home page that says it straight: this is a cycling blog.
+2. Ride stories with pictures.
+3. Ride notes — packing, trains, café kilometres.
 
-If you are reading this on the site, the leap already landed — the net appeared.
+If you are reading this on the site, the site works. Clip in when you are ready. The roads are out there.

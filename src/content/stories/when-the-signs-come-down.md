@@ -1,22 +1,19 @@
 ---
-title: When the signs come down
-headline: When the signs come down
-description: No arrows. Only weather, and the sound of your own walking.
-cover: /stories/empty-road.png
-gallery:
-  - /stories/empty-road.png
-  - /stories/road-detail.png
+title: Empty tarmac
+headline: Empty tarmac
+description: No arrows, no bunch, no café yet — just wet road, trees, and the sound of the freehub.
+gallery: []
 order: 3
 ---
 
-There are seasons when the path is lit like a runway. Then there are seasons when someone has taken the signs down overnight.
+Some rides have a cue sheet and a bunch. Some rides have an empty road after rain, trees close in, and no sign telling you which village is next.
 
-No right. No wrong. Only weather, and the sound of your own walking.
+That is still cycling. GPS can drop. Paper can tear. You keep a sense of the sun and the next junction. You ride the tarmac in front of the wheel.
 
-## Don’t wait for a replacement map
+## If the signs are gone
 
-The urge is to freeze until a clearer board appears. That freeze can last years.
+Slow down at junctions. Look for tyre tracks, a church spire, a river. A wrong turn on a bike is rarely a disaster — it is extra kilometres and often a better road.
 
-A better move: pick the next honest step that still feels like you, then take it while the light is only half there.
+Keep one person who knows you are out. Phone in a dry bag. Lights if the forest gets dark early.
 
-Keep one witness. Tell one trusted person what you’re trying — not for permission, for company.
+Then keep pedalling. Empty tarmac is why a lot of us own a bike.

@@ -1,7 +1,10 @@
 backend:
   name: github
-  repo: chewbacca23/plasticparticles-shop
-  branch: thenewsoulsearchers
+  repo: chewbacca23/thenewsoulsearchersblog
+  branch: main
+  base_url: https://thenewsoulsearchers.de
+  auth_endpoint: auth
+  site_domain: thenewsoulsearchers.de
 
 local_backend: true
 publish_mode: simple
@@ -9,16 +12,22 @@ publish_mode: simple
 media_folder: public/stories
 public_folder: /stories
 
-# Match live Strato (plain HTTP). HTTPS here while visiting http:// breaks OAuth state.
-site_url: http://thenewsoulsearchers.de
-display_url: http://thenewsoulsearchers.de
+site_url: https://thenewsoulsearchers.de
+display_url: https://thenewsoulsearchers.de
 logo_url: /logo.svg
+
+commit_messages:
+  create: Create {{collection}} “{{slug}}”
+  update: Update {{collection}} “{{slug}}”
+  delete: Delete {{collection}} “{{slug}}”
+  uploadMedia: Upload “{{path}}”
+  deleteMedia: Delete “{{path}}”
 
 
 collections:
   - name: stories
-    label: Stories
-    label_singular: Story
+    label: Rides
+    label_singular: Ride
     folder: src/content/stories
     create: true
     slug: "{{slug}}"
@@ -32,6 +41,7 @@ collections:
       - label: Cover image
         name: cover
         widget: image
+        required: false
         choose_url: false
         media_library:
           config:
@@ -47,11 +57,11 @@ collections:
           choose_url: false
       - { label: Order (1-6), name: order, widget: number, value_type: int, min: 1, max: 99, step: 1 }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Story text, name: body, widget: markdown }
+      - { label: Ride text, name: body, widget: markdown }
 
   - name: journal
-    label: Journal
-    label_singular: Journal post
+    label: Ride notes
+    label_singular: Ride note
     folder: src/content/journal
     create: true
     slug: "{{slug}}"

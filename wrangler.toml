@@ -1,8 +1,13 @@
-# Cloudflare Pages (optional wrangler config)
-# Prefer dashboard setup — see CLOUDFLARE.md
+# Must name the Worker that owns thenewsoulsearchers.de and holds the GitHub
+# OAuth secrets. `wrangler deploy` targets this name, so pointing it at the
+# repo name instead sent deploys to a Worker nobody visits, leaving the live
+# site stale while sibling Workers built fine.
+name = "thenewsoulsearchersblogc"
+main = "cloudflare/cms-oauth-worker.js"
+compatibility_date = "2026-08-23"
 
-name = thenewsoulsearchers
-pages_build_output_dir = "dist"
-
-[build]
-command = "npm run build"
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# OAuth routes must hit the Worker before the static admin files.
+run_worker_first = ["/auth", "/callback", "/cms-status"]

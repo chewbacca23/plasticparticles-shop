@@ -1,31 +1,17 @@
 # Your logo on the site
 
-Drop **your** logo into `public/` and the site picks it up automatically.
+The header, hero, and watermark all load **`/logo.svg`** (lowercase).
 
-## Easiest
+That filename must stay **exactly** `public/logo.svg`. Linux and Cloudflare treat `Logo.svg` and `logo.svg` as **two different files**. If both exist, the site keeps the placeholder.
 
-1. Save your logo as **`public/logo.svg`** or **`public/logo.png`**
-2. If you use PNG, open `src/site.config.ts` and set:
-   ```ts
-   logo: '/logo.png',
-   ```
-3. Rebuild: `npm run build`
+## What is in the file now
 
-## Tips for a subtle background look
+`public/logo.svg` is the shield crest, cropped from the Illustrator A4 export (`viewBox="244 50 96 122"`). The original artboard was a full page with the mark in the corner — without that crop the logo looks like a tiny stamp on empty paper.
 
-- **SVG or PNG with transparent background** works best.
-- Square or circle marks look great as the faint watermark.
-- Very busy logos: lower opacity in `src/site.config.ts`:
-  ```ts
-  logoWatermarkOpacity: 0.05,  // try 0.04 – 0.10
-  ```
+## If you re-export from Illustrator
 
-## Where it appears
+1. Overwrite **`public/logo.svg`** (not `Logo.svg`)
+2. If the export is a full A4 page again, crop the viewBox to the crest, or export only the artwork
+3. Rebuild (`npm run build`) or retry the Cloudflare deploy
 
-| Place | How |
-| --- | --- |
-| Header | Small mark next to the site name |
-| Every page | Large, soft watermark (easy on the eyes) |
-| Hero | Slightly stronger glow behind the headline |
-
-Replace `public/logo.svg` — no code changes needed if you keep that filename.
+Do not keep a second file named `Logo.svg` in `public/`.

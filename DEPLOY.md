@@ -2,13 +2,13 @@
 
 Static Astro site — deploy `dist/` to your host, then point DNS.
 
-**Recommended:** Cloudflare Pages (see [`CLOUDFLARE.md`](./CLOUDFLARE.md)).
+**Live setup:** Cloudflare Worker `thenewsoulsearchersblogc`, built from `chewbacca23/thenewsoulsearchersblog`. See [`CLOUDFLARE.md`](./CLOUDFLARE.md).
 
 Domain config: `astro.config.mjs` and `src/site.config.ts`.
 
 ---
 
-## Cloudflare Pages
+## Cloudflare (live)
 
 See **[CLOUDFLARE.md](./CLOUDFLARE.md)** — repo root is the project (no subfolder).
 
@@ -16,10 +16,7 @@ See **[CLOUDFLARE.md](./CLOUDFLARE.md)** — repo root is the project (no subfol
 
 ## GitHub Pages
 
-1. Repo → **Settings** → **Pages** → Source: **GitHub Actions**
-2. Push to `main` — workflow `.github/workflows/deploy-pages.yml`
-3. Custom domain: `thenewsoulsearchers.de`
-4. DNS A records to GitHub Pages IPs (see GitHub docs) or use Cloudflare instead
+Not used. The `deploy-pages.yml` workflow was removed: it ran on every push and failed, because Pages was never enabled on the repository. Add it back only if you move off Cloudflare.
 
 ---
 

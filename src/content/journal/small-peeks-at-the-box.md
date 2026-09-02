@@ -1,18 +1,18 @@
 ---
-title: Small peeks at the box
-description: On patience, curiosity, and why you do not need the whole map before the next step.
+title: Start with a weekend overnighter
+description: You do not need a two-week tour. One night, bags on, 80 kilometres — that is how touring starts.
 pubDate: 2025-11-02
-heroLabel: Reflection
+heroLabel: Touring
 ---
 
-Curiosity is not the enemy of patience. You can want to know what is inside the box and still refuse to tear the paper in a panic.
+You do not need the whole map of Europe before the first loaded ride. A weekend overnighter is enough: bags on Friday, 40–80 km, a cheap room or a tent, coffee, home on Sunday.
 
-A small peek is enough for many days: a sentence in a journal, a walk without headphones, a conversation that ends without a verdict.
+That is touring. The two-week Alps trip can wait until the bags have rattled once.
 
-## Practice
+## A small first tour
 
-1. Name one choice you have been postponing.
-2. Take the smallest honest step toward it today.
-3. Leave the rest of the wrap intact until tomorrow.
+1. Pick a town you can reach by bike or by regional train with a Fahrradkarte.
+2. Pack as if you mean it — tubes, jacket, one warm layer — then take one thing out.
+3. Ride there. Eat. Sleep. Ride back a different road if you can.
 
-The search is not a race to empty the box. It is learning to live beside it — hopeful, awake, and still moving.
+Curiosity is not a reason to panic-buy four new panniers. Ride with what you have. The cycling blog will still be here when the bigger tour is ready.

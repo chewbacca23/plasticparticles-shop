@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
+import { galleryMedia } from '../../lib/media';
 
 export async function getStaticPaths() {
   const stories = await getCollection('stories', ({ data }) => !data.draft);
@@ -12,32 +13,40 @@ export async function getStaticPaths() {
 
 const { story } = Astro.props;
 const { Content } = await render(story);
-const gallery = story.data.gallery.length ? story.data.gallery : [story.data.cover];
+const gallery = galleryMedia(story.data.cover, story.data.gallery);
 ---
 
 <BaseLayout title={story.data.title} description={story.data.description} ogType="article">
   <article class="section">
     <div class="site-shell article">
-      <p class="eyebrow">Story</p>
+      <p class="eyebrow">Ride</p>
       <h1>{story.data.headline}</h1>
       <p class="dek">{story.data.description}</p>
 
-      <div class="gallery">
-        {
-          gallery.map((src, i) => (
-            <figure>
-              <img src={src} alt="" width="1200" height="900" loading={i === 0 ? 'eager' : 'lazy'} />
-            </figure>
-          ))
-        }
-      </div>
+      {
+        gallery.length > 0 && (
+          <div class="gallery">
+            {gallery.map((src, i) => (
+              <figure>
+                <img
+                  src={src}
+                  alt=""
+                  width="1200"
+                  height="900"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+              </figure>
+            ))}
+          </div>
+        )
+      }
 
       <div class="prose">
         <Content />
       </div>
 
       <p class="back">
-        <a href="/stories">← Back to the six frames</a>
+        <a href="/stories">← All rides</a>
       </p>
     </div>
   </article>
