@@ -2,7 +2,7 @@
 title: The night before a tour
 headline: The night before a tour
 description: Bags packed. Bike checked. The next tour leaning in the hall, ready to roll.
-cover: /stories/packed-bike.jpg
+cover: /stories/img_6344.jpg
 gallery:
   - /stories/packed-bike.jpg
   - /stories/packed-bike-detail.jpg
