@@ -2,11 +2,13 @@
 title: The Tour de France Femmes ! they are harder than most of the boys !
 headline: Riding in 45 degrees heat in the Sun
 description: Riding up the Hill, but only 4 times that is ;)
-cover: /stories/img_6344.jpg
+cover: /stories/img_2878.jpg
 gallery:
-  - /stories/img_2878.jpg
+  - /stories/img_6344.jpg
   - /stories/img_5940.jpg
-order: 1
+  - /stories/img_6072.jpg
+  - /stories/img_6125.jpg
+order: 4
 draft: false
 ---
 # Chasing the Peloton to the Sea: The Weekend at the Tour de France Femmes Finale in Nice
