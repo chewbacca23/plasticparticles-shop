@@ -28,4 +28,15 @@ const stories = defineCollection({
   }),
 });
 
-export const collections = { journal, stories };
+const shots = defineCollection({
+  loader: glob({ base: './src/content/shots', pattern: '**/*.{md,mdx}' }),
+  schema: z.object({
+    title: z.string(),
+    photo: z.string(),
+    caption: z.string().optional(),
+    pubDate: z.coerce.date(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { journal, stories, shots };

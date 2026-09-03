@@ -59,6 +59,27 @@ collections:
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
       - { label: Ride text, name: body, widget: markdown }
 
+  - name: shots
+    label: Shots
+    label_singular: Shot
+    description: Photo plus a line. Shows on Now, newest first — like Instagram, on this site.
+    folder: src/content/shots
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: now
+    summary: "{{title}}"
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Only you see this in the list" }
+      - label: Photo
+        name: photo
+        widget: image
+        choose_url: false
+      - { label: Caption, name: caption, widget: text, required: false, hint: "The line under the photo" }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false }
+
   - name: journal
     label: Ride notes
     label_singular: Ride note

@@ -1,6 +1,6 @@
 # The Soul Searchers
 
-Cycling blog for **thenewsoulsearchers.de** — rides, ride notes, how we ride, about, contact.
+Cycling blog for **thenewsoulsearchers.de** — now, rides, ride notes, how we ride, about, contact.
 
 > A cycling blog — tours, roads, and travel by bike.
 
@@ -53,6 +53,7 @@ First-time OAuth clicks: [`CLOUDFLARE.md`](./CLOUDFLARE.md).
 4. Click **Login to Local Backend** (not GitHub)
 
 In the CMS:
+- **Shots** = one photo + a line. Shows on **Now**, newest first
 - **Rides** = six photo tiles and ride pages
 - **Ride notes** = packing, trains, café kilometres, touring posts
 - image uploads go into `public/stories/`

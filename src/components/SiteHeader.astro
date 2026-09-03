@@ -4,6 +4,7 @@ import { site } from '../site.config';
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const links = [
   { href: '/', label: 'Home' },
+  { href: '/now', label: 'Now' },
   { href: '/stories', label: 'Rides' },
   { href: '/journal', label: 'Ride notes' },
   { href: '/path', label: 'How we ride' },
