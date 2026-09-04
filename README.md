@@ -2,7 +2,7 @@
 
 Cycling blog for **thenewsoulsearchers.de** — now, rides, ride notes, how we ride, about, contact.
 
-> A cycling blog — tours, roads, and travel by bike.
+> A cycling blog. Tours, roads, and travel by bike.
 
 **Game shop (separate repo):** [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop)
 

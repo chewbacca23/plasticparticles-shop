@@ -62,7 +62,7 @@ collections:
   - name: shots
     label: Shots
     label_singular: Shot
-    description: Photo plus a line. Shows on Now, newest first — like Instagram, on this site.
+    description: Photo plus a line. Shows on Now, newest first, on this site.
     folder: src/content/shots
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"

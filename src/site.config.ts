@@ -1,7 +1,7 @@
 export const site = {
   name: 'The Soul Searchers',
   shortName: 'Soul Searchers',
-  tagline: 'A cycling blog — tours, roads, and travel by bike.',
+  tagline: 'A cycling blog. Tours, roads, and travel by bike.',
   description:
     'The Soul Searchers is a cycling blog: climbs, coast roads, café stops, bikes on trains, and seeing this planet from the saddle.',
   url: 'https://thenewsoulsearchers.de',
@@ -22,7 +22,7 @@ export const site = {
     street: '[Street / house number]',
     zipCity: '[PLZ] [City]',
     country: 'Germany',
-    phone: '[Phone — optional]',
+    phone: '[Phone, optional]',
     email: 'hello@thenewsoulsearchers.de',
   },
 };
