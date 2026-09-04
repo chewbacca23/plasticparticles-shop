@@ -528,7 +528,15 @@
     return /^(new|[＋+])\s*ride$/i.test(text);
   }
 
+  function isEditorSaveControl(node) {
+    var el = node && node.closest ? node.closest('button, a, [role="button"]') : node;
+    if (!el) return false;
+    var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    return /^(save|saving|publish|publishing)\b/i.test(text);
+  }
+
   function onCaptureClick(event) {
+    if (isEditorSaveControl(event.target)) return;
     if (!onRidesList()) return;
     if (event.target.closest && event.target.closest('[' + MARK + '="btn"]')) return;
     if (event.target.closest && event.target.closest('[' + MARK + '="create"]')) return;
@@ -684,7 +692,10 @@
   }
 
   document.addEventListener('click', onCaptureClick, true);
-  window.addEventListener('hashchange', tick);
+  window.addEventListener('hashchange', function () {
+    closeCreate();
+    tick();
+  });
   setInterval(tick, 700);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', tick);

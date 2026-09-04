@@ -117,6 +117,7 @@ describe('CMS − Ride wiring', () => {
       'photo deletes must stay inside public/stories',
     );
     assert.match(js, /Name of this ride/);
+    assert.match(js, /isEditorSaveControl/);
   });
 });
 

@@ -133,11 +133,10 @@ describe('isGitHubBlobPostUrl', () => {
 });
 
 describe('admin scripts stay wired', () => {
-  it('lets Decap keep the real change event and shrinks the GitHub blob POST', () => {
+  it('does not wrap fetch or swallow the file picker, so Publish can save', () => {
     const src = readFileSync('public/admin/shrink-on-pick.js', 'utf8');
     assert.doesNotMatch(src, /stopImmediatePropagation/);
-    assert.match(src, /git\/blobs/);
-    assert.match(src, /window\.fetch/);
+    assert.doesNotMatch(src, /window\.fetch\s*=/);
   });
 
   it('loads the GitHub raw thumb fallback on the CMS page', () => {
