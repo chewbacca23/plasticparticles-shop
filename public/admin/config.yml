@@ -57,6 +57,7 @@ collections:
           name: image
           widget: image
           choose_url: false
+          required: false
       - { label: Ride text, name: body, widget: markdown, hint: "The story. Write as much as you like." }
       - { label: Headline, name: headline, widget: string, hint: "Usually the same as the name. Shows on the ride tile." }
       - { label: Short intro, name: description, widget: text, hint: "A few lines under the name on the ride page." }

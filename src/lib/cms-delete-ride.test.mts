@@ -118,6 +118,7 @@ describe('CMS − Ride wiring', () => {
     );
     assert.match(js, /Name of this ride/);
     assert.match(js, /isEditorSaveControl/);
+    assert.match(js, /published/i);
   });
 });
 

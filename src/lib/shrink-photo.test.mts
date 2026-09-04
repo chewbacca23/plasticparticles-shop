@@ -146,4 +146,12 @@ describe('admin scripts stay wired', () => {
     assert.match(src, /raw\.githubusercontent\.com/);
     assert.match(src, /addEventListener\(\s*'error'/);
   });
+
+  it('turns a Publish click into Publish now', () => {
+    const html = readFileSync('public/admin/index.html', 'utf8');
+    assert.match(html, /publish-click\.js/);
+    const src = readFileSync('public/admin/publish-click.js', 'utf8');
+    assert.match(src, /publish now/);
+    assert.match(src, /already saved on GitHub/i);
+  });
 });
