@@ -1,13 +1,10 @@
 /**
- * Phone photos are 2–5 MB. Two things then break the editor thumb:
+ * Phone photos are 2–5 MB / HEIC. Do not touch Decap's change event —
+ * stopping it was why picks never reached GitHub (empty gallery, broken
+ * thumb, no new file in the repo).
  *
- * 1. Decap reads input.files in the same change event. If we shrink
- *    asynchronously and then swap, Decap already has the original.
- *    Stop that event, shrink, swap, fire a new change.
- * 2. Decap uploads with POST /git/blobs, not the contents API. If the
- *    FileList swap fails (iOS), shrink that POST body instead.
- *
- * HEIC from iPhone is converted to JPEG when the browser can decode it.
+ * Shrink happens on the way out: POST /git/blobs (and contents PUT).
+ * HEIC becomes JPEG when the browser can decode it.
  */
 (function () {
   var MAX_BYTES = 900000;
@@ -16,18 +13,6 @@
   function isHeic(file) {
     var t = (file.type || '').toLowerCase();
     return t.indexOf('heic') !== -1 || t.indexOf('heif') !== -1 || /\.(heic|heif)$/i.test(file.name || '');
-  }
-
-  function isRaster(file) {
-    var t = (file.type || '').toLowerCase();
-    return /image\/(jpeg|jpg|pjpeg|png|webp)/i.test(t) || /\.(jpe?g|png|webp)$/i.test(file.name || '');
-  }
-
-  function shouldShrink(file) {
-    if (!file) return false;
-    if (isHeic(file)) return true;
-    if (!isRaster(file)) return false;
-    return file.size > MAX_BYTES;
   }
 
   function jpegNameFor(name) {
@@ -52,6 +37,16 @@
   function hideToast() {
     var el = document.getElementById('shrink-toast');
     if (el) el.style.display = 'none';
+  }
+
+  function warnHeic() {
+    if (heicWarned) return;
+    heicWarned = true;
+    window.alert(
+      'This photo is Apple HEIC. Chrome cannot show it.\n\n' +
+        'On iPhone: Settings → Camera → Formats → Most Compatible, then pick again.\n\n' +
+        'Or export a JPEG from Photos first.',
+    );
   }
 
   function loadBitmap(blob) {
@@ -139,79 +134,23 @@
     });
   }
 
-  async function shrinkFile(file) {
-    var small = await blobToSmallJpeg(file, file.name);
-    if (!small) return file;
-    if (small.size >= file.size && !isHeic(file)) return file;
-    return small;
+  function withTimeout(promise, ms) {
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () {
+        reject(new Error('timeout'));
+      }, ms);
+      promise.then(
+        function (value) {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        function (err) {
+          clearTimeout(timer);
+          reject(err);
+        },
+      );
+    });
   }
-
-  function assignFiles(input, files) {
-    try {
-      var dt = new DataTransfer();
-      files.forEach(function (f) {
-        dt.items.add(f);
-      });
-      input.files = dt.files;
-      return input.files && input.files[0] && input.files[0].size === files[0].size;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  function warnHeic() {
-    if (heicWarned) return;
-    heicWarned = true;
-    window.alert(
-      'This photo is Apple HEIC. The editor cannot always convert it here.\n\n' +
-        'On iPhone: Settings → Camera → Formats → Most Compatible, then pick again.\n\n' +
-        'Or export a JPEG from Photos first.',
-    );
-  }
-
-  function onFileChange(event) {
-    var input = event.target;
-    if (!input || input.tagName !== 'INPUT' || input.type !== 'file') return;
-    if (input.dataset.shrinkDone === '1') {
-      input.dataset.shrinkDone = '';
-      return;
-    }
-    var list = Array.prototype.slice.call(input.files || []);
-    if (!list.some(shouldShrink)) return;
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-    event.preventDefault();
-    toast('Shrinking photo so the thumb works…');
-    Promise.resolve()
-      .then(async function () {
-        var next = [];
-        var i;
-        for (i = 0; i < list.length; i += 1) {
-          var file = list[i];
-          if (!shouldShrink(file)) {
-            next.push(file);
-            continue;
-          }
-          try {
-            next.push(await shrinkFile(file));
-          } catch (err) {
-            if (isHeic(file)) warnHeic();
-            next.push(file);
-          }
-        }
-        assignFiles(input, next);
-      })
-      .catch(function () {
-        if (list.some(isHeic)) warnHeic();
-      })
-      .then(function () {
-        hideToast();
-        input.dataset.shrinkDone = '1';
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-  }
-
-  document.addEventListener('change', onFileChange, true);
 
   function b64ToBytes(b64) {
     var clean = String(b64).replace(/\s/g, '');
@@ -222,19 +161,19 @@
     return bytes;
   }
 
+  function isHeicBytes(bytes) {
+    if (!bytes || bytes.length < 12) return false;
+    if (bytes[4] !== 0x66 || bytes[5] !== 0x74 || bytes[6] !== 0x79 || bytes[7] !== 0x70) return false;
+    var brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]).toLowerCase();
+    return /heic|heif|mif1|msf1/.test(brand);
+  }
+
   function looksLikeImage(bytes) {
     if (!bytes || bytes.length < 12) return false;
     if (bytes[0] === 0xff && bytes[1] === 0xd8) return true;
     if (bytes[0] === 0x89 && bytes[1] === 0x50) return true;
     if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return true;
     return isHeicBytes(bytes);
-  }
-
-  function isHeicBytes(bytes) {
-    if (!bytes || bytes.length < 12) return false;
-    if (bytes[4] !== 0x66 || bytes[5] !== 0x74 || bytes[6] !== 0x79 || bytes[7] !== 0x70) return false;
-    var brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]).toLowerCase();
-    return /heic|heif|mif1|msf1/.test(brand);
   }
 
   function blobToGitHubB64(blob) {
@@ -272,10 +211,14 @@
     var heic = isHeicBytes(bytes) || /\.(heic|heif)$/i.test(nameHint || '');
     if (!looksLikeImage(bytes) && !heic) return parsed;
     if (bytes.length <= MAX_BYTES && !heic) return parsed;
+    toast('Shrinking photo so the thumb works…');
     try {
-      var small = await blobToSmallJpeg(
-        new Blob([bytes]),
-        heic ? jpegNameFor(nameHint || 'photo.heic') : nameHint || 'photo.jpg',
+      var small = await withTimeout(
+        blobToSmallJpeg(
+          new Blob([bytes]),
+          heic ? jpegNameFor(nameHint || 'photo.heic') : nameHint || 'photo.jpg',
+        ),
+        12000,
       );
       if (small && small.size) {
         parsed.content = await blobToGitHubB64(small);
@@ -283,6 +226,8 @@
       }
     } catch (err) {
       if (heic) warnHeic();
+    } finally {
+      hideToast();
     }
     return parsed;
   }
@@ -344,10 +289,39 @@
     var args = arguments;
     return rewriteGithubUpload(input, init)
       .then(function (pair) {
+        if (pair.init === undefined) return origFetch.call(window, pair.input);
         return origFetch.call(window, pair.input, pair.init);
       })
       .catch(function () {
         return origFetch.apply(window, args);
       });
   };
+
+  document.addEventListener(
+    'change',
+    function (event) {
+      var input = event.target;
+      if (!input || input.tagName !== 'INPUT' || input.type !== 'file') return;
+      var list = Array.prototype.slice.call(input.files || []);
+      if (list.some(isHeic)) warnHeic();
+    },
+    true,
+  );
+
+  function preferJpeg(input) {
+    if (!input || input.tagName !== 'INPUT' || input.type !== 'file') return;
+    if (input.dataset.jpegAccept) return;
+    input.dataset.jpegAccept = '1';
+    input.setAttribute('accept', 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp');
+  }
+
+  function scanAccept() {
+    document.querySelectorAll('input[type="file"]').forEach(preferJpeg);
+  }
+
+  scanAccept();
+  new MutationObserver(scanAccept).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 })();

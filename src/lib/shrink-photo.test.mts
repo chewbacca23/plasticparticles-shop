@@ -133,11 +133,11 @@ describe('isGitHubBlobPostUrl', () => {
 });
 
 describe('admin scripts stay wired', () => {
-  it('stops the original change event so Decap does not upload the fat original', () => {
+  it('lets Decap keep the real change event and shrinks the GitHub blob POST', () => {
     const src = readFileSync('public/admin/shrink-on-pick.js', 'utf8');
-    assert.match(src, /stopImmediatePropagation/);
+    assert.doesNotMatch(src, /stopImmediatePropagation/);
     assert.match(src, /git\/blobs/);
-    assert.match(src, /document\.addEventListener\('change', onFileChange, true\)/);
+    assert.match(src, /window\.fetch/);
   });
 
   it('loads the GitHub raw thumb fallback on the CMS page', () => {
@@ -145,5 +145,6 @@ describe('admin scripts stay wired', () => {
     assert.match(html, /preview-fallback\.js/);
     const src = readFileSync('public/admin/preview-fallback.js', 'utf8');
     assert.match(src, /raw\.githubusercontent\.com/);
+    assert.match(src, /addEventListener\(\s*'error'/);
   });
 });
