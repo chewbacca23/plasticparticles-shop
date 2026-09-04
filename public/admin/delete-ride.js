@@ -531,6 +531,7 @@
   function isEditorSaveControl(node) {
     var el = node && node.closest ? node.closest('button, a, [role="button"]') : node;
     if (!el) return false;
+    if (el.getAttribute('data-ss-save-ride')) return true;
     var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
     return /^(save|saving|publish|publishing|published)\b/i.test(text);
   }

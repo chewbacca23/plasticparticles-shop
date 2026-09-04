@@ -147,11 +147,18 @@ describe('admin scripts stay wired', () => {
     assert.match(src, /addEventListener\(\s*'error'/);
   });
 
-  it('turns a Publish click into Publish now', () => {
+  it('puts a Save this ride control on the editor and wires Published to persist', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /publish-click\.js/);
+    assert.match(html, /Save this ride/);
     const src = readFileSync('public/admin/publish-click.js', 'utf8');
+    assert.match(src, /Save this ride/);
+    assert.match(src, /handleOnPersist/);
+    assert.match(src, /data-ss-save-ride/);
+    assert.match(src, /text === 'published'/);
     assert.match(src, /publish now/);
-    assert.match(src, /already saved on GitHub/i);
+    const config = readFileSync('public/admin/config.yml', 'utf8');
+    assert.match(config, /name: body[\s\S]*required:\s*false/);
+    assert.match(config, /name: gallery[\s\S]*required:\s*false/);
   });
 });
