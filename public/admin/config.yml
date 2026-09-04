@@ -30,6 +30,7 @@ collections:
     label_singular: Ride
     folder: src/content/stories
     create: true
+    delete: true
     slug: "{{slug}}"
     extension: md
     format: frontmatter
