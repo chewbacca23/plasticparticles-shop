@@ -1,9 +1,8 @@
 /**
- * Existing rides hide Save behind Published. The real write is Publish now,
- * and empty Ride text used to fail persist with a toast that is easy to miss.
- * This script:
- *   - puts a gold Save button on the editor and calls Decap's handleOnPersist
- *   - turns a Published / Publish click into a real save
+ * Do not auto-click the Publish dropdown. That slammed the three items
+ * shut in a split second, then persist often failed with no toast.
+ * Saving is the gold button, which calls Decap handleOnPersist.
+ * Publish now in the menu still works the native way.
  */
 (function () {
   var BTN = 'data-ss-save-ride';
@@ -228,23 +227,6 @@
     button.textContent = saving ? 'Saving…' : saveLabel();
     button.style.opacity = saving ? '0.7' : '1';
   }
-
-  document.addEventListener(
-    'click',
-    function (event) {
-      if (ignoreClick) return;
-      var el = event.target && event.target.closest && event.target.closest('button, a, [role="button"]');
-      if (!el || el.getAttribute(BTN)) return;
-      var text = label(el);
-      if (text === 'published' || text === 'publish') {
-        event.preventDefault();
-        event.stopPropagation();
-        if (event.stopImmediatePropagation) event.stopImmediatePropagation();
-        saveRide();
-      }
-    },
-    true,
-  );
 
   document.addEventListener('keydown', function (event) {
     if (!editorOpen()) return;
