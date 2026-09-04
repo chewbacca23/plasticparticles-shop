@@ -14,4 +14,4 @@ If it is raining sideways, sit. If the legs are cooked, sit. You did not come th
 
 Wash the chain if you can. Check the tyre cuts. Eat a real meal. Walk the town without clipless shoes. Write three lines about yesterday’s kilometres.
 
-Tomorrow you pack the bags again. The net appears when you clip in — but you clip in better after a night that was actually rest.
+Tomorrow you pack the bags again. The net appears when you clip in, but you clip in better after a night that was actually rest.

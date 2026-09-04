@@ -1,6 +1,6 @@
 ---
 title: Packing the bike for a tour
-description: What actually goes in the bags — tubes, tools, layers — and what stays home.
+description: What actually goes in the bags, tubes, tools, layers, and what stays home.
 pubDate: 2026-08-26
 heroLabel: Kit
 ---

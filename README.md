@@ -1,6 +1,6 @@
 # The Soul Searchers
 
-Cycling blog for **thenewsoulsearchers.de** — now, rides, ride notes, how we ride, about, contact.
+Cycling blog for **thenewsoulsearchers.de**: now, rides, ride notes, how we ride, about, contact.
 
 > A cycling blog. Tours, roads, and travel by bike.
 
@@ -73,7 +73,7 @@ Domain: **https://thenewsoulsearchers.de**
 
 | Change | File |
 | --- | --- |
-| **Your logo** | Replace `public/logo.svg` — see [`LOGO.md`](./LOGO.md) |
+| **Your logo** | Replace `public/logo.svg`, see [`LOGO.md`](./LOGO.md) |
 | Site name / tagline | `src/site.config.ts` |
 | Watermark strength | `logoWatermarkOpacity` in `site.config.ts` |
 | Home headline | `src/pages/index.astro` |

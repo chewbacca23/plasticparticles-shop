@@ -1,7 +1,7 @@
 ---
 title: Empty tarmac
 headline: Empty tarmac
-description: No arrows, no bunch, no café yet — just wet road, trees, and the sound of the freehub.
+description: No arrows, no bunch, no café yet, just wet road, trees, and the sound of the freehub.
 gallery: []
 order: 3
 ---
@@ -12,7 +12,7 @@ That is still cycling. GPS can drop. Paper can tear. You keep a sense of the sun
 
 ## If the signs are gone
 
-Slow down at junctions. Look for tyre tracks, a church spire, a river. A wrong turn on a bike is rarely a disaster — it is extra kilometres and often a better road.
+Slow down at junctions. Look for tyre tracks, a church spire, a river. A wrong turn on a bike is rarely a disaster, it is extra kilometres and often a better road.
 
 Keep one person who knows you are out. Phone in a dry bag. Lights if the forest gets dark early.
 
