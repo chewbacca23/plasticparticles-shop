@@ -1,7 +1,6 @@
 /**
- * Click a ride in the CMS list so it turns green, then − Ride erases it.
- * That removes the markdown page and any public/stories photos nothing
- * else (other rides, shots, ride notes) still uses.
+ * + Ride asks for a name, then opens the new file for photos and text.
+ * Click a ride in the list so it turns green, then − Ride erases it.
  */
 (function () {
   'use strict';
@@ -15,6 +14,7 @@
   var GREEN_LINE = '#147a3a';
   var selected = {};
   var deleting = false;
+  var creating = false;
 
   function log(message) {
     if (window.console && console.info) console.info('[ride] ' + message);
@@ -35,6 +35,61 @@
   function pathFromSlug(slug) {
     if (!slug || /[./]/.test(slug) || slug.indexOf('/') !== -1) return '';
     return 'src/content/stories/' + slug + '.md';
+  }
+
+  function slugFromName(name) {
+    var folded = String(name || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/ß/g, 'ss')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60)
+      .replace(/-+$/g, '');
+    if (!folded || /[./]/.test(folded)) return '';
+    return folded;
+  }
+
+  function uniqueSlug(base, paths) {
+    var safe = slugFromName(base);
+    if (!safe) return '';
+    var taken = {};
+    (paths || []).forEach(function (path) {
+      taken[slugFromPath(path)] = true;
+    });
+    if (!taken[safe]) return safe;
+    for (var n = 2; n < 100; n++) {
+      var candidate = safe + '-' + n;
+      if (!taken[candidate]) return candidate;
+    }
+    return '';
+  }
+
+  function todayStamp() {
+    var now = new Date();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    return now.getFullYear() + '-' + month + '-' + day;
+  }
+
+  function newRideMarkdown(title) {
+    var name = JSON.stringify(String(title || '').trim() || 'New ride');
+    return (
+      '---\n' +
+      'title: ' +
+      name +
+      '\nheadline: ' +
+      name +
+      '\ndescription: "Write a few lines about this ride."\n' +
+      'pubDate: ' +
+      todayStamp() +
+      '\norder: 0\ndraft: false\ngallery: []\n---\n\n'
+    );
+  }
+
+  function utf8ToBase64(text) {
+    return window.btoa(unescape(encodeURIComponent(text)));
   }
 
   function slugFromHref(href) {
@@ -244,6 +299,124 @@
     }, Promise.resolve());
   }
 
+  function closeCreate() {
+    var overlay = document.querySelector('[' + MARK + '="create"]');
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }
+
+  function openCreate() {
+    if (creating) return;
+    if (!isLocalHost() && !cmsToken()) {
+      window.alert('Log in with GitHub first, then try ＋ Ride again.');
+      return;
+    }
+    closeCreate();
+    var overlay = document.createElement('div');
+    overlay.setAttribute(MARK, 'create');
+    overlay.style.cssText =
+      'position:fixed;inset:0;background:rgba(6,10,14,0.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    var panel = document.createElement('div');
+    panel.style.cssText =
+      'width:min(28rem,100%);background:#121820;color:#eef3f7;border:1px solid rgba(215,224,232,0.12);border-radius:1rem;padding:1.15rem 1.2rem 1.25rem;';
+    panel.innerHTML =
+      '<p style="margin:0 0 0.35rem;color:#d4a35a;font-size:0.78rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase">New ride</p>' +
+      '<h2 style="margin:0 0 0.75rem;font-size:1.35rem">Name of this ride</h2>' +
+      '<p style="margin:0 0 0.85rem;color:rgba(215,224,232,0.72)">Then the file opens so you can add photos and your text.</p>' +
+      '<input data-ss-name type="text" maxlength="80" placeholder="Dawn on the ridge" style="display:block;width:100%;box-sizing:border-box;margin:0 0 0.85rem;padding:0.7rem 0.85rem;border:1px solid rgba(215,224,232,0.22);border-radius:0.7rem;background:#0c1218;color:#eef3f7;font:inherit">' +
+      '<p data-ss-status style="margin:0 0 0.85rem;min-height:1.2em;color:#f0c27a"></p>' +
+      '<p style="margin:0;display:flex;gap:0.55rem;flex-wrap:wrap">' +
+      '<button type="button" data-ss-go style="padding:0.45rem 0.9rem;border:0;border-radius:999px;background:#f0c27a;color:#0c1218;font-weight:700;cursor:pointer">Create ride</button>' +
+      '<button type="button" data-ss-cancel style="padding:0.45rem 0.9rem;border:1px solid rgba(215,224,232,0.28);border-radius:999px;background:transparent;color:#eef3f7;cursor:pointer">Cancel</button>' +
+      '</p>';
+    overlay.appendChild(panel);
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay && !creating) closeCreate();
+    });
+    panel.querySelector('[data-ss-cancel]').addEventListener('click', function () {
+      if (!creating) closeCreate();
+    });
+    var input = panel.querySelector('[data-ss-name]');
+    var status = panel.querySelector('[data-ss-status]');
+    var go = panel.querySelector('[data-ss-go]');
+    function submit() {
+      createRide((input.value || '').trim(), status, go);
+    }
+    go.addEventListener('click', submit);
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submit();
+      }
+    });
+    document.body.appendChild(overlay);
+    setTimeout(function () {
+      input.focus();
+    }, 50);
+  }
+
+  function createRide(title, status, go) {
+    if (creating) return;
+    if (!title) {
+      status.textContent = 'Give the ride a name first.';
+      return;
+    }
+    var base = slugFromName(title);
+    if (!base) {
+      status.textContent = 'Use letters or numbers in the name.';
+      return;
+    }
+    creating = true;
+    go.disabled = true;
+    status.textContent = 'Making the ride file…';
+    listMarkdown('src/content/stories')
+      .then(function (entries) {
+        var slug = uniqueSlug(
+          title,
+          (entries || []).map(function (entry) {
+            return entry.path;
+          }),
+        );
+        var path = pathFromSlug(slug);
+        if (!slug || !isRidePath(path)) throw new Error('Could not make a filename from that name.');
+        var raw = newRideMarkdown(title);
+        if (isLocalHost()) {
+          return proxy('persistEntry', {
+            entry: { slug: slug, path: path, raw: raw },
+            assets: [],
+            options: {
+              collectionName: 'stories',
+              commitMessage: 'Create Ride “' + slug + '”',
+              useWorkflow: false,
+              status: 'published',
+            },
+          }).then(function () {
+            return slug;
+          });
+        }
+        return github('contents/' + path, {
+          method: 'PUT',
+          body: {
+            message: 'Create Ride “' + slug + '”',
+            content: utf8ToBase64(raw),
+            branch: BRANCH,
+          },
+        }).then(function () {
+          return slug;
+        });
+      })
+      .then(function (slug) {
+        log('created src/content/stories/' + slug + '.md');
+        closeCreate();
+        window.location.hash = '#/collections/stories/entries/' + encodeURIComponent(slug);
+        window.location.reload();
+      })
+      .catch(function (err) {
+        creating = false;
+        go.disabled = false;
+        status.textContent = 'Could not create that ride. ' + (err && err.message ? err.message : '');
+      });
+  }
+
   function findNewRideControl() {
     var nodes = document.querySelectorAll('a, button');
     for (var i = 0; i < nodes.length; i++) {
@@ -347,9 +520,28 @@
     updateButton();
   }
 
+  function isNewRideControl(el) {
+    if (!el || el.getAttribute(MARK) === 'btn') return false;
+    var href = el.getAttribute('href') || '';
+    if (href.indexOf('/collections/stories/new') !== -1) return true;
+    var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    return /^(new|[＋+])\s*ride$/i.test(text);
+  }
+
   function onCaptureClick(event) {
     if (!onRidesList()) return;
     if (event.target.closest && event.target.closest('[' + MARK + '="btn"]')) return;
+    if (event.target.closest && event.target.closest('[' + MARK + '="create"]')) return;
+
+    var maybe = event.target.closest && event.target.closest('a, button');
+    if (maybe && isNewRideControl(maybe)) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      openCreate();
+      return;
+    }
+
     var link = entryLinkFromNode(event.target);
     if (!link) return;
     var slug = slugFromHref(link.getAttribute('href') || '');

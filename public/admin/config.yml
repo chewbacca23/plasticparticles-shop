@@ -36,9 +36,8 @@ collections:
     format: frontmatter
     preview_path: stories/{{slug}}
     fields:
-      - { label: Title, name: title, widget: string }
-      - { label: Headline, name: headline, widget: string }
-      - { label: Description, name: description, widget: text }
+      - { label: Name of this ride, name: title, widget: string, hint: "The name. + Ride asks for this first." }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
       - label: Cover image
         name: cover
         widget: image
@@ -56,10 +55,11 @@ collections:
           name: image
           widget: image
           choose_url: false
-      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
-      - { label: Order, name: order, widget: number, value_type: int, min: 1, max: 99, step: 1, required: false, hint: "Only if two rides share a date. Higher number comes first." }
+      - { label: Ride text, name: body, widget: markdown, hint: "The story. Write as much as you like." }
+      - { label: Headline, name: headline, widget: string, hint: "Usually the same as the name. Shows on the ride tile." }
+      - { label: Short intro, name: description, widget: text, hint: "A few lines under the name on the ride page." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Ride text, name: body, widget: markdown }
+      - { label: Order, name: order, widget: number, value_type: int, min: 1, max: 99, step: 1, required: false, hint: "Only if two rides share a date. Higher number comes first." }
 
   - name: shots
     label: Shots

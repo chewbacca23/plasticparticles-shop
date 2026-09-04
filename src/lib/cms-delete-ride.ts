@@ -60,3 +60,60 @@ export function unusedMediaPaths(fromDeleted: string[], stillUsed: string[]): st
   const used = new Set(stillUsed.filter(isRideMediaRepoPath));
   return [...new Set(fromDeleted.filter(isRideMediaRepoPath))].filter((path) => !used.has(path));
 }
+
+export function slugFromRideName(name?: string | null): string {
+  const folded = (name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+    .replace(/-+$/g, '');
+  if (!folded || /[./]/.test(folded)) return '';
+  return folded;
+}
+
+export function uniqueRideSlug(base: string, existingPaths: readonly string[]): string {
+  const safe = slugFromRideName(base);
+  if (!safe) return '';
+  const taken = new Set(
+    existingPaths.map((path) => slugFromRidePath(path)).filter(Boolean),
+  );
+  if (!taken.has(safe)) return safe;
+  for (let n = 2; n < 100; n++) {
+    const candidate = `${safe}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return '';
+}
+
+function yamlQuote(value: string): string {
+  return JSON.stringify(value);
+}
+
+export function todayStamp(now = new Date()): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function newRideMarkdown(title: string, pubDate = todayStamp()): string {
+  const name = title.trim() || 'New ride';
+  return [
+    '---',
+    `title: ${yamlQuote(name)}`,
+    `headline: ${yamlQuote(name)}`,
+    'description: "Write a few lines about this ride."',
+    `pubDate: ${pubDate}`,
+    'order: 0',
+    'draft: false',
+    'gallery: []',
+    '---',
+    '',
+    '',
+  ].join('\n');
+}
+

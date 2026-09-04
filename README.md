@@ -55,7 +55,7 @@ First-time OAuth clicks: [`CLOUDFLARE.md`](./CLOUDFLARE.md).
 In the CMS:
 - **Shots** = one photo + a line. Shows on **Now**, newest first
 - **Instagram** = username + latest photo link. One shot on the site, tap through to follow
-- **Rides** = photo tiles and ride pages, newest first. Set the Date. Click a ride so it turns green, then **− Ride** erases the page and photos nothing else still uses
+- **Rides** = photo tiles and ride pages, newest first. **＋ Ride** asks for a name, then photos and text. Click a ride so it turns green, then **− Ride** erases it
 - **Ride notes** = packing, trains, café kilometres, touring posts
 - image uploads go into `public/stories/`
 

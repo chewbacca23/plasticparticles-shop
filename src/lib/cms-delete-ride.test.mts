@@ -10,6 +10,10 @@ import {
   slugFromEntryHref,
   slugFromRidePath,
   unusedMediaPaths,
+  uniqueRideSlug,
+  newRideMarkdown,
+  slugFromRideName,
+  todayStamp,
 } from './cms-delete-ride.ts';
 
 describe('isRideMarkdownPath', () => {
@@ -112,5 +116,34 @@ describe('CMS − Ride wiring', () => {
       js.includes('public\\/stories\\/[A-Za-z0-9][A-Za-z0-9._-]*'),
       'photo deletes must stay inside public/stories',
     );
+    assert.match(js, /Name of this ride/);
+  });
+});
+
+describe('slugFromRideName', () => {
+  it('turns a ride name into a safe filename slug', () => {
+    assert.equal(slugFromRideName('Dawn on the ridge'), 'dawn-on-the-ridge');
+    assert.equal(slugFromRideName('Über the pass!'), 'uber-the-pass');
+    assert.equal(slugFromRideName('../secret'), 'secret');
+    assert.equal(slugFromRideName('   '), '');
+  });
+});
+
+describe('uniqueRideSlug', () => {
+  it('adds a number when the name is already a ride', () => {
+    assert.equal(uniqueRideSlug('Nice', ['src/content/stories/nice.md']), 'nice-2');
+    assert.equal(uniqueRideSlug('Window light', ['src/content/stories/nice.md']), 'window-light');
+  });
+});
+
+describe('newRideMarkdown', () => {
+  it('writes a ride file with the name, today’s date, and room for photos and text', () => {
+    const raw = newRideMarkdown('Dawn on the ridge', '2026-09-04');
+    assert.match(raw, /^---\n/);
+    assert.match(raw, /title: "Dawn on the ridge"/);
+    assert.match(raw, /headline: "Dawn on the ridge"/);
+    assert.match(raw, /pubDate: 2026-09-04/);
+    assert.match(raw, /gallery: \[\]/);
+    assert.equal(todayStamp(new Date('2026-09-04T15:00:00')), '2026-09-04');
   });
 });
