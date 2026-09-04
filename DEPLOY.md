@@ -46,6 +46,6 @@ You should see the Soul Searchers landing page.
 
 ---
 
-## Visitor stats (optional)
+## Visitor stats
 
-Plausible, Umami, or Cloudflare Web Analytics — no WordPress/Jetpack needed.
+Open [https://thenewsoulsearchers.de/looks](https://thenewsoulsearchers.de/looks) after the Worker is live. Today, last 7 days, all time, and the pages people opened. No cookies. Counts start from the day this ships.

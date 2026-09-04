@@ -86,6 +86,10 @@ Two things to know about iPhone photos: they carry your **GPS location** in EXIF
 
 If the GitHub popup says login is not wired yet, secrets from **B** are missing.
 
+### Looks (how many people opened a page)
+
+Open **https://thenewsoulsearchers.de/looks**. Today, last 7 days, all time, and which pages. No cookies. Numbers start after this Worker is live. Your own clicks count.
+
 ### Stuck? Ask the Worker instead of guessing
 
 Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names the live Worker can see — never the values.

@@ -1,0 +1,177 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Looks"
+  description="How many times people opened pages on The Soul Searchers."
+  robots="noindex, nofollow"
+>
+  <section class="section">
+    <div class="site-shell looks">
+      <p class="eyebrow">Just for you</p>
+      <h1 class="section-title">Looks</h1>
+      <p class="section-lead">
+        How many times someone opened a page. No names, no cookies. Counts start after this
+        page is live. Your own clicks count too.
+      </p>
+
+      <div class="cards">
+        <article class="card">
+          <p class="card-label">Today</p>
+          <p class="card-num" data-looks="today">—</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Last 7 days</p>
+          <p class="card-num" data-looks="week">—</p>
+        </article>
+        <article class="card">
+          <p class="card-label">All time</p>
+          <p class="card-num" data-looks="total">—</p>
+        </article>
+      </div>
+
+      <h2 class="pages-title">Pages people opened</h2>
+      <ol class="pages" data-looks-pages></ol>
+      <p class="note" data-looks-note></p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    var note = document.querySelector('[data-looks-note]');
+    fetch('/api/looks', { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('no looks yet');
+        return res.json();
+      })
+      .then(function (data) {
+        function set(key, value) {
+          var el = document.querySelector('[data-looks="' + key + '"]');
+          if (el) el.textContent = String(value);
+        }
+        set('today', data.today || 0);
+        set('week', data.week || 0);
+        set('total', data.total || 0);
+        var list = document.querySelector('[data-looks-pages]');
+        var pages = data.pages || [];
+        if (!list) return;
+        if (!pages.length) {
+          list.innerHTML = '<li class="empty">Nobody has opened a public page since this started counting.</li>';
+          return;
+        }
+        list.innerHTML = pages
+          .map(function (row) {
+            var path = row.path === '/' ? 'Home' : row.path;
+            return (
+              '<li><a href="' +
+              row.path +
+              '">' +
+              path +
+              '</a><span>' +
+              row.looks +
+              '</span></li>'
+            );
+          })
+          .join('');
+      })
+      .catch(function () {
+        if (note) {
+          note.textContent =
+            'Numbers show on the live site after Cloudflare has this Worker. Local preview has no counter.';
+        }
+      });
+  })();
+</script>
+
+<style>
+  .looks {
+    max-width: 40rem;
+  }
+
+  .cards {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1.75rem 0 2.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .card {
+    padding: 1.1rem 1.15rem 1.2rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.55);
+  }
+
+  .card-label {
+    margin: 0;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .card-num {
+    margin: 0.45rem 0 0;
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+
+  .pages-title {
+    margin: 0 0 0.85rem;
+    font-size: 1.35rem;
+  }
+
+  .pages {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .pages li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
+  }
+
+  .pages li:first-child {
+    border-top: 0;
+  }
+
+  .pages a {
+    color: var(--paper);
+    text-decoration: none;
+  }
+
+  .pages a:hover {
+    color: var(--amber-hot);
+  }
+
+  .pages span {
+    color: var(--amber-hot);
+    font-weight: 600;
+  }
+
+  .pages .empty,
+  .note {
+    color: rgba(215, 224, 232, 0.68);
+  }
+
+  .note {
+    margin: 1rem 0 0;
+  }
+</style>

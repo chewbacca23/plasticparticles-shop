@@ -8,6 +8,8 @@
  *   GITHUB_OAUTH_CLIENT_SECRET
  */
 
+import { handleLooksRequest } from './page-looks.js';
+
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
 
@@ -333,6 +335,9 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/cms-status') return statusPage(env);
+
+    const looks = await handleLooksRequest(request, env);
+    if (looks) return looks;
 
     if (url.pathname === '/auth' || url.pathname === '/callback') {
       const creds = oauthCreds(env);
