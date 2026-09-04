@@ -81,8 +81,13 @@ Two things to know about iPhone photos: they carry your **GPS location** in EXIF
 
 1. Open **https://thenewsoulsearchers.de/admin/** (apex, not www)
 2. **Login with GitHub** → authorize **Soul Searchers CMS**
-3. **Ride notes** or **Rides** → New → write → **Publish**
-4. Wait about a minute (Cloudflare rebuild) → hard-refresh the public page
+3. **Ride notes** or **Rides** → New → write → **Save this ride** / **Publish**
+4. Open the ride page itself (not only the list) and hard-refresh
+
+The editor writes GitHub immediately. If Cloudflare has not rebuilt yet, the Worker still
+reads that ride and its photos from GitHub so the public page is not blank. If a photo URL
+still 404s, **Workers → thenewsoulsearchersblogc → Deployments → Retry**, then
+`Cmd+Shift+R`.
 
 If the GitHub popup says login is not wired yet, secrets from **B** are missing.
 

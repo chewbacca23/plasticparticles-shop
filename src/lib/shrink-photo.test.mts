@@ -150,7 +150,12 @@ describe('admin scripts stay wired', () => {
   it('puts a Save this ride control on the editor and leaves the Publish menu alone', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /publish-click\.js/);
+    assert.match(html, /ride-preview\.js/);
     assert.match(html, /Save this ride/);
+    assert.ok(
+      html.indexOf('decap-cms.js') < html.indexOf('ride-preview.js'),
+      'ride preview must load after Decap',
+    );
     const src = readFileSync('public/admin/publish-click.js', 'utf8');
     assert.match(src, /Save this ride/);
     assert.match(src, /handleOnPersist/);

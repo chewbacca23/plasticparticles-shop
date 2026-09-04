@@ -9,6 +9,7 @@
  */
 
 import { handleLooksRequest } from './page-looks.js';
+import { handleFreshRide } from './fresh-ride.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -338,6 +339,9 @@ export default {
 
     const looks = await handleLooksRequest(request, env);
     if (looks) return looks;
+
+    const freshRide = await handleFreshRide(request, env);
+    if (freshRide) return freshRide;
 
     if (url.pathname === '/auth' || url.pathname === '/callback') {
       const creds = oauthCreds(env);
