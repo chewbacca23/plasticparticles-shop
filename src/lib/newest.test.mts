@@ -44,13 +44,14 @@ describe('newestFirst', () => {
     );
   });
 
-  it('puts the Tour ride first among the committed stories', () => {
+  it('puts the newest committed ride first', () => {
+    const strip = (value: string | undefined) => (value ?? '').trim().replace(/^["']|["']$/g, '');
     const rides = readdirSync('src/content/stories')
       .filter((name) => name.endsWith('.md'))
       .map((name) => {
         const raw = readFileSync(`src/content/stories/${name}`, 'utf8');
-        const headline = raw.match(/^headline:\s*(.*)$/m)?.[1]?.trim() ?? name;
-        const pubDate = raw.match(/^pubDate:\s*(.*)$/m)?.[1]?.trim();
+        const headline = strip(raw.match(/^headline:\s*(.*)$/m)?.[1]) || name;
+        const pubDate = strip(raw.match(/^pubDate:\s*(.*)$/m)?.[1]);
         const order = Number(raw.match(/^order:\s*(.*)$/m)?.[1] ?? 0);
         return { headline, pubDate, order };
       });
@@ -59,7 +60,12 @@ describe('newestFirst', () => {
       (ride) => ride.pubDate,
       (a, b) => b.order - a.order,
     );
-    assert.equal(sorted[0]?.headline, 'Riding in 45 degrees heat in the Sun');
-    assert.equal(sorted[1]?.headline, 'Nice');
+    assert.equal(sorted[0]?.headline, 'the most wonderful patches');
+    for (let i = 1; i < sorted.length; i += 1) {
+      assert.ok(
+        dateValue(sorted[i - 1].pubDate) >= dateValue(sorted[i].pubDate),
+        `${sorted[i - 1].headline} should not sit behind ${sorted[i].headline}`,
+      );
+    }
   });
 });
