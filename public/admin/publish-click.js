@@ -111,6 +111,21 @@
     }, 5000);
   }
 
+  function fieldErrorMessage() {
+    var nodes = document.querySelectorAll('[class*="Error"], [class*="error"], [role="alert"]');
+    var i;
+    var bits = [];
+    for (i = 0; i < nodes.length; i++) {
+      var text = label(nodes[i]);
+      if (text && text.length < 180 && bits.indexOf(text) === -1) bits.push(text);
+    }
+    var body = (document.body.innerText || '').replace(/\s+/g, ' ');
+    if (/order/i.test(body) && /must be|minimum|at least|range/i.test(body)) {
+      bits.push('Order cannot be below 0.');
+    }
+    return bits[0] || '';
+  }
+
   function saveRide() {
     if (saving) return;
     saving = true;
@@ -141,7 +156,38 @@
 
     started
       .then(function () {
-        toast('Saving. Look for Changes saved up top, then wait a minute and hard-refresh the public site.', true);
+        return new Promise(function (resolve, reject) {
+          var tries = 0;
+          function tick() {
+            tries += 1;
+            var text = document.body.innerText || '';
+            var unsaved = /unsaved changes/i.test(text);
+            var saved = /changes saved/i.test(text) && !unsaved;
+            var busy = /publishing/i.test(text);
+            if (saved) {
+              resolve();
+              return;
+            }
+            if (unsaved && !busy && tries >= 4) {
+              reject(
+                new Error(
+                  fieldErrorMessage() ||
+                    'Could not save. Look for a red field on the form, then try again.',
+                ),
+              );
+              return;
+            }
+            if (tries >= 40) {
+              resolve();
+              return;
+            }
+            window.setTimeout(tick, 250);
+          }
+          window.setTimeout(tick, 250);
+        });
+      })
+      .then(function () {
+        toast('Saved. Wait a minute, then hard-refresh the public site.', true);
       })
       .catch(function (err) {
         var message = err && err.message ? err.message : 'Save failed.';

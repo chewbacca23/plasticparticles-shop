@@ -147,6 +147,7 @@ describe('newRideMarkdown', () => {
     assert.match(raw, /headline: "Dawn on the ridge"/);
     assert.match(raw, /pubDate: 2026-09-04/);
     assert.match(raw, /gallery: \[\]/);
+    assert.match(raw, /order: 0/);
     assert.equal(todayStamp(new Date('2026-09-04T15:00:00')), '2026-09-04');
   });
 });

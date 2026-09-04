@@ -160,5 +160,6 @@ describe('admin scripts stay wired', () => {
     const config = readFileSync('public/admin/config.yml', 'utf8');
     assert.match(config, /name: body[\s\S]*required:\s*false/);
     assert.match(config, /name: gallery[\s\S]*required:\s*false/);
+    assert.match(config, /name: order[\s\S]*min:\s*0/);
   });
 });
