@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import FeedGrid from '../components/FeedGrid.astro';
+import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
 
@@ -26,6 +27,7 @@ const items = collectFeed(
       <p class="section-lead">
         Photos as they happen. Tap one, then keep going — next, next, next. No app. You stay here.
       </p>
+      <InstagramLatest />
       <FeedGrid items={items} />
     </div>
   </section>

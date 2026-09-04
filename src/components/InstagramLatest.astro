@@ -1,0 +1,113 @@
+---
+import { instagramBind } from '../lib/instagram';
+import settings from '../content/settings/instagram.json';
+
+const bound = instagramBind(settings);
+---
+
+{
+  bound && (
+    <aside class="ig" aria-label="Instagram">
+      <p class="eyebrow">Instagram</p>
+      <h2 class="ig-title">Latest on Instagram</h2>
+      <p class="ig-lead">
+        One photo from the account. Tap it, follow, see the rest there — that is how more people
+        find the rides.
+      </p>
+
+      {
+        bound.post ? (
+          <div class="ig-embed">
+            <iframe
+              class="ig-frame"
+              src={`${bound.post.permalink}embed/captioned/`}
+              title={`Latest Instagram photo from @${bound.handle}`}
+              loading="lazy"
+              allow="encrypted-media; clipboard-write"
+            ></iframe>
+            <a class="ig-fallback" href={bound.post.permalink} target="_blank" rel="noopener noreferrer">
+              View the latest photo on Instagram
+            </a>
+          </div>
+        ) : (
+          <p class="ig-pending">
+            Account is bound. Paste the latest photo link in the editor and that shot shows here.
+          </p>
+        )
+      }
+
+      <p class="ig-actions">
+        <a
+          class="btn btn-primary"
+          href={bound.profileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Follow @{bound.handle} on Instagram
+        </a>
+        {
+          bound.post && (
+            <a
+              class="btn btn-ghost"
+              href={bound.post.permalink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open this photo
+            </a>
+          )
+        }
+      </p>
+    </aside>
+  )
+}
+
+<style>
+  .ig {
+    margin: 0 0 2.75rem;
+    padding: 1.35rem 1.35rem 1.5rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1.15rem;
+    background: rgba(18, 26, 34, 0.42);
+  }
+
+  .ig-title {
+    margin: 0 0 0.55rem;
+    font-size: clamp(1.55rem, 3vw, 2.1rem);
+  }
+
+  .ig-lead,
+  .ig-pending {
+    max-width: 36rem;
+    margin: 0 0 1.15rem;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .ig-embed {
+    max-width: 28rem;
+    margin: 0 0 1.15rem;
+  }
+
+  .ig-frame {
+    display: block;
+    width: 100%;
+    height: 38rem;
+    border: 0;
+    border-radius: 0.7rem;
+    background: #fff;
+  }
+
+  .ig-fallback {
+    display: inline-block;
+    margin-top: 0.65rem;
+    color: var(--amber-hot);
+    font-size: 0.92rem;
+  }
+
+  .ig-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+  }
+</style>

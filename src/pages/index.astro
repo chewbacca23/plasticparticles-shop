@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LogoBackdrop from '../components/LogoBackdrop.astro';
 import FeedGrid from '../components/FeedGrid.astro';
+import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
 import { site } from '../site.config';
@@ -54,6 +55,7 @@ const nowItems = collectFeed(
       <p class="section-lead">
         Newest photos first. Tap one and stay — there is always another shot.
       </p>
+      <InstagramLatest />
       <FeedGrid items={nowItems} limit={12} moreHref="/now" />
     </div>
   </section>

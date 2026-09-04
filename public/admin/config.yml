@@ -96,3 +96,21 @@ collections:
       - { label: Hero label, name: heroLabel, widget: string, required: false }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
       - { label: Post text, name: body, widget: markdown }
+
+  - name: settings
+    label: Instagram
+    files:
+      - name: instagram
+        label: Instagram
+        file: src/content/settings/instagram.json
+        preview_path: now
+        fields:
+          - label: Username
+            name: handle
+            widget: string
+            hint: "Without the @. People tap through to this account."
+          - label: Latest photo link
+            name: latestPost
+            widget: string
+            required: false
+            hint: "Open the photo on Instagram → Share → Copy link. Paste here. That one photo is what the site shows."
