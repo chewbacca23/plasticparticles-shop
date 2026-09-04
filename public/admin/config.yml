@@ -56,7 +56,8 @@ collections:
           name: image
           widget: image
           choose_url: false
-      - { label: Order (1-6), name: order, widget: number, value_type: int, min: 1, max: 99, step: 1 }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
+      - { label: Order, name: order, widget: number, value_type: int, min: 1, max: 99, step: 1, required: false, hint: "Only if two rides share a date. Higher number comes first." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
       - { label: Ride text, name: body, widget: markdown }
 

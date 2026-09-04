@@ -75,6 +75,7 @@ describe('collectFeed', () => {
           headline: 'Nice ride',
           cover: present,
           gallery: [presentTwo, '/stories/packed-bike.jpg'],
+          pubDate: new Date('2026-08-31'),
         },
         {
           id: 'empty',
@@ -97,10 +98,34 @@ describe('collectFeed', () => {
         { id: 'ride:nice:1', caption: 'Nice ride', href: '/stories/nice' },
       ],
     );
-    assert.equal(feed[1].date.valueOf(), RIDE_PHOTO_DATE.valueOf());
+    assert.equal(feed[1].date.valueOf(), new Date('2026-08-31').valueOf());
   });
 
-  it('puts a new shot above leftover ride photos', () => {
+  it('puts a new ride above leftover photos from an older ride', () => {
+    const feed = collectFeed(
+      [],
+      [
+        {
+          id: 'nice',
+          headline: 'Nice',
+          cover: present,
+          pubDate: new Date('2026-08-31'),
+        },
+        {
+          id: 'tour',
+          headline: 'Tour',
+          cover: flyover,
+          pubDate: new Date('2026-09-02'),
+        },
+      ],
+    );
+    assert.deepEqual(
+      feed.map((item) => item.id),
+      ['ride:tour:0', 'ride:nice:0'],
+    );
+  });
+
+  it('puts a new shot above leftover photos from an older ride', () => {
     const feed = collectFeed(
       [
         {
@@ -110,7 +135,7 @@ describe('collectFeed', () => {
           pubDate: new Date('2026-09-03'),
         },
       ],
-      [{ id: 'nice', headline: 'Nice', cover: present }],
+      [{ id: 'nice', headline: 'Nice', cover: present, pubDate: new Date('2026-08-31') }],
     );
     assert.deepEqual(
       feed.map((item) => item.id),

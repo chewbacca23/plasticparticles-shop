@@ -2,10 +2,13 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { mediaExists } from '../../lib/media';
+import { newestFirst } from '../../lib/newest';
 import { site } from '../../site.config';
 
-const stories = (await getCollection('stories', ({ data }) => !data.draft)).sort(
-  (a, b) => a.data.order - b.data.order,
+const stories = newestFirst(
+  await getCollection('stories', ({ data }) => !data.draft),
+  (story) => story.data.pubDate,
+  (a, b) => (b.data.order ?? 0) - (a.data.order ?? 0),
 );
 
 const tiles = stories.map((story) => ({
@@ -21,10 +24,10 @@ const tiles = stories.map((story) => ({
   <section class="section">
     <div class="site-shell">
       <p class="eyebrow">Rides</p>
-      <h1 class="section-title">Six rides</h1>
+      <h1 class="section-title">The rides</h1>
       <p class="section-lead">
-        A dawn climb, empty tarmac, Nice on the Côte d'Azur, a rest-day window, the night before a
-        tour, notes after you unclip. Open a ride.
+        Newest first. A dawn climb, empty tarmac, Nice on the Côte d'Azur, a rest-day window, the
+        night before a tour, notes after you unclip. Open a ride.
       </p>
 
       <div class="grid">

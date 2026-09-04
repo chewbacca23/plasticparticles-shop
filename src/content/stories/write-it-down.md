@@ -3,6 +3,7 @@ title: Café notes
 headline: Café notes
 description: Unclip. Order coffee. Write the ride down before the kilometres fade.
 gallery: []
+pubDate: 2026-08-26
 order: 6
 ---
 

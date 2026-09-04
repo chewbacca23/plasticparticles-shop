@@ -3,6 +3,7 @@ title: Rest day
 headline: Rest day
 description: Bike in the hall. Coffee. Light on the floor. Tomorrow you clip in again.
 gallery: []
+pubDate: 2026-08-26
 order: 5
 ---
 

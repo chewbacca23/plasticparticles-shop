@@ -14,6 +14,7 @@ export type RideInput = {
   headline: string;
   cover?: string | null;
   gallery?: readonly (string | null | undefined)[];
+  pubDate?: Date | string | null;
   draft?: boolean;
 };
 
@@ -70,7 +71,7 @@ export function collectFeed(shots: readonly ShotInput[], rides: readonly RideInp
         id: `ride:${ride.id}:${index}`,
         photo,
         caption: ride.headline,
-        date: RIDE_PHOTO_DATE,
+        date: ride.pubDate ? new Date(ride.pubDate) : RIDE_PHOTO_DATE,
         href: `/stories/${ride.id}`,
       });
     }

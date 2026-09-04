@@ -6,6 +6,7 @@ cover: /stories/nice-baie-des-anges.jpg
 gallery:
   - /stories/nice-baie-des-anges.jpg
   - /stories/nice-promenade-detail.jpg
+pubDate: 2026-08-31
 order: 4
 ---
 

@@ -23,7 +23,8 @@ const stories = defineCollection({
     // Optional: deleting a photo in the CMS must not fail the whole build.
     cover: z.string().optional(),
     gallery: z.array(z.string()).default([]),
-    order: z.number(),
+    pubDate: z.coerce.date(),
+    order: z.number().optional().default(0),
     draft: z.boolean().default(false),
   }),
 });

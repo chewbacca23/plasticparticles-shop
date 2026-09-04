@@ -3,6 +3,7 @@ title: Empty tarmac
 headline: Empty tarmac
 description: No arrows, no bunch, no café yet, just wet road, trees, and the sound of the freehub.
 gallery: []
+pubDate: 2026-08-26
 order: 3
 ---
 

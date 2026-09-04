@@ -8,6 +8,7 @@ gallery:
   - /stories/img_5940.jpg
   - /stories/img_6072.jpg
   - /stories/img_6125.jpg
+pubDate: 2026-09-02
 order: 4
 draft: false
 ---

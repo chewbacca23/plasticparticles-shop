@@ -1,11 +1,13 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
+import { newestFirst } from '../lib/newest';
 import { site } from '../site.config';
 import type { APIContext } from 'astro';
 
 export async function GET(context: APIContext) {
-  const posts = (await getCollection('journal', ({ data }) => !data.draft)).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+  const posts = newestFirst(
+    await getCollection('journal', ({ data }) => !data.draft),
+    (post) => post.data.pubDate,
   );
 
   return rss({
