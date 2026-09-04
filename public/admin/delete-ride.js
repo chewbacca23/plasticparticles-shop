@@ -96,7 +96,7 @@
       var href = el.getAttribute('href') || '';
       if (href.indexOf('/collections/stories/new') !== -1) return el;
       var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-      if (/^new ride$/i.test(text)) return el;
+      if (/^(new|[＋+])\s*ride$/i.test(text)) return el;
     }
     return null;
   }
