@@ -10,8 +10,9 @@
   var BRANCH = 'main';
   var MARK = 'data-ss-delete-ride';
   var SELECTED = 'data-ss-ride-selected';
-  var GREEN = '#d8f5e3';
-  var GREEN_LINE = '#1f9d55';
+  var GREEN = '#2fbf62';
+  var GREEN_TEXT = '#06240f';
+  var GREEN_LINE = '#147a3a';
   var selected = {};
   var deleting = false;
 
@@ -274,29 +275,30 @@
     return null;
   }
 
-  function cardForLink(link) {
-    var parent = link.parentElement;
-    if (parent && parent !== document.body && parent.querySelectorAll('a[href*="/collections/stories/entries/"]').length === 1) {
-      return parent;
-    }
-    return link;
-  }
-
   function paintSelection() {
     var links = document.querySelectorAll('a[href*="/collections/stories/entries/"]');
     for (var i = 0; i < links.length; i++) {
       var link = links[i];
       var slug = slugFromHref(link.getAttribute('href') || '');
-      var card = cardForLink(link);
-      if (slug && selected[slug]) {
-        card.style.background = GREEN;
-        card.style.boxShadow = 'inset 0 0 0 3px ' + GREEN_LINE;
-        card.setAttribute(SELECTED, slug);
-      } else if (card.getAttribute(SELECTED)) {
-        card.style.background = '';
-        card.style.boxShadow = '';
-        card.removeAttribute(SELECTED);
-      }
+      var on = !!(slug && selected[slug]);
+      var nodes = [link];
+      var li = link.closest && link.closest('li');
+      if (li) nodes.push(li);
+      var title = link.querySelector('h2, h3');
+      if (title) nodes.push(title);
+      nodes.forEach(function (el) {
+        if (on) {
+          el.style.setProperty('background', GREEN, 'important');
+          el.style.setProperty('color', GREEN_TEXT, 'important');
+          el.style.setProperty('box-shadow', 'inset 0 0 0 3px ' + GREEN_LINE, 'important');
+          el.setAttribute(SELECTED, slug);
+        } else if (el.getAttribute(SELECTED)) {
+          el.style.removeProperty('background');
+          el.style.removeProperty('color');
+          el.style.removeProperty('box-shadow');
+          el.removeAttribute(SELECTED);
+        }
+      });
     }
   }
 

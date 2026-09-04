@@ -103,7 +103,7 @@ describe('CMS − Ride wiring', () => {
   it('selects a list card then deletes only the ride folder and unused photos', () => {
     const js = readFileSync('public/admin/delete-ride.js', 'utf8');
     assert.match(js, /− Ride/);
-    assert.match(js, /#d8f5e3/);
+    assert.match(js, /#2fbf62/);
     assert.ok(
       js.includes('src\\/content\\/stories\\/[^./][^/]*\\.md'),
       'delete-ride.js must only target src/content/stories/*.md',
