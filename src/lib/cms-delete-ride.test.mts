@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { isRideMarkdownPath, rideLabelFromMarkdown, slugFromRidePath } from './cms-delete-ride.ts';
+import {
+  isRideMarkdownPath,
+  isRideMediaRepoPath,
+  mediaRepoPathsFromText,
+  publicMediaToRepoPath,
+  rideLabelFromMarkdown,
+  slugFromEntryHref,
+  slugFromRidePath,
+  unusedMediaPaths,
+} from './cms-delete-ride.ts';
 
 describe('isRideMarkdownPath', () => {
   it('accepts a ride file and rejects everything else', () => {
@@ -30,18 +39,78 @@ describe('slugFromRidePath', () => {
   });
 });
 
+describe('slugFromEntryHref', () => {
+  it('reads the slug from a Decap collection link', () => {
+    assert.equal(
+      slugFromEntryHref('#/collections/stories/entries/empty-tarmac'),
+      'empty-tarmac',
+    );
+    assert.equal(
+      slugFromEntryHref(
+        'http://localhost:4322/admin/index.html#/collections/stories/entries/the-night-before-a-tour',
+      ),
+      'the-night-before-a-tour',
+    );
+    assert.equal(slugFromEntryHref('#/collections/shots/entries/promenade'), '');
+  });
+});
+
+describe('publicMediaToRepoPath', () => {
+  it('maps a CMS photo URL onto public/stories', () => {
+    assert.equal(publicMediaToRepoPath('/stories/img_2878.jpg'), 'public/stories/img_2878.jpg');
+    assert.equal(publicMediaToRepoPath('"/stories/nice-baie-des-anges.jpg"'), 'public/stories/nice-baie-des-anges.jpg');
+    assert.equal(publicMediaToRepoPath('/stories/../secrets.txt'), null);
+    assert.equal(publicMediaToRepoPath('/shots/other.jpg'), null);
+  });
+});
+
+describe('isRideMediaRepoPath', () => {
+  it('only allows files in public/stories', () => {
+    assert.equal(isRideMediaRepoPath('public/stories/img_2878.jpg'), true);
+    assert.equal(isRideMediaRepoPath('public/stories/../package.json'), false);
+    assert.equal(isRideMediaRepoPath('src/content/stories/nice.md'), false);
+  });
+});
+
+describe('mediaRepoPathsFromText', () => {
+  it('collects cover and gallery photos from the Nice ride', () => {
+    const raw = readFileSync('src/content/stories/nice.md', 'utf8');
+    assert.deepEqual(mediaRepoPathsFromText(raw).sort(), [
+      'public/stories/nice-baie-des-anges.jpg',
+      'public/stories/nice-promenade-detail.jpg',
+    ]);
+  });
+});
+
+describe('unusedMediaPaths', () => {
+  it('keeps a photo that a shot still uses', () => {
+    assert.deepEqual(
+      unusedMediaPaths(
+        ['public/stories/nice-baie-des-anges.jpg', 'public/stories/only-this-ride.jpg'],
+        ['public/stories/nice-baie-des-anges.jpg'],
+      ),
+      ['public/stories/only-this-ride.jpg'],
+    );
+  });
+});
+
 describe('CMS − Ride wiring', () => {
   it('loads delete-ride.js from the admin page', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /src="\/admin\/delete-ride\.js"/);
   });
 
-  it('keeps the list button label and ride-folder guard in the CMS script', () => {
+  it('selects a list card then deletes only the ride folder and unused photos', () => {
     const js = readFileSync('public/admin/delete-ride.js', 'utf8');
     assert.match(js, /− Ride/);
+    assert.match(js, /#d8f5e3/);
     assert.ok(
       js.includes('src\\/content\\/stories\\/[^./][^/]*\\.md'),
       'delete-ride.js must only target src/content/stories/*.md',
+    );
+    assert.ok(
+      js.includes('public\\/stories\\/[A-Za-z0-9][A-Za-z0-9._-]*'),
+      'photo deletes must stay inside public/stories',
     );
   });
 });
