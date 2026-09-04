@@ -43,6 +43,7 @@ collections:
         widget: image
         required: false
         choose_url: false
+        hint: "JPEG from the phone. HEIC often shows as a broken thumb. iPhone: Camera → Formats → Most Compatible."
         media_library:
           config:
             multiple: false
@@ -50,6 +51,7 @@ collections:
         name: gallery
         widget: list
         summary: "{{fields.image}}"
+        hint: "Same as cover: JPEG. The thumb loads from GitHub, so it should show before the public site rebuilds."
         field:
           label: Image
           name: image
@@ -78,6 +80,7 @@ collections:
         name: photo
         widget: image
         choose_url: false
+        hint: "JPEG from the phone. HEIC often shows as a broken thumb."
       - { label: Caption, name: caption, widget: text, required: false, hint: "The line under the photo" }
       - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }

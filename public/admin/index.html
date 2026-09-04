@@ -63,9 +63,10 @@
         the public site.
       </p>
       <p style="margin: 0.55rem 0 0">
-        <strong>Photos:</strong> upload straight from your phone, any size. Big ones are shrunk
-        here in the browser before uploading, so the thumbnail is right away. GitHub refuses to
-        serve files over 1 MB to this preview, which is why that matters.
+        <strong>Photos:</strong> upload JPEG from the phone. The thumb used to break for a minute
+        because the editor asked the live site for a file Cloudflare had not rebuilt yet. It now
+        loads the picture from GitHub, so you should see it straight after pick. iPhone HEIC is
+        the remaining trap: Settings → Camera → Formats → Most Compatible, or export a JPEG.
       </p>
       <p style="margin: 0.55rem 0 0">
         <strong>Shots:</strong> one photo and a line. They show on
@@ -129,6 +130,7 @@
       })();
     </script>
     <script src="/admin/shrink-on-pick.js"></script>
+    <script src="/admin/preview-fallback.js"></script>
     <script src="/admin/delete-ride.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
   </body>
