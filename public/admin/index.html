@@ -4,95 +4,237 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Soul Searchers CMS</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      :root {
+        --ink: #0c1218;
+        --fog: #d7e0e8;
+        --paper: #eef3f7;
+        --amber: #d4a35a;
+        --amber-hot: #f0c27a;
+        --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+        --font-body: 'Figtree', 'Avenir Next', system-ui, sans-serif;
+      }
+
+      html,
       body {
         margin: 0;
-        background: #0c1218;
-        color: #eef3f7;
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        min-height: 100%;
+        background:
+          radial-gradient(ellipse 120% 80% at 50% -20%, rgba(30, 58, 69, 0.35), transparent 55%),
+          var(--ink) !important;
+        color: var(--fog);
+        font-family: var(--font-body);
       }
+
+      .cms-top {
+        position: relative;
+        z-index: 5;
+        border-bottom: 1px solid rgba(215, 224, 232, 0.08);
+        background: rgba(10, 14, 20, 0.72);
+        backdrop-filter: blur(16px);
+      }
+
+      .cms-top-inner {
+        width: min(40rem, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 1rem 0 1.1rem;
+      }
+
+      .cms-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--paper);
+        text-decoration: none;
+      }
+
+      .cms-brand img {
+        width: 2.4rem;
+        height: auto;
+        filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
+      }
+
+      .cms-brand span {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+      }
+
+      .cms-kicker {
+        margin: 0.45rem 0 0;
+        color: var(--amber);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
       .banner {
-        max-width: 40rem;
-        margin: 1rem auto 0;
-        padding: 1rem 1.1rem;
-        border: 1px solid rgba(240, 194, 122, 0.35);
-        border-radius: 10px;
-        background: rgba(30, 40, 48, 0.92);
-        color: #d7e0e8;
+        margin-top: 0.85rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid rgba(215, 224, 232, 0.1);
+        border-radius: 1rem;
+        background: rgba(18, 26, 34, 0.55);
+        color: var(--fog);
         font-size: 0.95rem;
-        line-height: 1.45;
+        line-height: 1.5;
       }
+
+      .banner summary {
+        cursor: pointer;
+        color: var(--amber-hot);
+        font-weight: 600;
+        list-style: none;
+      }
+
+      .banner summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .banner[open] summary {
+        margin-bottom: 0.65rem;
+      }
+
       .banner strong {
-        color: #f0c27a;
+        color: var(--amber-hot);
       }
+
       .banner ol {
         margin: 0.6rem 0 0;
         padding-left: 1.2rem;
       }
-      .banner code {
-        color: #f0c27a;
-        font-size: 0.88em;
+
+      .banner code,
+      .banner a {
+        color: var(--amber-hot);
       }
+
       .banner.hidden {
         display: none;
+      }
+
+      /* Decap’s default login is a light-gray dump with a dinner-plate crest. */
+      section[class*='AuthenticationPage'] {
+        background: transparent !important;
+        min-height: calc(100vh - 8rem);
+        padding: 2.5rem 1rem 4rem !important;
+      }
+
+      section[class*='AuthenticationPage'] img[alt='Logo'] {
+        width: 4.6rem !important;
+        height: auto !important;
+        max-height: 5.8rem !important;
+        filter: drop-shadow(0 0 16px rgba(212, 163, 90, 0.28));
+      }
+
+      button[class*='LoginButton'] {
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber)) !important;
+        color: var(--ink) !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        padding: 0.85rem 1.5rem !important;
+        font-family: var(--font-body) !important;
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 10px 28px rgba(212, 163, 90, 0.22);
+      }
+
+      button[class*='LoginButton'] svg {
+        fill: var(--ink) !important;
+      }
+
+      a[class*='GoBackButton'] {
+        color: var(--amber-hot) !important;
+      }
+
+      a[class*='GoBackButton'] p,
+      a[class*='GoBackButton'] span {
+        color: var(--amber-hot) !important;
+      }
+
+      a[class*='GoBackButton'] svg path {
+        fill: var(--amber-hot) !important;
+      }
+
+      span[class*='NetlifyCreditIcon'],
+      [class*='NetlifyCredit'] {
+        display: none !important;
       }
     </style>
   </head>
   <body>
-    <div id="local-banner" class="banner hidden">
-      <strong>Local editing (this works)</strong>
-      <ol>
-        <li>Terminal 1: <code>npm run cms:proxy</code></li>
-        <li>Terminal 2: <code>npm run dev</code></li>
-        <li>Open this page at <code>http://localhost:4321/admin/</code></li>
-        <li>Click <strong>Login to Local Backend</strong>. Do <em>not</em> use GitHub login here</li>
-      </ol>
-      After edits: <code>npm run build</code>. Live saving is
-      <code>https://thenewsoulsearchers.de/admin/</code> (Login with GitHub).
-      <strong>Shots</strong> = one photo + a line. They show on <code>/now</code>.
-      <strong>Instagram</strong> in the editor: username + latest photo Share link.
-      On <strong>Rides</strong>, <strong>＋ Ride</strong> asks for a name, then opens the file
-      for photos and text. The gold <strong>Save this ride</strong> button writes the file.
-      Click a ride so it turns green, then <strong>− Ride</strong>.
-      The <strong>Date</strong> on a ride puts it first on the site. Newest first.
-    </div>
-    <div id="live-banner" class="banner hidden">
-      <strong>Login with GitHub to add rides and notes</strong>
-      <p style="margin: 0.55rem 0 0">
-        Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). Use the gold
-        <strong>Save this ride</strong> button at the bottom-right. That writes to GitHub. The
-        top <strong>Publish</strong> menu stays open so you can pick <strong>Publish now</strong>
-        if you want. Then open the ride page itself (not only the list) and hard-refresh
-        (<code>Cmd+Shift+R</code>). GitHub already has the text and photos. The public Worker
-        can sit on an old build, so an empty page after Publish is the site being behind, not a
-        lost save.
-      </p>
-      <p style="margin: 0.55rem 0 0">
-        <strong>Photos:</strong> JPEG from the phone. Then <strong>Save this ride</strong>. iPhone
-        HEIC is a broken thumb here. Settings → Camera → Formats → Most Compatible, or export a
-        JPEG from Photos.
-      </p>
-      <p style="margin: 0.55rem 0 0">
-        <strong>Shots:</strong> one photo and a line. They show on
-        <a href="/now" style="color: #f0c27a">Now</a>, newest first. People stay on the site
-        and keep looking.
-      </p>
-      <p style="margin: 0.55rem 0 0">
-        <strong>Instagram:</strong> open <em>Instagram</em> in the editor. Put the username, then
-        paste the latest photo’s Share link. That one photo shows on the site so people hop into
-        the account.
-      </p>
-      <p style="margin: 0.55rem 0 0">
-        <strong>Rides:</strong> <strong>＋ Ride</strong> asks for a name, then opens the file so
-        you can add photos and your text. Click a ride so it turns green, then
-        <strong>− Ride</strong>. The Date puts a new ride first. Wait a minute, then hard-refresh
-        the public site.
-      </p>
-      <p style="margin: 0.55rem 0 0">
-        <strong>Looks:</strong> anyone can open
-        <a href="/looks" style="color: #f0c27a">Looks</a> in the footer. It shows how many times
-        people opened the site, which country, and which site sent them.
-      </p>
+    <div class="cms-top">
+      <div class="cms-top-inner">
+        <a class="cms-brand" href="/">
+          <img src="/logo.svg" alt="" width="40" height="51" />
+          <span>The Soul Searchers</span>
+        </a>
+        <p class="cms-kicker">Editor</p>
+        <div id="local-banner" class="banner hidden">
+          <details>
+            <summary>Local editing</summary>
+            <strong>Local editing (this works)</strong>
+            <ol>
+              <li>Terminal 1: <code>npm run cms:proxy</code></li>
+              <li>Terminal 2: <code>npm run dev</code></li>
+              <li>Open this page at <code>http://localhost:4321/admin/</code></li>
+              <li>
+                Click <strong>Login to Local Backend</strong>. Do <em>not</em> use GitHub login here
+              </li>
+            </ol>
+            After edits: <code>npm run build</code>. Live saving is
+            <code>https://thenewsoulsearchers.de/admin/</code> (Login with GitHub).
+            <strong>Shots</strong> = one photo + a line. They show on <code>/now</code>.
+            <strong>Instagram</strong> in the editor: username + latest photo Share link. On
+            <strong>Rides</strong>, <strong>＋ Ride</strong> asks for a name, then opens the file for
+            photos and text. The gold <strong>Save this ride</strong> button writes the file. Click a
+            ride so it turns green, then <strong>− Ride</strong>. The <strong>Date</strong> on a ride
+            puts it first on the site. Newest first.
+          </details>
+        </div>
+        <div id="live-banner" class="banner hidden">
+          <details>
+            <summary>How this editor works</summary>
+            <strong>Login with GitHub to add rides and notes</strong>
+            <p style="margin: 0.55rem 0 0">
+              Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). Use the
+              gold <strong>Save this ride</strong> button at the bottom-right. That writes to GitHub.
+              The top <strong>Publish</strong> menu stays open so you can pick
+              <strong>Publish now</strong> if you want. Then open the ride page itself (not only the
+              list) and hard-refresh (<code>Cmd+Shift+R</code>). GitHub already has the text and
+              photos. The public Worker can sit on an old build, so an empty page after Publish is
+              the site being behind, not a lost save.
+            </p>
+            <p style="margin: 0.55rem 0 0">
+              <strong>Photos:</strong> JPEG from the phone. Then <strong>Save this ride</strong>.
+              iPhone HEIC is a broken thumb here. Settings → Camera → Formats → Most Compatible, or
+              export a JPEG from Photos.
+            </p>
+            <p style="margin: 0.55rem 0 0">
+              <strong>Shots:</strong> one photo and a line. They show on
+              <a href="/now">Now</a>, newest first.
+            </p>
+            <p style="margin: 0.55rem 0 0">
+              <strong>Instagram:</strong> open <em>Instagram</em> in the editor. Put the username,
+              then paste the latest photo’s Share link.
+            </p>
+            <p style="margin: 0.55rem 0 0">
+              <strong>Rides:</strong> <strong>＋ Ride</strong> asks for a name, then opens the file
+              so you can add photos and your text. Click a ride so it turns green, then
+              <strong>− Ride</strong>.
+            </p>
+            <p style="margin: 0.55rem 0 0">
+              <strong>Looks:</strong> anyone can open <a href="/looks">Looks</a> in the footer.
+            </p>
+          </details>
+        </div>
+      </div>
     </div>
     <script>
       (function () {

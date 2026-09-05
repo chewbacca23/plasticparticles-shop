@@ -147,6 +147,16 @@ describe('admin scripts stay wired', () => {
     assert.match(src, /addEventListener\(\s*'error'/);
   });
 
+  it('styles the GitHub login page like the site, not Decap’s gray dump', () => {
+    const html = readFileSync('public/admin/index.html', 'utf8');
+    assert.match(html, /AuthenticationPage/);
+    assert.match(html, /LoginButton/);
+    assert.match(html, /NetlifyCreditIcon/);
+    assert.match(html, /How this editor works/);
+    assert.match(html, /<details>/);
+    assert.doesNotMatch(html, /background:\s*#eff0f4/);
+  });
+
   it('puts a Save this ride control on the editor and leaves the Publish menu alone', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /publish-click\.js/);
