@@ -4,14 +4,18 @@ import worker from './cms-oauth-worker.js';
 import {
   applyLook,
   berlinDay,
+  countryLabel,
   emptyLooks,
   fillLooksInHtml,
   handleLooksPage,
   handleLooksRequest,
+  lookFromRequest,
   looksDashboardPage,
   memoryLooksStore,
   recordDocumentLook,
   recordLook,
+  sanitizeCountry,
+  sanitizeFrom,
   sanitizePath,
   shouldCountDocument,
   shouldRecordPath,
@@ -23,6 +27,8 @@ const SITE_LOOKS = `<html><body>
 <p class="card-num" data-looks="week">—</p>
 <p class="card-num" data-looks="total">—</p>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
+<ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
+<ol class="pages" data-looks-from><li class="empty">no from</li></ol>
 <footer>Looks</footer>
 </body></html>`;
 
@@ -49,14 +55,32 @@ describe('shouldRecordPath', () => {
 describe('summarizeLooks', () => {
   it('adds today, the week, and the busiest pages', () => {
     const today = berlinDay(new Date('2026-09-04T12:00:00+02:00'));
-    const data = applyLook(emptyLooks(), '/', today);
-    const next = applyLook(data, '/now', today);
-    const extra = applyLook(next, '/now', today);
+    const data = applyLook(emptyLooks(), '/', today, { country: 'DE', from: 'Instagram' });
+    const next = applyLook(data, '/now', today, { country: 'FR', from: 'Instagram' });
+    const extra = applyLook(next, '/now', today, { country: 'DE', from: 'Google' });
     const summary = summarizeLooks(extra, new Date('2026-09-04T12:00:00+02:00'));
     assert.equal(summary.today, 3);
     assert.equal(summary.week, 3);
     assert.equal(summary.total, 3);
     assert.deepEqual(summary.pages[0], { path: '/now', looks: 2 });
+    assert.deepEqual(summary.countries[0], { name: 'Germany', looks: 2 });
+    assert.deepEqual(summary.from[0], { name: 'Instagram', looks: 2 });
+  });
+});
+
+describe('sanitizeFrom', () => {
+  it('names Instagram and skips our own site', () => {
+    assert.equal(
+      sanitizeFrom('https://www.instagram.com/p/abc', 'https://thenewsoulsearchers.de/now'),
+      'Instagram',
+    );
+    assert.equal(
+      sanitizeFrom('https://thenewsoulsearchers.de/now', 'https://thenewsoulsearchers.de/'),
+      'On this site',
+    );
+    assert.equal(sanitizeFrom('', 'https://thenewsoulsearchers.de/now'), 'Typed or bookmark');
+    assert.equal(sanitizeCountry('de'), 'DE');
+    assert.equal(countryLabel('DE'), 'Germany');
   });
 });
 
@@ -171,6 +195,22 @@ describe('GET/POST /api/looks', () => {
     const page = await handleLooksPage(new Request('https://thenewsoulsearchers.de/looks'), env);
     assert.match(await page.text(), /\/now/);
   });
+
+  it('stores country and the site that sent them', async () => {
+    const env = { STATS: memoryKv() };
+    const request = new Request('https://thenewsoulsearchers.de/now', {
+      headers: {
+        'sec-fetch-dest': 'document',
+        referer: 'https://www.instagram.com/',
+      },
+    });
+    Object.defineProperty(request, 'cf', { value: { country: 'DE' } });
+    assert.deepEqual(lookFromRequest(request), { country: 'DE', from: 'Instagram' });
+    await recordDocumentLook(request, env);
+    const html = await (await handleLooksPage(new Request('https://thenewsoulsearchers.de/looks'), env)).text();
+    assert.match(html, /Germany/);
+    assert.match(html, /Instagram/);
+  });
 });
 
 describe('shouldCountDocument', () => {
@@ -193,11 +233,15 @@ describe('fillLooksInHtml', () => {
       week: 5,
       total: 9,
       pages: [{ path: '/', looks: 4 }],
+      countries: [{ name: 'Germany', looks: 3 }],
+      from: [{ name: 'Instagram', looks: 2 }],
     });
     assert.match(html, /data-looks="today">2</);
     assert.match(html, /data-looks="week">5</);
     assert.match(html, /data-looks="total">9</);
     assert.match(html, /Home/);
+    assert.match(html, /Germany/);
+    assert.match(html, /Instagram/);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
 });
@@ -214,6 +258,16 @@ describe('looksDashboardPage', () => {
     assert.match(html, />5</);
     assert.match(html, />9</);
     assert.match(html, /Home/);
+    const withFrom = await looksDashboardPage({
+      today: 1,
+      week: 1,
+      total: 1,
+      pages: [],
+      countries: [{ name: 'France', looks: 1 }],
+      from: [{ name: 'Google', looks: 1 }],
+    }).text();
+    assert.match(withFrom, /France/);
+    assert.match(withFrom, /Google/);
   });
 });
 

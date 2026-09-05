@@ -12,7 +12,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="eyebrow">Open counts</p>
       <h1 class="section-title">Looks</h1>
       <p class="section-lead">
-        How many times someone opened a page. No names. Counts start after this Worker is live.
+        How many times someone opened a page, which country, and which site sent them. No names.
+        Counts start after this Worker is live.
       </p>
 
       <div class="cards">
@@ -33,6 +34,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h2 class="pages-title">Pages people opened</h2>
       <ol class="pages" data-looks-pages>
         <li class="empty">Open Home, Now, or a ride, then refresh this page.</li>
+      </ol>
+
+      <h2 class="pages-title">Where they opened from</h2>
+      <ol class="pages" data-looks-countries>
+        <li class="empty">Country shows after someone opens a page.</li>
+      </ol>
+
+      <h2 class="pages-title">What sent them</h2>
+      <ol class="pages" data-looks-from>
+        <li class="empty">The site that sent them shows after someone opens a page.</li>
       </ol>
     </div>
   </section>
@@ -80,7 +91,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .pages-title {
-    margin: 0 0 0.85rem;
+    margin: 2.25rem 0 0.85rem;
     font-size: 1.35rem;
   }
 

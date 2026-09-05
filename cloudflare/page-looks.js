@@ -31,7 +31,7 @@ export function berlinDay(now = new Date()) {
 }
 
 export function emptyLooks() {
-  return { total: 0, days: {}, paths: {} };
+  return { total: 0, days: {}, paths: {}, countries: {}, from: {} };
 }
 
 export function sanitizePath(raw) {
@@ -54,15 +54,23 @@ export function shouldRecordPath(path) {
   return true;
 }
 
-export function applyLook(data, path, day) {
+export function applyLook(data, path, day, extras = {}) {
   const next = {
     total: Number(data.total) || 0,
     days: { ...(data.days || {}) },
     paths: { ...(data.paths || {}) },
+    countries: { ...(data.countries || {}) },
+    from: { ...(data.from || {}) },
   };
   next.total += 1;
   next.days[day] = (Number(next.days[day]) || 0) + 1;
   next.paths[path] = (Number(next.paths[path]) || 0) + 1;
+  if (extras.country) {
+    next.countries[extras.country] = (Number(next.countries[extras.country]) || 0) + 1;
+  }
+  if (extras.from) {
+    next.from[extras.from] = (Number(next.from[extras.from]) || 0) + 1;
+  }
   return next;
 }
 
@@ -79,11 +87,132 @@ export function summarizeLooks(data, now = new Date()) {
     .map(([path, looks]) => ({ path, looks: Number(looks) || 0 }))
     .sort((a, b) => b.looks - a.looks || a.path.localeCompare(b.path))
     .slice(0, 12);
+  const countries = topNamedCounts(data.countries, countryLabel);
+  const from = topNamedCounts(data.from);
   return {
     today: Number(days[today]) || 0,
     week,
     total: Number(data.total) || 0,
     pages,
+    countries,
+    from,
+  };
+}
+
+function topNamedCounts(map, label = (key) => key) {
+  return Object.entries(map || {})
+    .map(([key, looks]) => ({ name: label(key), looks: Number(looks) || 0 }))
+    .sort((a, b) => b.looks - a.looks || a.name.localeCompare(b.name))
+    .slice(0, 12);
+}
+
+const COUNTRY_NAMES = {
+  AT: 'Austria',
+  AU: 'Australia',
+  BE: 'Belgium',
+  BR: 'Brazil',
+  CA: 'Canada',
+  CH: 'Switzerland',
+  CN: 'China',
+  CZ: 'Czechia',
+  DE: 'Germany',
+  DK: 'Denmark',
+  ES: 'Spain',
+  FI: 'Finland',
+  FR: 'France',
+  GB: 'United Kingdom',
+  GR: 'Greece',
+  HR: 'Croatia',
+  HU: 'Hungary',
+  IE: 'Ireland',
+  IN: 'India',
+  IT: 'Italy',
+  JP: 'Japan',
+  KR: 'South Korea',
+  LU: 'Luxembourg',
+  NL: 'Netherlands',
+  NO: 'Norway',
+  NZ: 'New Zealand',
+  PL: 'Poland',
+  PT: 'Portugal',
+  RO: 'Romania',
+  SE: 'Sweden',
+  SI: 'Slovenia',
+  SK: 'Slovakia',
+  T1: 'Tor',
+  TR: 'Turkey',
+  UA: 'Ukraine',
+  US: 'United States',
+  XX: 'Unknown',
+};
+
+export function countryLabel(code) {
+  const key = String(code || '').toUpperCase();
+  return COUNTRY_NAMES[key] || key;
+}
+
+export function sanitizeCountry(raw) {
+  const code = String(raw || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$|^T1$/.test(code)) return '';
+  return code;
+}
+
+const FROM_NAMES = {
+  'instagram.com': 'Instagram',
+  'l.instagram.com': 'Instagram',
+  'facebook.com': 'Facebook',
+  'm.facebook.com': 'Facebook',
+  'l.facebook.com': 'Facebook',
+  'google.com': 'Google',
+  'google.de': 'Google',
+  'google.fr': 'Google',
+  'google.it': 'Google',
+  'google.nl': 'Google',
+  'bing.com': 'Bing',
+  'duckduckgo.com': 'DuckDuckGo',
+  't.co': 'X',
+  'twitter.com': 'X',
+  'x.com': 'X',
+  'youtube.com': 'YouTube',
+  'linkedin.com': 'LinkedIn',
+  'reddit.com': 'Reddit',
+  'bsky.app': 'Bluesky',
+};
+
+const OWN_HOSTS = new Set([
+  'thenewsoulsearchers.de',
+  'www.thenewsoulsearchers.de',
+  'localhost',
+  '127.0.0.1',
+]);
+
+export function sanitizeFrom(referer, pageUrl) {
+  if (!referer) return 'Typed or bookmark';
+  try {
+    const from = new URL(referer);
+    let host = from.hostname.toLowerCase();
+    if (host.startsWith('www.')) host = host.slice(4);
+    let here = '';
+    try {
+      here = new URL(pageUrl).hostname.toLowerCase();
+      if (here.startsWith('www.')) here = here.slice(4);
+    } catch {
+      here = '';
+    }
+    if (OWN_HOSTS.has(host) || host === here) return 'On this site';
+    if (FROM_NAMES[host]) return FROM_NAMES[host];
+    if (host.endsWith('.google.com') || /^google\.[a-z.]+$/.test(host)) return 'Google';
+    if (host.length > 80) return host.slice(0, 80);
+    return host || 'Typed or bookmark';
+  } catch {
+    return 'Typed or bookmark';
+  }
+}
+
+export function lookFromRequest(request) {
+  return {
+    country: sanitizeCountry(request.cf?.country),
+    from: sanitizeFrom(request.headers.get('referer'), request.url),
   };
 }
 
@@ -111,6 +240,9 @@ export function kvLooksStore(kv) {
           total: Number(parsed.total) || 0,
           days: parsed.days && typeof parsed.days === 'object' ? parsed.days : {},
           paths: parsed.paths && typeof parsed.paths === 'object' ? parsed.paths : {},
+          countries:
+            parsed.countries && typeof parsed.countries === 'object' ? parsed.countries : {},
+          from: parsed.from && typeof parsed.from === 'object' ? parsed.from : {},
         };
       } catch {
         return emptyLooks();
@@ -160,10 +292,10 @@ export function looksStoreFor(env) {
   return env.__memoryLooks;
 }
 
-export async function recordLook(store, rawPath, now = new Date()) {
+export async function recordLook(store, rawPath, now = new Date(), extras = {}) {
   const path = sanitizePath(rawPath);
   if (!shouldRecordPath(path)) return { recorded: false, path };
-  const data = applyLook(await store.load(), path, berlinDay(now));
+  const data = applyLook(await store.load(), path, berlinDay(now), extras);
   await store.save(data);
   return { recorded: true, path, total: data.total };
 }
@@ -285,7 +417,12 @@ export function shouldCountDocument(request) {
 export async function recordDocumentLook(request, env) {
   if (!shouldCountDocument(request)) return { recorded: false };
   try {
-    return await recordLook(looksStoreFor(env), new URL(request.url).pathname);
+    return await recordLook(
+      looksStoreFor(env),
+      new URL(request.url).pathname,
+      new Date(),
+      lookFromRequest(request),
+    );
   } catch {
     return { recorded: false };
   }
@@ -295,16 +432,15 @@ export function looksDashboardPage(summary) {
   const today = Number(summary?.today) || 0;
   const week = Number(summary?.week) || 0;
   const total = Number(summary?.total) || 0;
-  const pages = Array.isArray(summary?.pages) ? summary.pages : [];
-  const rows = pages.length
-    ? pages
-        .map((row) => {
-          const label = row.path === '/' ? 'Home' : escapeHtml(row.path);
-          const href = escapeHtml(row.path);
-          return `<li><a href="${href}">${label}</a><span>${Number(row.looks) || 0}</span></li>`;
-        })
-        .join('')
-    : '<li class="empty">Open Home, Now, or a ride in another tab, then refresh this page.</li>';
+  const rows = looksPageRows(summary?.pages);
+  const countryRows = looksNamedRows(
+    summary?.countries,
+    'Country shows after someone opens a page.',
+  );
+  const fromRows = looksNamedRows(
+    summary?.from,
+    'The site that sent them shows after someone opens a page.',
+  );
 
   return new Response(
     `<!doctype html>
@@ -331,7 +467,7 @@ export function looksDashboardPage(summary) {
     .card { padding:1.1rem 1.15rem; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); }
     .card-label { margin:0; color:var(--amber); font-size:.78rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
     .card-num { margin:.45rem 0 0; color:var(--paper); font-size:2.4rem; line-height:1; }
-    h2 { margin:0 0 .85rem; font-size:1.35rem; }
+    h2 { margin:2.25rem 0 .85rem; font-size:1.35rem; }
     ol { margin:0; padding:0; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; overflow:hidden; }
     li { display:flex; justify-content:space-between; gap:1rem; padding:.85rem 1.1rem; border-top:1px solid rgba(215,224,232,.08); }
     li:first-child { border-top:0; }
@@ -354,6 +490,10 @@ export function looksDashboardPage(summary) {
     </div>
     <h2>Pages people opened</h2>
     <ol>${rows}</ol>
+    <h2>Where they opened from</h2>
+    <ol>${countryRows}</ol>
+    <h2>What sent them</h2>
+    <ol>${fromRows}</ol>
     <p class="back"><a href="/">← Home</a> · <a href="/admin/">Editor</a></p>
   </main>
 </body>
@@ -382,11 +522,29 @@ export function looksPageRows(pages) {
     .join('');
 }
 
+export function looksNamedRows(items, emptyText) {
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    return `<li class="empty">${emptyText}</li>`;
+  }
+  return list
+    .map((row) => `<li>${escapeHtml(row.name)}<span>${Number(row.looks) || 0}</span></li>`)
+    .join('');
+}
+
 export function fillLooksInHtml(html, summary) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
   const total = String(Number(summary?.total) || 0);
   const rows = looksPageRows(summary?.pages);
+  const countryRows = looksNamedRows(
+    summary?.countries,
+    'Country shows after someone opens a page.',
+  );
+  const fromRows = looksNamedRows(
+    summary?.from,
+    'The site that sent them shows after someone opens a page.',
+  );
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
@@ -394,6 +552,14 @@ export function fillLooksInHtml(html, summary) {
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${rows}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-countries[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${countryRows}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-from[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${fromRows}</ol>`,
     );
 }
 
