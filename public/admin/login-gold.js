@@ -1,6 +1,6 @@
 /**
- * Gold Login with GitHub in our bar. Decap’s own button can vanish if Mail
- * opens first. This clicks Decap’s login so the GitHub popup still works.
+ * Gold Login with GitHub in our bar. Decap’s own button can vanish.
+ * This clicks Decap’s login so the GitHub popup still works.
  */
 (function () {
   var AFTER = 'ss-after-login';
@@ -11,6 +11,17 @@
 
   function loggedIn() {
     if (authPage()) return false;
+    try {
+      var keys = ['decap-cms-user', 'netlify-cms-user'];
+      for (var i = 0; i < keys.length; i++) {
+        var raw = window.localStorage.getItem(keys[i]);
+        if (!raw) continue;
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.token) return true;
+      }
+    } catch (e) {
+      // A corrupt session is treated as logged out.
+    }
     return !!(
       document.querySelector('[class*="AppHeader"]') ||
       document.querySelector('[class*="CollectionLabel"]') ||
@@ -42,34 +53,15 @@
     }, 150);
   }
 
-  var hash = window.location.hash || '';
-  if (hash.indexOf('/collections/') !== -1 || hash.indexOf('/workflow') !== -1) {
-    try {
-      window.sessionStorage.setItem(AFTER, hash);
-    } catch (e) {
-      // sessionStorage can be blocked; login still works.
-    }
-    window.history.replaceState(null, '', window.location.pathname + window.location.search);
-  }
+  window.ssGoldLogin = {
+    loggedIn: loggedIn,
+    startLogin: startLogin,
+  };
 
   var login = document.getElementById('cms-login');
   if (login) {
     login.addEventListener('click', function (event) {
       event.preventDefault();
-      startLogin();
-    });
-  }
-
-  var mail = document.getElementById('cms-mail');
-  if (mail) {
-    mail.addEventListener('click', function (event) {
-      if (loggedIn()) return;
-      event.preventDefault();
-      try {
-        window.sessionStorage.setItem(AFTER, '#/collections/settings/entries/imprint');
-      } catch (e) {
-        // Same as above.
-      }
       startLogin();
     });
   }
@@ -85,7 +77,11 @@
     } catch (e) {
       next = '';
     }
-    if (next && window.location.hash !== next) {
+    if (next === 'mail' || next === '#mail') {
+      window.dispatchEvent(new CustomEvent('ss-open-mail'));
+      return;
+    }
+    if (next && next.charAt(0) === '#' && window.location.hash !== next) {
       window.location.hash = next;
     }
   }, 700);

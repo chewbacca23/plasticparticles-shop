@@ -151,7 +151,7 @@ describe('admin scripts stay wired', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /class="cms-looks" href="\/looks"/);
     assert.match(html, /class="cms-mail"/);
-    assert.match(html, /#\/collections\/settings\/entries\/imprint/);
+    assert.match(html, /id="cms-mail-panel"/);
     assert.match(html, /class="cms-login"/);
     assert.match(html, /Login with GitHub/);
     assert.match(html, /login-gold\.js/);

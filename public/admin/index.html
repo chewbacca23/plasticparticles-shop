@@ -35,7 +35,7 @@
 
       .cms-top {
         position: relative;
-        z-index: 5;
+        z-index: 20000;
         border-bottom: 1px solid rgba(215, 224, 232, 0.08);
         background: rgba(10, 14, 20, 0.72);
         backdrop-filter: blur(16px);
@@ -83,14 +83,20 @@
       .cms-mail,
       .cms-login {
         display: inline-flex;
-        align-items: baseline;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.6rem;
+        min-width: 4.6rem;
         margin-top: 0.15rem;
-        padding: 0.4rem 0.85rem;
+        padding: 0.55rem 1.1rem;
+        border: 0;
         border-radius: 999px;
         background: linear-gradient(135deg, var(--amber-hot), var(--amber));
         color: var(--ink);
         text-decoration: none;
+        font: inherit;
         font-weight: 700;
+        cursor: pointer;
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
@@ -102,8 +108,104 @@
         display: none;
       }
 
-      .cms-top:not(.cms-in) .cms-mail {
+      .cms-mail-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 30000;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 4.5rem 1rem 1.5rem;
+        background: rgba(6, 10, 14, 0.72);
+      }
+
+      .cms-mail-panel[hidden] {
         display: none;
+      }
+
+      .cms-mail-card {
+        width: min(36rem, 100%);
+        max-height: calc(100vh - 6rem);
+        overflow: auto;
+        padding: 1.25rem 1.3rem 1.35rem;
+        border: 1px solid rgba(215, 224, 232, 0.12);
+        border-radius: 1.1rem;
+        background: #121820;
+        color: var(--paper);
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      }
+
+      .cms-mail-card h2 {
+        margin: 0 0 0.35rem;
+        font-family: var(--font-display);
+        font-size: 1.55rem;
+      }
+
+      .cms-mail-lead {
+        margin: 0 0 1rem;
+        color: rgba(215, 224, 232, 0.72);
+      }
+
+      .cms-mail-card label {
+        display: grid;
+        gap: 0.35rem;
+        margin: 0 0 0.85rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--amber);
+      }
+
+      .cms-mail-card input {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 3rem;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid rgba(215, 224, 232, 0.22);
+        border-radius: 0.75rem;
+        background: #0c1218;
+        color: var(--paper);
+        font: 1.05rem/1.35 var(--font-body);
+      }
+
+      .cms-mail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin: 1rem 0 0;
+      }
+
+      .cms-mail-save,
+      .cms-mail-close {
+        min-height: 2.8rem;
+        padding: 0.65rem 1.15rem;
+        border-radius: 999px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .cms-mail-save {
+        border: 0;
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
+        color: var(--ink);
+      }
+
+      .cms-mail-close {
+        border: 1px solid rgba(215, 224, 232, 0.28);
+        background: transparent;
+        color: var(--paper);
+      }
+
+      #cms-mail-status {
+        min-height: 1.3em;
+        margin: 0.25rem 0 0;
+        color: var(--amber-hot);
+      }
+
+      #cms-mail-status.bad {
+        color: #f0c2c2;
       }
 
       .cms-looks-num {
@@ -254,7 +356,7 @@
           </div>
           <span class="cms-links">
             <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
-            <a class="cms-mail" id="cms-mail" href="#/collections/settings/entries/imprint">Mail</a>
+            <button type="button" class="cms-mail" id="cms-mail">Mail</button>
             <a class="cms-looks" href="/looks">
               Looks
               <span class="cms-looks-num" data-looks="today">—</span>
@@ -311,9 +413,9 @@
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Mail and imprint:</strong> click the gold <strong>Mail</strong> button in this
-              bar. Put your email, street, and city. Gold <strong>Save mail and imprint</strong>.
-              Then open <a href="/contact">Contact</a> and <a href="/impressum">Imprint</a> and
-              hard-refresh.
+              bar. A form opens on top. Type your email, street, and city, then
+              <strong>Save mail and imprint</strong>. Then open
+              <a href="/contact">Contact</a> and <a href="/impressum">Imprint</a> and hard-refresh.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Instagram:</strong> open <em>Site</em>, then <em>Instagram</em>. Put the
@@ -331,6 +433,49 @@
             </p>
           </details>
         </div>
+      </div>
+    </div>
+    <div id="cms-mail-panel" class="cms-mail-panel" hidden>
+      <div class="cms-mail-card">
+        <p class="cms-kicker">Site</p>
+        <h2>Mail and imprint</h2>
+        <p class="cms-mail-lead">
+          These boxes are the thing to click. Type here, then save. This writes the Contact and
+          Imprint pages.
+        </p>
+        <label>
+          Email
+          <input id="cms-mail-email" type="email" autocomplete="email" placeholder="henrik@thenewsoulsearchers.de" />
+        </label>
+        <label>
+          Name on the imprint
+          <input id="cms-mail-legal" type="text" placeholder="The Soul Searchers" />
+        </label>
+        <label>
+          Your name
+          <input id="cms-mail-name" type="text" placeholder="Henrik Kürschner" />
+        </label>
+        <label>
+          Street
+          <input id="cms-mail-street" type="text" autocomplete="street-address" placeholder="Street and house number" />
+        </label>
+        <label>
+          Postcode and city
+          <input id="cms-mail-city" type="text" placeholder="12345 Berlin" />
+        </label>
+        <label>
+          Country
+          <input id="cms-mail-country" type="text" value="Germany" />
+        </label>
+        <label>
+          Phone
+          <input id="cms-mail-phone" type="tel" placeholder="Optional" />
+        </label>
+        <p id="cms-mail-status"></p>
+        <p class="cms-mail-actions">
+          <button type="button" class="cms-mail-save" id="cms-mail-save">Save mail and imprint</button>
+          <button type="button" class="cms-mail-close" id="cms-mail-close">Close</button>
+        </p>
       </div>
     </div>
     <script>
@@ -383,6 +528,7 @@
     <script src="/admin/publish-click.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
     <script src="/admin/login-gold.js"></script>
+    <script src="/admin/mail-gold.js"></script>
     <script src="/admin/ride-preview.js"></script>
   </body>
 </html>
