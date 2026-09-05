@@ -70,8 +70,23 @@
 
       .cms-looks:hover,
       .cms-mail:hover,
-      .cms-login:hover {
+      .cms-login:hover,
+      .cms-mail-inline:hover {
         color: var(--ink);
+      }
+
+      .cms-mail-inline {
+        display: inline-flex;
+        align-items: center;
+        margin: 0 0.15rem;
+        padding: 0.15rem 0.65rem;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
       }
 
       .cms-links {
@@ -100,6 +115,21 @@
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
+      /* Decap paints a full-page layer over the gold bar. Pin Mail
+         above that layer so the letters stay a real button. */
+      .cms-mail {
+        position: fixed;
+        left: 1.1rem;
+        bottom: 1.1rem;
+        z-index: 2147483000;
+        min-height: 3.4rem;
+        min-width: 13.5rem;
+        margin: 0;
+        padding: 0.85rem 1.35rem;
+        font-size: 1.15rem;
+        pointer-events: auto;
+      }
+
       .cms-login {
         font-size: 1rem;
       }
@@ -111,7 +141,7 @@
       .cms-mail-panel {
         position: fixed;
         inset: 0;
-        z-index: 30000;
+        z-index: 2147483001;
         display: flex;
         align-items: flex-start;
         justify-content: center;
@@ -356,7 +386,7 @@
           </div>
           <span class="cms-links">
             <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
-            <button type="button" class="cms-mail" id="cms-mail">Mail</button>
+            <button type="button" class="cms-mail" id="cms-mail">Mail and imprint</button>
             <a class="cms-looks" href="/looks">
               Looks
               <span class="cms-looks-num" data-looks="today">—</span>
@@ -412,9 +442,10 @@
               <a href="/now">Now</a>, newest first.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Mail and imprint:</strong> click the gold <strong>Mail</strong> button in this
-              bar. A form opens on top. Type your email, street, and city, then
-              <strong>Save mail and imprint</strong>. Then open
+              <strong>Mail and imprint:</strong> use the gold
+              <button type="button" class="cms-mail-inline" data-ss-mail>Mail and imprint</button>
+              button at the bottom-left. A form opens on top. Type your email, street, and city,
+              then <strong>Save mail and imprint</strong>. Then open
               <a href="/contact">Contact</a> and <a href="/impressum">Imprint</a> and hard-refresh.
             </p>
             <p style="margin: 0.55rem 0 0">

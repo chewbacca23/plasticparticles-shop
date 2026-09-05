@@ -331,8 +331,14 @@
 
   var mail = $('cms-mail');
   if (mail) {
-    mail.setAttribute('href', '#mail');
+    document.body.appendChild(mail);
     mail.addEventListener('click', onMailClick);
+  }
+
+  var extras = document.querySelectorAll('[data-ss-mail]');
+  var i;
+  for (i = 0; i < extras.length; i++) {
+    extras[i].addEventListener('click', onMailClick);
   }
 
   var close = $('cms-mail-close');

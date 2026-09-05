@@ -78,11 +78,15 @@ describe('gold Mail form', () => {
   it('puts a clickable Mail chip and the form on the editor page', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /id="cms-mail"/);
+    assert.match(html, /Mail and imprint/);
+    assert.match(html, /position:\s*fixed/);
+    assert.match(html, /z-index:\s*2147483000/);
     assert.match(html, /id="cms-mail-panel"/);
     assert.match(html, /id="cms-mail-email"/);
     assert.match(html, /id="cms-mail-street"/);
     assert.match(html, /id="cms-mail-save"/);
     assert.match(html, /mail-gold\.js/);
+    assert.match(html, /data-ss-mail/);
     assert.doesNotMatch(html, /cms-top:not\(\.cms-in\) \.cms-mail/);
     assert.doesNotMatch(html, /#\/collections\/settings\/entries\/imprint/);
     assert.ok(
@@ -98,6 +102,8 @@ describe('gold Mail form', () => {
     assert.match(js, /cmsToken/);
     assert.match(js, /persistEntry/);
     assert.match(js, /api\.github\.com/);
+    assert.match(js, /document\.body\.appendChild\(mail\)/);
+    assert.match(js, /data-ss-mail/);
     assert.doesNotMatch(js, /#\/collections\/settings\/entries\/imprint/);
   });
 });
