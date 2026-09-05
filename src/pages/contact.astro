@@ -24,11 +24,11 @@ const email = publicEmail(saved);
         <h2>Message ready</h2>
         <p>
           Your mail client should open with the note. If it doesn’t, email
-          <a href={`mailto:${email}`}>{email}</a> directly.
+          <a data-site="email" href={`mailto:${email}`}>{email}</a> directly.
         </p>
       </div>
 
-      <form id="contact-form" class="form" method="post" action={`mailto:${email}`} enctype="text/plain">
+      <form id="contact-form" class="form" method="post" action={`mailto:${email}`} enctype="text/plain" data-site="mail-form">
         <label>
           <span>Name</span>
           <input type="text" name="name" required autocomplete="name" />
@@ -46,7 +46,7 @@ const email = publicEmail(saved);
 
       <p class="alt">
         Prefer a direct line?
-        <a href={`mailto:${email}`}>{email}</a>
+        <a data-site="email" href={`mailto:${email}`}>{email}</a>
       </p>
     </div>
   </section>

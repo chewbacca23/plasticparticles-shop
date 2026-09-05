@@ -68,8 +68,28 @@
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      .cms-looks:hover {
+      .cms-looks:hover,
+      .cms-mail:hover {
         color: var(--ink);
+      }
+
+      .cms-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .cms-mail {
+        display: inline-flex;
+        align-items: baseline;
+        margin-top: 0.15rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
       .cms-looks-num {
@@ -218,10 +238,13 @@
             </a>
             <p class="cms-kicker">Editor</p>
           </div>
-          <a class="cms-looks" href="/looks">
-            Looks
-            <span class="cms-looks-num" data-looks="today">—</span>
-          </a>
+          <span class="cms-links">
+            <a class="cms-mail" href="#/collections/settings/entries/imprint">Mail</a>
+            <a class="cms-looks" href="/looks">
+              Looks
+              <span class="cms-looks-num" data-looks="today">—</span>
+            </a>
+          </span>
         </div>
         <div id="local-banner" class="banner hidden">
           <details>
@@ -271,9 +294,10 @@
               <a href="/now">Now</a>, newest first.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Mail and imprint:</strong> open <em>Site</em>, then <em>Mail and imprint</em>.
-              Put your email, street, and city. Gold <strong>Save mail and imprint</strong>. That
-              fills Contact and Imprint.
+              <strong>Mail and imprint:</strong> click the gold <strong>Mail</strong> button in this
+              bar. Put your email, street, and city. Gold <strong>Save mail and imprint</strong>.
+              Then open <a href="/contact">Contact</a> and <a href="/impressum">Imprint</a> and
+              hard-refresh.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Instagram:</strong> open <em>Site</em>, then <em>Instagram</em>. Put the

@@ -17,6 +17,7 @@ import {
   recordDocumentLook,
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
+import { handleFreshSite } from './fresh-site.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -359,6 +360,9 @@ export default {
 
     const freshRide = await handleFreshRide(request, env);
     if (freshRide) return freshRide;
+
+    const freshSite = await handleFreshSite(request, env);
+    if (freshSite) return freshSite;
 
     if (url.pathname === '/auth' || url.pathname === '/callback') {
       const creds = oauthCreds(env);

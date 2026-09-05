@@ -150,6 +150,7 @@ describe('admin scripts stay wired', () => {
   it('puts Looks in the editor bar', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /class="cms-looks" href="\/looks"/);
+    assert.match(html, /class="cms-mail" href="#\/collections\/settings\/entries\/imprint"/);
     assert.match(html, /data-looks="today"/);
     assert.match(html, /Photos in the story/);
     assert.match(html, /Mail and imprint/);
@@ -186,6 +187,7 @@ describe('admin scripts stay wired', () => {
     assert.match(config, /Photos in the story/);
     assert.match(config, /First photo/);
     assert.match(config, /Mail and imprint/);
+    assert.match(config, /format: json/);
     assert.match(config, /name: email/);
     assert.match(config, /name: order[\s\S]*min:\s*0/);
     assert.match(src, /Save mail and imprint/);

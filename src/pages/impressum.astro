@@ -18,7 +18,7 @@ const imprint = publicImprint(saved);
       <p class="section-lead">Angaben gemäß § 5 TMG.</p>
 
       <h2>Angaben zum Anbieter</h2>
-      <p>
+      <p data-site="provider">
         {imprint.legalName}<br />
         {imprint.responsible}
         {imprint.street && <><br />{imprint.street}</>}
@@ -28,17 +28,19 @@ const imprint = publicImprint(saved);
 
       <h2>Kontakt</h2>
       <p>
-        E-Mail: <a href={`mailto:${imprint.email}`}>{imprint.email}</a>
-        {imprint.phone && (
-          <>
-            <br />
-            Telefon: {imprint.phone}
-          </>
-        )}
+        E-Mail: <a data-site="email" href={`mailto:${imprint.email}`}>{imprint.email}</a>
+        <span data-site="phone">
+          {imprint.phone && (
+            <>
+              <br />
+              Telefon: {imprint.phone}
+            </>
+          )}
+        </span>
       </p>
 
       <h2>Verantwortlich für den Inhalt</h2>
-      <p>
+      <p data-site="responsible">
         {imprint.responsible}
         {imprint.street && <><br />{imprint.street}</>}
         {imprint.zipCity && <><br />{imprint.zipCity}</>}
