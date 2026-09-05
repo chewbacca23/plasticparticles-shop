@@ -252,7 +252,7 @@
 
   function persistLocal(raw) {
     return proxy('persistEntry', {
-      entry: { slug: 'imprint', path: PATH, raw: raw, data: fromUnknown(JSON.parse(raw)) },
+      entry: { slug: 'imprint', path: PATH, raw: raw },
       assets: [],
       options: {
         collectionName: 'settings',
@@ -300,6 +300,13 @@
       })
       .catch(function (err) {
         var message = err && err.message ? err.message : 'Could not save.';
+        if (/failed to fetch/i.test(message) && isLocalHost()) {
+          message = 'Local save needs the CMS proxy. In a terminal: npm run cms:proxy';
+        }
+        if (/failed to fetch|unauthorized|bad credentials|requires authentication/i.test(message) && !isLocalHost()) {
+          message = 'Login with GitHub first, then Save mail and imprint.';
+          startLogin();
+        }
         setStatus(message, false);
       })
       .then(function () {
