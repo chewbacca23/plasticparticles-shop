@@ -8,7 +8,13 @@
  *   GITHUB_OAUTH_CLIENT_SECRET
  */
 
-import { handleLooksPage, handleLooksRequest, looksSetCookie, looksToken } from './page-looks.js';
+import {
+  handleLooksPage,
+  handleLooksRequest,
+  looksSetCookie,
+  looksToken,
+  recordDocumentLook,
+} from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 
 const PROVIDER = 'github';
@@ -350,6 +356,8 @@ export default {
 
     const looksPage = await handleLooksPage(request, env);
     if (looksPage) return looksPage;
+
+    await recordDocumentLook(request, env);
 
     const freshRide = await handleFreshRide(request, env);
     if (freshRide) return freshRide;

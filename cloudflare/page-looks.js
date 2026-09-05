@@ -172,6 +172,14 @@ export async function readLooks(store, now = new Date()) {
   return summarizeLooks(await store.load(), now);
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export const LOOKS_COOKIE = 'ss_looks';
 const LOOKS_MESSAGE = 'soul-searchers-looks';
 
@@ -265,11 +273,107 @@ export function isLooksPath(pathname) {
   return pathname === '/looks' || pathname === '/looks/';
 }
 
+export function shouldCountDocument(request) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return false;
+  const dest = (request.headers.get('sec-fetch-dest') || '').toLowerCase();
+  if (dest && dest !== 'document' && dest !== 'empty') return false;
+  const path = new URL(request.url).pathname;
+  if (/\.[a-z0-9]{1,8}$/i.test(path)) return false;
+  return true;
+}
+
+export async function recordDocumentLook(request, env) {
+  if (!shouldCountDocument(request)) return { recorded: false };
+  try {
+    return await recordLook(looksStoreFor(env), new URL(request.url).pathname);
+  } catch {
+    return { recorded: false };
+  }
+}
+
+export function looksDashboardPage(summary) {
+  const today = Number(summary?.today) || 0;
+  const week = Number(summary?.week) || 0;
+  const total = Number(summary?.total) || 0;
+  const pages = Array.isArray(summary?.pages) ? summary.pages : [];
+  const rows = pages.length
+    ? pages
+        .map((row) => {
+          const label = row.path === '/' ? 'Home' : escapeHtml(row.path);
+          const href = escapeHtml(row.path);
+          return `<li><a href="${href}">${label}</a><span>${Number(row.looks) || 0}</span></li>`;
+        })
+        .join('')
+    : '<li class="empty">Open Home, Now, or a ride in another tab, then refresh this page.</li>';
+
+  return new Response(
+    `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Looks · The Soul Searchers</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <style>
+    :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber:#d4a35a; --amber-hot:#f0c27a; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
+      font-family: Figtree, "Avenir Next", system-ui, sans-serif; }
+    a { color: inherit; }
+    a:hover { color: var(--amber-hot); }
+    .site-shell { width: min(40rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
+    .eyebrow { margin:0 0 .4rem; letter-spacing:.16em; text-transform:uppercase; font-size:.78rem; color:var(--amber); font-weight:700; }
+    h1 { margin:0 0 .75rem; font-size: clamp(2rem, 4vw, 2.8rem); color:var(--paper); }
+    .lead { margin:0 0 1.75rem; color:rgba(215,224,232,.75); }
+    .cards { display:grid; gap:.85rem; margin:0 0 2.25rem; }
+    @media (min-width:640px) { .cards { grid-template-columns:repeat(3,1fr); } }
+    .card { padding:1.1rem 1.15rem; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); }
+    .card-label { margin:0; color:var(--amber); font-size:.78rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+    .card-num { margin:.45rem 0 0; color:var(--paper); font-size:2.4rem; line-height:1; }
+    h2 { margin:0 0 .85rem; font-size:1.35rem; }
+    ol { margin:0; padding:0; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; overflow:hidden; }
+    li { display:flex; justify-content:space-between; gap:1rem; padding:.85rem 1.1rem; border-top:1px solid rgba(215,224,232,.08); }
+    li:first-child { border-top:0; }
+    li a { color:var(--paper); text-decoration:none; }
+    li span { color:var(--amber-hot); font-weight:600; }
+    .empty { color:rgba(215,224,232,.68); }
+    .back { margin:1.5rem 0 0; }
+    .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <main class="site-shell">
+    <p class="eyebrow">Just for you</p>
+    <h1>Looks</h1>
+    <p class="lead">How many times someone opened a page. Only you can see this. No names.</p>
+    <div class="cards">
+      <article class="card"><p class="card-label">Today</p><p class="card-num">${today}</p></article>
+      <article class="card"><p class="card-label">Last 7 days</p><p class="card-num">${week}</p></article>
+      <article class="card"><p class="card-label">All time</p><p class="card-num">${total}</p></article>
+    </div>
+    <h2>Pages people opened</h2>
+    <ol>${rows}</ol>
+    <p class="back"><a href="/">← Home</a> · <a href="/admin/">Editor</a></p>
+  </main>
+</body>
+</html>`,
+    {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+      },
+    },
+  );
+}
+
 export async function handleLooksPage(request, env) {
   const url = new URL(request.url);
   if (!isLooksPath(url.pathname)) return null;
-  if (await requestHasLooksAccess(request, env)) return null;
-  return looksGatePage();
+  if (!(await requestHasLooksAccess(request, env))) return looksGatePage();
+  const summary = await readLooks(looksStoreFor(env));
+  return looksDashboardPage(summary);
 }
 
 export async function handleLooksRequest(request, env) {

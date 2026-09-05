@@ -8,10 +8,13 @@ import {
   handleLooksPage,
   handleLooksRequest,
   LOOKS_COOKIE,
+  looksDashboardPage,
   looksToken,
   memoryLooksStore,
+  recordDocumentLook,
   recordLook,
   sanitizePath,
+  shouldCountDocument,
   shouldRecordPath,
   summarizeLooks,
 } from './page-looks.js';
@@ -155,7 +158,57 @@ describe('GET/POST /api/looks', () => {
       }),
       env,
     );
-    assert.equal(await open.text(), 'looks-ok');
+    const html = await open.text();
+    assert.match(html, /Just for you/);
+    assert.match(html, />1</);
+    assert.match(html, /Home/);
+  });
+
+  it('counts a real page open without /api/looks', async () => {
+    const env = { STATS: memoryKv(), GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET };
+    const counted = await recordDocumentLook(
+      new Request('https://thenewsoulsearchers.de/now', {
+        headers: { 'sec-fetch-dest': 'document' },
+      }),
+      env,
+    );
+    assert.equal(counted.recorded, true);
+    const token = await looksToken(LOOKS_SECRET);
+    const page = await handleLooksPage(
+      new Request('https://thenewsoulsearchers.de/looks', {
+        headers: { cookie: `${LOOKS_COOKIE}=${token}` },
+      }),
+      env,
+    );
+    assert.match(await page.text(), /\/now/);
+  });
+});
+
+describe('shouldCountDocument', () => {
+  it('counts a page open and skips a photo', () => {
+    assert.equal(
+      shouldCountDocument(new Request('https://thenewsoulsearchers.de/now')),
+      true,
+    );
+    assert.equal(
+      shouldCountDocument(new Request('https://thenewsoulsearchers.de/stories/img_5940.jpg')),
+      false,
+    );
+  });
+});
+
+describe('looksDashboardPage', () => {
+  it('prints the numbers in the HTML', async () => {
+    const html = await looksDashboardPage({
+      today: 2,
+      week: 5,
+      total: 9,
+      pages: [{ path: '/', looks: 4 }],
+    }).text();
+    assert.match(html, />2</);
+    assert.match(html, />5</);
+    assert.match(html, />9</);
+    assert.match(html, /Home/);
   });
 });
 

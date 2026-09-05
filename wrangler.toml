@@ -9,5 +9,6 @@ compatibility_date = "2026-08-23"
 [assets]
 directory = "./dist"
 binding = "ASSETS"
-# OAuth routes must hit the Worker before the static admin files.
-run_worker_first = ["/auth", "/callback", "/cms-status", "/api/looks", "/looks", "/looks/", "/stories/*"]
+# Every public page must hit the Worker so Looks can count the open.
+# /api/looks is challenged by Bot Fight, so beacons never arrived.
+run_worker_first = true
