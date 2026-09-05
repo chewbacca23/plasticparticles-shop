@@ -150,7 +150,11 @@ describe('admin scripts stay wired', () => {
   it('puts Looks in the editor bar', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /class="cms-looks" href="\/looks"/);
-    assert.match(html, /class="cms-mail" href="#\/collections\/settings\/entries\/imprint"/);
+    assert.match(html, /class="cms-mail"/);
+    assert.match(html, /#\/collections\/settings\/entries\/imprint/);
+    assert.match(html, /class="cms-login"/);
+    assert.match(html, /Login with GitHub/);
+    assert.match(html, /login-gold\.js/);
     assert.match(html, /data-looks="today"/);
     assert.match(html, /Photos in the story/);
     assert.match(html, /Mail and imprint/);
@@ -172,9 +176,16 @@ describe('admin scripts stay wired', () => {
     assert.match(html, /ride-preview\.js/);
     assert.match(html, /Save this ride/);
     assert.ok(
+      html.indexOf('decap-cms.js') < html.indexOf('login-gold.js'),
+      'gold login must load after Decap',
+    );
+    assert.ok(
       html.indexOf('decap-cms.js') < html.indexOf('ride-preview.js'),
       'ride preview must load after Decap',
     );
+    const login = readFileSync('public/admin/login-gold.js', 'utf8');
+    assert.match(login, /LoginButton/);
+    assert.match(login, /startLogin/);
     const src = readFileSync('public/admin/publish-click.js', 'utf8');
     assert.match(src, /Save this ride/);
     assert.match(src, /handleOnPersist/);

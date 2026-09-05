@@ -69,7 +69,8 @@
       }
 
       .cms-looks:hover,
-      .cms-mail:hover {
+      .cms-mail:hover,
+      .cms-login:hover {
         color: var(--ink);
       }
 
@@ -79,7 +80,8 @@
         gap: 0.5rem;
       }
 
-      .cms-mail {
+      .cms-mail,
+      .cms-login {
         display: inline-flex;
         align-items: baseline;
         margin-top: 0.15rem;
@@ -90,6 +92,18 @@
         text-decoration: none;
         font-weight: 700;
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
+      }
+
+      .cms-login {
+        font-size: 1rem;
+      }
+
+      .cms-top.cms-in .cms-login {
+        display: none;
+      }
+
+      .cms-top:not(.cms-in) .cms-mail {
+        display: none;
       }
 
       .cms-looks-num {
@@ -239,7 +253,8 @@
             <p class="cms-kicker">Editor</p>
           </div>
           <span class="cms-links">
-            <a class="cms-mail" href="#/collections/settings/entries/imprint">Mail</a>
+            <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
+            <a class="cms-mail" id="cms-mail" href="#/collections/settings/entries/imprint">Mail</a>
             <a class="cms-looks" href="/looks">
               Looks
               <span class="cms-looks-num" data-looks="today">—</span>
@@ -274,7 +289,8 @@
             <summary>How this editor works</summary>
             <strong>Login with GitHub to add rides and notes</strong>
             <p style="margin: 0.55rem 0 0">
-              Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). Use the
+              Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). First
+              click the gold <strong>Login with GitHub</strong> in this bar. Then use the
               gold <strong>Save this ride</strong> button at the bottom-right. That writes to GitHub.
               The top <strong>Publish</strong> menu stays open so you can pick
               <strong>Publish now</strong> if you want. Then open the ride page itself (not only the
@@ -366,6 +382,7 @@
     <script src="/admin/delete-ride.js"></script>
     <script src="/admin/publish-click.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
+    <script src="/admin/login-gold.js"></script>
     <script src="/admin/ride-preview.js"></script>
   </body>
 </html>
