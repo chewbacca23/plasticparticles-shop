@@ -473,6 +473,7 @@ export function looksDashboardPage(summary) {
     li:first-child { border-top:0; }
     li a { color:var(--paper); text-decoration:none; }
     li span { color:var(--amber-hot); font-weight:600; }
+    li .looks-name { color:var(--paper); font-weight:400; }
     .empty { color:rgba(215,224,232,.68); }
     .back { margin:1.5rem 0 0; }
     .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
@@ -528,7 +529,10 @@ export function looksNamedRows(items, emptyText) {
     return `<li class="empty">${emptyText}</li>`;
   }
   return list
-    .map((row) => `<li>${escapeHtml(row.name)}<span>${Number(row.looks) || 0}</span></li>`)
+    .map(
+      (row) =>
+        `<li><span class="looks-name">${escapeHtml(row.name)}</span><span>${Number(row.looks) || 0}</span></li>`,
+    )
     .join('');
 }
 
