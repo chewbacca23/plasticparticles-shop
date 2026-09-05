@@ -11,6 +11,7 @@ const SKIP = new Set([
   '/cms-status',
   '/api/looks',
   '/looks',
+  '/looks/',
   '/rss.xml',
   '/sitemap-index.xml',
   '/sitemap-0.xml',
@@ -260,9 +261,13 @@ export function looksGatePage() {
   );
 }
 
+export function isLooksPath(pathname) {
+  return pathname === '/looks' || pathname === '/looks/';
+}
+
 export async function handleLooksPage(request, env) {
   const url = new URL(request.url);
-  if (url.pathname !== '/looks') return null;
+  if (!isLooksPath(url.pathname)) return null;
   if (await requestHasLooksAccess(request, env)) return null;
   return looksGatePage();
 }

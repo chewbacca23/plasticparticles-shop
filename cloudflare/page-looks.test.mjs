@@ -118,6 +118,11 @@ describe('GET/POST /api/looks', () => {
     );
     assert.equal(page.status, 401);
     assert.match(await page.text(), /only for you/i);
+    const trailed = await handleLooksPage(
+      new Request('https://thenewsoulsearchers.de/looks/'),
+      env,
+    );
+    assert.equal(trailed.status, 401);
   });
 
   it('is reachable through the Worker entrypoint after login', async () => {
