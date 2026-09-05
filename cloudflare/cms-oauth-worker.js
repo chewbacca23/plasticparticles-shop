@@ -8,7 +8,7 @@
  *   GITHUB_OAUTH_CLIENT_SECRET
  */
 
-import { handleLooksRequest } from './page-looks.js';
+import { handleLooksPage, handleLooksRequest, looksSetCookie, looksToken } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 
 const PROVIDER = 'github';
@@ -324,7 +324,15 @@ async function handleCallback(url, creds) {
   }
 
   const html = callbackHtml('success', { token: data.access_token, provider: PROVIDER });
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  const headers = {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': 'no-store',
+  };
+  const token = await looksToken(creds.secret);
+  if (token) {
+    headers['set-cookie'] = looksSetCookie(token, { secure: url.protocol === 'https:' });
+  }
+  return new Response(html, { headers });
 }
 
 export default {
@@ -339,6 +347,9 @@ export default {
 
     const looks = await handleLooksRequest(request, env);
     if (looks) return looks;
+
+    const looksPage = await handleLooksPage(request, env);
+    if (looksPage) return looksPage;
 
     const freshRide = await handleFreshRide(request, env);
     if (freshRide) return freshRide;

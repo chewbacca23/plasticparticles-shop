@@ -48,4 +48,4 @@ You should see the Soul Searchers landing page.
 
 ## Visitor stats
 
-Open [https://thenewsoulsearchers.de/looks](https://thenewsoulsearchers.de/looks) after the Worker is live. Today, last 7 days, all time, and the pages people opened. No cookies. Counts start from the day this ships.
+Login at `/admin/`, then open `/looks`. Only that GitHub login can see the numbers. Today, last 7 days, all time, and the pages people opened. Counts start from the day this ships.

@@ -171,12 +171,117 @@ export async function readLooks(store, now = new Date()) {
   return summarizeLooks(await store.load(), now);
 }
 
+export const LOOKS_COOKIE = 'ss_looks';
+const LOOKS_MESSAGE = 'soul-searchers-looks';
+
+function looksSecret(env) {
+  const value =
+    env?.GITHUB_OAUTH_CLIENT_SECRET ||
+    env?.GITHUB_CLIENT_SECRET ||
+    env?.CLIENT_SECRET;
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+export async function hmacHex(secret, message) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const bits = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
+  return [...new Uint8Array(bits)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export async function looksToken(secret) {
+  if (!secret) return '';
+  return hmacHex(secret, LOOKS_MESSAGE);
+}
+
+export function cookieValue(header, name) {
+  if (!header) return '';
+  for (const part of String(header).split(';')) {
+    const trimmed = part.trim();
+    const cut = trimmed.indexOf('=');
+    if (cut === -1) continue;
+    if (trimmed.slice(0, cut) === name) return trimmed.slice(cut + 1);
+  }
+  return '';
+}
+
+export function looksSetCookie(token, { secure = true } = {}) {
+  return `${LOOKS_COOKIE}=${token}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax${
+    secure ? '; Secure' : ''
+  }`;
+}
+
+export async function requestHasLooksAccess(request, env) {
+  const secret = looksSecret(env);
+  const token = await looksToken(secret);
+  if (!token) return false;
+  return cookieValue(request.headers.get('cookie'), LOOKS_COOKIE) === token;
+}
+
+export function looksGatePage() {
+  return new Response(
+    `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Looks · The Soul Searchers</title>
+  <style>
+    body { font-family: Figtree, system-ui, sans-serif; background: #0c1218; color: #d7e0e8;
+      max-width: 28rem; margin: 4rem auto; padding: 0 1.2rem; line-height: 1.5; }
+    h1 { color: #f0c27a; font-size: 1.4rem; }
+    a { color: #f0c27a; }
+    ol { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Looks is only for you</h1>
+  <p>This page shows how many times people opened the site. Visitors do not see it.</p>
+  <ol>
+    <li>Open <a href="/admin/">the editor</a></li>
+    <li>Click <strong>Login with GitHub</strong></li>
+    <li>Come back to <a href="/looks">/looks</a></li>
+  </ol>
+</body>
+</html>`,
+    {
+      status: 401,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+      },
+    },
+  );
+}
+
+export async function handleLooksPage(request, env) {
+  const url = new URL(request.url);
+  if (url.pathname !== '/looks') return null;
+  if (await requestHasLooksAccess(request, env)) return null;
+  return looksGatePage();
+}
+
 export async function handleLooksRequest(request, env) {
   const url = new URL(request.url);
   if (url.pathname !== '/api/looks') return null;
 
   const store = looksStoreFor(env);
   if (request.method === 'GET') {
+    if (!(await requestHasLooksAccess(request, env))) {
+      return new Response(JSON.stringify({ error: 'login' }), {
+        status: 401,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+        },
+      });
+    }
     const summary = await readLooks(store);
     return new Response(JSON.stringify(summary), {
       status: 200,

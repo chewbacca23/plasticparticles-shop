@@ -213,6 +213,7 @@ describe('GET /callback', () => {
     assert.match(html, /authorization:github:success:/);
     assert.match(html, /gho_test_token/);
     assert.match(html, /authorizing:github/);
+    assert.match(res.headers.get('set-cookie') || '', /ss_looks=/);
   });
 
   it('returns Decap error HTML when GitHub denies login', async () => {

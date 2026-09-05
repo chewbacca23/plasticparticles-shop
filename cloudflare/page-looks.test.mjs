@@ -5,13 +5,29 @@ import {
   applyLook,
   berlinDay,
   emptyLooks,
+  handleLooksPage,
   handleLooksRequest,
+  LOOKS_COOKIE,
+  looksToken,
   memoryLooksStore,
   recordLook,
   sanitizePath,
   shouldRecordPath,
   summarizeLooks,
 } from './page-looks.js';
+
+const LOOKS_SECRET = 'looks-test-secret';
+
+async function looksGet(url, env, extra = {}) {
+  const token = await looksToken(LOOKS_SECRET);
+  return handleLooksRequest(
+    new Request(url, {
+      ...extra,
+      headers: { cookie: `${LOOKS_COOKIE}=${token}`, ...(extra.headers || {}) },
+    }),
+    { ...env, GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET },
+  );
+}
 
 describe('sanitizePath', () => {
   it('keeps a public page and drops traversal', () => {
@@ -73,19 +89,42 @@ describe('GET/POST /api/looks', () => {
     );
     assert.equal(post.status, 204);
 
-    const get = await handleLooksRequest(
-      new Request('https://thenewsoulsearchers.de/api/looks'),
-      env,
-    );
+    const get = await looksGet('https://thenewsoulsearchers.de/api/looks', env);
     const body = await get.json();
     assert.equal(body.total, 1);
     assert.equal(body.pages[0].path, '/now');
   });
 
-  it('is reachable through the Worker entrypoint', async () => {
+  it('hides the numbers until GitHub login sets the Looks cookie', async () => {
+    const env = { STATS: memoryKv(), GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET };
+    await handleLooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/looks', {
+        method: 'POST',
+        headers: { origin: 'https://thenewsoulsearchers.de', 'content-type': 'text/plain' },
+        body: '/now',
+      }),
+      env,
+    );
+    const closed = await handleLooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/looks'),
+      env,
+    );
+    assert.equal(closed.status, 401);
+    assert.equal((await closed.json()).error, 'login');
+
+    const page = await handleLooksPage(
+      new Request('https://thenewsoulsearchers.de/looks'),
+      env,
+    );
+    assert.equal(page.status, 401);
+    assert.match(await page.text(), /only for you/i);
+  });
+
+  it('is reachable through the Worker entrypoint after login', async () => {
     const env = {
       STATS: memoryKv(),
-      ASSETS: { fetch: async () => new Response('nope') },
+      GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET,
+      ASSETS: { fetch: async () => new Response('looks-ok') },
     };
     await worker.fetch(
       new Request('https://thenewsoulsearchers.de/api/looks', {
@@ -95,9 +134,23 @@ describe('GET/POST /api/looks', () => {
       }),
       env,
     );
-    const res = await worker.fetch(new Request('https://thenewsoulsearchers.de/api/looks'), env);
+    const token = await looksToken(LOOKS_SECRET);
+    const res = await worker.fetch(
+      new Request('https://thenewsoulsearchers.de/api/looks', {
+        headers: { cookie: `${LOOKS_COOKIE}=${token}` },
+      }),
+      env,
+    );
     const body = await res.json();
     assert.equal(body.total, 1);
+
+    const open = await worker.fetch(
+      new Request('https://thenewsoulsearchers.de/looks', {
+        headers: { cookie: `${LOOKS_COOKIE}=${token}` },
+      }),
+      env,
+    );
+    assert.equal(await open.text(), 'looks-ok');
   });
 });
 
