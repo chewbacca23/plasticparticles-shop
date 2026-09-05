@@ -42,9 +42,40 @@
       }
 
       .cms-top-inner {
-        width: min(40rem, calc(100% - 2rem));
+        width: min(52rem, calc(100% - 2rem));
         margin: 0 auto;
         padding: 1rem 0 1.1rem;
+      }
+
+      .cms-top-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .cms-looks {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.55rem;
+        margin-top: 0.15rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
+      }
+
+      .cms-looks:hover {
+        color: var(--ink);
+      }
+
+      .cms-looks-num {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        line-height: 1;
       }
 
       .cms-brand {
@@ -179,11 +210,19 @@
   <body>
     <div class="cms-top">
       <div class="cms-top-inner">
-        <a class="cms-brand" href="/">
-          <img src="/logo.svg" alt="" width="40" height="51" />
-          <span>The Soul Searchers</span>
-        </a>
-        <p class="cms-kicker">Editor</p>
+        <div class="cms-top-row">
+          <div>
+            <a class="cms-brand" href="/">
+              <img src="/logo.svg" alt="" width="40" height="51" />
+              <span>The Soul Searchers</span>
+            </a>
+            <p class="cms-kicker">Editor</p>
+          </div>
+          <a class="cms-looks" href="/looks">
+            Looks
+            <span class="cms-looks-num" data-looks="today">—</span>
+          </a>
+        </div>
         <div id="local-banner" class="banner hidden">
           <details>
             <summary>Local editing</summary>
@@ -238,7 +277,8 @@
               <strong>− Ride</strong>.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Looks:</strong> anyone can open <a href="/looks">Looks</a> in the footer.
+              <strong>Looks:</strong> the gold <a href="/looks">Looks</a> button in this bar, or the
+              footer on the public site.
             </p>
           </details>
         </div>

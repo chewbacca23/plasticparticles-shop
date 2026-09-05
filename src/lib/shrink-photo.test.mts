@@ -147,6 +147,12 @@ describe('admin scripts stay wired', () => {
     assert.match(src, /addEventListener\(\s*'error'/);
   });
 
+  it('puts Looks in the editor bar', () => {
+    const html = readFileSync('public/admin/index.html', 'utf8');
+    assert.match(html, /class="cms-looks" href="\/looks"/);
+    assert.match(html, /data-looks="today"/);
+  });
+
   it('styles the GitHub login page like the site, not Decap’s gray dump', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /AuthenticationPage/);

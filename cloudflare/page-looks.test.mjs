@@ -9,6 +9,7 @@ import {
   fillLooksInHtml,
   handleLooksPage,
   handleLooksRequest,
+  isAdminPath,
   lookFromRequest,
   looksDashboardPage,
   memoryLooksStore,
@@ -37,6 +38,15 @@ describe('sanitizePath', () => {
     assert.equal(sanitizePath('/stories/nice?x=1'), '/stories/nice');
     assert.equal(sanitizePath('now'), '/now');
     assert.equal(sanitizePath('/foo/../secret'), '');
+  });
+});
+
+describe('isAdminPath', () => {
+  it('marks the editor page so Looks can sit in the bar', () => {
+    assert.equal(isAdminPath('/admin'), true);
+    assert.equal(isAdminPath('/admin/'), true);
+    assert.equal(isAdminPath('/admin/index.html'), true);
+    assert.equal(isAdminPath('/looks'), false);
   });
 });
 
@@ -181,6 +191,21 @@ describe('GET/POST /api/looks', () => {
     assert.match(html, /data-looks="today">1</);
     assert.match(html, /\/now/);
     assert.match(html, /<footer>Looks<\/footer>/);
+
+    const editor = await worker.fetch(
+      new Request('https://thenewsoulsearchers.de/admin/'),
+      {
+        ...env,
+        ASSETS: {
+          fetch: async () =>
+            new Response(
+              '<a class="cms-looks" href="/looks">Looks <span data-looks="today">—</span></a>',
+              { headers: { 'content-type': 'text/html' } },
+            ),
+        },
+      },
+    );
+    assert.match(await editor.text(), /data-looks="today">1</);
   });
 
   it('counts a real page open without /api/looks', async () => {

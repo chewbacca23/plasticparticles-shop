@@ -405,6 +405,14 @@ export function isLooksPath(pathname) {
   return pathname === '/looks' || pathname === '/looks/';
 }
 
+export function isAdminPath(pathname) {
+  return pathname === '/admin' || pathname === '/admin/' || pathname === '/admin/index.html';
+}
+
+export function shouldFillLooks(pathname) {
+  return isLooksPath(pathname) || isAdminPath(pathname);
+}
+
 export function shouldCountDocument(request) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return false;
   const dest = (request.headers.get('sec-fetch-dest') || '').toLowerCase();
@@ -598,8 +606,8 @@ async function fetchLooksAsset(request, env) {
 
 export async function applyLooksToAsset(request, env, asset) {
   const url = new URL(request.url);
-  if (!isLooksPath(url.pathname)) return asset;
-  if (!asset || !asset.ok) return null;
+  if (!shouldFillLooks(url.pathname)) return asset;
+  if (!asset || !asset.ok) return isLooksPath(url.pathname) ? null : asset;
   const type = asset.headers.get('content-type') || '';
   if (type && !type.includes('html') && !type.includes('text')) return asset;
   const summary = await safeReadLooks(env);
