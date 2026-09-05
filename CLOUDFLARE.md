@@ -93,10 +93,9 @@ If the GitHub popup says login is not wired yet, secrets from **B** are missing.
 
 ### Looks (how many people opened a page)
 
-Login at **https://thenewsoulsearchers.de/admin/**, then open **https://thenewsoulsearchers.de/looks**.
-Only that GitHub login can see the numbers. Visitors do not get a footer link. Today, last 7
-days, all time, and which pages. No names. Numbers start after this Worker is live. Your own
-clicks count.
+Open **https://thenewsoulsearchers.de/looks** or the **Looks** link in the footer. Today, last 7
+days, all time, and which pages. No names. Anyone can see it. Numbers start after this Worker
+is live. Your own clicks count.
 
 ### Stuck? Ask the Worker instead of guessing
 

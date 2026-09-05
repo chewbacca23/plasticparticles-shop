@@ -344,9 +344,9 @@ export function looksDashboardPage(summary) {
 </head>
 <body>
   <main class="site-shell">
-    <p class="eyebrow">Just for you</p>
+    <p class="eyebrow">Looks</p>
     <h1>Looks</h1>
-    <p class="lead">How many times someone opened a page. Only you can see this. No names.</p>
+    <p class="lead">How many times someone opened a page. No names.</p>
     <div class="cards">
       <article class="card"><p class="card-label">Today</p><p class="card-num">${today}</p></article>
       <article class="card"><p class="card-label">Last 7 days</p><p class="card-num">${week}</p></article>
@@ -371,7 +371,6 @@ export function looksDashboardPage(summary) {
 export async function handleLooksPage(request, env) {
   const url = new URL(request.url);
   if (!isLooksPath(url.pathname)) return null;
-  if (!(await requestHasLooksAccess(request, env))) return looksGatePage();
   const summary = await readLooks(looksStoreFor(env));
   return looksDashboardPage(summary);
 }
@@ -382,15 +381,6 @@ export async function handleLooksRequest(request, env) {
 
   const store = looksStoreFor(env);
   if (request.method === 'GET') {
-    if (!(await requestHasLooksAccess(request, env))) {
-      return new Response(JSON.stringify({ error: 'login' }), {
-        status: 401,
-        headers: {
-          'content-type': 'application/json; charset=utf-8',
-          'cache-control': 'no-store',
-        },
-      });
-    }
     const summary = await readLooks(store);
     return new Response(JSON.stringify(summary), {
       status: 200,

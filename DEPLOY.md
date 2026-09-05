@@ -48,4 +48,4 @@ You should see the Soul Searchers landing page.
 
 ## Visitor stats
 
-Login at `/admin/`, then open `/looks`. Only that GitHub login can see the numbers. Today, last 7 days, all time, and the pages people opened. Counts start from the day this ships.
+Open `/looks` or the Looks link in the footer. Anyone can see Today, last 7 days, all time, and the pages people opened. Counts start from the day this ships.

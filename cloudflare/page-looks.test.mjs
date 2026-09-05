@@ -7,9 +7,7 @@ import {
   emptyLooks,
   handleLooksPage,
   handleLooksRequest,
-  LOOKS_COOKIE,
   looksDashboardPage,
-  looksToken,
   memoryLooksStore,
   recordDocumentLook,
   recordLook,
@@ -18,19 +16,6 @@ import {
   shouldRecordPath,
   summarizeLooks,
 } from './page-looks.js';
-
-const LOOKS_SECRET = 'looks-test-secret';
-
-async function looksGet(url, env, extra = {}) {
-  const token = await looksToken(LOOKS_SECRET);
-  return handleLooksRequest(
-    new Request(url, {
-      ...extra,
-      headers: { cookie: `${LOOKS_COOKIE}=${token}`, ...(extra.headers || {}) },
-    }),
-    { ...env, GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET },
-  );
-}
 
 describe('sanitizePath', () => {
   it('keeps a public page and drops traversal', () => {
@@ -92,14 +77,17 @@ describe('GET/POST /api/looks', () => {
     );
     assert.equal(post.status, 204);
 
-    const get = await looksGet('https://thenewsoulsearchers.de/api/looks', env);
+    const get = await handleLooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/looks'),
+      env,
+    );
     const body = await get.json();
     assert.equal(body.total, 1);
     assert.equal(body.pages[0].path, '/now');
   });
 
-  it('hides the numbers until GitHub login sets the Looks cookie', async () => {
-    const env = { STATS: memoryKv(), GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET };
+  it('lets anyone open Looks without logging in', async () => {
+    const env = { STATS: memoryKv() };
     await handleLooksRequest(
       new Request('https://thenewsoulsearchers.de/api/looks', {
         method: 'POST',
@@ -108,64 +96,44 @@ describe('GET/POST /api/looks', () => {
       }),
       env,
     );
-    const closed = await handleLooksRequest(
+    const open = await handleLooksRequest(
       new Request('https://thenewsoulsearchers.de/api/looks'),
       env,
     );
-    assert.equal(closed.status, 401);
-    assert.equal((await closed.json()).error, 'login');
+    assert.equal(open.status, 200);
+    assert.equal((await open.json()).total, 1);
 
     const page = await handleLooksPage(
       new Request('https://thenewsoulsearchers.de/looks'),
       env,
     );
-    assert.equal(page.status, 401);
-    assert.match(await page.text(), /only for you/i);
-    const trailed = await handleLooksPage(
-      new Request('https://thenewsoulsearchers.de/looks/'),
-      env,
-    );
-    assert.equal(trailed.status, 401);
+    assert.equal(page.status, 200);
+    assert.match(await page.text(), /\/now/);
   });
 
-  it('is reachable through the Worker entrypoint after login', async () => {
+  it('is reachable through the Worker entrypoint', async () => {
     const env = {
       STATS: memoryKv(),
-      GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET,
       ASSETS: { fetch: async () => new Response('looks-ok') },
     };
     await worker.fetch(
-      new Request('https://thenewsoulsearchers.de/api/looks', {
-        method: 'POST',
-        body: JSON.stringify({ path: '/' }),
-        headers: { 'content-type': 'application/json', origin: 'https://thenewsoulsearchers.de' },
+      new Request('https://thenewsoulsearchers.de/now', {
+        headers: { 'sec-fetch-dest': 'document' },
       }),
       env,
     );
-    const token = await looksToken(LOOKS_SECRET);
-    const res = await worker.fetch(
-      new Request('https://thenewsoulsearchers.de/api/looks', {
-        headers: { cookie: `${LOOKS_COOKIE}=${token}` },
-      }),
-      env,
-    );
+    const res = await worker.fetch(new Request('https://thenewsoulsearchers.de/api/looks'), env);
     const body = await res.json();
     assert.equal(body.total, 1);
 
-    const open = await worker.fetch(
-      new Request('https://thenewsoulsearchers.de/looks', {
-        headers: { cookie: `${LOOKS_COOKIE}=${token}` },
-      }),
-      env,
-    );
+    const open = await worker.fetch(new Request('https://thenewsoulsearchers.de/looks'), env);
     const html = await open.text();
-    assert.match(html, /Just for you/);
     assert.match(html, />1</);
-    assert.match(html, /Home/);
+    assert.match(html, /\/now/);
   });
 
   it('counts a real page open without /api/looks', async () => {
-    const env = { STATS: memoryKv(), GITHUB_OAUTH_CLIENT_SECRET: LOOKS_SECRET };
+    const env = { STATS: memoryKv() };
     const counted = await recordDocumentLook(
       new Request('https://thenewsoulsearchers.de/now', {
         headers: { 'sec-fetch-dest': 'document' },
@@ -173,13 +141,7 @@ describe('GET/POST /api/looks', () => {
       env,
     );
     assert.equal(counted.recorded, true);
-    const token = await looksToken(LOOKS_SECRET);
-    const page = await handleLooksPage(
-      new Request('https://thenewsoulsearchers.de/looks', {
-        headers: { cookie: `${LOOKS_COOKIE}=${token}` },
-      }),
-      env,
-    );
+    const page = await handleLooksPage(new Request('https://thenewsoulsearchers.de/looks'), env);
     assert.match(await page.text(), /\/now/);
   });
 });
