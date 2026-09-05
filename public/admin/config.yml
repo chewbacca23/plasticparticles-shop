@@ -38,27 +38,27 @@ collections:
     fields:
       - { label: Name of this ride, name: title, widget: string, hint: "The name. + Ride asks for this first." }
       - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
-      - label: Cover image
+      - label: First photo
         name: cover
         widget: image
         required: false
         choose_url: false
-        hint: "JPEG from the phone. HEIC often shows as a broken thumb. iPhone: Camera → Formats → Most Compatible."
+        hint: "This one sits at the top of the ride, and on the ride tile. JPEG from the phone. HEIC is often a broken thumb. iPhone: Camera → Formats → Most Compatible."
         media_library:
           config:
             multiple: false
-      - label: Gallery images
+      - label: Photos in the story
         name: gallery
         widget: list
         summary: "{{fields.image}}"
-        hint: "Same as cover: JPEG. The thumb loads from GitHub, so it should show before the public site rebuilds."
+        hint: "These sit inside the story, between your paragraphs. Not in a pile at the start. JPEG, same as the first photo."
         field:
           label: Image
           name: image
           widget: image
           choose_url: false
           required: false
-      - { label: Ride text, name: body, widget: markdown, required: false, hint: "The story. Write as much as you like. You can save photos first." }
+      - { label: Ride text, name: body, widget: markdown, required: false, hint: "The story. The picture button puts a photo where the cursor is. Photos you add here stay in the text." }
       - { label: Headline, name: headline, widget: string, required: false, hint: "Usually the same as the name. Shows on the ride tile." }
       - { label: Short intro, name: description, widget: text, required: false, hint: "A few lines under the name on the ride page." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }

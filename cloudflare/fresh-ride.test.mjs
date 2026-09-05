@@ -87,6 +87,34 @@ describe('renderMarkdown', () => {
     assert.match(html, /&lt;em&gt;raw&lt;\/em&gt;/);
     assert.match(html, /<h2>Next<\/h2>/);
   });
+
+  it('turns a story photo into a figure and keeps a numbered list', () => {
+    const html = renderMarkdown(
+      'Hello\n\n![](/stories/img_6440-2.jpg)\n\n1. Where you rode\n2. Bike and bags',
+    );
+    assert.match(html, /<figure><img src="\/stories\/img_6440-2\.jpg"/);
+    assert.match(html, /<ol><li>Where you rode<\/li><li>Bike and bags<\/li><\/ol>/);
+    assert.doesNotMatch(html, /javascript:/);
+    assert.equal(renderMarkdown('![](javascript:alert(1))'), '');
+  });
+});
+
+describe('renderRidePage', () => {
+  it('puts extra photos inside the story, not in a pile at the start', () => {
+    const html = renderRidePage({
+      slug: 'the-most-wonderful-patches',
+      data: parseMarkdownFile(patches).data,
+      body: parseMarkdownFile(patches).body,
+    });
+    const cafe = html.indexOf('Café du Cycliste');
+    const cover = html.indexOf('img_5940.jpg');
+    const extra = html.indexOf('img_6440-2.jpg');
+    assert.ok(cover !== -1 && cafe !== -1 && extra !== -1);
+    assert.ok(cover < cafe, 'first photo stays at the top');
+    assert.ok(cafe < extra, 'story photos sit after the first paragraph');
+    assert.doesNotMatch(html, /class="gallery"/);
+    assert.match(html, /class="hero"/);
+  });
 });
 
 describe('staticLooksBehind', () => {

@@ -151,6 +151,7 @@ describe('admin scripts stay wired', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /class="cms-looks" href="\/looks"/);
     assert.match(html, /data-looks="today"/);
+    assert.match(html, /Photos in the story/);
   });
 
   it('styles the GitHub login page like the site, not Decap’s gray dump', () => {
@@ -181,6 +182,12 @@ describe('admin scripts stay wired', () => {
     const config = readFileSync('public/admin/config.yml', 'utf8');
     assert.match(config, /name: body[\s\S]*required:\s*false/);
     assert.match(config, /name: gallery[\s\S]*required:\s*false/);
+    assert.match(config, /Photos in the story/);
+    assert.match(config, /First photo/);
     assert.match(config, /name: order[\s\S]*min:\s*0/);
+    const preview = readFileSync('public/admin/ride-preview.js', 'utf8');
+    assert.match(preview, /ss-ride-preview__hero/);
+    assert.match(preview, /ss-ride-preview__story/);
+    assert.doesNotMatch(preview, /ss-ride-preview__gallery/);
   });
 });

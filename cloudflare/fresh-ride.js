@@ -6,6 +6,8 @@
  * the same repo.
  */
 
+import { planRidePhotos, safePhotoSrc } from './story-photos.js';
+
 const REPO = 'chewbacca23/thenewsoulsearchersblog';
 const BRANCH = 'main';
 const RAW = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;
@@ -128,6 +130,21 @@ function inlineMarkdown(text) {
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
 }
 
+function renderImage(alt, src) {
+  const photo = safePhotoSrc(src);
+  if (!photo) return '';
+  return `<figure><img src="${escapeHtml(photo)}" alt="${escapeHtml(alt)}" width="1200" height="900" loading="lazy" /></figure>`;
+}
+
+function renderList(lines, ordered) {
+  const tag = ordered ? 'ol' : 'ul';
+  const items = lines
+    .map((line) => line.replace(ordered ? /^\d+\.\s+/ : /^[-*]\s+/, ''))
+    .map((line) => `<li>${inlineMarkdown(line)}</li>`)
+    .join('');
+  return `<${tag}>${items}</${tag}>`;
+}
+
 export function renderMarkdown(markdown) {
   const source = String(markdown || '')
     .replace(/\r\n/g, '\n')
@@ -136,8 +153,16 @@ export function renderMarkdown(markdown) {
   return source
     .split(/\n{2,}/)
     .map((block) => {
-      const lines = block.split('\n');
-      const first = lines[0];
+      const trimmed = block.trim();
+      if (trimmed.startsWith('![')) {
+        const image = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)\s*$/);
+        if (!image) return '';
+        const src = image[2].trim().replace(/\s+"[^"]*"\s*$/, '');
+        return renderImage(image[1], src);
+      }
+
+      const lines = block.split('\n').filter((line) => line.trim() !== '');
+      const first = lines[0] || '';
       const rest = lines.slice(1).map((line) => inlineMarkdown(line)).join('<br />');
       if (first.startsWith('### ')) {
         return `<h3>${inlineMarkdown(first.slice(4))}</h3>${rest ? `<p>${rest}</p>` : ''}`;
@@ -147,6 +172,12 @@ export function renderMarkdown(markdown) {
       }
       if (first.startsWith('# ')) {
         return `<h1>${inlineMarkdown(first.slice(2))}</h1>${rest ? `<p>${rest}</p>` : ''}`;
+      }
+      if (lines.length && lines.every((line) => /^\d+\.\s+/.test(line))) {
+        return renderList(lines, true);
+      }
+      if (lines.length && lines.every((line) => /^[-*]\s+/.test(line))) {
+        return renderList(lines, false);
       }
       return `<p>${lines.map((line) => inlineMarkdown(line)).join('<br />')}</p>`;
     })
@@ -182,15 +213,11 @@ export function renderRidePage({ slug, data = {}, body = '' } = {}) {
   const title = data.headline || data.title || slug;
   const description = data.description || title;
   const photos = galleryPaths(data.cover, data.gallery);
-  const figures = photos
-    .map(
-      (src, index) =>
-        `<figure><img src="${escapeHtml(src)}" alt="" width="1200" height="900" loading="${
-          index === 0 ? 'eager' : 'lazy'
-        }" /></figure>`,
-    )
-    .join('');
-  const story = renderMarkdown(body);
+  const plan = planRidePhotos(photos, body, data.cover);
+  const hero = plan.hero
+    ? `<figure class="hero"><img src="${escapeHtml(plan.hero)}" alt="" width="1200" height="900" loading="eager" /></figure>`
+    : '';
+  const story = renderMarkdown(plan.wovenBody);
 
   return `<!doctype html>
 <html lang="en">
@@ -222,12 +249,14 @@ export function renderRidePage({ slug, data = {}, body = '' } = {}) {
     .eyebrow { margin:0 0 .4rem; letter-spacing:.08em; text-transform:uppercase; font-size:.78rem; color:rgba(215,224,232,.55); }
     h1 { margin:0 0 .75rem; font-family: Fraunces, Georgia, serif; font-size: clamp(2rem, 4.5vw, 3.1rem); color:var(--paper); }
     .dek { margin:0 0 1.75rem; color:rgba(215,224,232,.75); font-size:1.1rem; }
-    .gallery { display:grid; gap:1rem; margin:0 0 2.5rem; }
+    .hero { margin:0 0 2rem; }
     figure { margin:0; overflow:hidden; border-radius:.9rem; box-shadow:0 18px 40px rgba(0,0,0,.25); }
     figure img { width:100%; height:auto; display:block; }
     .prose { max-width: 38rem; }
     .prose h2 { margin:2.2rem 0 .8rem; font-size:1.55rem; }
     .prose p { margin:0 0 1rem; }
+    .prose figure { margin:1.8rem 0; }
+    .prose ol, .prose ul { padding-left:1.2rem; }
     .back { margin-top:2.75rem; }
     .back a { color:var(--amber-hot); text-decoration:none; font-weight:600; }
   </style>
@@ -250,7 +279,7 @@ export function renderRidePage({ slug, data = {}, body = '' } = {}) {
       <p class="eyebrow">Ride</p>
       <h1>${escapeHtml(title)}</h1>
       <p class="dek">${escapeHtml(description)}</p>
-      ${figures ? `<div class="gallery">${figures}</div>` : ''}
+      ${hero}
       <div class="prose">${story}</div>
       <p class="back"><a href="/stories">← All rides</a></p>
     </article>
