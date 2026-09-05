@@ -1,0 +1,146 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Looks"
+  description="How many times people opened pages on The Soul Searchers."
+  robots="noindex, nofollow"
+>
+  <section class="section">
+    <div class="site-shell looks">
+      <p class="eyebrow">Open counts</p>
+      <h1 class="section-title">Looks</h1>
+      <p class="section-lead">
+        How many times someone opened a page, which country, and which site sent them. No names.
+        Counts start after this Worker is live.
+      </p>
+
+      <div class="cards">
+        <article class="card">
+          <p class="card-label">Today</p>
+          <p class="card-num" data-looks="today">—</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Last 7 days</p>
+          <p class="card-num" data-looks="week">—</p>
+        </article>
+        <article class="card">
+          <p class="card-label">All time</p>
+          <p class="card-num" data-looks="total">—</p>
+        </article>
+      </div>
+
+      <h2 class="pages-title">Pages people opened</h2>
+      <ol class="pages" data-looks-pages>
+        <li class="empty">Open Home, Now, or a ride, then refresh this page.</li>
+      </ol>
+
+      <h2 class="pages-title">Where they opened from</h2>
+      <ol class="pages" data-looks-countries>
+        <li class="empty">Country shows after someone opens a page.</li>
+      </ol>
+
+      <h2 class="pages-title">What sent them</h2>
+      <ol class="pages" data-looks-from>
+        <li class="empty">The site that sent them shows after someone opens a page.</li>
+      </ol>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .looks {
+    max-width: 40rem;
+  }
+
+  .cards {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1.75rem 0 2.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .card {
+    padding: 1.1rem 1.15rem 1.2rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.55);
+  }
+
+  .card-label {
+    margin: 0;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .card-num {
+    margin: 0.45rem 0 0;
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+
+  .pages-title {
+    margin: 2.25rem 0 0.85rem;
+    font-size: 1.35rem;
+  }
+
+  .pages {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .pages li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
+  }
+
+  .pages li:first-child {
+    border-top: 0;
+  }
+
+  .pages a {
+    color: var(--paper);
+    text-decoration: none;
+  }
+
+  .pages a:hover {
+    color: var(--amber-hot);
+  }
+
+  .pages span {
+    color: var(--amber-hot);
+    font-weight: 600;
+  }
+
+  .pages .looks-name {
+    color: var(--paper);
+    font-weight: 400;
+  }
+
+  .pages .empty,
+  .note {
+    color: rgba(215, 224, 232, 0.68);
+  }
+
+  .note {
+    margin: 1rem 0 0;
+  }
+</style>

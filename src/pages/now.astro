@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FeedGrid from '../components/FeedGrid.astro';
+import InstagramLatest from '../components/InstagramLatest.astro';
+import { getCollection } from 'astro:content';
+import { collectFeed } from '../lib/feed';
+
+const [shots, stories] = await Promise.all([
+  getCollection('shots', ({ data }) => !data.draft),
+  getCollection('stories', ({ data }) => !data.draft),
+]);
+
+const items = collectFeed(
+  shots.map((shot) => ({ id: shot.id, ...shot.data })),
+  stories.map((story) => ({ id: story.id, ...story.data })),
+);
+---
+
+<BaseLayout
+  title="Now"
+  description="Photos from the road. Newest shots first. Stay and look around."
+>
+  <section class="section">
+    <div class="site-shell">
+      <p class="eyebrow">Now</p>
+      <h1 class="section-title">From the road</h1>
+      <p class="section-lead">
+        Photos as they happen. Tap one and keep going. You stay here.
+      </p>
+      <InstagramLatest />
+      <FeedGrid items={items} />
+    </div>
+  </section>
+</BaseLayout>

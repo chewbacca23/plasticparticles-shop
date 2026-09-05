@@ -1,7 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LogoBackdrop from '../components/LogoBackdrop.astro';
+import FeedGrid from '../components/FeedGrid.astro';
+import InstagramLatest from '../components/InstagramLatest.astro';
+import { getCollection } from 'astro:content';
+import { collectFeed } from '../lib/feed';
 import { site } from '../site.config';
+
+const [shots, stories] = await Promise.all([
+  getCollection('shots', ({ data }) => !data.draft),
+  getCollection('stories', ({ data }) => !data.draft),
+]);
+
+const nowItems = collectFeed(
+  shots.map((shot) => ({ id: shot.id, ...shot.data })),
+  stories.map((story) => ({ id: story.id, ...story.data })),
+);
 ---
 
 <BaseLayout watermark={false}>
@@ -22,15 +36,27 @@ import { site } from '../site.config';
       <h1 class="reveal reveal-delay-2">This is a cycling blog.</h1>
       <p class="hero-lead reveal reveal-delay-3">
         Tours, climbs, coast roads, café stops, and a bike in the luggage car. We ride to see this
-        planet — not to sit in a car. Six rides below. Clip in.
+        planet, not to sit in a car. Photos from the road below. Clip in.
       </p>
       <div class="hero-actions reveal reveal-delay-3">
-        <a class="btn btn-primary" href="/stories">The rides</a>
-        <a class="btn btn-ghost" href="/journal">Ride notes</a>
+        <a class="btn btn-primary" href="#now">Now</a>
+        <a class="btn btn-ghost" href="/stories">The rides</a>
       </div>
       <p class="scroll-hint reveal reveal-delay-3">
-        <a href="/stories">Open the ride gallery ↓</a>
+        <a href="#now">See the latest shots ↓</a>
       </p>
+    </div>
+  </section>
+
+  <section class="section now-home" id="now" aria-label="Now">
+    <div class="site-shell">
+      <p class="eyebrow">Now</p>
+      <h2 class="section-title">From the road</h2>
+      <p class="section-lead">
+        Newest photos first. Tap one and stay. There is always another shot.
+      </p>
+      <InstagramLatest />
+      <FeedGrid items={nowItems} limit={12} moreHref="/now" />
     </div>
   </section>
 </BaseLayout>
@@ -162,5 +188,9 @@ import { site } from '../site.config';
 
   .scroll-hint a:hover {
     color: var(--amber-hot);
+  }
+
+  .now-home {
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
   }
 </style>

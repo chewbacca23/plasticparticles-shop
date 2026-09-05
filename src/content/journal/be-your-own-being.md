@@ -1,6 +1,6 @@
 ---
 title: Ride your own route
-description: Nobody else pedals your bike — skip the KOM chase and choose the road you actually want.
+description: Nobody else pedals your bike, skip the KOM chase and choose the road you actually want.
 pubDate: 2024-03-12
 heroLabel: On the road
 ---

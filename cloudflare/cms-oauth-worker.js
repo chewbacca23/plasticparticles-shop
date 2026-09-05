@@ -8,6 +8,17 @@
  *   GITHUB_OAUTH_CLIENT_SECRET
  */
 
+import {
+  applyLooksToAsset,
+  handleLooksPage,
+  handleLooksRequest,
+  looksSetCookie,
+  looksToken,
+  recordDocumentLook,
+} from './page-looks.js';
+import { handleFreshRide } from './fresh-ride.js';
+import { handleFreshSite } from './fresh-site.js';
+
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
 
@@ -321,7 +332,15 @@ async function handleCallback(url, creds) {
   }
 
   const html = callbackHtml('success', { token: data.access_token, provider: PROVIDER });
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  const headers = {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': 'no-store',
+  };
+  const token = await looksToken(creds.secret);
+  if (token) {
+    headers['set-cookie'] = looksSetCookie(token, { secure: url.protocol === 'https:' });
+  }
+  return new Response(html, { headers });
 }
 
 export default {
@@ -334,6 +353,17 @@ export default {
 
     if (url.pathname === '/cms-status') return statusPage(env);
 
+    const looks = await handleLooksRequest(request, env);
+    if (looks) return looks;
+
+    await recordDocumentLook(request, env);
+
+    const freshRide = await handleFreshRide(request, env);
+    if (freshRide) return freshRide;
+
+    const freshSite = await handleFreshSite(request, env);
+    if (freshSite) return freshSite;
+
     if (url.pathname === '/auth' || url.pathname === '/callback') {
       const creds = oauthCreds(env);
       if (!creds) return missingSecretsPage(env);
@@ -341,7 +371,14 @@ export default {
       return handleCallback(url, creds);
     }
 
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+      const asset = await env.ASSETS.fetch(request);
+      const filled = await applyLooksToAsset(request, env, asset);
+      return filled || asset;
+    }
+
+    const looksPage = await handleLooksPage(request, env);
+    if (looksPage) return looksPage;
     return new Response('Not found', { status: 404 });
   },
 };

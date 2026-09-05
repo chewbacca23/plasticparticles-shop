@@ -1,6 +1,10 @@
 ---
 import { site } from '../site.config';
+import { instagramBind } from '../lib/instagram';
+import settings from '../content/settings/instagram.json';
+
 const year = new Date().getFullYear();
+const instagram = instagramBind(settings);
 ---
 
 <footer class="footer">
@@ -10,6 +14,14 @@ const year = new Date().getFullYear();
       <p class="footer-tag">{site.tagline}</p>
     </div>
     <div class="footer-links">
+      <a href="/now">Now</a>
+      {
+        instagram && (
+          <a href={instagram.profileUrl} target="_blank" rel="noopener noreferrer">
+            Instagram
+          </a>
+        )
+      }
       <a href="/stories">Rides</a>
       <a href="/journal">Ride notes</a>
       <a href="/path">How we ride</a>
@@ -17,9 +29,10 @@ const year = new Date().getFullYear();
       <a href="/contact">Contact</a>
       <a href="/impressum">Imprint</a>
       <a href="/rss.xml">RSS</a>
+      <a class="admin-link" href="/looks">Looks</a>
       <a class="admin-link" href="/admin/index.html">Edit content</a>
     </div>
-    <p class="footer-copy">© {year} {site.name}. A cycling blog. Packed light. Owned, not rented.</p>
+    <p class="footer-copy">© {year} {site.name}. A cycling blog, packed light.</p>
   </div>
 </footer>
 

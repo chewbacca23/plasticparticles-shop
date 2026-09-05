@@ -30,34 +30,61 @@ collections:
     label_singular: Ride
     folder: src/content/stories
     create: true
+    delete: true
     slug: "{{slug}}"
     extension: md
     format: frontmatter
     preview_path: stories/{{slug}}
     fields:
-      - { label: Title, name: title, widget: string }
-      - { label: Headline, name: headline, widget: string }
-      - { label: Description, name: description, widget: text }
-      - label: Cover image
+      - { label: Name of this ride, name: title, widget: string, hint: "The name. + Ride asks for this first." }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
+      - label: First photo
         name: cover
         widget: image
         required: false
         choose_url: false
+        hint: "This one sits at the top of the ride, and on the ride tile. JPEG from the phone. HEIC is often a broken thumb. iPhone: Camera → Formats → Most Compatible."
         media_library:
           config:
             multiple: false
-      - label: Gallery images
+      - label: Photos in the story
         name: gallery
         widget: list
         summary: "{{fields.image}}"
+        hint: "These sit inside the story, between your paragraphs. Not in a pile at the start. JPEG, same as the first photo."
         field:
           label: Image
           name: image
           widget: image
           choose_url: false
-      - { label: Order (1-6), name: order, widget: number, value_type: int, min: 1, max: 99, step: 1 }
+          required: false
+      - { label: Ride text, name: body, widget: markdown, required: false, hint: "The story. The picture button puts a photo where the cursor is. Photos you add here stay in the text." }
+      - { label: Headline, name: headline, widget: string, required: false, hint: "Usually the same as the name. Shows on the ride tile." }
+      - { label: Short intro, name: description, widget: text, required: false, hint: "A few lines under the name on the ride page." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Ride text, name: body, widget: markdown }
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 99, step: 1, required: false, hint: "Only if two rides share a date. Higher number comes first. 0 is fine." }
+
+  - name: shots
+    label: Shots
+    label_singular: Shot
+    description: Photo plus a line. Shows on Now, newest first, on this site.
+    folder: src/content/shots
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: now
+    summary: "{{title}}"
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Only you see this in the list" }
+      - label: Photo
+        name: photo
+        widget: image
+        choose_url: false
+        hint: "JPEG from the phone. HEIC often shows as a broken thumb."
+      - { label: Caption, name: caption, widget: text, required: false, hint: "The line under the photo" }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false }
 
   - name: journal
     label: Ride notes
@@ -75,3 +102,38 @@ collections:
       - { label: Hero label, name: heroLabel, widget: string, required: false }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
       - { label: Post text, name: body, widget: markdown }
+
+  - name: settings
+    label: Site
+    files:
+      - name: imprint
+        label: Mail and imprint
+        file: src/content/settings/site.json
+        format: json
+        preview_path: impressum
+        fields:
+          - label: Email
+            name: email
+            widget: string
+            required: false
+            hint: "The address people write to. Shows on Contact and Imprint."
+          - { label: Name on the imprint, name: legalName, widget: string, required: false, hint: "Usually The Soul Searchers." }
+          - { label: Your name, name: responsible, widget: string, required: false, hint: "The person responsible for the site." }
+          - { label: Street, name: street, widget: string, required: false, hint: "Street and house number. Needed for the German Impressum." }
+          - { label: Postcode and city, name: zipCity, widget: string, required: false, hint: "Like 12345 Berlin." }
+          - { label: Country, name: country, widget: string, required: false, hint: "Germany is fine." }
+          - { label: Phone, name: phone, widget: string, required: false, hint: "Optional. Leave empty if you do not want it on the site." }
+      - name: instagram
+        label: Instagram
+        file: src/content/settings/instagram.json
+        preview_path: now
+        fields:
+          - label: Username
+            name: handle
+            widget: string
+            hint: "Without the @. People tap through to this account."
+          - label: Latest photo link
+            name: latestPost
+            widget: string
+            required: false
+            hint: "Open the photo on Instagram → Share → Copy link. Paste here. That one photo is what the site shows."

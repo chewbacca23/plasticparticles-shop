@@ -213,6 +213,7 @@ describe('GET /callback', () => {
     assert.match(html, /authorization:github:success:/);
     assert.match(html, /gho_test_token/);
     assert.match(html, /authorizing:github/);
+    assert.match(res.headers.get('set-cookie') || '', /ss_looks=/);
   });
 
   it('returns Decap error HTML when GitHub denies login', async () => {
@@ -233,5 +234,33 @@ describe('static assets fallback', () => {
       },
     });
     assert.equal(await res.text(), 'admin-ok');
+  });
+
+  it('fills an empty published ride from GitHub', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(
+        '---\ntitle: Patches\nheadline: Patches\ncover: /stories/img_6440-2.jpg\ndraft: false\n---\nSitting in front of me are two small patches.\n',
+        { status: 200 },
+      );
+    try {
+      const res = await worker.fetch(
+        new Request('https://thenewsoulsearchers.de/stories/the-most-wonderful-patches'),
+        {
+          ASSETS: {
+            fetch: async () =>
+              new Response('<h1>Patches</h1><div class="prose"></div>', {
+                status: 200,
+                headers: { 'content-type': 'text/html' },
+              }),
+          },
+        },
+      );
+      const html = await res.text();
+      assert.match(html, /two small patches/);
+      assert.match(html, /img_6440-2\.jpg/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });

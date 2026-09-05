@@ -1,7 +1,7 @@
 export const site = {
   name: 'The Soul Searchers',
   shortName: 'Soul Searchers',
-  tagline: 'A cycling blog — tours, roads, and travel by bike.',
+  tagline: 'A cycling blog. Tours, roads, and travel by bike.',
   description:
     'The Soul Searchers is a cycling blog: climbs, coast roads, café stops, bikes on trains, and seeing this planet from the saddle.',
   url: 'https://thenewsoulsearchers.de',
@@ -15,14 +15,14 @@ export const site = {
   logoWatermarkOpacity: 0.07,
   logoWatermarkBlur: '0.5px',
 
-  /** Impressum — fill in your real details (required on .de sites) */
+  /** Impressum defaults. Henrik fills the real lines in the editor (Site → Mail and imprint). */
   imprint: {
     legalName: 'The Soul Searchers',
     responsible: 'Henrik Kürschner',
-    street: '[Street / house number]',
-    zipCity: '[PLZ] [City]',
+    street: '',
+    zipCity: '',
     country: 'Germany',
-    phone: '[Phone — optional]',
+    phone: '',
     email: 'hello@thenewsoulsearchers.de',
   },
 };
