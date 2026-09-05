@@ -5,6 +5,7 @@ import {
   applyLook,
   berlinDay,
   emptyLooks,
+  fillLooksInHtml,
   handleLooksPage,
   handleLooksRequest,
   looksDashboardPage,
@@ -16,6 +17,14 @@ import {
   shouldRecordPath,
   summarizeLooks,
 } from './page-looks.js';
+
+const SITE_LOOKS = `<html><body>
+<p class="card-num" data-looks="today">—</p>
+<p class="card-num" data-looks="week">—</p>
+<p class="card-num" data-looks="total">—</p>
+<ol class="pages" data-looks-pages><li class="empty">none</li></ol>
+<footer>Looks</footer>
+</body></html>`;
 
 describe('sanitizePath', () => {
   it('keeps a public page and drops traversal', () => {
@@ -109,12 +118,29 @@ describe('GET/POST /api/looks', () => {
     );
     assert.equal(page.status, 200);
     assert.match(await page.text(), /\/now/);
+
+    const site = await handleLooksPage(
+      new Request('https://thenewsoulsearchers.de/looks'),
+      {
+        ...env,
+        ASSETS: {
+          fetch: async () =>
+            new Response(SITE_LOOKS, { headers: { 'content-type': 'text/html' } }),
+        },
+      },
+    );
+    const siteHtml = await site.text();
+    assert.match(siteHtml, /<footer>Looks<\/footer>/);
+    assert.match(siteHtml, /\/now/);
   });
 
   it('is reachable through the Worker entrypoint', async () => {
     const env = {
       STATS: memoryKv(),
-      ASSETS: { fetch: async () => new Response('looks-ok') },
+      ASSETS: {
+        fetch: async () =>
+          new Response(SITE_LOOKS, { headers: { 'content-type': 'text/html; charset=utf-8' } }),
+      },
     };
     await worker.fetch(
       new Request('https://thenewsoulsearchers.de/now', {
@@ -128,8 +154,9 @@ describe('GET/POST /api/looks', () => {
 
     const open = await worker.fetch(new Request('https://thenewsoulsearchers.de/looks'), env);
     const html = await open.text();
-    assert.match(html, />1</);
+    assert.match(html, /data-looks="today">1</);
     assert.match(html, /\/now/);
+    assert.match(html, /<footer>Looks<\/footer>/);
   });
 
   it('counts a real page open without /api/looks', async () => {
@@ -156,6 +183,22 @@ describe('shouldCountDocument', () => {
       shouldCountDocument(new Request('https://thenewsoulsearchers.de/stories/img_5940.jpg')),
       false,
     );
+  });
+});
+
+describe('fillLooksInHtml', () => {
+  it('writes the counts into the site page', () => {
+    const html = fillLooksInHtml(SITE_LOOKS, {
+      today: 2,
+      week: 5,
+      total: 9,
+      pages: [{ path: '/', looks: 4 }],
+    });
+    assert.match(html, /data-looks="today">2</);
+    assert.match(html, /data-looks="week">5</);
+    assert.match(html, /data-looks="total">9</);
+    assert.match(html, /Home/);
+    assert.match(html, /<footer>Looks<\/footer>/);
   });
 });
 

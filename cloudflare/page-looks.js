@@ -368,11 +368,84 @@ export function looksDashboardPage(summary) {
   );
 }
 
+export function looksPageRows(pages) {
+  const list = Array.isArray(pages) ? pages : [];
+  if (!list.length) {
+    return '<li class="empty">Open Home, Now, or a ride, then refresh this page.</li>';
+  }
+  return list
+    .map((row) => {
+      const label = row.path === '/' ? 'Home' : escapeHtml(row.path);
+      const href = escapeHtml(row.path);
+      return `<li><a href="${href}">${label}</a><span>${Number(row.looks) || 0}</span></li>`;
+    })
+    .join('');
+}
+
+export function fillLooksInHtml(html, summary) {
+  const today = String(Number(summary?.today) || 0);
+  const week = String(Number(summary?.week) || 0);
+  const total = String(Number(summary?.total) || 0);
+  const rows = looksPageRows(summary?.pages);
+  return String(html)
+    .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
+    .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
+    .replace(/data-looks="total"([^>]*)>[\s\S]*?</, `data-looks="total"$1>${total}<`)
+    .replace(
+      /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${rows}</ol>`,
+    );
+}
+
+async function safeReadLooks(env) {
+  try {
+    return await readLooks(looksStoreFor(env));
+  } catch {
+    return summarizeLooks(emptyLooks());
+  }
+}
+
+async function fetchLooksAsset(request, env) {
+  if (!env?.ASSETS?.fetch) return null;
+  const paths = ['/looks', '/looks/', '/looks/index.html'];
+  for (const path of paths) {
+    const url = new URL(request.url);
+    url.pathname = path;
+    const asset = await env.ASSETS.fetch(
+      new Request(url, { method: 'GET', headers: request.headers }),
+    );
+    if (asset.ok) return asset;
+    const location = asset.headers.get('location');
+    if (asset.status >= 300 && asset.status < 400 && location) {
+      const next = await env.ASSETS.fetch(
+        new Request(new URL(location, url), { method: 'GET', headers: request.headers }),
+      );
+      if (next.ok) return next;
+    }
+  }
+  return null;
+}
+
+export async function applyLooksToAsset(request, env, asset) {
+  const url = new URL(request.url);
+  if (!isLooksPath(url.pathname)) return asset;
+  if (!asset || !asset.ok) return null;
+  const type = asset.headers.get('content-type') || '';
+  if (type && !type.includes('html') && !type.includes('text')) return asset;
+  const summary = await safeReadLooks(env);
+  const html = fillLooksInHtml(await asset.text(), summary);
+  const headers = new Headers(asset.headers);
+  headers.set('content-type', 'text/html; charset=utf-8');
+  return new Response(html, { status: 200, headers });
+}
+
 export async function handleLooksPage(request, env) {
   const url = new URL(request.url);
   if (!isLooksPath(url.pathname)) return null;
-  const summary = await readLooks(looksStoreFor(env));
-  return looksDashboardPage(summary);
+  const asset = await fetchLooksAsset(request, env);
+  const filled = await applyLooksToAsset(request, env, asset);
+  if (filled) return filled;
+  return looksDashboardPage(await safeReadLooks(env));
 }
 
 export async function handleLooksRequest(request, env) {

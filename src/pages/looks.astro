@@ -31,59 +31,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
 
       <h2 class="pages-title">Pages people opened</h2>
-      <ol class="pages" data-looks-pages></ol>
-      <p class="note" data-looks-note></p>
+      <ol class="pages" data-looks-pages>
+        <li class="empty">Open Home, Now, or a ride, then refresh this page.</li>
+      </ol>
     </div>
   </section>
 </BaseLayout>
-
-<script is:inline>
-  (function () {
-    var note = document.querySelector('[data-looks-note]');
-    fetch('/api/looks', { cache: 'no-store' })
-      .then(function (res) {
-        if (!res.ok) throw new Error('no looks yet');
-        return res.json();
-      })
-      .then(function (data) {
-        function set(key, value) {
-          var el = document.querySelector('[data-looks="' + key + '"]');
-          if (el) el.textContent = String(value);
-        }
-        set('today', data.today || 0);
-        set('week', data.week || 0);
-        set('total', data.total || 0);
-        var list = document.querySelector('[data-looks-pages]');
-        var pages = data.pages || [];
-        if (!list) return;
-        if (!pages.length) {
-          list.innerHTML =
-            '<li class="empty">Open Home, Now, or a ride in another tab, then refresh this page.</li>';
-          return;
-        }
-        list.innerHTML = pages
-          .map(function (row) {
-            var path = row.path === '/' ? 'Home' : row.path;
-            return (
-              '<li><a href="' +
-              row.path +
-              '">' +
-              path +
-              '</a><span>' +
-              row.looks +
-              '</span></li>'
-            );
-          })
-          .join('');
-      })
-      .catch(function () {
-        if (note) {
-          note.textContent =
-            'If the numbers stay blank, open Home or a ride, then refresh this page.';
-        }
-      });
-  })();
-</script>
 
 <style>
   .looks {

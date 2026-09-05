@@ -9,6 +9,7 @@
  */
 
 import {
+  applyLooksToAsset,
   handleLooksPage,
   handleLooksRequest,
   looksSetCookie,
@@ -354,9 +355,6 @@ export default {
     const looks = await handleLooksRequest(request, env);
     if (looks) return looks;
 
-    const looksPage = await handleLooksPage(request, env);
-    if (looksPage) return looksPage;
-
     await recordDocumentLook(request, env);
 
     const freshRide = await handleFreshRide(request, env);
@@ -369,7 +367,14 @@ export default {
       return handleCallback(url, creds);
     }
 
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+      const asset = await env.ASSETS.fetch(request);
+      const filled = await applyLooksToAsset(request, env, asset);
+      return filled || asset;
+    }
+
+    const looksPage = await handleLooksPage(request, env);
+    if (looksPage) return looksPage;
     return new Response('Not found', { status: 404 });
   },
 };
