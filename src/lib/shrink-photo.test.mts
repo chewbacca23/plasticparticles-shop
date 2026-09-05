@@ -152,6 +152,7 @@ describe('admin scripts stay wired', () => {
     assert.match(html, /class="cms-looks" href="\/looks"/);
     assert.match(html, /data-looks="today"/);
     assert.match(html, /Photos in the story/);
+    assert.match(html, /Mail and imprint/);
   });
 
   it('styles the GitHub login page like the site, not Decap’s gray dump', () => {
@@ -184,7 +185,10 @@ describe('admin scripts stay wired', () => {
     assert.match(config, /name: gallery[\s\S]*required:\s*false/);
     assert.match(config, /Photos in the story/);
     assert.match(config, /First photo/);
+    assert.match(config, /Mail and imprint/);
+    assert.match(config, /name: email/);
     assert.match(config, /name: order[\s\S]*min:\s*0/);
+    assert.match(src, /Save mail and imprint/);
     const preview = readFileSync('public/admin/ride-preview.js', 'utf8');
     assert.match(preview, /ss-ride-preview__hero/);
     assert.match(preview, /ss-ride-preview__story/);

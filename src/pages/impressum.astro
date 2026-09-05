@@ -1,8 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { site } from '../site.config';
+import saved from '../content/settings/site.json';
+import { publicImprint } from '../lib/site-settings';
 
-const { imprint } = site;
+const imprint = publicImprint(saved);
 ---
 
 <BaseLayout
@@ -13,29 +15,33 @@ const { imprint } = site;
     <div class="site-shell legal">
       <p class="eyebrow">Legal</p>
       <h1 class="section-title">Imprint / Impressum</h1>
-      <p class="section-lead">
-        Angaben gemäß § 5 TMG. You can edit the details in <code>src/site.config.ts</code>.
-      </p>
+      <p class="section-lead">Angaben gemäß § 5 TMG.</p>
 
       <h2>Angaben zum Anbieter</h2>
       <p>
         {imprint.legalName}<br />
-        {imprint.responsible}<br />
-        {imprint.street}<br />
-        {imprint.zipCity}<br />
-        {imprint.country}
+        {imprint.responsible}
+        {imprint.street && <><br />{imprint.street}</>}
+        {imprint.zipCity && <><br />{imprint.zipCity}</>}
+        {imprint.country && <><br />{imprint.country}</>}
       </p>
 
       <h2>Kontakt</h2>
       <p>
         E-Mail: <a href={`mailto:${imprint.email}`}>{imprint.email}</a>
+        {imprint.phone && (
+          <>
+            <br />
+            Telefon: {imprint.phone}
+          </>
+        )}
       </p>
 
       <h2>Verantwortlich für den Inhalt</h2>
       <p>
-        {imprint.responsible}<br />
-        {imprint.street}<br />
-        {imprint.zipCity}
+        {imprint.responsible}
+        {imprint.street && <><br />{imprint.street}</>}
+        {imprint.zipCity && <><br />{imprint.zipCity}</>}
       </p>
 
       <h2>Haftung für Inhalte</h2>
@@ -76,8 +82,7 @@ const { imprint } = site;
     font-size: 1.25rem;
   }
 
-  code {
+  a {
     color: var(--amber-hot);
-    font-size: 0.9em;
   }
 </style>

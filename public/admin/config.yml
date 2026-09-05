@@ -104,8 +104,24 @@ collections:
       - { label: Post text, name: body, widget: markdown }
 
   - name: settings
-    label: Instagram
+    label: Site
     files:
+      - name: imprint
+        label: Mail and imprint
+        file: src/content/settings/site.json
+        preview_path: impressum
+        fields:
+          - label: Email
+            name: email
+            widget: string
+            required: false
+            hint: "The address people write to. Shows on Contact and Imprint."
+          - { label: Name on the imprint, name: legalName, widget: string, hint: "Usually The Soul Searchers." }
+          - { label: Your name, name: responsible, widget: string, hint: "The person responsible for the site." }
+          - { label: Street, name: street, widget: string, required: false, hint: "Street and house number. Needed for the German Impressum." }
+          - { label: Postcode and city, name: zipCity, widget: string, required: false, hint: "Like 12345 Berlin." }
+          - { label: Country, name: country, widget: string, required: false, hint: "Germany is fine." }
+          - { label: Phone, name: phone, widget: string, required: false, hint: "Optional. Leave empty if you do not want it on the site." }
       - name: instagram
         label: Instagram
         file: src/content/settings/instagram.json
