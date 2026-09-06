@@ -115,20 +115,19 @@
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      /* Decap paints a full-page layer over the gold bar. Pin Mail
-         above that layer so the letters stay a real button. */
+      /* Same size as Save this note. Pin above Decap’s full-page layer. */
       .cms-mail {
         position: fixed;
         left: 1.1rem;
         bottom: 1.1rem;
         z-index: 2147483000;
-        min-height: 1.7rem;
+        min-height: 0;
         min-width: 0;
         margin: 0;
-        padding: 0.35rem 0.65rem;
-        font-size: 0.7rem;
+        padding: 0.85rem 1.25rem;
+        font: 700 1.05rem/1 Inter, system-ui, sans-serif;
         pointer-events: auto;
-        box-shadow: 0 4px 12px rgba(212, 163, 90, 0.2);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
       }
 
       .cms-login {
@@ -141,13 +140,16 @@
 
       .cms-mail-panel {
         position: fixed;
-        inset: 0;
+        top: 4.4rem;
+        right: 1.1rem;
+        bottom: 5.2rem;
+        left: auto;
         z-index: 2147483001;
         display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 4.5rem 1rem 1.5rem;
-        background: rgba(6, 10, 14, 0.72);
+        width: min(22.5rem, calc(100vw - 2.2rem));
+        padding: 0;
+        background: none;
+        pointer-events: none;
       }
 
       .cms-mail-panel[hidden] {
@@ -155,10 +157,11 @@
       }
 
       .cms-mail-card {
-        width: min(36rem, 100%);
-        max-height: calc(100vh - 5.5rem);
+        pointer-events: auto;
+        width: 100%;
+        max-height: 100%;
         overflow: auto;
-        padding: 1rem 1.15rem 1.1rem;
+        padding: 0.85rem 0.95rem 1rem;
         border: 1px solid rgba(215, 224, 232, 0.12);
         border-radius: 1.1rem;
         background: #121820;
@@ -169,19 +172,20 @@
       .cms-mail-card h2 {
         margin: 0 0 0.25rem;
         font-family: var(--font-display);
-        font-size: 1.4rem;
+        font-size: 1.2rem;
       }
 
       .cms-mail-lead {
-        margin: 0 0 0.75rem;
+        margin: 0 0 0.65rem;
         color: rgba(215, 224, 232, 0.72);
+        font-size: 0.92rem;
       }
 
       .cms-mail-card label {
         display: grid;
-        gap: 0.25rem;
-        margin: 0 0 0.55rem;
-        font-size: 0.78rem;
+        gap: 0.2rem;
+        margin: 0 0 0.45rem;
+        font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
@@ -191,13 +195,13 @@
       .cms-mail-card input {
         width: 100%;
         box-sizing: border-box;
-        min-height: 2.55rem;
-        padding: 0.55rem 0.8rem;
+        min-height: 2.15rem;
+        padding: 0.4rem 0.7rem;
         border: 1px solid rgba(215, 224, 232, 0.22);
         border-radius: 0.75rem;
         background: #0c1218;
         color: var(--paper);
-        font: 1.05rem/1.35 var(--font-body);
+        font: 1rem/1.35 var(--font-body);
       }
 
       .cms-mail-actions {
@@ -446,7 +450,7 @@
             <p style="margin: 0.55rem 0 0">
               <strong>Mail and imprint:</strong> use the gold
               <button type="button" class="cms-mail-inline" data-ss-mail>Mail and imprint</button>
-              button at the bottom-left. A form opens on top. Type your email, street, and city,
+              button at the bottom-left. A form opens on the right. Type your email, street, and city,
               then <strong>Save mail and imprint</strong>. Then open
               <a href="/contact">Contact</a> and <a href="/impressum">Imprint</a> and hard-refresh.
             </p>

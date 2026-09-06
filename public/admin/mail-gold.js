@@ -349,6 +349,7 @@
 
   var overlay = panel();
   if (overlay) {
+    document.body.appendChild(overlay);
     overlay.addEventListener('click', function (event) {
       if (event.target === overlay) closePanel();
     });

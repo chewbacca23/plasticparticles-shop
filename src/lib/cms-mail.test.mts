@@ -81,8 +81,11 @@ describe('gold Mail form', () => {
     assert.match(html, /Mail and imprint/);
     assert.match(html, /position:\s*fixed/);
     assert.match(html, /z-index:\s*2147483000/);
-    assert.match(html, /font-size:\s*0\.7rem/);
-    assert.match(html, /min-height:\s*1\.7rem/);
+    assert.match(html, /padding:\s*0\.85rem 1\.25rem/);
+    assert.match(html, /font:\s*700 1\.05rem\/1/);
+    assert.match(html, /\.cms-mail-panel[\s\S]*right:\s*1\.1rem/);
+    assert.doesNotMatch(html, /\.cms-mail-panel[\s\S]*inset:\s*0/);
+    assert.doesNotMatch(html, /background:\s*rgba\(6, 10, 14, 0\.72\)/);
     assert.doesNotMatch(html, /min-height:\s*3\.4rem/);
     assert.doesNotMatch(html, /min-width:\s*13\.5rem/);
     assert.match(html, /id="cms-mail-panel"/);
@@ -107,6 +110,7 @@ describe('gold Mail form', () => {
     assert.match(js, /persistEntry/);
     assert.match(js, /api\.github\.com/);
     assert.match(js, /document\.body\.appendChild\(mail\)/);
+    assert.match(js, /document\.body\.appendChild\(overlay\)/);
     assert.match(js, /data-ss-mail/);
     assert.doesNotMatch(js, /#\/collections\/settings\/entries\/imprint/);
   });
