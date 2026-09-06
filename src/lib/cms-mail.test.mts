@@ -81,6 +81,10 @@ describe('gold Mail form', () => {
     assert.match(html, /Mail and imprint/);
     assert.match(html, /position:\s*fixed/);
     assert.match(html, /z-index:\s*2147483000/);
+    assert.match(html, /font-size:\s*0\.7rem/);
+    assert.match(html, /min-height:\s*1\.7rem/);
+    assert.doesNotMatch(html, /min-height:\s*3\.4rem/);
+    assert.doesNotMatch(html, /min-width:\s*13\.5rem/);
     assert.match(html, /id="cms-mail-panel"/);
     assert.match(html, /id="cms-mail-email"/);
     assert.match(html, /id="cms-mail-street"/);
