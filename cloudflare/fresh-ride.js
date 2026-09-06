@@ -37,6 +37,14 @@ export function storySlug(pathname) {
   return slug;
 }
 
+export function journalSlug(pathname) {
+  const match = String(pathname || '').match(/^\/journal\/([^/]+)$/);
+  if (!match) return '';
+  const slug = match[1];
+  if (IMAGE_EXT.test(slug) || !SAFE_SLUG.test(slug)) return '';
+  return slug;
+}
+
 export function unquote(value) {
   const text = String(value ?? '').trim();
   if (
@@ -209,7 +217,11 @@ export function githubRawRide(slug) {
   return `${RAW}/src/content/stories/${encodeURIComponent(slug)}.md`;
 }
 
-export function renderRidePage({ slug, data = {}, body = '' } = {}) {
+export function githubRawNote(slug) {
+  return `${RAW}/src/content/journal/${encodeURIComponent(slug)}.md`;
+}
+
+export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {}) {
   const title = data.headline || data.title || slug;
   const description = data.description || title;
   const photos = galleryPaths(data.cover, data.gallery);
@@ -276,12 +288,12 @@ export function renderRidePage({ slug, data = {}, body = '' } = {}) {
   </header>
   <main>
     <article class="site-shell">
-      <p class="eyebrow">Ride</p>
+      <p class="eyebrow">${kind === 'note' ? 'Ride note' : 'Ride'}</p>
       <h1>${escapeHtml(title)}</h1>
       <p class="dek">${escapeHtml(description)}</p>
       ${hero}
       <div class="prose">${story}</div>
-      <p class="back"><a href="/stories">← All rides</a></p>
+      <p class="back"><a href="${kind === 'note' ? '/journal' : '/stories'}">${kind === 'note' ? '← All ride notes' : '← All rides'}</a></p>
     </article>
   </main>
   <script>
@@ -341,12 +353,15 @@ export async function handleFreshRide(request, env) {
     return asset;
   }
 
-  const slug = storySlug(url.pathname);
+  const rideSlug = storySlug(url.pathname);
+  const noteSlug = journalSlug(url.pathname);
+  const slug = rideSlug || noteSlug;
   if (!slug) return null;
+  const kind = noteSlug ? 'note' : 'ride';
 
   let markdown = '';
   try {
-    markdown = await fetchText(githubRawRide(slug));
+    markdown = await fetchText(kind === 'note' ? githubRawNote(slug) : githubRawRide(slug));
   } catch {
     markdown = '';
   }
@@ -369,7 +384,7 @@ export async function handleFreshRide(request, env) {
     }
   }
 
-  const page = renderRidePage({ slug, data: parsed.data, body: parsed.body });
+  const page = renderRidePage({ slug, data: parsed.data, body: parsed.body, kind });
   return new Response(page, {
     status: 200,
     headers: {

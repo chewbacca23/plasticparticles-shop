@@ -196,6 +196,7 @@ describe('admin scripts stay wired', () => {
     assert.match(config, /name: body[\s\S]*required:\s*false/);
     assert.match(config, /name: gallery[\s\S]*required:\s*false/);
     assert.match(config, /Photos in the story/);
+    assert.match(config, /Photos in the note/);
     assert.match(config, /First photo/);
     assert.match(config, /Mail and imprint/);
     assert.match(config, /format: json/);
@@ -205,6 +206,7 @@ describe('admin scripts stay wired', () => {
     const preview = readFileSync('public/admin/ride-preview.js', 'utf8');
     assert.match(preview, /ss-ride-preview__hero/);
     assert.match(preview, /ss-ride-preview__story/);
+    assert.match(preview, /registerPreviewTemplate\('journal'/);
     assert.doesNotMatch(preview, /ss-ride-preview__gallery/);
   });
 });

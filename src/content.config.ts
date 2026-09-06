@@ -2,6 +2,11 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
+const galleryItem = z.union([
+  z.string(),
+  z.object({ image: z.string().optional() }).transform((value) => value.image ?? ''),
+]);
+
 const journal = defineCollection({
   loader: glob({ base: './src/content/journal', pattern: '**/*.{md,mdx}' }),
   schema: z.object({
@@ -10,14 +15,14 @@ const journal = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     heroLabel: z.string().optional(),
+    cover: z.string().optional(),
+    gallery: z.array(galleryItem).optional().default([]),
     draft: z.boolean().default(false),
-  }),
+  }).transform((data) => ({
+    ...data,
+    gallery: data.gallery.map((item) => item.trim()).filter(Boolean),
+  })),
 });
-
-const galleryItem = z.union([
-  z.string(),
-  z.object({ image: z.string().optional() }).transform((value) => value.image ?? ''),
-]);
 
 const stories = defineCollection({
   loader: glob({ base: './src/content/stories', pattern: '**/*.{md,mdx}' }),

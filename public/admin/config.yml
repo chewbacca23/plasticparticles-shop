@@ -100,8 +100,28 @@ collections:
       - { label: Description, name: description, widget: text }
       - { label: Published date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
       - { label: Hero label, name: heroLabel, widget: string, required: false }
+      - label: First photo
+        name: cover
+        widget: image
+        required: false
+        choose_url: false
+        hint: "This one sits at the top of the note. JPEG from the phone. HEIC is often a broken thumb."
+        media_library:
+          config:
+            multiple: false
+      - label: Photos in the note
+        name: gallery
+        widget: list
+        summary: "{{fields.image}}"
+        hint: "These sit inside the note, between your paragraphs. JPEG, same as the first photo."
+        field:
+          label: Image
+          name: image
+          widget: image
+          choose_url: false
+          required: false
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Post text, name: body, widget: markdown }
+      - { label: Post text, name: body, widget: markdown, required: false, hint: "The picture button puts a photo where the cursor is." }
 
   - name: settings
     label: Site

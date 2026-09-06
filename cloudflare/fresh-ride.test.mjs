@@ -3,9 +3,11 @@ import { afterEach, describe, it } from 'node:test';
 import {
   escapeHtml,
   galleryPaths,
+  githubRawNote,
   githubRawPhoto,
   githubRawRide,
   handleFreshRide,
+  journalSlug,
   parseMarkdownFile,
   parseSimpleYaml,
   renderMarkdown,
@@ -43,6 +45,9 @@ describe('path helpers', () => {
     assert.equal(storyImageName('/stories/img_6440-2.jpg'), 'img_6440-2.jpg');
     assert.equal(storyImageName('/stories/the-most-wonderful-patches'), '');
     assert.equal(storyImageName('/stories/../secret.jpg'), '');
+    assert.equal(journalSlug('/journal/packing-the-bike'), 'packing-the-bike');
+    assert.equal(journalSlug('/journal/img_6440-2.jpg'), '');
+    assert.equal(journalSlug('/stories/packing-the-bike'), '');
   });
 });
 
@@ -114,6 +119,18 @@ describe('renderRidePage', () => {
     assert.ok(cafe < extra, 'story photos sit after the first paragraph');
     assert.doesNotMatch(html, /class="gallery"/);
     assert.match(html, /class="hero"/);
+  });
+
+  it('labels a note page as a ride note', () => {
+    const html = renderRidePage({
+      slug: 'packing-the-bike',
+      data: { title: 'Packing the bike', cover: '/stories/img_2878.jpg' },
+      body: 'Packing is the unglamorous half of touring.',
+      kind: 'note',
+    });
+    assert.match(html, />Ride note</);
+    assert.match(html, /href="\/journal"/);
+    assert.match(html, /img_2878\.jpg/);
   });
 });
 
@@ -216,6 +233,36 @@ describe('handleFreshRide', () => {
       await handleFreshRide(new Request('https://thenewsoulsearchers.de/now'), {}),
       null,
     );
+  });
+
+  it('fills a ride note from GitHub when the static page has no photos yet', async () => {
+    const note = `---
+title: Packing the bike for a tour
+description: What actually goes in the bags.
+pubDate: 2026-08-26
+cover: /stories/img_2878.jpg
+gallery:
+  - /stories/nice-baie-des-anges.jpg
+---
+Packing is the unglamorous half of touring.
+`;
+    globalThis.fetch = async (url) => {
+      assert.equal(String(url), githubRawNote('packing-the-bike'));
+      return new Response(note, { status: 200 });
+    };
+    const stale = new Response(
+      '<h1>Packing the bike for a tour</h1><div class="prose"><p>Packing is the unglamorous half of touring.</p></div>',
+      { status: 200, headers: { 'content-type': 'text/html' } },
+    );
+    const res = await handleFreshRide(
+      new Request('https://thenewsoulsearchers.de/journal/packing-the-bike'),
+      { ASSETS: { fetch: async () => stale } },
+    );
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.match(html, />Ride note</);
+    assert.match(html, /img_2878\.jpg/);
+    assert.match(html, /nice-baie-des-anges\.jpg/);
   });
 });
 

@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/PostCard.astro';
 import { getCollection } from 'astro:content';
 import { newestFirst } from '../../lib/newest';
+import { mediaExists } from '../../lib/media';
 
 const posts = newestFirst(
   await getCollection('journal', ({ data }) => !data.draft),
@@ -31,6 +32,7 @@ const posts = newestFirst(
               description={post.data.description}
               date={post.data.pubDate}
               label={post.data.heroLabel}
+              image={mediaExists(post.data.cover) ? post.data.cover : undefined}
             />
           ))
         }

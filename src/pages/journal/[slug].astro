@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
+import { galleryMedia } from '../../lib/media';
+import { renderMarkdown } from '../../../cloudflare/fresh-ride.js';
+import { planRidePhotos } from '../../../cloudflare/story-photos.js';
 
 export async function getStaticPaths() {
   const posts = await getCollection('journal', ({ data }) => !data.draft);
@@ -11,7 +14,9 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const photos = galleryMedia(post.data.cover, post.data.gallery);
+const plan = planRidePhotos(photos, post.body, post.data.cover);
+const noteHtml = renderMarkdown(plan.wovenBody);
 const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
   year: 'numeric',
   month: 'long',
@@ -28,9 +33,16 @@ const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
         <p class="dek">{post.data.description}</p>
         <time datetime={post.data.pubDate.toISOString()}>{formatted}</time>
       </header>
-      <div class="prose">
-        <Content />
-      </div>
+
+      {
+        plan.hero && (
+          <figure class="hero">
+            <img src={plan.hero} alt="" width="1200" height="900" loading="eager" />
+          </figure>
+        )
+      }
+
+      <div class="prose" set:html={noteHtml} />
       <p class="back">
         <a href="/journal">← All ride notes</a>
       </p>
@@ -63,6 +75,31 @@ const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
     font-size: 0.86rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+  }
+
+  .hero {
+    margin: 0 0 2rem;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .hero img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .prose :global(figure) {
+    margin: 1.8rem 0;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .prose :global(figure img) {
+    margin: 0;
+    box-shadow: none;
   }
 
   .back {

@@ -99,10 +99,10 @@
     var h = window.h || (window.CMS && window.CMS.h);
     if (!h || !window.CMS.registerPreviewTemplate) return;
 
-    window.CMS.registerPreviewTemplate('stories', function (props) {
+    function previewNote(props, eyebrow) {
       var entry = props.entry;
       var title =
-        entry.getIn(['data', 'headline']) || entry.getIn(['data', 'title']) || 'Ride';
+        entry.getIn(['data', 'headline']) || entry.getIn(['data', 'title']) || eyebrow;
       var description = entry.getIn(['data', 'description']) || '';
       var cover = safePhoto(entry.getIn(['data', 'cover']));
       var photos = [];
@@ -126,12 +126,19 @@
       return h(
         'article',
         { className: 'ss-ride-preview' },
-        h('p', { className: 'ss-ride-preview__eyebrow' }, 'Ride'),
+        h('p', { className: 'ss-ride-preview__eyebrow' }, eyebrow),
         h('h1', null, String(title)),
         description ? h('p', { className: 'ss-ride-preview__dek' }, String(description)) : null,
         plan.hero ? h('img', { className: 'ss-ride-preview__hero', src: plan.hero, alt: '' }) : null,
         h('div', { className: 'ss-ride-preview__story' }, blocks),
       );
+    }
+
+    window.CMS.registerPreviewTemplate('stories', function (props) {
+      return previewNote(props, 'Ride');
+    });
+    window.CMS.registerPreviewTemplate('journal', function (props) {
+      return previewNote(props, 'Ride note');
     });
 
     window.CMS.registerPreviewStyle(
