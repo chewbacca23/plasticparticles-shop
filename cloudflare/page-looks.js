@@ -18,6 +18,7 @@ const SKIP = new Set([
   '/robots.txt',
   '/favicon.ico',
   '/logo.svg',
+  '/logo.png',
   '/og.svg',
 ]);
 

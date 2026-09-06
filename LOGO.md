@@ -1,17 +1,18 @@
 # Your logo on the site
 
-The header, hero, and watermark all load **`/logo.svg`** (lowercase).
+The header, hero, and watermark all load **`/logo.svg`**. That file embeds **`public/logo.png`** so the crest still shows when the SVG is used as an image.
 
-That filename must stay **exactly** `public/logo.svg`. Linux and Cloudflare treat `Logo.svg` and `logo.svg` as **two different files**. If both exist, the site keeps the placeholder.
+Those names must stay lowercase. Linux and Cloudflare treat `Logo.svg` and `logo.svg` as two different files.
 
 ## What is in the file now
 
-`public/logo.svg` is the shield crest, cropped from the Illustrator A4 export (`viewBox="244 50 96 122"`). The original artboard was a full page with the mark in the corner — without that crop the logo looks like a tiny stamp on empty paper.
+Henrik’s new crest, cropped from the chat PNG and scaled up. The original file was 106×150 with a lot of empty space. The shield itself was about 45×71.
 
-## If you re-export from Illustrator
+## If you send a better export
 
-1. Overwrite **`public/logo.svg`** (not `Logo.svg`)
-2. If the export is a full A4 page again, crop the viewBox to the crest, or export only the artwork
-3. Rebuild (`npm run build`) or retry the Cloudflare deploy
+1. Overwrite **`public/logo.png`** with a bigger PNG, or send an SVG from Illustrator
+2. If Illustrator exports a full A4 page, crop to the crest
+3. Keep the public filename **`logo.png`** / **`logo.svg`** (not `Logo.svg`)
+4. Rebuild or retry the Cloudflare deploy
 
 Do not keep a second file named `Logo.svg` in `public/`.
