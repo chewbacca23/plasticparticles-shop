@@ -49,7 +49,7 @@ collections:
         widget: image
         required: false
         choose_url: false
-        hint: "This one sits at the top of the ride, and on the ride tile. JPEG from the phone. If the thumb looks broken, wait a second — we load it from GitHub. HEIC is often a broken thumb. iPhone: Camera → Formats → Most Compatible."
+        hint: "This one sits at the top of the ride, and on the ride tile. Upload → pick JPEG from your Mac (that puts it on the site). Then Save this ride. HEIC often fails. If the thumb looks broken, wait a second."
         media_library:
           config:
             multiple: false
@@ -57,7 +57,7 @@ collections:
         name: gallery
         widget: list
         summary: "{{fields.image}}"
-        hint: "These sit inside the story, between your paragraphs. Not in a pile at the start. JPEG, same as the first photo."
+        hint: "Inside the story, between paragraphs. Same Upload → JPEG from the Mac → Save."
         field:
           label: Image
           name: image
@@ -115,7 +115,7 @@ collections:
         widget: image
         required: false
         choose_url: false
-        hint: "Top of the note. Use JPEG (not HEIC). Fat phone photos shrink in the browser first. Then gold Save this note. If the thumb still looks broken, wait a second — we load it from GitHub."
+        hint: "Top of the note. JPEG from the Mac (not HEIC). Upload opens your files — that is correct; it saves into the site media. Then gold Save this note. Fat phone photos shrink on GitHub after save. If the thumb looks broken, wait a second."
         media_library:
           config:
             multiple: false
@@ -123,7 +123,7 @@ collections:
         name: gallery
         widget: list
         summary: "{{fields.image}}"
-        hint: "Inside the note, between paragraphs. JPEG, same as First photo. Or use the picture button in the text."
+        hint: "Inside the note. Same Upload → pick JPEG from the Mac → Save this note."
         field:
           label: Image
           name: image

@@ -133,12 +133,13 @@ describe('isGitHubBlobPostUrl', () => {
 });
 
 describe('admin scripts stay wired', () => {
-  it('shrinks on pick without wrapping fetch, so Publish can save', () => {
+  it('does not wrap fetch or swallow the file picker, so Upload stays in the note', () => {
     const src = readFileSync('public/admin/shrink-on-pick.js', 'utf8');
-    // Pick-time stop + replay is OK. Wrapping fetch froze Save / Publish.
-    assert.match(src, /stopImmediatePropagation/);
-    assert.match(src, /DataTransfer/);
+    // Pick-time stop + replay bounced Upload out of the entry. Leave Decap alone.
+    assert.doesNotMatch(src, /stopImmediatePropagation/);
     assert.doesNotMatch(src, /window\.fetch\s*=/);
+    assert.doesNotMatch(src, /DataTransfer/);
+    assert.match(src, /HEIC/);
   });
 
   it('loads the GitHub raw thumb fallback on the CMS page', () => {
