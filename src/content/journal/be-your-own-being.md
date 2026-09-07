@@ -1,8 +1,10 @@
 ---
 title: Ride your own route
-description: Nobody else pedals your bike, skip the KOM chase and choose the road you actually want.
-pubDate: 2024-03-12
+description: Nobody else pedals your bike, skip the KOM chase and choose the
+  road you actually want.
+pubDate: 2026-09-07
 heroLabel: On the road
+cover: /stories/img_5956.jpeg
 ---
 
 Cycling is full of people who will tell you the “right” bike, the right watts, the right loop. Club rides have a pace. Strava has a crown. Friends have an opinion about your touring bags.
