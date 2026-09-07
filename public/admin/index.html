@@ -115,10 +115,11 @@
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      /* Same size as Save this note. Pin above Decap’s full-page layer. */
+      /* Same size as Save this note. Right column with the form and save. */
       .cms-mail {
         position: fixed;
-        left: 1.1rem;
+        right: 1.1rem;
+        left: auto;
         bottom: 1.1rem;
         z-index: 2147483000;
         min-height: 0;
@@ -128,6 +129,10 @@
         font: 700 1.05rem/1 Inter, system-ui, sans-serif;
         pointer-events: auto;
         box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      }
+
+      .cms-mail[data-ss-above-save] {
+        bottom: 4.05rem;
       }
 
       .cms-login {
@@ -142,7 +147,7 @@
         position: fixed;
         top: 4.4rem;
         right: 1.1rem;
-        bottom: 5.2rem;
+        bottom: 7.8rem;
         left: auto;
         z-index: 2147483001;
         display: flex;
@@ -454,7 +459,7 @@
             <p style="margin: 0.55rem 0 0">
               <strong>Mail and imprint:</strong> use the gold
               <button type="button" class="cms-mail-inline" data-ss-mail>Mail and imprint</button>
-              button at the bottom-left. A form opens on the right. Type your email, street, and city,
+              button at the bottom-right. A form opens above it on the right. Type your email, street, and city,
               then <strong>Save mail and imprint</strong>. Then open
               <a href="/contact">Contact</a> and <a href="/impressum">Imprint</a> and hard-refresh.
             </p>

@@ -84,10 +84,15 @@ describe('gold Mail form', () => {
     assert.match(html, /padding:\s*0\.85rem 1\.25rem/);
     assert.match(html, /font:\s*700 1\.05rem\/1/);
     assert.match(html, /\.cms-mail-panel[\s\S]*right:\s*1\.1rem/);
+    assert.match(html, /\.cms-mail[\s\S]*right:\s*1\.1rem/);
+    assert.match(html, /data-ss-above-save/);
+    assert.match(html, /bottom-right/);
+    assert.doesNotMatch(html, /\.cms-mail[\s\S]*left:\s*1\.1rem;/);
     assert.doesNotMatch(html, /\.cms-mail-panel[\s\S]*inset:\s*0/);
     assert.doesNotMatch(html, /background:\s*rgba\(6, 10, 14, 0\.72\)/);
     assert.doesNotMatch(html, /min-height:\s*3\.4rem/);
     assert.doesNotMatch(html, /min-width:\s*13\.5rem/);
+    assert.doesNotMatch(html, /button at the bottom-left/);
     assert.match(html, /id="cms-mail-panel"/);
     assert.match(html, /id="cms-mail-email"/);
     assert.match(html, /id="cms-mail-street"/);
@@ -111,6 +116,8 @@ describe('gold Mail form', () => {
     assert.match(js, /api\.github\.com/);
     assert.match(js, /document\.body\.appendChild\(mail\)/);
     assert.match(js, /document\.body\.appendChild\(overlay\)/);
+    assert.match(js, /data-ss-above-save/);
+    assert.match(js, /stackRightPills/);
     assert.match(js, /data-ss-mail/);
     assert.doesNotMatch(js, /#\/collections\/settings\/entries\/imprint/);
   });

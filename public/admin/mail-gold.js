@@ -329,6 +329,17 @@
     }
   }
 
+  function stackRightPills() {
+    var mail = $('cms-mail');
+    if (!mail) return;
+    var save = document.querySelector('[data-ss-save-ride]');
+    if (save && document.body.contains(save)) {
+      mail.setAttribute('data-ss-above-save', '1');
+    } else {
+      mail.removeAttribute('data-ss-above-save');
+    }
+  }
+
   var mail = $('cms-mail');
   if (mail) {
     document.body.appendChild(mail);
@@ -356,6 +367,9 @@
   }
 
   window.addEventListener('ss-open-mail', openPanel);
+  window.addEventListener('hashchange', stackRightPills);
+  window.setInterval(stackRightPills, 400);
+  stackRightPills();
 
   try {
     if (window.sessionStorage.getItem(OPEN) === '1') openPanel();
