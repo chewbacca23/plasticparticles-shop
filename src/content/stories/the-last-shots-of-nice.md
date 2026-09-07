@@ -4,9 +4,9 @@ pubDate: 2026-09-07
 cover: /stories/img_5956.jpg
 gallery:
   - /stories/img_6372.jpeg
-  - null
-  - null
-  - null
+  - /stories/img_2831.jpeg
+  - /stories/img_6003.jpeg
+  - /stories/img_5959.jpeg
 headline: The Last Shots of Nice ;)
 description: Write a few lines about this ride.
 draft: false
