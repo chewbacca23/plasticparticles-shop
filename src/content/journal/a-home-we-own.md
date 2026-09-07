@@ -2,7 +2,7 @@
 title: Base camp for the bikes
 description: Why this cycling blog lives on its own domain, a home between
   tours, not a rented theme.
-pubDate: 2026-08-11
+pubDate: 2026-09-07
 heroLabel: Notes
 cover: /stories/img_5956.jpeg
 ---
