@@ -21,8 +21,8 @@ const watermarkSrc = site.logoWatermark ?? site.logo;
     class="logo-backdrop__mark"
     src={watermarkSrc}
     alt=""
-    width="891"
-    height="1400"
+    width="1018"
+    height="1600"
     decoding="async"
   />
   <div class="logo-backdrop__veil"></div>
@@ -41,13 +41,13 @@ const watermarkSrc = site.logoWatermark ?? site.logo;
     position: absolute;
     right: clamp(-3rem, -1vw, 2rem);
     top: 50%;
-    /* Slightly smaller than before so we stretch less */
-    width: min(52vw, 28rem);
+    /* Smaller + soft so we never stretch chat pixels into a sharp wall */
+    width: min(48vw, 26rem);
     height: auto;
     transform: translateY(-48%);
-    opacity: var(--wm-opacity, 0.08);
+    opacity: var(--wm-opacity, 0.09);
     /* Soft blur on top of the pre-blurred asset — kills remaining blockiness */
-    filter: blur(var(--wm-blur, 10px)) saturate(0.7) brightness(1.06);
+    filter: blur(var(--wm-blur, 18px)) saturate(0.65) brightness(1.05);
     mix-blend-mode: soft-light;
     image-rendering: auto;
     animation: logo-float 22s ease-in-out infinite;
