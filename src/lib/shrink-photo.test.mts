@@ -152,6 +152,8 @@ describe('admin scripts stay wired', () => {
     assert.ok(src.includes('api.github.com') || /api\\.github\\.com/.test(src));
     assert.ok(src.includes('/contents/') || /\\\/contents\\\//.test(src));
     assert.match(src, /Photo is saved/);
+    assert.match(src, /jpgTwin/);
+    assert.match(src, /\\.jpeg\$/i);
     assert.match(src, /storiesPathNear/);
   });
 

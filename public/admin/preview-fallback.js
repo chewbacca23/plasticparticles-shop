@@ -37,8 +37,12 @@
   }
 
   function jpegTwin(file) {
-    if (!file || !/\.(heic|heif)$/i.test(file)) return null;
-    return file.replace(/\.(heic|heif)$/i, '.jpg');
+    if (!file) return null;
+    if (/\.(heic|heif)$/i.test(file)) return file.replace(/\.(heic|heif)$/i, '.jpg');
+    // Phone / Mac often saves .jpeg while the repo has .jpg (or the other way)
+    if (/\.jpeg$/i.test(file)) return file.replace(/\.jpeg$/i, '.jpg');
+    if (/\.jpg$/i.test(file)) return file.replace(/\.jpg$/i, '.jpeg');
+    return null;
   }
 
   function rawUrl(src) {
@@ -46,11 +50,23 @@
     if (src.indexOf('raw.githubusercontent.com') !== -1) return null;
     var file = fileFromSrc(src);
     if (!file) return null;
-    // Contents API is never a real image for the <img> tag.
+    // Contents API is never a real image for the <img> tag when the file is fat.
     if (/api\.github\.com\/repos\/.+\/contents\//i.test(src)) return rawForFile(file);
+    if (/api\.github\.com\/repos\/.+\/git\/blobs\//i.test(src)) return rawForFile(file);
     if (src.indexOf('blob:') === 0) return null;
     if (isLocal) return null;
     return rawForFile(file);
+  }
+
+  function tryTwinOrPlaceholder(img, src) {
+    var file = fileFromSrc(src);
+    var twin = jpegTwin(file);
+    if (twin && img.dataset.jpgTwin !== '1') {
+      img.dataset.jpgTwin = '1';
+      setSrc(img, rawForFile(twin));
+      return;
+    }
+    showPlaceholder(img);
   }
 
   function storiesPathNear(img) {
@@ -135,14 +151,7 @@
     if (src.indexOf('raw.githubusercontent.com') !== -1) {
       if (!fromError && img.complete && img.naturalWidth > 0) return;
       if (img.dataset.rawRetry === '1') {
-        var file = fileFromSrc(src);
-        var twin = jpegTwin(file);
-        if (twin && img.dataset.jpgTwin !== '1') {
-          img.dataset.jpgTwin = '1';
-          setSrc(img, rawForFile(twin));
-          return;
-        }
-        showPlaceholder(img);
+        tryTwinOrPlaceholder(img, src);
         return;
       }
       img.dataset.rawRetry = '1';
