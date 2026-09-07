@@ -17,7 +17,7 @@ export const site = {
    */
   logoWatermark: '/logo-watermark.png',
   /** Large faint mark behind pages (0 = off, 0.04–0.12 = subtle) */
-  logoWatermarkOpacity: 0.09,
+  logoWatermarkOpacity: 0.06,
   /** Extra CSS blur on top of the soft PNG (hides chat-PNG pixel edges) */
   logoWatermarkBlur: '24px',
 

@@ -47,9 +47,11 @@ const watermarkSrc = site.logoWatermark ?? site.logo;
     transform: translateY(-48%);
     opacity: var(--wm-opacity, 0.09);
     /* Soft blur on top of the pre-blurred asset — kills remaining blockiness */
-    filter: blur(var(--wm-blur, 24px)) saturate(0.65) brightness(1.05);
-    mix-blend-mode: soft-light;
+    filter: blur(var(--wm-blur, 24px)) saturate(0.55) brightness(1.12) contrast(0.92);
+    /* normal blend: soft-light was making soft edges read as blocky on dark sky */
+    mix-blend-mode: normal;
     image-rendering: auto;
+    will-change: transform, filter;
     animation: logo-float 22s ease-in-out infinite;
   }
 
