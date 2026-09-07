@@ -8,7 +8,7 @@ gallery:
   - /stories/img_6003.jpeg
   - /stories/img_5959.jpeg
 headline: The Last Shots of Nice ;)
-description: Write a few lines about this ride.
+description: I always dream to go back in Spring ;)
 draft: false
 order: 0
 ---
