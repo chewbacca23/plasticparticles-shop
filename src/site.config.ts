@@ -19,7 +19,7 @@ export const site = {
   /** Large faint mark behind pages (0 = off, 0.04–0.12 = subtle) */
   logoWatermarkOpacity: 0.09,
   /** Extra CSS blur on top of the soft PNG (hides chat-PNG pixel edges) */
-  logoWatermarkBlur: '18px',
+  logoWatermarkBlur: '24px',
 
   /** Impressum defaults. Henrik fills the real lines in the editor (Site → Mail and imprint). */
   imprint: {
