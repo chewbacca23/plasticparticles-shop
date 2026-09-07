@@ -1,30 +1,76 @@
 /**
- * After an upload the editor often points the thumb at /stories/foo.jpg
- * on the live site (404 until Cloudflare rebuilds) or at a blob: HEIC
- * the browser cannot paint. On error, show GitHub raw or a JPEG blob.
+ * Decap’s First photo thumb often breaks:
+ * 1) GitHub contents API returns no body over 1 MB (JSON, not a picture)
+ * 2) Live /stories/foo.jpg 404s until Cloudflare rebuilds
+ * 3) A blob: HEIC the browser cannot paint
  *
- * Do not rewrite working live thumbs eagerly — only swap after a 404.
+ * Always send those thumbs to public GitHub raw, and keep scanning for
+ * imgs that already failed so the broken-image icon does not stick.
  */
 (function () {
   var RAW =
     'https://raw.githubusercontent.com/chewbacca23/thenewsoulsearchersblog/main/public/stories/';
   var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  var PLACEHOLDER =
+    'data:image/svg+xml,' +
+    encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420">' +
+        '<rect width="640" height="420" fill="#121820"/>' +
+        '<text x="320" y="200" text-anchor="middle" fill="#f0c27a" font-family="system-ui,sans-serif" font-size="22" font-weight="700">Photo is saved</text>' +
+        '<text x="320" y="236" text-anchor="middle" fill="#d7e0e8" font-family="system-ui,sans-serif" font-size="15">Preview is loading from GitHub</text>' +
+        '</svg>',
+    );
 
   function fileFromSrc(src) {
-    var publicMatch = String(src || '').match(/public\/stories\/([^/?#]+)/i);
-    if (publicMatch) return publicMatch[1];
-    var stories = String(src || '').match(
+    var text = String(src || '');
+    var publicMatch = text.match(/public\/stories\/([^/?#]+)/i);
+    if (publicMatch) return decodeURIComponent(publicMatch[1]);
+    var stories = text.match(
       /(?:^|\/)stories\/([^/?#]+\.(?:jpe?g|png|webp|gif|heic|heif))/i,
     );
-    return stories ? stories[1] : null;
+    return stories ? decodeURIComponent(stories[1]) : null;
+  }
+
+  function rawForFile(file) {
+    if (!file) return null;
+    return RAW + encodeURIComponent(file).replace(/%2F/gi, '/');
+  }
+
+  function jpegTwin(file) {
+    if (!file || !/\.(heic|heif)$/i.test(file)) return null;
+    return file.replace(/\.(heic|heif)$/i, '.jpg');
   }
 
   function rawUrl(src) {
-    if (isLocal) return null;
-    if (!src || src.indexOf('raw.githubusercontent.com') !== -1) return null;
-    if (src.indexOf('blob:') === 0 || src.indexOf('data:') === 0) return null;
+    if (!src || src.indexOf('data:') === 0) return null;
+    if (src.indexOf('raw.githubusercontent.com') !== -1) return null;
     var file = fileFromSrc(src);
-    return file ? RAW + file : null;
+    if (!file) return null;
+    // Contents API is never a real image for the <img> tag.
+    if (/api\.github\.com\/repos\/.+\/contents\//i.test(src)) return rawForFile(file);
+    if (src.indexOf('blob:') === 0) return null;
+    if (isLocal) return null;
+    return rawForFile(file);
+  }
+
+  function storiesPathNear(img) {
+    var root = img;
+    var hops = 0;
+    while (root && hops < 10) {
+      var inputs = root.querySelectorAll ? root.querySelectorAll('input, textarea') : [];
+      var i;
+      for (i = 0; i < inputs.length; i++) {
+        var value = String(inputs[i].value || '');
+        var match = value.match(/\/stories\/[^\s"'<>]+/i);
+        if (match) return match[0];
+      }
+      var text = String(root.getAttribute && (root.getAttribute('title') || root.getAttribute('aria-label')) || '');
+      var fromAttr = text.match(/\/stories\/[^\s"'<>]+/i);
+      if (fromAttr) return fromAttr[0];
+      root = root.parentElement;
+      hops += 1;
+    }
+    return null;
   }
 
   function blobToJpegUrl(blob) {
@@ -67,41 +113,131 @@
     });
   }
 
+  function setSrc(img, next) {
+    if (!img || !next) return;
+    if ((img.currentSrc || img.src || '').split('?')[0] === next.split('?')[0]) return;
+    img.dataset.ssThumb = '1';
+    img.src = next;
+  }
+
+  function showPlaceholder(img) {
+    if (!img || img.dataset.ssPlace === '1') return;
+    img.dataset.ssPlace = '1';
+    img.src = PLACEHOLDER;
+  }
+
+  function fixImg(img, fromError) {
+    if (!img || img.tagName !== 'IMG') return;
+    if (img.dataset.ssBusy === '1') return;
+    var src = img.currentSrc || img.getAttribute('src') || img.src || '';
+    if (!src || src.indexOf(PLACEHOLDER) === 0) return;
+
+    if (src.indexOf('raw.githubusercontent.com') !== -1) {
+      if (!fromError && img.complete && img.naturalWidth > 0) return;
+      if (img.dataset.rawRetry === '1') {
+        var file = fileFromSrc(src);
+        var twin = jpegTwin(file);
+        if (twin && img.dataset.jpgTwin !== '1') {
+          img.dataset.jpgTwin = '1';
+          setSrc(img, rawForFile(twin));
+          return;
+        }
+        showPlaceholder(img);
+        return;
+      }
+      img.dataset.rawRetry = '1';
+      setTimeout(function () {
+        setSrc(img, src.split('?')[0] + '?t=' + Date.now());
+      }, 1200);
+      return;
+    }
+
+    if (src.indexOf('blob:') === 0) {
+      if (!fromError && img.complete && img.naturalWidth > 0) return;
+      if (img.dataset.blobTried === '1') {
+        var near = storiesPathNear(img);
+        var fromNear = near && rawUrl(near);
+        if (fromNear) {
+          setSrc(img, fromNear);
+          return;
+        }
+        showPlaceholder(img);
+        return;
+      }
+      img.dataset.blobTried = '1';
+      img.dataset.ssBusy = '1';
+      fetch(src)
+        .then(function (res) {
+          return res.blob();
+        })
+        .then(blobToJpegUrl)
+        .then(function (next) {
+          setSrc(img, next);
+        })
+        .catch(function () {
+          var path = storiesPathNear(img);
+          var next = path && rawUrl(path);
+          if (next) setSrc(img, next);
+          else showPlaceholder(img);
+        })
+        .then(function () {
+          img.dataset.ssBusy = '0';
+        });
+      return;
+    }
+
+    var next = rawUrl(src);
+    if (!next) {
+      var nearby = storiesPathNear(img);
+      next = nearby && rawUrl(nearby);
+    }
+    if (!next) {
+      if (fromError || (img.complete && img.naturalWidth === 0)) showPlaceholder(img);
+      return;
+    }
+    setSrc(img, next);
+  }
+
+  function scan() {
+    var imgs = document.querySelectorAll('#nc-root img, [class*="Editor"] img, [class*="Media"] img');
+    var i;
+    for (i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      var src = img.currentSrc || img.getAttribute('src') || img.src || '';
+      if (!src) continue;
+      if (/api\.github\.com\/repos\/.+\/contents\//i.test(src) || fileFromSrc(src)) {
+        fixImg(img, false);
+        continue;
+      }
+      if (img.complete && img.naturalWidth === 0 && src.indexOf('data:') !== 0) {
+        fixImg(img, true);
+      }
+    }
+  }
+
   document.addEventListener(
     'error',
     function (event) {
       var img = event.target;
       if (!img || img.tagName !== 'IMG') return;
-      var src = img.currentSrc || img.src || '';
-
-      if (src.indexOf('raw.githubusercontent.com') !== -1) {
-        if (img.dataset.rawRetry === '1') return;
-        img.dataset.rawRetry = '1';
-        setTimeout(function () {
-          img.src = src.split('?')[0] + '?t=' + Date.now();
-        }, 2000);
-        return;
-      }
-
-      if (src.indexOf('blob:') === 0 && img.dataset.blobTried !== '1') {
-        img.dataset.blobTried = '1';
-        fetch(src)
-          .then(function (res) {
-            return res.blob();
-          })
-          .then(blobToJpegUrl)
-          .then(function (next) {
-            img.src = next;
-          })
-          .catch(function () {});
-        return;
-      }
-
-      var next = rawUrl(src);
-      if (!next) return;
-      img.dataset.rawTried = '1';
-      img.src = next;
+      fixImg(img, true);
     },
     true,
   );
+
+  if (typeof MutationObserver === 'function') {
+    var observer = new MutationObserver(function () {
+      scan();
+    });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['src'],
+    });
+  }
+
+  window.setInterval(scan, 900);
+  window.addEventListener('load', scan);
+  scan();
 })();

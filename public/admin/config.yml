@@ -43,7 +43,7 @@ collections:
         widget: image
         required: false
         choose_url: false
-        hint: "This one sits at the top of the ride, and on the ride tile. JPEG from the phone. HEIC is often a broken thumb. iPhone: Camera → Formats → Most Compatible."
+        hint: "This one sits at the top of the ride, and on the ride tile. JPEG from the phone. If the thumb looks broken, wait a second — we load it from GitHub. HEIC is often a broken thumb. iPhone: Camera → Formats → Most Compatible."
         media_library:
           config:
             multiple: false
@@ -81,7 +81,7 @@ collections:
         name: photo
         widget: image
         choose_url: false
-        hint: "JPEG from the phone. HEIC often shows as a broken thumb."
+        hint: "JPEG from the phone. If the thumb looks broken, wait a second — we load it from GitHub. HEIC often shows as a broken thumb."
       - { label: Caption, name: caption, widget: text, required: false, hint: "The line under the photo" }
       - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
@@ -105,7 +105,7 @@ collections:
         widget: image
         required: false
         choose_url: false
-        hint: "This one sits at the top of the note. JPEG from the phone. HEIC is often a broken thumb."
+        hint: "This one sits at the top of the note. JPEG from the phone. If the thumb looks broken, wait a second — we load it from GitHub. HEIC is often a broken thumb."
         media_library:
           config:
             multiple: false

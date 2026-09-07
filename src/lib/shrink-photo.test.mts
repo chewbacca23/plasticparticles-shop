@@ -145,6 +145,11 @@ describe('admin scripts stay wired', () => {
     const src = readFileSync('public/admin/preview-fallback.js', 'utf8');
     assert.match(src, /raw\.githubusercontent\.com/);
     assert.match(src, /addEventListener\(\s*'error'/);
+    assert.match(src, /MutationObserver/);
+    assert.ok(src.includes('api.github.com') || /api\\.github\\.com/.test(src));
+    assert.ok(src.includes('/contents/') || /\\\/contents\\\//.test(src));
+    assert.match(src, /Photo is saved/);
+    assert.match(src, /storiesPathNear/);
   });
 
   it('puts Looks in the editor bar', () => {
