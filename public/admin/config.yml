@@ -133,6 +133,32 @@ collections:
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
       - { label: Post text, name: body, widget: markdown, required: false, hint: "The picture button puts a photo where the cursor is." }
 
+  - name: friends
+    label: Friends
+    label_singular: Friend
+    description: People and places that helped along the ride. Shows on Friends.
+    folder: src/content/friends
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: friends
+    summary: "{{name}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Name, name: name, widget: string, hint: "Person, shop, café, brand — whoever helped." }
+      - { label: Website, name: url, widget: string, required: false, hint: "Optional. Full link, like https://…" }
+      - { label: Thank-you line, name: thanks, widget: text, required: false, hint: "One short line. What they did on the road." }
+      - label: Logo or photo
+        name: logo
+        widget: image
+        required: false
+        choose_url: false
+        hint: "Optional. JPEG from the Mac. Same Upload path as rides."
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first. 0 is fine." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden on the site until you turn it off." }
+
   - name: settings
     label: Site
     files:

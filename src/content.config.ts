@@ -65,4 +65,20 @@ const shots = defineCollection({
   }),
 });
 
-export const collections = { journal, stories, shots };
+const friends = defineCollection({
+  loader: glob({ base: './src/content/friends', pattern: '**/*.{md,mdx}' }),
+  schema: z.object({
+    name: z.string(),
+    url: z.string().optional().default(''),
+    thanks: z.string().optional().default(''),
+    logo: z.string().optional(),
+    order: z.number().optional().default(0),
+    draft: z.boolean().default(false),
+  }).transform((data) => ({
+    ...data,
+    url: data.url.trim(),
+    thanks: data.thanks.trim(),
+  })),
+});
+
+export const collections = { journal, stories, shots, friends };

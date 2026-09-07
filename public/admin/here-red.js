@@ -9,6 +9,7 @@
     stories: 'rides',
     shots: 'shots',
     journal: 'ride notes',
+    friends: 'friends',
     settings: 'site',
     media: 'media',
   };
