@@ -105,7 +105,7 @@ collections:
         widget: image
         required: false
         choose_url: false
-        hint: "This one sits at the top of the note. JPEG from the phone. If the thumb looks broken, wait a second — we load it from GitHub. HEIC is often a broken thumb."
+        hint: "Top of the note. Use JPEG (not HEIC). Fat phone photos shrink in the browser first. Then gold Save this note. If the thumb still looks broken, wait a second — we load it from GitHub."
         media_library:
           config:
             multiple: false
@@ -113,7 +113,7 @@ collections:
         name: gallery
         widget: list
         summary: "{{fields.image}}"
-        hint: "These sit inside the note, between your paragraphs. JPEG, same as the first photo."
+        hint: "Inside the note, between paragraphs. JPEG, same as First photo. Or use the picture button in the text."
         field:
           label: Image
           name: image

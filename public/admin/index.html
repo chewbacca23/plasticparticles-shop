@@ -481,7 +481,11 @@
             <p style="margin: 0.55rem 0 0">
               <strong>Ride notes:</strong> open <em>Ride notes</em>, then a note.
               <strong>First photo</strong> at the top. <strong>Photos in the note</strong> in the
-              text. Gold <strong>Save this note</strong>.
+              text. JPEG only (iPhone HEIC usually fails). Gold <strong>Save this note</strong>.
+              Fat phone photos shrink automatically when you pick them. If upload still looks stuck,
+              export a JPEG under ~1 MB from Photos, or run
+              <code>sh scripts/shrink-photo.sh ~/Desktop/your-photo.HEIC</code> on the Mac and upload
+              the <code>-web.jpg</code>.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Looks:</strong> the gold <a href="/looks">Looks</a> button in this bar, or the
