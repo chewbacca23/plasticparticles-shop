@@ -211,6 +211,12 @@ describe('admin scripts stay wired', () => {
     assert.match(config, /format: json/);
     assert.match(config, /name: email/);
     assert.match(config, /name: order[\s\S]*min:\s*0/);
+    // Form only — live preview pane was covering fields and eating clicks
+    assert.match(config, /name: stories[\s\S]*editor:[\s\S]*preview:\s*false/);
+    assert.match(config, /name: journal[\s\S]*editor:[\s\S]*preview:\s*false/);
+    const htmlLayout = readFileSync('public/admin/index.html', 'utf8');
+    assert.match(htmlLayout, /editor-layout\.js/);
+    assert.match(htmlLayout, /--cms-top-h/);
     assert.match(src, /Save mail and imprint/);
     const preview = readFileSync('public/admin/ride-preview.js', 'utf8');
     assert.match(preview, /ss-ride-preview__hero/);

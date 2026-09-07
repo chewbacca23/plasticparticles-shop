@@ -9,6 +9,10 @@ backend:
 local_backend: true
 publish_mode: simple
 
+# Live preview sits on top of the form and eats clicks. Edit here; check the
+# public page after Save (preview_path links still work).
+# Per-collection editor.preview: false below.
+
 media_folder: public/stories
 public_folder: /stories
 
@@ -35,6 +39,8 @@ collections:
     extension: md
     format: frontmatter
     preview_path: stories/{{slug}}
+    editor:
+      preview: false
     fields:
       - { label: Name of this ride, name: title, widget: string, hint: "The name. + Ride asks for this first." }
       - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
@@ -75,6 +81,8 @@ collections:
     format: frontmatter
     preview_path: now
     summary: "{{title}}"
+    editor:
+      preview: false
     fields:
       - { label: Title, name: title, widget: string, hint: "Only you see this in the list" }
       - label: Photo
@@ -95,6 +103,8 @@ collections:
     extension: md
     format: frontmatter
     preview_path: journal/{{slug}}
+    editor:
+      preview: false
     fields:
       - { label: Title, name: title, widget: string }
       - { label: Description, name: description, widget: text }
@@ -131,6 +141,8 @@ collections:
         file: src/content/settings/site.json
         format: json
         preview_path: impressum
+        editor:
+          preview: false
         fields:
           - label: Email
             name: email
@@ -147,6 +159,8 @@ collections:
         label: Instagram
         file: src/content/settings/instagram.json
         preview_path: now
+        editor:
+          preview: false
         fields:
           - label: Username
             name: handle
