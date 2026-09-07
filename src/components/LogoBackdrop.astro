@@ -8,7 +8,7 @@ interface Props {
 
 const { variant = 'default' } = Astro.props;
 const opacity =
-  variant === 'hero' ? Math.min(site.logoWatermarkOpacity + 0.02, 0.12) : site.logoWatermarkOpacity;
+  variant === 'hero' ? Math.min(site.logoWatermarkOpacity + 0.03, 0.16) : site.logoWatermarkOpacity;
 const watermarkSrc = site.logoWatermark ?? site.logo;
 ---
 
@@ -39,26 +39,24 @@ const watermarkSrc = site.logoWatermark ?? site.logo;
 
   .logo-backdrop__mark {
     position: absolute;
-    right: clamp(-3rem, -1vw, 2rem);
+    right: clamp(-4rem, -2vw, 1rem);
     top: 50%;
-    /* Smaller + soft so we never stretch chat pixels into a sharp wall */
-    width: min(46vw, 24rem);
+    /* Big again — soft asset keeps pixels from shouting */
+    width: min(58vw, 32rem);
     height: auto;
     transform: translateY(-48%);
-    opacity: var(--wm-opacity, 0.09);
-    /* Soft blur on top of the pre-blurred asset — kills remaining blockiness */
-    filter: blur(var(--wm-blur, 24px)) saturate(0.55) brightness(1.12) contrast(0.92);
-    /* normal blend: soft-light was making soft edges read as blocky on dark sky */
-    mix-blend-mode: normal;
+    opacity: var(--wm-opacity, 0.11);
+    filter: blur(var(--wm-blur, 8px)) saturate(0.85) brightness(1.2);
+    mix-blend-mode: screen;
     image-rendering: auto;
-    will-change: transform, filter;
     animation: logo-float 22s ease-in-out infinite;
   }
 
   .logo-backdrop__veil {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse 70% 60% at 72% 42%, transparent 30%, var(--ink) 78%);
+    /* Lighter veil so the crest still shows on the right */
+    background: radial-gradient(ellipse 75% 65% at 74% 42%, transparent 38%, var(--ink) 82%);
   }
 
   @keyframes logo-float {
@@ -73,9 +71,9 @@ const watermarkSrc = site.logoWatermark ?? site.logo;
 
   @media (max-width: 720px) {
     .logo-backdrop__mark {
-      right: -18%;
-      width: min(78vw, 18rem);
-      opacity: calc(var(--wm-opacity, 0.08) * 0.85);
+      right: -16%;
+      width: min(88vw, 22rem);
+      opacity: calc(var(--wm-opacity, 0.11) * 0.9);
     }
   }
 
