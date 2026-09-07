@@ -11,9 +11,15 @@ export const site = {
 
   /** Crest lives at `public/logo.svg`, which wraps `public/logo.png`. */
   logo: '/logo.svg',
+  /**
+   * Soft, pre-blurred crest for the page backdrop only.
+   * Header / favicon keep the sharp `logo` above.
+   */
+  logoWatermark: '/logo-watermark.png',
   /** Large faint mark behind pages (0 = off, 0.04–0.12 = subtle) */
-  logoWatermarkOpacity: 0.07,
-  logoWatermarkBlur: '0.5px',
+  logoWatermarkOpacity: 0.08,
+  /** Extra CSS blur on top of the soft PNG (hides chat-PNG pixel edges) */
+  logoWatermarkBlur: '10px',
 
   /** Impressum defaults. Henrik fills the real lines in the editor (Site → Mail and imprint). */
   imprint: {
