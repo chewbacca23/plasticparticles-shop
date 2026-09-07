@@ -60,7 +60,7 @@ describe('newestFirst', () => {
       (ride) => ride.pubDate,
       (a, b) => b.order - a.order,
     );
-    assert.equal(sorted[0]?.headline, 'the most wonderful patches');
+    assert.equal(sorted[0]?.headline, 'The Last Shots of Nice ;)');
     for (let i = 1; i < sorted.length; i += 1) {
       assert.ok(
         dateValue(sorted[i - 1].pubDate) >= dateValue(sorted[i].pubDate),
