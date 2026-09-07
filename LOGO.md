@@ -6,7 +6,7 @@ Those names must stay lowercase. Linux and Cloudflare treat `Logo.svg` and `logo
 
 ## What is in the file now
 
-Henrik’s new crest, cropped from the chat PNG. The canvas was still 106×150, but the shield now fills most of it (about 82×130). A real Illustrator SVG will still look sharper.
+Henrik’s crest with the red **SOUL SEARCHERS** banner, white dog, and lightning colours. Cropped from the chat PNG so the shield fills the frame (about 84×132 upscaled to 504×792). A real Illustrator SVG will still look sharper.
 
 ## If you send a better export
 
