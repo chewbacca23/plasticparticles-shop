@@ -133,9 +133,11 @@ describe('isGitHubBlobPostUrl', () => {
 });
 
 describe('admin scripts stay wired', () => {
-  it('does not wrap fetch or swallow the file picker, so Publish can save', () => {
+  it('shrinks on pick without wrapping fetch, so Publish can save', () => {
     const src = readFileSync('public/admin/shrink-on-pick.js', 'utf8');
-    assert.doesNotMatch(src, /stopImmediatePropagation/);
+    // Pick-time stop + replay is OK. Wrapping fetch froze Save / Publish.
+    assert.match(src, /stopImmediatePropagation/);
+    assert.match(src, /DataTransfer/);
     assert.doesNotMatch(src, /window\.fetch\s*=/);
   });
 
