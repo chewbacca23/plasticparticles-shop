@@ -1,9 +1,10 @@
 ---
 title: Café notes
+pubDate: 2026-08-26
+cover: /stories/img_5950.jpeg
+gallery: []
 headline: Café notes
 description: Unclip. Order coffee. Write the ride down before the kilometres fade.
-gallery: []
-pubDate: 2026-08-26
 order: 6
 ---
 
