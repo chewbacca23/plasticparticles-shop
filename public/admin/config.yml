@@ -212,13 +212,13 @@ collections:
           - label: Short text
             name: blurb
             widget: text
-            hint: "A few lines under the headline. Keep it light — people email Henrik for a patch."
+            hint: "A few lines under the headline. Woven, not handmade. Mention the 50-piece limit. People email Henrik."
           - label: Patch photo
             name: photo
             widget: image
             required: false
             choose_url: false
-            hint: "Photo of the handmade crest patch. JPEG from the Mac. Until you add one, the crest shows."
+            hint: "Photo of the woven crest patch. JPEG from the Mac. Until you add one, the crest shows."
           - label: Draft
             name: draft
             widget: boolean

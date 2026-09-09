@@ -7,10 +7,10 @@ import { mediaExists } from '../lib/media';
 const PATCH_MAIL = 'henrik@thenewsoulsearchers.de';
 const mailto = `mailto:${PATCH_MAIL}?subject=${encodeURIComponent('Patch')}`;
 
-const headline = (saved.headline || 'Handmade crest patches').trim();
+const headline = (saved.headline || 'Woven crest patches').trim();
 const blurb = (
   saved.blurb ||
-  'The Soul Searchers crest, stitched by hand. If you want one, drop Henrik an email.'
+  'The Soul Searchers crest, woven — not handmade. A limited run of 50, worldwide. If you want one, drop Henrik an email.'
 ).trim();
 const photo = mediaExists(saved.photo) ? saved.photo : site.logo;
 const usingCrestFallback = !mediaExists(saved.photo);
@@ -18,7 +18,7 @@ const usingCrestFallback = !mediaExists(saved.photo);
 
 <BaseLayout
   title="Patches"
-  description="Handmade Soul Searchers crest patches. Drop Henrik an email if you want one."
+  description="Woven Soul Searchers crest patches. Limited to 50 worldwide. Drop Henrik an email if you want one."
 >
   <section class="section">
     <div class="site-shell patches">
@@ -30,7 +30,7 @@ const usingCrestFallback = !mediaExists(saved.photo);
         <img
           class:list={['patch-photo', { 'patch-photo--crest': usingCrestFallback }]}
           src={photo}
-          alt={usingCrestFallback ? 'The Soul Searchers crest' : 'Handmade Soul Searchers crest patch'}
+          alt={usingCrestFallback ? 'The Soul Searchers crest' : 'Woven Soul Searchers crest patch'}
           width="800"
           height="800"
           decoding="async"
