@@ -1,5 +1,5 @@
 ---
-name: hanna
+name: Hanna Walker
 url: https://www.procyclingstats.com/rider/hannah-walker
 thanks: "Hanna Walker is proof that brilliance and warmth can coexist in one
   person. Still an avid cyclist herself, she brings a rider's instinct and
