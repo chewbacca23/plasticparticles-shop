@@ -1,5 +1,5 @@
 ---
-name: Joerg
+name: Joerg Haas
 url: beinghunted.com
 thanks: my best friend for a hundred years and counting oh man have we been
   through stuff together on and off the bike we rode the dolomites and more he
