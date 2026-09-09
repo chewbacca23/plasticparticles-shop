@@ -373,23 +373,16 @@ export function looksGatePage() {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Looks · The Soul Searchers</title>
+  <title>The Soul Searchers</title>
   <style>
     body { font-family: Figtree, system-ui, sans-serif; background: #0c1218; color: #d7e0e8;
       max-width: 28rem; margin: 4rem auto; padding: 0 1.2rem; line-height: 1.5; }
-    h1 { color: #f0c27a; font-size: 1.4rem; }
     a { color: #f0c27a; }
-    ol { padding-left: 1.2rem; }
   </style>
 </head>
 <body>
-  <h1>Looks is only for you</h1>
-  <p>This page shows how many times people opened the site. Visitors do not see it.</p>
-  <ol>
-    <li>Open <a href="/admin/">the editor</a></li>
-    <li>Click <strong>Login with GitHub</strong></li>
-    <li>Come back to <a href="/looks">/looks</a></li>
-  </ol>
+  <p>Nothing to see here.</p>
+  <p><a href="/">Home</a></p>
 </body>
 </html>`,
     {
@@ -609,6 +602,9 @@ export async function applyLooksToAsset(request, env, asset) {
   const url = new URL(request.url);
   if (!shouldFillLooks(url.pathname)) return asset;
   if (!asset || !asset.ok) return isLooksPath(url.pathname) ? null : asset;
+  if (!(await requestHasLooksAccess(request, env))) {
+    return isLooksPath(url.pathname) ? looksGatePage() : asset;
+  }
   const type = asset.headers.get('content-type') || '';
   if (type && !type.includes('html') && !type.includes('text')) return asset;
   const summary = await safeReadLooks(env);
@@ -621,6 +617,7 @@ export async function applyLooksToAsset(request, env, asset) {
 export async function handleLooksPage(request, env) {
   const url = new URL(request.url);
   if (!isLooksPath(url.pathname)) return null;
+  if (!(await requestHasLooksAccess(request, env))) return looksGatePage();
   const asset = await fetchLooksAsset(request, env);
   const filled = await applyLooksToAsset(request, env, asset);
   if (filled) return filled;
@@ -633,6 +630,15 @@ export async function handleLooksRequest(request, env) {
 
   const store = looksStoreFor(env);
   if (request.method === 'GET') {
+    if (!(await requestHasLooksAccess(request, env))) {
+      return new Response(JSON.stringify({ error: 'private' }), {
+        status: 401,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+        },
+      });
+    }
     const summary = await readLooks(store);
     return new Response(JSON.stringify(summary), {
       status: 200,

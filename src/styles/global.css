@@ -114,13 +114,14 @@ p {
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
-  padding: 0.42rem 0.7rem;
+  padding: 0.32rem 0.7rem;
   border: 1px solid transparent;
   border-radius: 999px;
   font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.01em;
+  line-height: 1.15;
   text-decoration: none;
   transition:
     transform 180ms ease,

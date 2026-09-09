@@ -219,7 +219,7 @@
       button.setAttribute(BTN, '1');
       button.setAttribute(
         'style',
-        'position:fixed;right:1.1rem;bottom:1.1rem;z-index:100000;width:12rem;min-height:2.55rem;padding:0.62rem 0.95rem;border:0;border-radius:999px;background:#f0c27a;color:#0c1218;font:700 0.95rem/1 Inter,system-ui,sans-serif;text-align:center;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.4);',
+        'position:fixed;right:1.1rem;bottom:1.1rem;z-index:100000;width:9.25rem;min-height:0;padding:0.32rem 0.7rem;border:0;border-radius:999px;background:#f0c27a;color:#0c1218;font:700 0.72rem/1.15 Inter,system-ui,sans-serif;text-align:center;cursor:pointer;box-shadow:0 8px 22px rgba(212,163,90,.2);',
       );
       button.addEventListener('click', function (event) {
         event.preventDefault();

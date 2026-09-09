@@ -93,10 +93,10 @@ If the GitHub popup says login is not wired yet, secrets from **B** are missing.
 
 ### Looks (how many people opened a page)
 
-Open **https://thenewsoulsearchers.de/looks** or the **Looks** link in the footer. It is a normal
-site page (same header and footer as Home). Today, last 7 days, all time, which pages, which
-country, and which site sent them. No names. Anyone can see it. Numbers start after this
-Worker is live. Your own clicks count.
+After **Login with GitHub** in `/admin/`, open the gold **Looks** chip (or bookmark
+`/looks`). It stays private: no footer link, and strangers without the login cookie get a blank
+gate page. Today, last 7 days, all time, which pages, which country, and which site sent them.
+No visitor names. Numbers start after this Worker is live. Your own clicks count.
 
 A Worker-only HTML page for `/looks` was challenged by Bot Fight, so the count page never
 opened. The Worker now fills the numbers into the real Astro page instead.
