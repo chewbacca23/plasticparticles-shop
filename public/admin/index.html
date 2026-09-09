@@ -54,22 +54,6 @@
         gap: 1rem;
       }
 
-      .cms-looks {
-        display: inline-flex;
-        align-items: baseline;
-        gap: 0.4rem;
-        margin-top: 0.15rem;
-        padding: 0.32rem 0.7rem;
-        border-radius: 999px;
-        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
-        color: var(--ink);
-        text-decoration: none;
-        font-size: 0.72rem;
-        font-weight: 700;
-        line-height: 1.15;
-        box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
-      }
-
       .cms-looks:hover,
       .cms-mail:hover,
       .cms-login:hover,
@@ -100,7 +84,8 @@
       }
 
       .cms-mail,
-      .cms-login {
+      .cms-login,
+      .cms-looks {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -119,8 +104,9 @@
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      /* Same size stack as Looks. Right column above save. */
-      .cms-mail {
+      /* Bottom-right stack: Save, Mail, Looks (same size). */
+      .cms-mail,
+      .cms-looks {
         position: fixed;
         right: 1.1rem;
         left: auto;
@@ -131,14 +117,24 @@
         margin: 0;
         padding: 0.32rem 0.7rem;
         justify-content: center;
+        gap: 0.35rem;
         text-align: center;
         font: 700 0.72rem/1.15 Inter, system-ui, sans-serif;
         pointer-events: auto;
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      .cms-mail[data-ss-above-save] {
+      .cms-mail[data-ss-above-save],
+      .cms-looks[data-ss-above-mail] {
         bottom: 3.15rem;
+      }
+
+      .cms-looks[data-ss-above-mail][data-ss-above-save] {
+        bottom: 5.2rem;
+      }
+
+      .cms-looks-num {
+        font-variant-numeric: tabular-nums;
       }
 
       .cms-login {
@@ -153,7 +149,7 @@
         position: fixed;
         top: 4.4rem;
         right: 1.1rem;
-        bottom: 7.8rem;
+        bottom: 9.6rem;
         left: auto;
         z-index: 2147483001;
         display: flex;
@@ -252,12 +248,6 @@
 
       #cms-mail-status.bad {
         color: #f0c2c2;
-      }
-
-      .cms-looks-num {
-        font-family: var(--font-display);
-        font-size: 1.15rem;
-        line-height: 1;
       }
 
       .cms-brand {
@@ -423,7 +413,7 @@
         overflow-y: auto !important;
         pointer-events: auto !important;
         background: #0c1218 !important;
-        /* Room for gold Save / Mail pills at the bottom-right */
+        /* Room for gold Looks / Mail / Save stack at the bottom-right */
         padding-bottom: 5.5rem !important;
       }
 
@@ -478,13 +468,13 @@
           </div>
           <span class="cms-links">
             <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
-            <button type="button" class="cms-mail" id="cms-mail">Mail and imprint</button>
-            <a class="cms-looks" href="/looks">
-              Looks
-              <span class="cms-looks-num" data-looks="today">—</span>
-            </a>
           </span>
         </div>
+        <button type="button" class="cms-mail" id="cms-mail">Mail and imprint</button>
+        <a class="cms-looks" href="/looks">
+          Looks
+          <span class="cms-looks-num" data-looks="today">—</span>
+        </a>
         <div id="local-banner" class="banner hidden">
           <details>
             <summary>Local editing</summary>
@@ -580,8 +570,8 @@
               Old <a href="/patches">/patches</a> link goes to Shop.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Looks:</strong> after login, the gold <a href="/looks">Looks</a> button in
-              this bar. Private. Not linked on the public site.
+              <strong>Looks:</strong> after login, the gold <a href="/looks">Looks</a> pill in the
+              bottom-right stack (with Mail and Save). Private. Not linked on the public site.
             </p>
           </details>
         </div>

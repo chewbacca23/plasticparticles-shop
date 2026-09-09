@@ -331,12 +331,17 @@
 
   function stackRightPills() {
     var mail = $('cms-mail');
-    if (!mail) return;
+    var looks = document.querySelector('.cms-looks');
     var save = document.querySelector('[data-ss-save-ride]');
-    if (save && document.body.contains(save)) {
-      mail.setAttribute('data-ss-above-save', '1');
-    } else {
-      mail.removeAttribute('data-ss-above-save');
+    var hasSave = !!(save && document.body.contains(save));
+    if (mail) {
+      if (hasSave) mail.setAttribute('data-ss-above-save', '1');
+      else mail.removeAttribute('data-ss-above-save');
+    }
+    if (looks) {
+      looks.setAttribute('data-ss-above-mail', '1');
+      if (hasSave) looks.setAttribute('data-ss-above-save', '1');
+      else looks.removeAttribute('data-ss-above-save');
     }
   }
 
@@ -345,6 +350,9 @@
     document.body.appendChild(mail);
     mail.addEventListener('click', onMailClick);
   }
+
+  var looks = document.querySelector('.cms-looks');
+  if (looks) document.body.appendChild(looks);
 
   var extras = document.querySelectorAll('[data-ss-mail]');
   var i;

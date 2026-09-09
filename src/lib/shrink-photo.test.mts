@@ -157,9 +157,11 @@ describe('admin scripts stay wired', () => {
     assert.match(src, /storiesPathNear/);
   });
 
-  it('puts Looks in the editor bar', () => {
+  it('puts Looks in the bottom-right gold stack', () => {
     const html = readFileSync('public/admin/index.html', 'utf8');
     assert.match(html, /class="cms-looks" href="\/looks"/);
+    assert.match(html, /\.cms-looks[\s\S]*position:\s*fixed/);
+    assert.match(html, /data-ss-above-mail/);
     assert.match(html, /class="cms-mail"/);
     assert.match(html, /id="cms-mail-panel"/);
     assert.match(html, /class="cms-login"/);
@@ -168,6 +170,7 @@ describe('admin scripts stay wired', () => {
     assert.match(html, /data-looks="today"/);
     assert.match(html, /Photos in the story/);
     assert.match(html, /Mail and imprint/);
+    assert.match(html, /bottom-right stack/);
   });
 
   it('styles the GitHub login page like the site, not Decap’s gray dump', () => {
