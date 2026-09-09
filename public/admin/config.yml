@@ -159,6 +159,33 @@ collections:
       - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first. 0 is fine." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden on the site until you turn it off." }
 
+  - name: shop
+    label: Shop
+    label_singular: Product
+    description: Small shop in the background. People email Henrik. No cart.
+    folder: src/content/shop
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: shop
+    summary: "{{title}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Name, name: title, widget: string, hint: "Product name, like Woven crest patch." }
+      - { label: Short text, name: blurb, widget: text, required: false, hint: "A few lines. No dashes if you can help it. Email is the CTA." }
+      - label: Photo
+        name: photo
+        widget: image
+        required: false
+        choose_url: false
+        hint: "JPEG from the Mac. Until you add one, the crest shows."
+      - { label: Limit line, name: limit, widget: string, required: false, hint: "Optional. Like 50 worldwide." }
+      - { label: Mail subject, name: mailSubject, widget: string, required: false, default: Shop, hint: "Subject line when someone taps Email Henrik. Patch is fine for the crest." }
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
+
   - name: settings
     label: Site
     files:
@@ -197,31 +224,3 @@ collections:
             widget: string
             required: false
             hint: "Open the photo on Instagram → Share → Copy link. Paste here. That one photo is what the site shows."
-      - name: patches
-        label: Patches
-        file: src/content/settings/patches.json
-        format: json
-        preview_path: patches
-        editor:
-          preview: false
-        fields:
-          - label: Headline
-            name: headline
-            widget: string
-            hint: "Top of the Patches page."
-          - label: Short text
-            name: blurb
-            widget: text
-            hint: "A few lines under the headline. Woven, not handmade. Mention the 50-piece limit. People email Henrik."
-          - label: Patch photo
-            name: photo
-            widget: image
-            required: false
-            choose_url: false
-            hint: "Photo of the woven crest patch. JPEG from the Mac. Until you add one, the crest shows."
-          - label: Draft
-            name: draft
-            widget: boolean
-            default: false
-            required: false
-            hint: "On = hide the custom photo/text path later if you need it. Page stays live either way for now."

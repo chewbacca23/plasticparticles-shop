@@ -10,6 +10,7 @@
     shots: 'shots',
     journal: 'ride notes',
     friends: 'friends',
+    shop: 'shop',
     settings: 'site',
     media: 'media',
   };

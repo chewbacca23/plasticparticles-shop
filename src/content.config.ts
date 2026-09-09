@@ -81,4 +81,24 @@ const friends = defineCollection({
   })),
 });
 
-export const collections = { journal, stories, shots, friends };
+const shop = defineCollection({
+  loader: glob({ base: './src/content/shop', pattern: '**/*.{md,mdx}' }),
+  schema: z
+    .object({
+      title: z.string(),
+      blurb: z.string().optional().default(''),
+      photo: z.string().optional(),
+      limit: z.string().optional().default(''),
+      mailSubject: z.string().optional().default('Shop'),
+      order: z.number().optional().default(0),
+      draft: z.boolean().default(false),
+    })
+    .transform((data) => ({
+      ...data,
+      blurb: data.blurb.trim(),
+      limit: data.limit.trim(),
+      mailSubject: data.mailSubject.trim() || 'Shop',
+    })),
+});
+
+export const collections = { journal, stories, shots, friends, shop };
