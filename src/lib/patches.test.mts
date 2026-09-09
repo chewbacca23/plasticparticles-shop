@@ -18,6 +18,9 @@ describe('woven crest patches', () => {
     assert.match(String(saved.headline), /woven/i);
     assert.match(String(saved.blurb), /not handmade/i);
     assert.match(String(saved.blurb), /50/);
+    assert.match(String(saved.blurb), /sent out/i);
+    assert.match(String(saved.blurb), /worldwide/i);
+    assert.doesNotMatch(String(saved.blurb), /[—–]/);
 
     const config = readFileSync('public/admin/config.yml', 'utf8');
     assert.match(config, /name: patches/);
