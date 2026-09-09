@@ -81,11 +81,13 @@ describe('gold Mail form', () => {
     assert.match(html, /Mail and imprint/);
     assert.match(html, /position:\s*fixed/);
     assert.match(html, /z-index:\s*2147483000/);
-    assert.match(html, /padding:\s*0\.85rem 1\.25rem/);
-    assert.match(html, /font:\s*700 1\.05rem\/1/);
+    assert.match(html, /width:\s*12rem/);
+    assert.match(html, /min-height:\s*2\.55rem/);
+    assert.match(html, /font:\s*700 0\.95rem\/1/);
     assert.match(html, /\.cms-mail-panel[\s\S]*right:\s*1\.1rem/);
     assert.match(html, /\.cms-mail[\s\S]*right:\s*1\.1rem/);
     assert.match(html, /data-ss-above-save/);
+    assert.match(html, /bottom:\s*4\.55rem/);
     assert.match(html, /bottom-right/);
     assert.doesNotMatch(html, /\.cms-mail[\s\S]*left:\s*1\.1rem;/);
     assert.doesNotMatch(html, /\.cms-mail-panel[\s\S]*inset:\s*0/);

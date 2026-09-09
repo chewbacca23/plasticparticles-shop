@@ -200,8 +200,10 @@ describe('admin scripts stay wired', () => {
     assert.match(src, /Save this ride/);
     assert.match(src, /handleOnPersist/);
     assert.match(src, /data-ss-save-ride/);
-    assert.match(src, /padding:0\.85rem 1\.25rem/);
-    assert.match(src, /font:700 1\.05rem\/1/);
+    assert.match(src, /min-height:2\.55rem/);
+    assert.match(src, /width:12rem/);
+    assert.match(src, /padding:0\.62rem 0\.95rem/);
+    assert.match(src, /font:700 0\.95rem\/1/);
     assert.doesNotMatch(src, /text === 'publish'/);
     assert.doesNotMatch(src, /clickPublishNow/);
     const config = readFileSync('public/admin/config.yml', 'utf8');
