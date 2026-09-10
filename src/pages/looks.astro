@@ -42,6 +42,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </ol>
 
       <h2 class="pages-title">What sent them</h2>
+      <p class="note">
+        Tap a name to open that site (Instagram, Facebook, and so on). Browsers often hide the exact
+        post, so you get the network, not the single link.
+      </p>
       <ol class="pages" data-looks-from>
         <li class="empty">The site that sent them shows after someone opens a page.</li>
       </ol>
@@ -118,11 +122,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .pages a {
     color: var(--paper);
-    text-decoration: none;
+    text-decoration: underline;
+    text-decoration-color: rgba(240, 194, 122, 0.45);
+    text-underline-offset: 0.18em;
   }
 
   .pages a:hover {
     color: var(--amber-hot);
+    text-decoration-color: var(--amber-hot);
   }
 
   .pages span {

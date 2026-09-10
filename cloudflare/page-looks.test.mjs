@@ -20,6 +20,8 @@ import {
   sanitizeCountry,
   sanitizeFrom,
   sanitizePath,
+  fromSiteHref,
+  looksFromRows,
   shouldCountDocument,
   shouldRecordPath,
   summarizeLooks,
@@ -111,6 +113,33 @@ describe('sanitizeFrom', () => {
     assert.equal(sanitizeFrom('', 'https://thenewsoulsearchers.de/now'), 'Typed or bookmark');
     assert.equal(sanitizeCountry('de'), 'DE');
     assert.equal(countryLabel('DE'), 'Germany');
+  });
+});
+
+describe('fromSiteHref', () => {
+  it('opens Instagram and Facebook, and skips typed visits', () => {
+    assert.equal(fromSiteHref('Instagram'), 'https://www.instagram.com/');
+    assert.equal(fromSiteHref('Facebook'), 'https://www.facebook.com/');
+    assert.equal(fromSiteHref('goldsprint.de'), 'https://goldsprint.de/');
+    assert.equal(fromSiteHref('Typed or bookmark'), '');
+    assert.equal(fromSiteHref('On this site'), '');
+  });
+});
+
+describe('looksFromRows', () => {
+  it('turns What sent them into clickable site links', () => {
+    const html = looksFromRows(
+      [
+        { name: 'Instagram', looks: 4 },
+        { name: 'Typed or bookmark', looks: 2 },
+      ],
+      'none',
+    );
+    assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
+    assert.match(html, /target="_blank"/);
+    assert.match(html, />Instagram</);
+    assert.match(html, /class="looks-name">Typed or bookmark</);
+    assert.doesNotMatch(html, /Typed or bookmark<\/a>/);
   });
 });
 
@@ -299,7 +328,8 @@ describe('GET/POST /api/looks', () => {
       )
     ).text();
     assert.match(html, /Germany/);
-    assert.match(html, /Instagram/);
+    assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
+    assert.match(html, />Instagram</);
   });
 });
 
@@ -331,7 +361,8 @@ describe('fillLooksInHtml', () => {
     assert.match(html, /data-looks="total">9</);
     assert.match(html, /Home/);
     assert.match(html, /Germany/);
-    assert.match(html, /Instagram/);
+    assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
+    assert.match(html, />Instagram</);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
 });
@@ -357,7 +388,8 @@ describe('looksDashboardPage', () => {
       from: [{ name: 'Google', looks: 1 }],
     }).text();
     assert.match(withFrom, /France/);
-    assert.match(withFrom, /Google/);
+    assert.match(withFrom, /href="https:\/\/www\.google\.com\/"/);
+    assert.match(withFrom, />Google</);
   });
 });
 

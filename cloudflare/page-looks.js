@@ -180,6 +180,20 @@ const FROM_NAMES = {
   'bsky.app': 'Bluesky',
 };
 
+/** Home pages for the friendly names we store. Click Opens that site. */
+const FROM_HOME = {
+  Instagram: 'https://www.instagram.com/',
+  Facebook: 'https://www.facebook.com/',
+  Google: 'https://www.google.com/',
+  Bing: 'https://www.bing.com/',
+  DuckDuckGo: 'https://duckduckgo.com/',
+  X: 'https://x.com/',
+  YouTube: 'https://www.youtube.com/',
+  LinkedIn: 'https://www.linkedin.com/',
+  Reddit: 'https://www.reddit.com/',
+  Bluesky: 'https://bsky.app/',
+};
+
 const OWN_HOSTS = new Set([
   'thenewsoulsearchers.de',
   'www.thenewsoulsearchers.de',
@@ -208,6 +222,17 @@ export function sanitizeFrom(referer, pageUrl) {
   } catch {
     return 'Typed or bookmark';
   }
+}
+
+/** URL to open for a stored “what sent them” label. Empty if there is nowhere useful to go. */
+export function fromSiteHref(name) {
+  const key = String(name || '').trim();
+  if (!key || key === 'Typed or bookmark' || key === 'On this site') return '';
+  if (FROM_HOME[key]) return FROM_HOME[key];
+  if (/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i.test(key) && !key.includes('/')) {
+    return `https://${key.toLowerCase()}/`;
+  }
+  return '';
 }
 
 export function lookFromRequest(request) {
@@ -439,7 +464,7 @@ export function looksDashboardPage(summary) {
     summary?.countries,
     'Country shows after someone opens a page.',
   );
-  const fromRows = looksNamedRows(
+  const fromRows = looksFromRows(
     summary?.from,
     'The site that sent them shows after someone opens a page.',
   );
@@ -473,7 +498,8 @@ export function looksDashboardPage(summary) {
     ol { margin:0; padding:0; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; overflow:hidden; }
     li { display:flex; justify-content:space-between; gap:1rem; padding:.85rem 1.1rem; border-top:1px solid rgba(215,224,232,.08); }
     li:first-child { border-top:0; }
-    li a { color:var(--paper); text-decoration:none; }
+    li a { color:var(--paper); text-decoration:underline; text-decoration-color:rgba(240,194,122,.45); text-underline-offset:.18em; }
+    li a:hover { color: var(--amber-hot); text-decoration-color: var(--amber-hot); }
     li span { color:var(--amber-hot); font-weight:600; }
     li .looks-name { color:var(--paper); font-weight:400; }
     .empty { color:rgba(215,224,232,.68); }
@@ -538,6 +564,24 @@ export function looksNamedRows(items, emptyText) {
     .join('');
 }
 
+export function looksFromRows(items, emptyText) {
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    return `<li class="empty">${emptyText}</li>`;
+  }
+  return list
+    .map((row) => {
+      const label = escapeHtml(row.name);
+      const count = Number(row.looks) || 0;
+      const href = fromSiteHref(row.name);
+      if (href) {
+        return `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a><span>${count}</span></li>`;
+      }
+      return `<li><span class="looks-name">${label}</span><span>${count}</span></li>`;
+    })
+    .join('');
+}
+
 export function fillLooksInHtml(html, summary) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
@@ -547,7 +591,7 @@ export function fillLooksInHtml(html, summary) {
     summary?.countries,
     'Country shows after someone opens a page.',
   );
-  const fromRows = looksNamedRows(
+  const fromRows = looksFromRows(
     summary?.from,
     'The site that sent them shows after someone opens a page.',
   );
