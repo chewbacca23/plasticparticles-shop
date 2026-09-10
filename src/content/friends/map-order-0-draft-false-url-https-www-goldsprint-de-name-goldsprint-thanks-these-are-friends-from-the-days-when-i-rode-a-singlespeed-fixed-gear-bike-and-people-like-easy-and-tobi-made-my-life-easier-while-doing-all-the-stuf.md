@@ -1,5 +1,5 @@
 ---
-name: goldsprint :)
+name: Goldsprint :)
 url: https://www.goldsprint.de/
 thanks: "these are friends from the days when i rode a singlespeed fixed gear
   bike and people like Easy and Tobi made my life easier while doing all the
