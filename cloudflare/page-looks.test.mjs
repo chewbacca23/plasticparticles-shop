@@ -10,6 +10,7 @@ import {
   handleLooksPage,
   handleLooksRequest,
   isAdminPath,
+  isStatsKvBinding,
   lookFromRequest,
   looksDashboardPage,
   looksSetCookie,
@@ -153,6 +154,18 @@ describe('looksFromRows', () => {
     assert.match(html, />Instagram</);
     assert.match(html, /class="looks-name">Typed or bookmark</);
     assert.doesNotMatch(html, /Typed or bookmark<\/a>/);
+  });
+});
+
+describe('isStatsKvBinding', () => {
+  it('accepts STATS objects and rejects fetch-only bindings', () => {
+    assert.equal(
+      isStatsKvBinding({ get: async () => null, put: async () => {} }),
+      true,
+    );
+    assert.equal(isStatsKvBinding({}), true);
+    assert.equal(isStatsKvBinding({ fetch: async () => new Response('') }), false);
+    assert.equal(isStatsKvBinding(undefined), false);
   });
 });
 

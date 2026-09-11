@@ -14,6 +14,7 @@ import {
   handleLooksRequest,
   looksSetCookie,
   looksStoreKind,
+  looksStatsBindingInfo,
   looksToken,
   recordDocumentLook,
 } from './page-looks.js';
@@ -101,6 +102,7 @@ function statusPage(env) {
 
   const idShape = creds ? describeClientId(creds.id) : 'n/a';
   const looksStorage = looksStoreKind(env);
+  const statsBinding = looksStatsBindingInfo(env);
 
   const body = {
     loginWired: Boolean(creds),
@@ -110,6 +112,7 @@ function statusPage(env) {
     clientSecretLength: creds ? creds.secret.length : 0,
     looksStorage,
     looksDurable: looksStorage === 'kv',
+    statsBinding,
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,
   };

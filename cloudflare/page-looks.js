@@ -328,8 +328,20 @@ export function cacheLooksStore(cache = globalThis.caches?.default, requestUrl =
   };
 }
 
+/**
+ * Cloudflare KV on a Worker is usually a real object with get/put.
+ * Some dashboard binds show up as env.STATS before typeof methods look like
+ * normal functions, so treat any non-fetch STATS object as KV.
+ */
+export function isStatsKvBinding(value) {
+  if (!value || typeof value !== 'object') return false;
+  // ASSETS / service bindings speak fetch and do not have KV get.
+  if (typeof value.fetch === 'function' && typeof value.get !== 'function') return false;
+  return true;
+}
+
 export function looksStoreFor(env) {
-  if (env?.STATS && typeof env.STATS.get === 'function' && typeof env.STATS.put === 'function') {
+  if (isStatsKvBinding(env?.STATS)) {
     return kvLooksStore(env.STATS);
   }
   if (typeof caches !== 'undefined' && caches.default) {
@@ -341,11 +353,23 @@ export function looksStoreFor(env) {
 
 /** Where Looks numbers live. Prefer kv — cache and memory can vanish on deploy. */
 export function looksStoreKind(env) {
-  if (env?.STATS && typeof env.STATS.get === 'function' && typeof env.STATS.put === 'function') {
-    return 'kv';
-  }
+  if (isStatsKvBinding(env?.STATS)) return 'kv';
   if (typeof caches !== 'undefined' && caches.default) return 'cache';
   return 'memory';
+}
+
+/** Safe shape report for /cms-status — no KV values. */
+export function looksStatsBindingInfo(env) {
+  const value = env?.STATS;
+  return {
+    present: value != null,
+    typeof: value == null ? 'missing' : typeof value,
+    hasGet: typeof value?.get === 'function',
+    hasPut: typeof value?.put === 'function',
+    hasList: typeof value?.list === 'function',
+    hasFetch: typeof value?.fetch === 'function',
+    treatedAsKv: isStatsKvBinding(value),
+  };
 }
 
 export async function recordLook(store, rawPath, now = new Date(), extras = {}) {
