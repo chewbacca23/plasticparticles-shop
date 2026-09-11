@@ -13,9 +13,7 @@ binding = "ASSETS"
 # /api/looks is challenged by Bot Fight, so beacons never arrived.
 run_worker_first = true
 
-# Durable Looks counts (survives deploys). Create the namespace in the
-# Cloudflare dashboard (CLOUDFLARE.md → Looks storage), then uncomment
-# these three lines and paste the namespace id.
-# [[kv_namespaces]]
-# binding = "STATS"
-# id = "PASTE_KV_NAMESPACE_ID_HERE"
+# Durable Looks counts (survives deploys). Namespace soulsearchers-looks.
+[[kv_namespaces]]
+binding = "STATS"
+id = "9f6a71b57d0643389c34f328e801012f"
