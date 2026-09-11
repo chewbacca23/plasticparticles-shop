@@ -291,6 +291,76 @@ p {
   margin-top: 0.35rem;
 }
 
+/* Looks lists are filled by the Worker, so styles must be global (not Astro-scoped). */
+.looks .pages-title {
+  margin: 2.25rem 0 0.85rem;
+  padding-left: 1.15rem;
+  font-size: 1.35rem;
+}
+
+.looks .pages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid rgba(215, 224, 232, 0.1);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: rgba(18, 26, 34, 0.35);
+}
+
+.looks .pages li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 0.95rem 1.15rem;
+  border-top: 1px solid rgba(215, 224, 232, 0.08);
+}
+
+.looks .pages li:first-child {
+  border-top: 0;
+}
+
+.looks .pages li > :first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+.looks .pages li > span:last-child {
+  flex: 0 0 auto;
+  color: var(--amber-hot);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.looks .pages a {
+  color: var(--paper);
+  text-decoration: underline;
+  text-decoration-color: rgba(240, 194, 122, 0.45);
+  text-underline-offset: 0.18em;
+}
+
+.looks .pages a:hover {
+  color: var(--amber-hot);
+  text-decoration-color: var(--amber-hot);
+}
+
+.looks .pages .looks-name {
+  color: var(--paper);
+  font-weight: 400;
+}
+
+.looks .pages .empty,
+.looks .note {
+  color: rgba(215, 224, 232, 0.68);
+}
+
+.looks .note {
+  margin: 1rem 0 0.85rem;
+  padding-left: 1.15rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
