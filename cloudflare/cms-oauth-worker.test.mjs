@@ -125,6 +125,24 @@ describe('GET /cms-status', () => {
     assert.match(body.clientIdShape, /does NOT look like/);
   });
 
+  it('reports Looks storage as cache or kv without leaking values', async () => {
+    const cacheBody = JSON.parse(await (await statusPage({ ASSETS: {} })).text());
+    assert.ok(['cache', 'memory'].includes(cacheBody.looksStorage));
+    assert.equal(cacheBody.looksDurable, false);
+
+    const kvBody = JSON.parse(
+      await (
+        await statusPage({
+          ASSETS: {},
+          STATS: { get: async () => null, put: async () => {} },
+        })
+      ).text(),
+    );
+    assert.equal(kvBody.looksStorage, 'kv');
+    assert.equal(kvBody.looksDurable, true);
+    assert.ok(kvBody.otherBindingsVisibleToWorker.includes('STATS'));
+  });
+
   it('is reachable through the Worker entrypoint', async () => {
     const res = await worker.fetch(new Request('https://thenewsoulsearchers.de/cms-status'), {
       ASSETS: { fetch: async () => new Response('should not be used') },

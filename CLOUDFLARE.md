@@ -95,11 +95,28 @@ If the GitHub popup says login is not wired yet, secrets from **B** are missing.
 
 After **Login with GitHub** in `/admin/`, open the gold **Looks** chip (or bookmark
 `/looks`). It stays private: no footer link, and strangers without the login cookie get a blank
-gate page. Today, last 7 days, all time, which pages, which country, and which site sent them.
-No visitor names. Numbers start after this Worker is live. Your own clicks count.
+gate page. Today, last 7 days, this year, all time, which pages, which country, and which site
+sent them. No visitor names. Numbers start after this Worker is live. Your own clicks count.
 
 A Worker-only HTML page for `/looks` was challenged by Bot Fight, so the count page never
 opened. The Worker now fills the numbers into the real Astro page instead.
+
+### Looks storage (so counts survive deploys)
+
+Without a KV binding, Looks falls back to a temporary cache and numbers can reset on deploy.
+Bind a durable store once:
+
+1. Open [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages**
+2. Open Worker **`thenewsoulsearchersblogc`** (the one on thenewsoulsearchers.de)
+3. **Settings** → **Bindings** → **Add** → **KV Namespace**
+4. Variable name: **`STATS`** (exact spelling)
+5. **Create a new namespace** → name it `soulsearchers-looks` → Save
+6. Copy the namespace **ID** (long hex string)
+7. In the blog repo `wrangler.toml`, uncomment the `[[kv_namespaces]]` block and paste that ID
+8. Mac-push this branch to blog `main`, then **Deployments → Retry** on that Worker
+9. Open **https://thenewsoulsearchers.de/cms-status** — want `"looksStorage": "kv"` and `"looksDurable": true`
+
+Until step 9 says `kv`, counts can still vanish on the next deploy.
 
 ### Stuck? Ask the Worker instead of guessing
 
@@ -111,6 +128,8 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 | Names listed but `"loginWired": false` | Names are close but unmatched. Rename to `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET`. |
 | `"clientIdShape": "does NOT look like a GitHub client id"` | The Client **ID** box holds the wrong value (GitHub ids start `Ov23`). |
 | `"loginWired": true` | Login is ready. Go to `/admin/`. |
+| `"looksStorage": "cache"` or `"memory"` | Looks is temporary. Finish the KV steps above. |
+| `"looksStorage": "kv"` / `"looksDurable": true` | Looks is durable. Counts survive deploys. |
 
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 

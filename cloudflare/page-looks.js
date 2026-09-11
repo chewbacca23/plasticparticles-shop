@@ -339,6 +339,15 @@ export function looksStoreFor(env) {
   return env.__memoryLooks;
 }
 
+/** Where Looks numbers live. Prefer kv — cache and memory can vanish on deploy. */
+export function looksStoreKind(env) {
+  if (env?.STATS && typeof env.STATS.get === 'function' && typeof env.STATS.put === 'function') {
+    return 'kv';
+  }
+  if (typeof caches !== 'undefined' && caches.default) return 'cache';
+  return 'memory';
+}
+
 export async function recordLook(store, rawPath, now = new Date(), extras = {}) {
   const path = sanitizePath(rawPath);
   if (!shouldRecordPath(path)) return { recorded: false, path };

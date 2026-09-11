@@ -13,6 +13,7 @@ import {
   lookFromRequest,
   looksDashboardPage,
   looksSetCookie,
+  looksStoreKind,
   looksToken,
   memoryLooksStore,
   recordDocumentLook,
@@ -152,6 +153,16 @@ describe('looksFromRows', () => {
     assert.match(html, />Instagram</);
     assert.match(html, /class="looks-name">Typed or bookmark</);
     assert.doesNotMatch(html, /Typed or bookmark<\/a>/);
+  });
+});
+
+describe('looksStoreKind', () => {
+  it('prefers durable KV over cache', () => {
+    assert.equal(
+      looksStoreKind({ STATS: { get: async () => null, put: async () => {} } }),
+      'kv',
+    );
+    assert.ok(['cache', 'memory'].includes(looksStoreKind({})));
   });
 });
 
