@@ -47,7 +47,9 @@ function withLooksCookie(url, cookie, init = {}) {
 const SITE_LOOKS = `<html><body>
 <p class="card-num" data-looks="today">—</p>
 <p class="card-num" data-looks="week">—</p>
+<p class="card-num" data-looks="year">—</p>
 <p class="card-num" data-looks="total">—</p>
+<ol class="pages" data-looks-years><li class="empty">no years</li></ol>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
 <ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
 <ol class="pages" data-looks-from><li class="empty">no from</li></ol>
@@ -85,15 +87,25 @@ describe('shouldRecordPath', () => {
 });
 
 describe('summarizeLooks', () => {
-  it('adds today, the week, and the busiest pages', () => {
+  it('adds today, the week, the year, and the busiest pages', () => {
     const today = berlinDay(new Date('2026-09-04T12:00:00+02:00'));
     const data = applyLook(emptyLooks(), '/', today, { country: 'DE', from: 'Instagram' });
     const next = applyLook(data, '/now', today, { country: 'FR', from: 'Instagram' });
     const extra = applyLook(next, '/now', today, { country: 'DE', from: 'Google' });
-    const summary = summarizeLooks(extra, new Date('2026-09-04T12:00:00+02:00'));
+    const withOld = {
+      ...extra,
+      days: { ...extra.days, '2025-12-31': 7 },
+      total: extra.total + 7,
+    };
+    const summary = summarizeLooks(withOld, new Date('2026-09-04T12:00:00+02:00'));
     assert.equal(summary.today, 3);
     assert.equal(summary.week, 3);
-    assert.equal(summary.total, 3);
+    assert.equal(summary.year, 3);
+    assert.equal(summary.total, 10);
+    assert.deepEqual(summary.years, [
+      { name: '2026', looks: 3 },
+      { name: '2025', looks: 7 },
+    ]);
     assert.deepEqual(summary.pages[0], { path: '/now', looks: 2 });
     assert.deepEqual(summary.countries[0], { name: 'Germany', looks: 2 });
     assert.deepEqual(summary.from[0], { name: 'Instagram', looks: 2 });
@@ -351,16 +363,20 @@ describe('fillLooksInHtml', () => {
     const html = fillLooksInHtml(SITE_LOOKS, {
       today: 2,
       week: 5,
+      year: 8,
       total: 9,
+      years: [{ name: '2026', looks: 8 }],
       pages: [{ path: '/', looks: 4 }],
       countries: [{ name: 'Germany', looks: 3 }],
       from: [{ name: 'Instagram', looks: 2 }],
     });
     assert.match(html, /data-looks="today">2</);
     assert.match(html, /data-looks="week">5</);
+    assert.match(html, /data-looks="year">8</);
     assert.match(html, /data-looks="total">9</);
     assert.match(html, /Home/);
     assert.match(html, /Germany/);
+    assert.match(html, /class="looks-name">2026</);
     assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
     assert.match(html, />Instagram</);
     assert.match(html, /<footer>Looks<\/footer>/);
@@ -372,17 +388,24 @@ describe('looksDashboardPage', () => {
     const html = await looksDashboardPage({
       today: 2,
       week: 5,
+      year: 8,
       total: 9,
+      years: [{ name: '2026', looks: 8 }],
       pages: [{ path: '/', looks: 4 }],
     }).text();
     assert.match(html, />2</);
     assert.match(html, />5</);
+    assert.match(html, />8</);
     assert.match(html, />9</);
+    assert.match(html, /This year/);
+    assert.match(html, /All the years/);
     assert.match(html, /Home/);
     const withFrom = await looksDashboardPage({
       today: 1,
       week: 1,
+      year: 1,
       total: 1,
+      years: [{ name: '2026', looks: 1 }],
       pages: [],
       countries: [{ name: 'France', looks: 1 }],
       from: [{ name: 'Google', looks: 1 }],

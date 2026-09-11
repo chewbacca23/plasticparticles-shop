@@ -26,10 +26,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <p class="card-num" data-looks="week">—</p>
         </article>
         <article class="card">
+          <p class="card-label">This year</p>
+          <p class="card-num" data-looks="year">—</p>
+        </article>
+        <article class="card">
           <p class="card-label">All time</p>
           <p class="card-num" data-looks="total">—</p>
         </article>
       </div>
+
+      <h2 class="pages-title">All the years</h2>
+      <ol class="pages" data-looks-years>
+        <li class="empty">Years show once people have opened the site.</li>
+      </ol>
 
       <h2 class="pages-title">Pages people opened</h2>
       <ol class="pages" data-looks-pages>
@@ -66,7 +75,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   @media (min-width: 640px) {
     .cards {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 900px) {
+    .cards {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 
@@ -96,6 +111,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .pages-title {
     margin: 2.25rem 0 0.85rem;
+    padding-left: 1.15rem;
     font-size: 1.35rem;
   }
 
@@ -112,7 +128,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.85rem 1.1rem;
+    padding: 0.9rem 1.15rem 0.9rem 1.65rem;
     border-top: 1px solid rgba(215, 224, 232, 0.08);
   }
 
@@ -148,6 +164,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .note {
-    margin: 1rem 0 0;
+    margin: 1rem 0 0.85rem;
+    padding-left: 1.15rem;
   }
 </style>

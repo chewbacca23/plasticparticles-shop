@@ -31,6 +31,10 @@ export function berlinDay(now = new Date()) {
   }).format(now);
 }
 
+export function berlinYear(now = new Date()) {
+  return berlinDay(now).slice(0, 4);
+}
+
 export function emptyLooks() {
   return { total: 0, days: {}, paths: {}, countries: {}, from: {} };
 }
@@ -75,15 +79,30 @@ export function applyLook(data, path, day, extras = {}) {
   return next;
 }
 
+export function yearTotals(days) {
+  const byYear = {};
+  for (const [day, count] of Object.entries(days || {})) {
+    const year = String(day).slice(0, 4);
+    if (!/^\d{4}$/.test(year)) continue;
+    byYear[year] = (Number(byYear[year]) || 0) + (Number(count) || 0);
+  }
+  return Object.entries(byYear)
+    .map(([name, looks]) => ({ name, looks }))
+    .sort((a, b) => b.name.localeCompare(a.name) || b.looks - a.looks);
+}
+
 export function summarizeLooks(data, now = new Date()) {
   const days = data.days || {};
   const today = berlinDay(now);
+  const thisYear = berlinYear(now);
   const weekDays = [];
   for (let i = 6; i >= 0; i--) {
     const at = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
     weekDays.push(berlinDay(at));
   }
   const week = weekDays.reduce((sum, day) => sum + (Number(days[day]) || 0), 0);
+  const years = yearTotals(days);
+  const year = years.find((row) => row.name === thisYear)?.looks || 0;
   const pages = Object.entries(data.paths || {})
     .map(([path, looks]) => ({ path, looks: Number(looks) || 0 }))
     .sort((a, b) => b.looks - a.looks || a.path.localeCompare(b.path))
@@ -93,7 +112,9 @@ export function summarizeLooks(data, now = new Date()) {
   return {
     today: Number(days[today]) || 0,
     week,
+    year,
     total: Number(data.total) || 0,
+    years,
     pages,
     countries,
     from,
@@ -458,6 +479,7 @@ export async function recordDocumentLook(request, env) {
 export function looksDashboardPage(summary) {
   const today = Number(summary?.today) || 0;
   const week = Number(summary?.week) || 0;
+  const year = Number(summary?.year) || 0;
   const total = Number(summary?.total) || 0;
   const rows = looksPageRows(summary?.pages);
   const countryRows = looksNamedRows(
@@ -467,6 +489,10 @@ export function looksDashboardPage(summary) {
   const fromRows = looksFromRows(
     summary?.from,
     'The site that sent them shows after someone opens a page.',
+  );
+  const yearRows = looksNamedRows(
+    summary?.years,
+    'Years show once people have opened the site.',
   );
 
   return new Response(
@@ -490,20 +516,21 @@ export function looksDashboardPage(summary) {
     h1 { margin:0 0 .75rem; font-size: clamp(2rem, 4vw, 2.8rem); color:var(--paper); }
     .lead { margin:0 0 1.75rem; color:rgba(215,224,232,.75); }
     .cards { display:grid; gap:.85rem; margin:0 0 2.25rem; }
-    @media (min-width:640px) { .cards { grid-template-columns:repeat(3,1fr); } }
+    @media (min-width:640px) { .cards { grid-template-columns:repeat(2,1fr); } }
+    @media (min-width:900px) { .cards { grid-template-columns:repeat(4,1fr); } }
     .card { padding:1.1rem 1.15rem; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); }
     .card-label { margin:0; color:var(--amber); font-size:.78rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
     .card-num { margin:.45rem 0 0; color:var(--paper); font-size:2.4rem; line-height:1; }
-    h2 { margin:2.25rem 0 .85rem; font-size:1.35rem; }
+    h2 { margin:2.25rem 0 .85rem; padding-left:1.15rem; font-size:1.35rem; }
     ol { margin:0; padding:0; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; overflow:hidden; }
-    li { display:flex; justify-content:space-between; gap:1rem; padding:.85rem 1.1rem; border-top:1px solid rgba(215,224,232,.08); }
+    li { display:flex; justify-content:space-between; gap:1rem; padding:.9rem 1.15rem .9rem 1.65rem; border-top:1px solid rgba(215,224,232,.08); }
     li:first-child { border-top:0; }
     li a { color:var(--paper); text-decoration:underline; text-decoration-color:rgba(240,194,122,.45); text-underline-offset:.18em; }
     li a:hover { color: var(--amber-hot); text-decoration-color: var(--amber-hot); }
     li span { color:var(--amber-hot); font-weight:600; }
     li .looks-name { color:var(--paper); font-weight:400; }
     .empty { color:rgba(215,224,232,.68); }
-    .back { margin:1.5rem 0 0; }
+    .back { margin:1.5rem 0 0; padding-left:1.15rem; }
     .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
   </style>
 </head>
@@ -515,8 +542,11 @@ export function looksDashboardPage(summary) {
     <div class="cards">
       <article class="card"><p class="card-label">Today</p><p class="card-num">${today}</p></article>
       <article class="card"><p class="card-label">Last 7 days</p><p class="card-num">${week}</p></article>
+      <article class="card"><p class="card-label">This year</p><p class="card-num">${year}</p></article>
       <article class="card"><p class="card-label">All time</p><p class="card-num">${total}</p></article>
     </div>
+    <h2>All the years</h2>
+    <ol>${yearRows}</ol>
     <h2>Pages people opened</h2>
     <ol>${rows}</ol>
     <h2>Where they opened from</h2>
@@ -585,6 +615,7 @@ export function looksFromRows(items, emptyText) {
 export function fillLooksInHtml(html, summary) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
+  const year = String(Number(summary?.year) || 0);
   const total = String(Number(summary?.total) || 0);
   const rows = looksPageRows(summary?.pages);
   const countryRows = looksNamedRows(
@@ -595,10 +626,19 @@ export function fillLooksInHtml(html, summary) {
     summary?.from,
     'The site that sent them shows after someone opens a page.',
   );
+  const yearRows = looksNamedRows(
+    summary?.years,
+    'Years show once people have opened the site.',
+  );
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
+    .replace(/data-looks="year"([^>]*)>[\s\S]*?</, `data-looks="year"$1>${year}<`)
     .replace(/data-looks="total"([^>]*)>[\s\S]*?</, `data-looks="total"$1>${total}<`)
+    .replace(
+      /<ol([^>]*data-looks-years[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${yearRows}</ol>`,
+    )
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${rows}</ol>`,
