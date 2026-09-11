@@ -103,20 +103,15 @@ opened. The Worker now fills the numbers into the real Astro page instead.
 
 ### Looks storage (so counts survive deploys)
 
-Without a KV binding, Looks falls back to a temporary cache and numbers can reset on deploy.
-Bind a durable store once:
+Looks uses Cloudflare KV binding **`STATS`** → namespace **`soulsearchers-looks`**
+(`id` is in `wrangler.toml`). After a Mac-push, open
+**https://thenewsoulsearchers.de/cms-status** and confirm:
 
-1. Open [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages**
-2. Open Worker **`thenewsoulsearchersblogc`** (the one on thenewsoulsearchers.de)
-3. **Settings** → **Bindings** → **Add** → **KV Namespace**
-4. Variable name: **`STATS`** (exact spelling)
-5. **Create a new namespace** → name it `soulsearchers-looks` → Save
-6. Copy the namespace **ID** (long hex string)
-7. In the blog repo `wrangler.toml`, uncomment the `[[kv_namespaces]]` block and paste that ID
-8. Mac-push this branch to blog `main`, then **Deployments → Retry** on that Worker
-9. Open **https://thenewsoulsearchers.de/cms-status** — want `"looksStorage": "kv"` and `"looksDurable": true`
+- `"looksStorage": "kv"`
+- `"looksDurable": true`
 
-Until step 9 says `kv`, counts can still vanish on the next deploy.
+If it says `"cache"` or `statsBinding.present` is false, the deploy landed on the wrong
+Worker, or Bindings still need a Retry on **`thenewsoulsearchersblogc`**.
 
 ### Stuck? Ask the Worker instead of guessing
 
