@@ -125,6 +125,24 @@ describe('GET /cms-status', () => {
     assert.match(body.clientIdShape, /does NOT look like/);
   });
 
+  it('reports Looks storage as cache or kv without leaking values', async () => {
+    const cacheBody = JSON.parse(await (await statusPage({ ASSETS: {} })).text());
+    assert.ok(['cache', 'memory'].includes(cacheBody.looksStorage));
+    assert.equal(cacheBody.looksDurable, false);
+
+    const kvBody = JSON.parse(
+      await (
+        await statusPage({
+          ASSETS: {},
+          STATS: { get: async () => null, put: async () => {} },
+        })
+      ).text(),
+    );
+    assert.equal(kvBody.looksStorage, 'kv');
+    assert.equal(kvBody.looksDurable, true);
+    assert.ok(kvBody.otherBindingsVisibleToWorker.includes('STATS'));
+  });
+
   it('is reachable through the Worker entrypoint', async () => {
     const res = await worker.fetch(new Request('https://thenewsoulsearchers.de/cms-status'), {
       ASSETS: { fetch: async () => new Response('should not be used') },
@@ -213,6 +231,7 @@ describe('GET /callback', () => {
     assert.match(html, /authorization:github:success:/);
     assert.match(html, /gho_test_token/);
     assert.match(html, /authorizing:github/);
+    assert.match(res.headers.get('set-cookie') || '', /ss_looks=/);
   });
 
   it('returns Decap error HTML when GitHub denies login', async () => {
@@ -233,5 +252,33 @@ describe('static assets fallback', () => {
       },
     });
     assert.equal(await res.text(), 'admin-ok');
+  });
+
+  it('fills an empty published ride from GitHub', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(
+        '---\ntitle: Patches\nheadline: Patches\ncover: /stories/img_6440-2.jpg\ndraft: false\n---\nSitting in front of me are two small patches.\n',
+        { status: 200 },
+      );
+    try {
+      const res = await worker.fetch(
+        new Request('https://thenewsoulsearchers.de/stories/the-most-wonderful-patches'),
+        {
+          ASSETS: {
+            fetch: async () =>
+              new Response('<h1>Patches</h1><div class="prose"></div>', {
+                status: 200,
+                headers: { 'content-type': 'text/html' },
+              }),
+          },
+        },
+      );
+      const html = await res.text();
+      assert.match(html, /two small patches/);
+      assert.match(html, /img_6440-2\.jpg/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });

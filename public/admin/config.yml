@@ -9,6 +9,10 @@ backend:
 local_backend: true
 publish_mode: simple
 
+# Live preview sits on top of the form and eats clicks. Edit here; check the
+# public page after Save (preview_path links still work).
+# Per-collection editor.preview: false below.
+
 media_folder: public/stories
 public_folder: /stories
 
@@ -30,34 +34,65 @@ collections:
     label_singular: Ride
     folder: src/content/stories
     create: true
+    delete: true
     slug: "{{slug}}"
     extension: md
     format: frontmatter
     preview_path: stories/{{slug}}
+    editor:
+      preview: false
     fields:
-      - { label: Title, name: title, widget: string }
-      - { label: Headline, name: headline, widget: string }
-      - { label: Description, name: description, widget: text }
-      - label: Cover image
+      - { label: Name of this ride, name: title, widget: string, hint: "The name. + Ride asks for this first." }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first on the site" }
+      - label: First photo
         name: cover
         widget: image
         required: false
         choose_url: false
+        hint: "This one sits at the top of the ride, and on the ride tile. Upload → pick JPEG from your Mac (that puts it on the site). Then Save this ride. HEIC often fails. If the thumb looks broken, wait a second."
         media_library:
           config:
             multiple: false
-      - label: Gallery images
+      - label: Photos in the story
         name: gallery
         widget: list
         summary: "{{fields.image}}"
+        hint: "Inside the story, between paragraphs. Same Upload → JPEG from the Mac → Save."
         field:
           label: Image
           name: image
           widget: image
           choose_url: false
-      - { label: Order (1-6), name: order, widget: number, value_type: int, min: 1, max: 99, step: 1 }
+          required: false
+      - { label: Ride text, name: body, widget: markdown, required: false, hint: "The story. The picture button puts a photo where the cursor is. Photos you add here stay in the text." }
+      - { label: Headline, name: headline, widget: string, required: false, hint: "Usually the same as the name. Shows on the ride tile." }
+      - { label: Short intro, name: description, widget: text, required: false, hint: "A few lines under the name on the ride page." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Ride text, name: body, widget: markdown }
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 99, step: 1, required: false, hint: "Only if two rides share a date. Higher number comes first. 0 is fine." }
+
+  - name: shots
+    label: Shots
+    label_singular: Shot
+    description: Photo plus a line. Shows on Now, newest first, on this site.
+    folder: src/content/shots
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: now
+    summary: "{{title}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Only you see this in the list" }
+      - label: Photo
+        name: photo
+        widget: image
+        choose_url: false
+        hint: "JPEG from the phone. If the thumb looks broken, wait a second — we load it from GitHub. HEIC often shows as a broken thumb."
+      - { label: Caption, name: caption, widget: text, required: false, hint: "The line under the photo" }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false }
 
   - name: journal
     label: Ride notes
@@ -68,10 +103,124 @@ collections:
     extension: md
     format: frontmatter
     preview_path: journal/{{slug}}
+    editor:
+      preview: false
     fields:
       - { label: Title, name: title, widget: string }
       - { label: Description, name: description, widget: text }
       - { label: Published date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
       - { label: Hero label, name: heroLabel, widget: string, required: false }
+      - label: First photo
+        name: cover
+        widget: image
+        required: false
+        choose_url: false
+        hint: "Top of the note. JPEG from the Mac (not HEIC). Upload opens your files — that is correct; it saves into the site media. Then gold Save this note. Fat phone photos shrink on GitHub after save. If the thumb looks broken, wait a second."
+        media_library:
+          config:
+            multiple: false
+      - label: Photos in the note
+        name: gallery
+        widget: list
+        summary: "{{fields.image}}"
+        hint: "Inside the note. Same Upload → pick JPEG from the Mac → Save this note."
+        field:
+          label: Image
+          name: image
+          widget: image
+          choose_url: false
+          required: false
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
-      - { label: Post text, name: body, widget: markdown }
+      - { label: Post text, name: body, widget: markdown, required: false, hint: "The picture button puts a photo where the cursor is." }
+
+  - name: friends
+    label: Friends
+    label_singular: Friend
+    description: People and places that helped along the ride. Shows on Friends.
+    folder: src/content/friends
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: friends
+    summary: "{{name}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Name, name: name, widget: string, hint: "Person, shop, café, brand — whoever helped." }
+      - { label: Website, name: url, widget: string, required: false, hint: "Optional. Full link, like https://…" }
+      - { label: Thank-you line, name: thanks, widget: text, required: false, hint: "One short line. What they did on the road." }
+      - label: Logo or photo
+        name: logo
+        widget: image
+        required: false
+        choose_url: false
+        hint: "Optional. JPEG from the Mac. Same Upload path as rides."
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first. 0 is fine." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden on the site until you turn it off." }
+
+  - name: shop
+    label: Shop
+    label_singular: Product
+    description: Small shop in the background. People email Henrik. No cart.
+    folder: src/content/shop
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: shop
+    summary: "{{title}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Name, name: title, widget: string, hint: "Product name, like Woven crest patch." }
+      - { label: Short text, name: blurb, widget: text, required: false, hint: "A few lines. No dashes if you can help it. Email is the CTA." }
+      - label: Photo
+        name: photo
+        widget: image
+        required: false
+        choose_url: false
+        hint: "JPEG from the Mac. Until you add one, the crest shows."
+      - { label: Limit line, name: limit, widget: string, required: false, hint: "Optional. Like 50 worldwide." }
+      - { label: Mail subject, name: mailSubject, widget: string, required: false, default: Shop, hint: "Subject line when someone taps Email Henrik. Patch is fine for the crest." }
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
+
+  - name: settings
+    label: Site
+    files:
+      - name: imprint
+        label: Mail and imprint
+        file: src/content/settings/site.json
+        format: json
+        preview_path: impressum
+        editor:
+          preview: false
+        fields:
+          - label: Email
+            name: email
+            widget: string
+            required: false
+            hint: "The address people write to. Shows on Contact and Imprint."
+          - { label: Name on the imprint, name: legalName, widget: string, required: false, hint: "Usually The Soul Searchers." }
+          - { label: Your name, name: responsible, widget: string, required: false, hint: "The person responsible for the site." }
+          - { label: Street, name: street, widget: string, required: false, hint: "Street and house number. Needed for the German Impressum." }
+          - { label: Postcode and city, name: zipCity, widget: string, required: false, hint: "Like 12345 Berlin." }
+          - { label: Country, name: country, widget: string, required: false, hint: "Germany is fine." }
+          - { label: Phone, name: phone, widget: string, required: false, hint: "Optional. Leave empty if you do not want it on the site." }
+      - name: instagram
+        label: Instagram
+        file: src/content/settings/instagram.json
+        preview_path: now
+        editor:
+          preview: false
+        fields:
+          - label: Username
+            name: handle
+            widget: string
+            hint: "Without the @. People tap through to this account."
+          - label: Latest photo link
+            name: latestPost
+            widget: string
+            required: false
+            hint: "Open the photo on Instagram → Share → Copy link. Paste here. That one photo is what the site shows."

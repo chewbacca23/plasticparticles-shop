@@ -1,11 +1,17 @@
 ---
 import { site } from '../site.config';
+import { instagramBind } from '../lib/instagram';
+import settings from '../content/settings/instagram.json';
 
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const instagram = instagramBind(settings);
 const links = [
   { href: '/', label: 'Home' },
+  { href: '/now', label: 'Now' },
   { href: '/stories', label: 'Rides' },
   { href: '/journal', label: 'Ride notes' },
+  { href: '/friends', label: 'Friends' },
+  { href: '/shop', label: 'Shop' },
   { href: '/path', label: 'How we ride' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
@@ -29,6 +35,18 @@ const links = [
             {link.label}
           </a>
         ))
+      }
+      {
+        instagram && (
+          <a
+            class="nav-link"
+            href={instagram.profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Instagram
+          </a>
+        )
       }
     </nav>
   </div>

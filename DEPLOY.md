@@ -46,6 +46,8 @@ You should see the Soul Searchers landing page.
 
 ---
 
-## Visitor stats (optional)
+## Visitor stats
 
-Plausible, Umami, or Cloudflare Web Analytics — no WordPress/Jetpack needed.
+After you log into the editor, open `/looks` from the gold Looks chip. Only that login cookie
+can see Today, last 7 days, all time, the pages people opened, which country, and which site
+sent them. Counts start from the day this ships.

@@ -1,6 +1,6 @@
 ---
 title: This is a cycling blog
-description: The Soul Searchers is a cycling blog — we ride to travel, and we write it down.
+description: The Soul Searchers is a cycling blog, we ride to travel, and we write it down.
 pubDate: 2026-08-26
 heroLabel: Welcome
 ---
@@ -13,7 +13,7 @@ Not only race days. Not only the Tuesday club run. The slow stuff too: a pass at
 
 ## What we ride
 
-Road, tourer, gravel — whatever you clip into. Loaded or naked. From Germany and out into Europe when the calendar allows. The bike is how we look at this planet.
+Road, tourer, gravel, whatever you clip into. Loaded or naked. From Germany and out into Europe when the calendar allows. The bike is how we look at this planet.
 
 ## What you will read
 

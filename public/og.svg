@@ -19,5 +19,5 @@
   <circle cx="480" cy="150" r="2" fill="#eef3f7" opacity="0.5"/>
   <circle cx="620" cy="80" r="2" fill="#eef3f7" opacity="0.65"/>
   <text x="88" y="300" fill="#eef3f7" font-family="Georgia, serif" font-size="64" font-weight="500">The Soul Searchers</text>
-  <text x="88" y="360" fill="#d4a35a" font-family="Arial, sans-serif" font-size="26">A cycling blog — tours, roads, travel by bike.</text>
+  <text x="88" y="360" fill="#d4a35a" font-family="Arial, sans-serif" font-size="26">A cycling blog. Tours, roads, travel by bike.</text>
 </svg>

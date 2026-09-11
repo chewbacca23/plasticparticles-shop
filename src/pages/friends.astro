@@ -1,0 +1,141 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const friends = (await getCollection('friends', ({ data }) => !data.draft)).sort((a, b) => {
+  if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+  return a.data.name.localeCompare(b.data.name);
+});
+---
+
+<BaseLayout
+  title="Friends"
+  description="Friends who helped along the ride — cafés, shops, and people who made the kilometres kinder."
+>
+  <section class="section">
+    <div class="site-shell friends">
+      <p class="eyebrow">Friends</p>
+      <h1 class="section-title">Friends who helped along the ride</h1>
+      <p class="section-lead">
+        Not a sponsor wall. A thank-you list for people and places that made a tour lighter —
+        a repair, a coffee, a bed, a kind tip at the roadside.
+      </p>
+
+      {
+        friends.length === 0 ? (
+          <p class="empty">
+            Friends will show here when you add them in the editor under <strong>Friends</strong>.
+          </p>
+        ) : (
+          <ul class="friend-list">
+            {friends.map((friend) => {
+              const { name, url, thanks, logo } = friend.data;
+              const NameTag = url ? 'a' : 'span';
+              const nameProps = url
+                ? { href: url, target: '_blank', rel: 'noopener noreferrer' }
+                : {};
+              return (
+                <li class="friend">
+                  {logo ? (
+                    <img class="friend-logo" src={logo} alt="" width="96" height="96" loading="lazy" decoding="async" />
+                  ) : (
+                    <span class="friend-mark" aria-hidden="true" />
+                  )}
+                  <div class="friend-copy">
+                    <NameTag class="friend-name" {...nameProps}>
+                      {name}
+                    </NameTag>
+                    {thanks ? <p class="friend-thanks">{thanks}</p> : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .friends {
+    max-width: 42rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .friend-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .friend {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1.1rem 1.25rem;
+    align-items: center;
+    padding: 1.35rem 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .friend:last-child {
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .friend-logo {
+    width: 4.5rem;
+    height: 4.5rem;
+    object-fit: contain;
+    background: rgba(238, 243, 247, 0.04);
+  }
+
+  .friend-mark {
+    display: block;
+    width: 4.5rem;
+    height: 4.5rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    background: radial-gradient(circle at 30% 30%, rgba(240, 194, 122, 0.18), transparent 65%);
+  }
+
+  .friend-name {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--paper);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  a.friend-name:hover {
+    color: var(--amber-hot);
+  }
+
+  .friend-thanks {
+    margin: 0.35rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    font-size: 1rem;
+    max-width: 34rem;
+  }
+
+  @media (max-width: 520px) {
+    .friend {
+      grid-template-columns: 3.5rem 1fr;
+      gap: 0.85rem 1rem;
+    }
+
+    .friend-logo,
+    .friend-mark {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+
+    .friend-name {
+      font-size: 1.2rem;
+    }
+  }
+</style>

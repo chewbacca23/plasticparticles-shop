@@ -1,6 +1,6 @@
 ---
 title: Café kilometres
-description: Coffee, cake, bike outside — rest stops are part of the ride, not a failure of the plan.
+description: Coffee, cake, bike outside, rest stops are part of the ride, not a failure of the plan.
 pubDate: 2026-08-24
 heroLabel: On the road
 ---

@@ -1,0 +1,158 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site.config';
+import { mediaExists } from '../lib/media';
+
+const SHOP_MAIL = 'henrik@thenewsoulsearchers.de';
+
+const products = (await getCollection('shop', ({ data }) => !data.draft)).sort((a, b) => {
+  if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+  return a.data.title.localeCompare(b.data.title);
+});
+---
+
+<BaseLayout
+  title="Shop"
+  description="A small Soul Searchers shop in the background. Woven crest patches and whatever comes next. Drop Henrik an email."
+>
+  <section class="section">
+    <div class="site-shell shop">
+      <p class="eyebrow">Shop</p>
+      <h1 class="section-title">A small shop</h1>
+      <p class="section-lead">
+        Quiet corner of the blog. No cart, no checkout noise. Pick something, write Henrik, and it
+        finds its way to you.
+      </p>
+
+      {
+        products.length === 0 ? (
+          <p class="empty">
+            Products will show here when you add them in the editor under <strong>Shop</strong>.
+          </p>
+        ) : (
+          <ul class="product-list">
+            {products.map((product) => {
+              const { title, blurb, photo, limit, mailSubject } = product.data;
+              const image = mediaExists(photo) ? photo : site.logo;
+              const usingCrest = !mediaExists(photo);
+              const mailto = `mailto:${SHOP_MAIL}?subject=${encodeURIComponent(mailSubject)}`;
+              return (
+                <li class="product">
+                  <img
+                    class:list={['product-photo', { 'product-photo--crest': usingCrest }]}
+                    src={image}
+                    alt={usingCrest ? 'The Soul Searchers crest' : title}
+                    width="640"
+                    height="640"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div class="product-copy">
+                    <h2 class="product-title">{title}</h2>
+                    {limit ? <p class="product-limit">{limit}</p> : null}
+                    {blurb ? <p class="product-blurb">{blurb}</p> : null}
+                    <div class="cta-row">
+                      <a class="btn btn-primary" href={mailto}>
+                        Email Henrik
+                      </a>
+                      <a class="btn btn-ghost" href={`mailto:${SHOP_MAIL}`}>
+                        {SHOP_MAIL}
+                      </a>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .shop {
+    max-width: 44rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .product-list {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .product {
+    display: grid;
+    grid-template-columns: minmax(7rem, 11rem) 1fr;
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+    padding: 1.5rem 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .product:last-child {
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .product-photo {
+    width: 100%;
+    height: auto;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    background: rgba(238, 243, 247, 0.03);
+  }
+
+  .product-photo--crest {
+    padding: 1rem;
+    background: radial-gradient(circle at 30% 25%, rgba(240, 194, 122, 0.12), transparent 60%),
+      rgba(238, 243, 247, 0.03);
+  }
+
+  .product-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+  }
+
+  .product-limit {
+    margin: 0.35rem 0 0;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .product-blurb {
+    margin: 0.65rem 0 0;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 1rem;
+    max-width: 34rem;
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 1.1rem;
+  }
+
+  @media (max-width: 560px) {
+    .product {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .product-photo {
+      width: min(100%, 12rem);
+    }
+  }
+</style>
