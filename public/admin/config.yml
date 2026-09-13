@@ -49,7 +49,7 @@ collections:
         widget: image
         required: false
         choose_url: false
-        hint: "This one sits at the top of the ride, and on the ride tile. Upload → pick JPEG from your Mac (that puts it on the site). Then Save this ride. HEIC often fails. If the thumb looks broken, wait a second."
+        hint: "Only the top picture (and the ride tile). This alone does NOT put photos inside the story text. Upload → JPEG from your Mac → Save. HEIC often fails."
         media_library:
           config:
             multiple: false
@@ -57,14 +57,14 @@ collections:
         name: gallery
         widget: list
         summary: "{{fields.image}}"
-        hint: "Inside the story, between paragraphs. Same Upload → JPEG from the Mac → Save."
+        hint: "These sit between the paragraphs. First photo is not enough — add each in-story shot here. Upload → JPEG → add a row → Save this ride."
         field:
           label: Image
           name: image
           widget: image
           choose_url: false
           required: false
-      - { label: Ride text, name: body, widget: markdown, required: false, hint: "The story. The picture button puts a photo where the cursor is. Photos you add here stay in the text." }
+      - { label: Ride text, name: body, widget: markdown, required: false, hint: "The story. Optional: the picture button puts a photo where the cursor is. Or use Photos in the story above and we place them between paragraphs." }
       - { label: Headline, name: headline, widget: string, required: false, hint: "Usually the same as the name. Shows on the ride tile." }
       - { label: Short intro, name: description, widget: text, required: false, hint: "A few lines under the name on the ride page." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false }
