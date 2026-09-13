@@ -4,6 +4,13 @@ pubDate: 2026-09-13
 cover: /stories/img_1442.jpeg
 gallery:
   - /stories/img_1442.jpeg
+  - /stories/img_1459.jpeg
+  - /stories/img_1424.jpeg
+  - /stories/img_1422.jpeg
+  - /stories/img_1428.jpeg
+  - /stories/img_1426.jpeg
+  - /stories/img_1463.jpeg
+  - null
 headline: The mighty Mountain
 description: Write a few lines about this ride.
 draft: false
