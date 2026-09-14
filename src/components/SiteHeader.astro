@@ -61,7 +61,6 @@ const links = [
           var header = document.querySelector('.header--home');
           var heroCrest = document.querySelector('.hero-logo');
           var headerCrest = header && header.querySelector('.brand-logo');
-          var brandText = header && header.querySelector('.brand-text');
           if (!header || !headerCrest) return;
           if (!heroCrest) {
             header.style.setProperty('--crest', '1');
@@ -70,8 +69,10 @@ const links = [
 
           var reduce =
             window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          var ticking = false;
           var runway = null;
+          var goal = 0;
+          var visual = 0;
+          var looping = false;
           var flyer = document.createElement('img');
           flyer.className = 'crest-flyer';
           flyer.src = heroCrest.currentSrc || heroCrest.src;
@@ -92,13 +93,14 @@ const links = [
           }
 
           function targetBox() {
-            var text = brandText.getBoundingClientRect();
+            // Use the real logo slot X (works even while width is still 0).
+            var logo = headerCrest.getBoundingClientRect();
+            var bar = header.querySelector('.header-inner').getBoundingClientRect();
             var width = 38.4;
             var height = width * (51 / 40);
-            var gap = 12;
             return {
-              left: text.left - gap - width,
-              top: text.top + (text.height - height) / 2,
+              left: logo.left,
+              top: bar.top + (bar.height - height) / 2,
               width: width,
               height: height,
             };
@@ -116,14 +118,12 @@ const links = [
           }
 
           function hideHero() {
-            // Keep layout for FLIP math; only the flyer should be seen mid-flight.
             heroCrest.style.setProperty('opacity', '0', 'important');
             heroCrest.style.setProperty('visibility', 'hidden', 'important');
             heroCrest.style.setProperty('transform', 'none', 'important');
           }
 
-          function updateCrest() {
-            ticking = false;
+          function progressFromScroll() {
             var headerBox = header.getBoundingClientRect();
             var heroBox = heroCrest.getBoundingClientRect();
             var gap = heroBox.top - headerBox.bottom;
@@ -141,7 +141,10 @@ const links = [
             var raw = (runway.startGap - gap) / span;
             if (raw < 0) raw = 0;
             if (raw > 1) raw = 1;
+            return raw;
+          }
 
+          function paint(raw) {
             if (reduce) {
               hideFlyer();
               var hard = raw >= 0.5 ? 1 : 0;
@@ -154,8 +157,7 @@ const links = [
 
             var tMove = easeInOut(raw);
             var tSize = easeOut(raw);
-            // Open space in the bar a little ahead of the crest landing.
-            var tSlot = easeOut(Math.min(1, raw * 1.15));
+            var tSlot = easeOut(Math.min(1, raw * 1.12));
 
             header.style.setProperty('--crest', tSlot.toFixed(4));
             header.classList.toggle('crest-in', raw > 0.96);
@@ -166,18 +168,18 @@ const links = [
               return;
             }
 
-            if (raw >= 0.98) {
+            if (raw >= 0.985) {
               hideFlyer();
               hideHero();
               return;
             }
 
-            // One crest only: the flyer eases from the big hero mark into the small header mark.
             hideHero();
+            var heroBox = heroCrest.getBoundingClientRect();
             var to = targetBox();
             var left = lerp(heroBox.left, to.left, tMove);
             var top = lerp(heroBox.top, to.top, tMove);
-            var width = lerp(heroBox.width, to.width, tSize);
+            var width = lerp(Math.max(heroBox.width, 1), to.width, tSize);
 
             flyer.style.visibility = 'visible';
             flyer.style.opacity = '1';
@@ -186,15 +188,38 @@ const links = [
               'translate3d(' + left.toFixed(2) + 'px, ' + top.toFixed(2) + 'px, 0)';
           }
 
-          function onScroll() {
-            if (ticking) return;
-            ticking = true;
-            window.requestAnimationFrame(updateCrest);
+          function tick() {
+            goal = progressFromScroll();
+            var diff = goal - visual;
+            // Smooth catch-up so laptop trackpad jumps still ease, instead of popping.
+            if (Math.abs(diff) < 0.001) {
+              visual = goal;
+              paint(visual);
+              looping = false;
+              return;
+            }
+            visual += diff * 0.16;
+            paint(visual);
+            window.requestAnimationFrame(tick);
           }
 
-          updateCrest();
-          window.addEventListener('scroll', onScroll, { passive: true });
-          window.addEventListener('resize', onScroll);
+          function kick() {
+            goal = progressFromScroll();
+            if (!looping) {
+              looping = true;
+              window.requestAnimationFrame(tick);
+            }
+          }
+
+          function onResize() {
+            runway = null;
+            visual = progressFromScroll();
+            kick();
+          }
+
+          kick();
+          window.addEventListener('scroll', kick, { passive: true });
+          window.addEventListener('resize', onResize);
         }
 
         if (document.readyState === 'loading') {
