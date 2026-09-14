@@ -33,6 +33,7 @@ const instagram = instagramBind(settings);
       <a href="/rss.xml">RSS</a>
     </div>
     <p class="footer-copy">© {year} {site.name}. A cycling blog, packed light.</p>
+    <p class="footer-credit">Site design &amp; build with Cursor.</p>
   </div>
 </footer>
 
@@ -63,6 +64,12 @@ const instagram = instagramBind(settings);
     font-size: 0.92rem;
   }
 
+  .footer-credit {
+    margin: 0.15rem 0 0;
+    color: rgba(215, 224, 232, 0.42);
+    font-size: 0.78rem;
+  }
+
   .footer-links {
     display: flex;
     flex-wrap: wrap;
@@ -84,7 +91,8 @@ const instagram = instagramBind(settings);
       align-items: end;
     }
 
-    .footer-copy {
+    .footer-copy,
+    .footer-credit {
       grid-column: 1 / -1;
     }
   }
