@@ -17,3 +17,8 @@ run_worker_first = true
 [[kv_namespaces]]
 binding = "STATS"
 id = "9f6a71b57d0643389c34f328e801012f"
+
+# Contact form can send through Cloudflare Email Sending when enabled:
+# [[send_email]]
+# name = "EMAIL"
+# Or set secret RESEND_API_KEY (https://resend.com) on thenewsoulsearchersblogc.

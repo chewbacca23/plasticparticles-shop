@@ -21,25 +21,27 @@ const email = publicEmail(saved);
       </p>
 
       <div id="form-success" class="success" hidden>
-        <h2>Message ready</h2>
+        <h2>Sent</h2>
         <p>
-          Your mail client should open with the note. If it doesn’t, email
-          <a data-site="email" href={`mailto:${email}`}>{email}</a> directly.
+          Your note is on its way to Henrik. If anything stalls, write
+          <a data-site="email" href={`mailto:${email}`}>{email}</a> direct.
         </p>
       </div>
 
-      <form id="contact-form" class="form" method="post" action={`mailto:${email}`} enctype="text/plain" data-site="mail-form">
+      <p id="form-error" class="error" hidden></p>
+
+      <form id="contact-form" class="form" method="post" action="/api/contact" data-site="mail-form">
         <label>
           <span>Name</span>
-          <input type="text" name="name" required autocomplete="name" />
+          <input type="text" name="name" required autocomplete="name" maxlength="120" />
         </label>
         <label>
           <span>Email</span>
-          <input type="email" name="email" required autocomplete="email" />
+          <input type="email" name="email" required autocomplete="email" maxlength="200" />
         </label>
         <label>
           <span>Message</span>
-          <textarea name="message" rows="6" required></textarea>
+          <textarea name="message" rows="6" required maxlength="5000"></textarea>
         </label>
         <button class="btn btn-primary" type="submit">Send message</button>
       </form>
@@ -52,15 +54,112 @@ const email = publicEmail(saved);
   </section>
 </BaseLayout>
 
-<script>
-  const form = document.getElementById('contact-form');
-  const success = document.getElementById('form-success');
-  form?.addEventListener('submit', () => {
-    window.setTimeout(() => {
-      success?.removeAttribute('hidden');
-      form?.setAttribute('hidden', '');
-    }, 200);
-  });
+<script is:inline>
+  (function () {
+    var form = document.getElementById('contact-form');
+    var success = document.getElementById('form-success');
+    var errorBox = document.getElementById('form-error');
+    if (!form) return;
+
+    var sending = false;
+    var fallback = form.getAttribute('action') || '/api/contact';
+
+    function showError(text) {
+      if (!errorBox) return;
+      errorBox.textContent = text || 'Could not send just now.';
+      errorBox.hidden = false;
+    }
+
+    function hideError() {
+      if (!errorBox) return;
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
+
+    function showSent() {
+      if (success) success.hidden = false;
+      form.hidden = true;
+      hideError();
+    }
+
+    function openMailto(fields) {
+      var mail =
+        (document.querySelector('[data-site="email"]') || {}).getAttribute('href') ||
+        'mailto:hello@thenewsoulsearchers.de';
+      var to = String(mail).replace(/^mailto:/i, '').split('?')[0];
+      var subject = encodeURIComponent('Soul Searchers note from ' + fields.name);
+      var body = encodeURIComponent(
+        'From: ' + fields.name + ' <' + fields.email + '>\n\n' + fields.message,
+      );
+      window.location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+    }
+
+    async function sendNote(fields) {
+      if (sending) return;
+      sending = true;
+      hideError();
+      var button = form.querySelector('button[type="submit"]');
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Sending…';
+      }
+
+      try {
+        var res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(fields),
+        });
+        var data = {};
+        try {
+          data = await res.json();
+        } catch (_) {}
+
+        if (res.ok && data.ok) {
+          showSent();
+          return;
+        }
+
+        if (data && data.mailto) {
+          openMailto(fields);
+          showSent();
+          return;
+        }
+
+        showError((data && data.error) || 'Could not send just now.');
+      } catch (_) {
+        openMailto(fields);
+        showSent();
+      } finally {
+        sending = false;
+        if (button && !form.hidden) {
+          button.disabled = false;
+          button.textContent = 'Send message';
+        }
+      }
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var data = new FormData(form);
+      sendNote({
+        name: String(data.get('name') || '').trim(),
+        email: String(data.get('email') || '').trim(),
+        message: String(data.get('message') || '').trim(),
+      });
+    });
+
+    // Enter in the email field sends right away when the note is ready.
+    var emailInput = form.querySelector('input[name="email"]');
+    if (emailInput) {
+      emailInput.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit', { cancelable: true }));
+      });
+    }
+  })();
 </script>
 
 <style>
@@ -114,6 +213,15 @@ const email = publicEmail(saved);
     color: var(--amber-hot);
   }
 
+  .error {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(220, 90, 90, 0.45);
+    border-radius: 0.85rem;
+    background: rgba(80, 24, 24, 0.35);
+    color: rgba(255, 220, 220, 0.92);
+  }
+
   .success {
     margin-bottom: 1.5rem;
     padding: 1.25rem 1.35rem;
@@ -130,5 +238,10 @@ const email = publicEmail(saved);
   .success p {
     margin: 0;
     color: rgba(215, 224, 232, 0.82);
+  }
+
+  button:disabled {
+    opacity: 0.7;
+    cursor: wait;
   }
 </style>

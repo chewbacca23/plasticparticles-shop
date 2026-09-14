@@ -126,6 +126,21 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 | `"looksStorage": "cache"` or `"memory"` | Looks is temporary. Finish the KV steps above. |
 | `"looksStorage": "kv"` / `"looksDurable": true` | Looks is durable. Counts survive deploys. |
 
+### Contact form (real send, no mail app)
+
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**.
+
+Wire it once with Resend (simplest):
+
+1. Create a free account at [resend.com](https://resend.com)
+2. Add and verify domain **`thenewsoulsearchers.de`** (DNS records Resend shows)
+3. Create an API key
+4. Cloudflare → Workers → **`thenewsoulsearchersblogc`** → Settings → Variables and Secrets
+5. Add **`RESEND_API_KEY`** as a **Secret** → paste the key → Save
+6. Deployments → **Retry**, hard-refresh `/contact`, send yourself a test note
+
+Until that secret is there, Send still opens a filled mailto as a fallback so nothing is lost.
+
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 
 Do not force-push over `thenewsoulsearchersblog` `main` after using the editor — that would wipe those posts.

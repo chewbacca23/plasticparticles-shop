@@ -20,6 +20,7 @@ import {
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
+import { handleContactRequest } from './contact-mail.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -359,6 +360,9 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/cms-status') return statusPage(env);
+
+    const contact = await handleContactRequest(request, env);
+    if (contact) return contact;
 
     const looks = await handleLooksRequest(request, env);
     if (looks) return looks;
