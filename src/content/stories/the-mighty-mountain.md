@@ -10,7 +10,6 @@ gallery:
   - /stories/img_1428.jpeg
   - /stories/img_1426.jpeg
   - /stories/img_1463.jpeg
-  - null
 headline: The mighty Mountain
 description: Write a few lines about this ride.
 draft: false

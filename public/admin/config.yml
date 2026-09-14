@@ -189,6 +189,20 @@ collections:
   - name: settings
     label: Site
     files:
+      - name: home
+        label: Home
+        file: src/content/settings/home.json
+        format: json
+        preview_path: /
+        editor:
+          preview: false
+        fields:
+          - label: Home hero photo
+            name: heroPhoto
+            widget: image
+            required: false
+            choose_url: false
+            hint: "Full-bleed opening photo on the home page. Pick one that feels like the road. Leave empty and the newest Now photo fills in. JPEG from the Mac."
       - name: imprint
         label: Mail and imprint
         file: src/content/settings/site.json
