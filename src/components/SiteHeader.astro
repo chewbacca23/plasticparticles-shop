@@ -61,18 +61,22 @@ const links = [
           var header = document.querySelector('.header--home');
           var heroCrest = document.querySelector('.hero-logo');
           var headerCrest = header && header.querySelector('.brand-logo');
-          if (!header || !headerCrest) return;
-          if (!heroCrest) {
-            header.style.setProperty('--crest', '1');
+          if (!header || !headerCrest || !heroCrest) {
+            if (header) header.style.setProperty('--crest', '1');
             return;
           }
 
           var reduce =
             window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          var runway = null;
-          var goal = 0;
-          var visual = 0;
-          var looping = false;
+          // Fixed-duration flight so laptop trackpads still show a real glide.
+          var DURATION = 1100;
+          var state = 'hero'; // hero | flying | header
+          var direction = 1; // 1 = up into header, -1 = back to hero
+          var fromBox = null;
+          var toBox = null;
+          var startedAt = 0;
+          var flying = false;
+
           var flyer = document.createElement('img');
           flyer.className = 'crest-flyer';
           flyer.src = heroCrest.currentSrc || heroCrest.src;
@@ -84,16 +88,20 @@ const links = [
             return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
           }
 
-          function easeOut(t) {
-            return 1 - Math.pow(1 - t, 3);
-          }
-
           function lerp(a, b, t) {
             return a + (b - a) * t;
           }
 
-          function targetBox() {
-            // Use the real logo slot X (works even while width is still 0).
+          function copyBox(box) {
+            return {
+              left: box.left,
+              top: box.top,
+              width: Math.max(box.width, 1),
+              height: Math.max(box.height, 1),
+            };
+          }
+
+          function headerSlot() {
             var logo = headerCrest.getBoundingClientRect();
             var bar = header.querySelector('.header-inner').getBoundingClientRect();
             var width = 38.4;
@@ -123,103 +131,129 @@ const links = [
             heroCrest.style.setProperty('transform', 'none', 'important');
           }
 
-          function progressFromScroll() {
-            var headerBox = header.getBoundingClientRect();
-            var heroBox = heroCrest.getBoundingClientRect();
-            var gap = heroBox.top - headerBox.bottom;
-
-            if (!runway) {
-              var restGap = Math.max(gap, heroBox.height);
-              runway = {
-                startGap: Math.max(restGap - 10, 96),
-                endGap: -Math.max(heroBox.height * 0.55, 48),
-              };
-            }
-
-            var span = runway.startGap - runway.endGap;
-            if (span < 1) span = 1;
-            var raw = (runway.startGap - gap) / span;
-            if (raw < 0) raw = 0;
-            if (raw > 1) raw = 1;
-            return raw;
+          function setHeaderCrest(on) {
+            header.style.setProperty('--crest', on ? '1' : '0');
+            header.classList.toggle('crest-in', !!on);
           }
 
-          function paint(raw) {
-            if (reduce) {
-              hideFlyer();
-              var hard = raw >= 0.5 ? 1 : 0;
-              header.style.setProperty('--crest', String(hard));
-              header.classList.toggle('crest-in', hard === 1);
-              if (hard) hideHero();
-              else showHero();
-              return;
-            }
-
-            var tMove = easeInOut(raw);
-            var tSize = easeOut(raw);
-            var tSlot = easeOut(Math.min(1, raw * 1.12));
-
-            header.style.setProperty('--crest', tSlot.toFixed(4));
-            header.classList.toggle('crest-in', raw > 0.96);
-
-            if (raw <= 0.001) {
-              hideFlyer();
-              showHero();
-              return;
-            }
-
-            if (raw >= 0.985) {
-              hideFlyer();
-              hideHero();
-              return;
-            }
-
-            hideHero();
-            var heroBox = heroCrest.getBoundingClientRect();
-            var to = targetBox();
-            var left = lerp(heroBox.left, to.left, tMove);
-            var top = lerp(heroBox.top, to.top, tMove);
-            var width = lerp(Math.max(heroBox.width, 1), to.width, tSize);
-
+          function paintFlyer(from, to, t) {
+            var e = easeInOut(t);
+            var left = lerp(from.left, to.left, e);
+            var top = lerp(from.top, to.top, e);
+            var width = lerp(from.width, to.width, e);
             flyer.style.visibility = 'visible';
             flyer.style.opacity = '1';
             flyer.style.width = width.toFixed(2) + 'px';
             flyer.style.transform =
               'translate3d(' + left.toFixed(2) + 'px, ' + top.toFixed(2) + 'px, 0)';
+            // Open the logo slot as the crest arrives.
+            var slot = direction > 0 ? e : 1 - e;
+            header.style.setProperty('--crest', slot.toFixed(4));
           }
 
-          function tick() {
-            goal = progressFromScroll();
-            var diff = goal - visual;
-            // Smooth catch-up so laptop trackpad jumps still ease, instead of popping.
-            if (Math.abs(diff) < 0.001) {
-              visual = goal;
-              paint(visual);
-              looping = false;
+          function finish(up) {
+            flying = false;
+            hideFlyer();
+            if (up) {
+              state = 'header';
+              hideHero();
+              setHeaderCrest(true);
+            } else {
+              state = 'hero';
+              showHero();
+              setHeaderCrest(false);
+            }
+          }
+
+          function startFlight(up) {
+            if (reduce) {
+              finish(up);
               return;
             }
-            visual += diff * 0.16;
-            paint(visual);
-            window.requestAnimationFrame(tick);
+
+            direction = up ? 1 : -1;
+            toBox = headerSlot();
+
+            if (up) {
+              fromBox = copyBox(heroCrest.getBoundingClientRect());
+              toBox = headerSlot();
+              // Trackpad jumps often leave the crest already at the bar.
+              // Guarantee a long, on-screen glide into the small header mark.
+              var barBottom = header.getBoundingClientRect().bottom;
+              var minTravel = 220;
+              if (fromBox.top < toBox.top + minTravel) {
+                fromBox.top = Math.min(window.innerHeight * 0.52, toBox.top + 320);
+                fromBox.left = Math.max(toBox.left, Math.min(fromBox.left || toBox.left + 80, window.innerWidth * 0.4));
+                fromBox.width = Math.max(fromBox.width, 110);
+                fromBox.height = fromBox.width * (51 / 40);
+              }
+              hideHero();
+              setHeaderCrest(false);
+            } else {
+              fromBox = headerSlot();
+              showHero();
+              toBox = copyBox(heroCrest.getBoundingClientRect());
+              hideHero();
+              setHeaderCrest(true);
+            }
+
+            startedAt = performance.now();
+            state = 'flying';
+            flying = true;
+            paintFlyer(fromBox, toBox, 0);
+            window.requestAnimationFrame(step);
           }
 
-          function kick() {
-            goal = progressFromScroll();
-            if (!looping) {
-              looping = true;
-              window.requestAnimationFrame(tick);
+          function step(now) {
+            if (!flying) return;
+            var t = (now - startedAt) / DURATION;
+            if (t >= 1) {
+              paintFlyer(fromBox, toBox, 1);
+              finish(direction > 0);
+              return;
+            }
+            if (t < 0) t = 0;
+            paintFlyer(fromBox, toBox, t);
+            window.requestAnimationFrame(step);
+          }
+
+          function shouldFlyUp() {
+            // Never on the initial hero view — only after a real scroll.
+            if (window.scrollY < 48) return false;
+            var hero = heroCrest.getBoundingClientRect();
+            var barBottom = header.getBoundingClientRect().bottom;
+            // Start while the big crest is still on screen, heading into the bar.
+            return hero.top < barBottom + 220 || hero.top < window.innerHeight * 0.42;
+          }
+
+          function shouldFlyDown() {
+            if (window.scrollY < 24) return true;
+            var hero = heroCrest.getBoundingClientRect();
+            return hero.top > window.innerHeight * 0.55;
+          }
+
+          function onScroll() {
+            if (flying) return;
+
+            if (state === 'hero' && shouldFlyUp()) {
+              startFlight(true);
+              return;
+            }
+
+            if (state === 'header' && shouldFlyDown()) {
+              startFlight(false);
             }
           }
 
-          function onResize() {
-            runway = null;
-            visual = progressFromScroll();
-            kick();
-          }
-
-          kick();
-          window.addEventListener('scroll', kick, { passive: true });
-          window.addEventListener('resize', onResize);
+          hideFlyer();
+          setHeaderCrest(false);
+          showHero();
+          // Do not run onScroll() here — on laptop the crest already sits in the
+          // upper half, which would fire the flight before any scroll.
+          window.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', function () {
+            if (state === 'header') setHeaderCrest(true);
+          });
         }
 
         if (document.readyState === 'loading') {
@@ -237,7 +271,7 @@ const links = [
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 60;
+    z-index: 80;
     width: 4rem;
     height: auto;
     margin: 0;
@@ -247,7 +281,7 @@ const links = [
     visibility: hidden;
     opacity: 0;
     transform: translate3d(-9999px, -9999px, 0);
-    filter: drop-shadow(0 12px 30px rgba(212, 163, 90, 0.4));
+    filter: drop-shadow(0 14px 34px rgba(212, 163, 90, 0.45));
     will-change: transform, width, opacity;
     transform-origin: center center;
   }
@@ -294,7 +328,6 @@ const links = [
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
   }
 
-  /* Home: crest flies into the bar; settled mark only appears at the end. */
   .header--home {
     --crest: 0;
   }
