@@ -4,6 +4,7 @@ import { instagramBind } from '../lib/instagram';
 import settings from '../content/settings/instagram.json';
 
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isHome = pathname === '/';
 const instagram = instagramBind(settings);
 const links = [
   { href: '/', label: 'Home' },
@@ -18,7 +19,7 @@ const links = [
 ];
 ---
 
-<header class="header">
+<header class:list={['header', { 'header--home': isHome }]}>
   <div class="site-shell header-inner">
     <a class="brand" href="/">
       <img class="brand-logo" src={site.logo} alt="" width="40" height="51" decoding="async" />
@@ -52,6 +53,38 @@ const links = [
   </div>
 </header>
 
+{
+  isHome && (
+    <script is:inline>
+      (function () {
+        function bindCrestHand() {
+          var header = document.querySelector('.header--home');
+          var heroCrest = document.querySelector('.hero-logo');
+          if (!header) return;
+          if (!heroCrest || !('IntersectionObserver' in window)) {
+            header.classList.add('crest-in');
+            return;
+          }
+          var io = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                header.classList.toggle('crest-in', !entry.isIntersecting);
+              });
+            },
+            { root: null, threshold: 0, rootMargin: '0px 0px 0px 0px' },
+          );
+          io.observe(heroCrest);
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', bindCrestHand);
+        } else {
+          bindCrestHand();
+        }
+      })();
+    </script>
+  )
+}
+
 <style>
   .header {
     position: sticky;
@@ -83,6 +116,38 @@ const links = [
     height: auto;
     object-fit: contain;
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
+  }
+
+  /* Home: big hero crest owns the mark until it scrolls away. */
+  .header--home .brand {
+    gap: 0;
+    transition: gap 280ms ease;
+  }
+
+  .header--home .brand-logo {
+    width: 0;
+    max-width: 0;
+    opacity: 0;
+    transform: scale(0.82);
+    overflow: hidden;
+    pointer-events: none;
+    transition:
+      width 280ms ease,
+      max-width 280ms ease,
+      opacity 220ms ease,
+      transform 280ms ease;
+  }
+
+  .header--home.crest-in .brand {
+    gap: 0.75rem;
+  }
+
+  .header--home.crest-in .brand-logo {
+    width: 2.4rem;
+    max-width: 2.4rem;
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
   }
 
   .brand-text {
@@ -121,6 +186,13 @@ const links = [
 
     .nav {
       justify-content: flex-start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header--home .brand,
+    .header--home .brand-logo {
+      transition: none;
     }
   }
 </style>
