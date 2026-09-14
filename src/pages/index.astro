@@ -90,8 +90,9 @@ const heroPhoto = resolveHomeHero(
 <style>
   .hero {
     position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
+    /* Header sits in normal flow above this, so 100vh alone pushes CTAs under the fold. */
+    min-height: calc(100vh - 4.25rem);
+    min-height: calc(100dvh - 4.25rem);
     display: grid;
     align-items: end;
     overflow: hidden;
@@ -247,6 +248,48 @@ const heroPhoto = resolveHomeHero(
     }
     to {
       transform: scale(1.12) translate3d(-1.2%, -0.8%, 0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      /* Wrapped nav makes the sticky header taller on small screens. */
+      min-height: calc(100vh - 10rem);
+      min-height: calc(100dvh - 10rem);
+    }
+
+    .hero-copy {
+      padding: 2.25rem 0 1.35rem;
+    }
+
+    .hero-logo {
+      width: 2.35rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .brand-hero {
+      margin-bottom: 0.45rem;
+      font-size: clamp(1.75rem, 8vw, 2.2rem);
+      line-height: 1.02;
+    }
+
+    h1 {
+      margin-bottom: 0.45rem;
+      font-size: 1.08rem;
+    }
+
+    .hero-lead {
+      margin-bottom: 0.9rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .scroll-hint {
+      display: none;
     }
   }
 
