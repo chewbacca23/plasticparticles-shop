@@ -69,6 +69,7 @@ const links = [
           var reduce =
             window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           var ticking = false;
+          var runway = null;
 
           function easeInOut(t) {
             return 0.5 - 0.5 * Math.cos(Math.PI * t);
@@ -78,12 +79,20 @@ const links = [
             ticking = false;
             var headerBox = header.getBoundingClientRect();
             var heroBox = heroCrest.getBoundingClientRect();
-            // Long runway so the handoff reads as a glide, not a pop.
-            var start = headerBox.bottom + Math.max(heroBox.height * 3.2, 260);
-            var end = headerBox.bottom - Math.max(heroBox.height * 0.6, 48);
-            var span = start - end;
+            var gap = heroBox.top - headerBox.bottom;
+
+            // Lock the runway from the crest's resting place so it only starts after a real scroll.
+            if (!runway) {
+              var restGap = Math.max(gap, heroBox.height);
+              runway = {
+                startGap: Math.max(restGap - 10, 96),
+                endGap: -Math.max(heroBox.height * 0.65, 56),
+              };
+            }
+
+            var span = runway.startGap - runway.endGap;
             if (span < 1) span = 1;
-            var raw = (start - heroBox.top) / span;
+            var raw = (runway.startGap - gap) / span;
             if (raw < 0) raw = 0;
             if (raw > 1) raw = 1;
             var t = reduce ? (raw >= 0.5 ? 1 : 0) : easeInOut(raw);
