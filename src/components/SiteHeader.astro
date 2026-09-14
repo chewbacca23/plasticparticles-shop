@@ -70,24 +70,26 @@ const links = [
             window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           var ticking = false;
 
-          function smoothstep(t) {
-            return t * t * (3 - 2 * t);
+          function easeInOut(t) {
+            return 0.5 - 0.5 * Math.cos(Math.PI * t);
           }
 
           function updateCrest() {
             ticking = false;
             var headerBox = header.getBoundingClientRect();
             var heroBox = heroCrest.getBoundingClientRect();
-            // Start as the hero crest nears the sticky bar; finish as it slips under it.
-            var start = headerBox.bottom + heroBox.height * 0.55;
-            var end = headerBox.bottom - 12;
-            var raw = (start - heroBox.top) / (start - end);
+            // Long runway so the handoff reads as a glide, not a pop.
+            var start = headerBox.bottom + Math.max(heroBox.height * 3.2, 260);
+            var end = headerBox.bottom - Math.max(heroBox.height * 0.6, 48);
+            var span = start - end;
+            if (span < 1) span = 1;
+            var raw = (start - heroBox.top) / span;
             if (raw < 0) raw = 0;
             if (raw > 1) raw = 1;
-            var t = reduce ? (raw >= 0.5 ? 1 : 0) : smoothstep(raw);
+            var t = reduce ? (raw >= 0.5 ? 1 : 0) : easeInOut(raw);
 
             header.style.setProperty('--crest', t.toFixed(4));
-            header.classList.toggle('crest-in', t > 0.04);
+            header.classList.toggle('crest-in', t > 0.02);
 
             if (t <= 0.001) {
               heroCrest.style.removeProperty('opacity');
@@ -105,7 +107,7 @@ const links = [
             heroCrest.style.setProperty('opacity', (out * 0.92).toFixed(4), 'important');
             heroCrest.style.setProperty(
               'transform',
-              'translate3d(0, ' + (-22 * t).toFixed(2) + 'px, 0) scale(' + (1 - 0.12 * t).toFixed(4) + ')',
+              'translate3d(0, ' + (-36 * t).toFixed(2) + 'px, 0) scale(' + (1 - 0.14 * t).toFixed(4) + ')',
               'important',
             );
           }
@@ -174,13 +176,18 @@ const links = [
   }
 
   .header--home .brand-logo {
-    width: calc(2.4rem * var(--crest));
-    max-width: 2.4rem;
+    width: 2.4rem;
+    max-width: calc(2.4rem * var(--crest));
     opacity: var(--crest);
-    transform: translate3d(0, calc((1 - var(--crest)) * 12px), 0) scale(calc(0.84 + 0.16 * var(--crest)));
+    transform: translate3d(
+        calc((1 - var(--crest)) * -8px),
+        calc((1 - var(--crest)) * 28px),
+        0
+      )
+      scale(calc(0.88 + 0.12 * var(--crest)));
     overflow: hidden;
     pointer-events: none;
-    will-change: opacity, transform, width;
+    will-change: opacity, transform, max-width;
   }
 
   .header--home.crest-in .brand-logo {
