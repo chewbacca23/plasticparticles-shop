@@ -57,10 +57,12 @@ const links = [
   isHome && (
     <script is:inline>
       (function () {
-        function bindCrestGlide() {
+        function bindCrestFlight() {
           var header = document.querySelector('.header--home');
           var heroCrest = document.querySelector('.hero-logo');
-          if (!header) return;
+          var headerCrest = header && header.querySelector('.brand-logo');
+          var brandText = header && header.querySelector('.brand-text');
+          if (!header || !headerCrest) return;
           if (!heroCrest) {
             header.style.setProperty('--crest', '1');
             return;
@@ -70,9 +72,38 @@ const links = [
             window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           var ticking = false;
           var runway = null;
+          var flyer = document.createElement('img');
+          flyer.className = 'crest-flyer';
+          flyer.src = heroCrest.currentSrc || heroCrest.src;
+          flyer.alt = '';
+          flyer.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(flyer);
 
           function easeInOut(t) {
             return 0.5 - 0.5 * Math.cos(Math.PI * t);
+          }
+
+          function lerp(a, b, t) {
+            return a + (b - a) * t;
+          }
+
+          function targetBox() {
+            // Destination to the left of the brand name inside the black bar.
+            var text = brandText.getBoundingClientRect();
+            var width = 38.4;
+            var height = width * (51 / 40);
+            var gap = 12;
+            return {
+              left: text.left - gap - width,
+              top: text.top + (text.height - height) / 2,
+              width: width,
+              height: height,
+            };
+          }
+
+          function hideFlyer() {
+            flyer.style.opacity = '0';
+            flyer.style.visibility = 'hidden';
           }
 
           function updateCrest() {
@@ -81,12 +112,11 @@ const links = [
             var heroBox = heroCrest.getBoundingClientRect();
             var gap = heroBox.top - headerBox.bottom;
 
-            // Lock the runway from the crest's resting place so it only starts after a real scroll.
             if (!runway) {
               var restGap = Math.max(gap, heroBox.height);
               runway = {
                 startGap: Math.max(restGap - 10, 96),
-                endGap: -Math.max(heroBox.height * 0.65, 56),
+                endGap: -Math.max(heroBox.height * 0.55, 48),
               };
             }
 
@@ -98,27 +128,49 @@ const links = [
             var t = reduce ? (raw >= 0.5 ? 1 : 0) : easeInOut(raw);
 
             header.style.setProperty('--crest', t.toFixed(4));
-            header.classList.toggle('crest-in', t > 0.02);
+            header.classList.toggle('crest-in', t > 0.97);
+
+            if (reduce) {
+              hideFlyer();
+              if (t >= 1) {
+                heroCrest.style.setProperty('opacity', '0', 'important');
+              } else {
+                heroCrest.style.removeProperty('opacity');
+              }
+              heroCrest.style.removeProperty('transform');
+              return;
+            }
 
             if (t <= 0.001) {
+              hideFlyer();
               heroCrest.style.removeProperty('opacity');
               heroCrest.style.removeProperty('transform');
               return;
             }
 
-            if (reduce) {
-              heroCrest.style.setProperty('opacity', t >= 1 ? '0' : '', 'important');
-              heroCrest.style.removeProperty('transform');
+            // Hero fades as the flyer takes the path into the black bar.
+            heroCrest.style.setProperty(
+              'opacity',
+              (Math.max(0, 1 - t * 1.35) * 0.92).toFixed(4),
+              'important',
+            );
+            heroCrest.style.setProperty('transform', 'translate3d(0,0,0)', 'important');
+
+            if (t >= 0.97) {
+              hideFlyer();
               return;
             }
 
-            var out = 1 - t;
-            heroCrest.style.setProperty('opacity', (out * 0.92).toFixed(4), 'important');
-            heroCrest.style.setProperty(
-              'transform',
-              'translate3d(0, ' + (-36 * t).toFixed(2) + 'px, 0) scale(' + (1 - 0.14 * t).toFixed(4) + ')',
-              'important',
-            );
+            var to = targetBox();
+            var left = lerp(heroBox.left, to.left, t);
+            var top = lerp(heroBox.top, to.top, t);
+            var width = lerp(heroBox.width, to.width, t);
+
+            flyer.style.visibility = 'visible';
+            flyer.style.opacity = '1';
+            flyer.style.width = width.toFixed(2) + 'px';
+            flyer.style.transform =
+              'translate3d(' + left.toFixed(2) + 'px, ' + top.toFixed(2) + 'px, 0)';
           }
 
           function onScroll() {
@@ -133,14 +185,40 @@ const links = [
         }
 
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', bindCrestGlide);
+          document.addEventListener('DOMContentLoaded', bindCrestFlight);
         } else {
-          bindCrestGlide();
+          bindCrestFlight();
         }
       })();
     </script>
   )
 }
+
+<style is:global>
+  .crest-flyer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    width: 4rem;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: translate3d(-9999px, -9999px, 0);
+    filter: drop-shadow(0 10px 28px rgba(212, 163, 90, 0.35));
+    will-change: transform, width, opacity;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crest-flyer {
+      display: none !important;
+    }
+  }
+</style>
 
 <style>
   .header {
@@ -150,6 +228,7 @@ const links = [
     border-bottom: 1px solid rgba(215, 224, 232, 0.06);
     background: rgba(10, 14, 20, 0.65);
     backdrop-filter: blur(16px) saturate(1.1);
+    overflow: visible;
   }
 
   .header-inner {
@@ -158,6 +237,7 @@ const links = [
     justify-content: space-between;
     gap: 1rem;
     min-height: 4.25rem;
+    overflow: visible;
   }
 
   .brand {
@@ -175,7 +255,7 @@ const links = [
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
   }
 
-  /* Home: crest glides from hero into the header as you scroll. */
+  /* Home: crest flies into the bar; settled mark only appears at the end. */
   .header--home {
     --crest: 0;
   }
@@ -187,19 +267,13 @@ const links = [
   .header--home .brand-logo {
     width: 2.4rem;
     max-width: calc(2.4rem * var(--crest));
-    opacity: var(--crest);
-    transform: translate3d(
-        calc((1 - var(--crest)) * -8px),
-        calc((1 - var(--crest)) * 28px),
-        0
-      )
-      scale(calc(0.88 + 0.12 * var(--crest)));
+    opacity: 0;
     overflow: hidden;
     pointer-events: none;
-    will-change: opacity, transform, max-width;
   }
 
   .header--home.crest-in .brand-logo {
+    opacity: 1;
     pointer-events: auto;
   }
 
@@ -239,12 +313,6 @@ const links = [
 
     .nav {
       justify-content: flex-start;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .header--home .brand-logo {
-      will-change: auto;
     }
   }
 </style>
