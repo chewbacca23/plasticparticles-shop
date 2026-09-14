@@ -19,7 +19,7 @@ const links = [
 ];
 ---
 
-<header class:list={['header', { 'header--home': isHome }]}>
+<header class:list={['header', { 'header--home': isHome }]} style={isHome ? '--crest: 0;' : undefined}>
   <div class="site-shell header-inner">
     <a class="brand" href="/">
       <img class="brand-logo" src={site.logo} alt="" width="40" height="51" decoding="async" />
@@ -57,28 +57,74 @@ const links = [
   isHome && (
     <script is:inline>
       (function () {
-        function bindCrestHand() {
+        function bindCrestGlide() {
           var header = document.querySelector('.header--home');
           var heroCrest = document.querySelector('.hero-logo');
           if (!header) return;
-          if (!heroCrest || !('IntersectionObserver' in window)) {
-            header.classList.add('crest-in');
+          if (!heroCrest) {
+            header.style.setProperty('--crest', '1');
             return;
           }
-          var io = new IntersectionObserver(
-            function (entries) {
-              entries.forEach(function (entry) {
-                header.classList.toggle('crest-in', !entry.isIntersecting);
-              });
-            },
-            { root: null, threshold: 0, rootMargin: '0px 0px 0px 0px' },
-          );
-          io.observe(heroCrest);
+
+          var reduce =
+            window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          var ticking = false;
+
+          function smoothstep(t) {
+            return t * t * (3 - 2 * t);
+          }
+
+          function updateCrest() {
+            ticking = false;
+            var headerBox = header.getBoundingClientRect();
+            var heroBox = heroCrest.getBoundingClientRect();
+            // Start as the hero crest nears the sticky bar; finish as it slips under it.
+            var start = headerBox.bottom + heroBox.height * 0.55;
+            var end = headerBox.bottom - 12;
+            var raw = (start - heroBox.top) / (start - end);
+            if (raw < 0) raw = 0;
+            if (raw > 1) raw = 1;
+            var t = reduce ? (raw >= 0.5 ? 1 : 0) : smoothstep(raw);
+
+            header.style.setProperty('--crest', t.toFixed(4));
+            header.classList.toggle('crest-in', t > 0.04);
+
+            if (t <= 0.001) {
+              heroCrest.style.removeProperty('opacity');
+              heroCrest.style.removeProperty('transform');
+              return;
+            }
+
+            if (reduce) {
+              heroCrest.style.setProperty('opacity', t >= 1 ? '0' : '', 'important');
+              heroCrest.style.removeProperty('transform');
+              return;
+            }
+
+            var out = 1 - t;
+            heroCrest.style.setProperty('opacity', (out * 0.92).toFixed(4), 'important');
+            heroCrest.style.setProperty(
+              'transform',
+              'translate3d(0, ' + (-22 * t).toFixed(2) + 'px, 0) scale(' + (1 - 0.12 * t).toFixed(4) + ')',
+              'important',
+            );
+          }
+
+          function onScroll() {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(updateCrest);
+          }
+
+          updateCrest();
+          window.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onScroll);
         }
+
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', bindCrestHand);
+          document.addEventListener('DOMContentLoaded', bindCrestGlide);
         } else {
-          bindCrestHand();
+          bindCrestGlide();
         }
       })();
     </script>
@@ -118,35 +164,26 @@ const links = [
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
   }
 
-  /* Home: big hero crest owns the mark until it scrolls away. */
+  /* Home: crest glides from hero into the header as you scroll. */
+  .header--home {
+    --crest: 0;
+  }
+
   .header--home .brand {
-    gap: 0;
-    transition: gap 280ms ease;
+    gap: calc(0.75rem * var(--crest));
   }
 
   .header--home .brand-logo {
-    width: 0;
-    max-width: 0;
-    opacity: 0;
-    transform: scale(0.82);
+    width: calc(2.4rem * var(--crest));
+    max-width: 2.4rem;
+    opacity: var(--crest);
+    transform: translate3d(0, calc((1 - var(--crest)) * 12px), 0) scale(calc(0.84 + 0.16 * var(--crest)));
     overflow: hidden;
     pointer-events: none;
-    transition:
-      width 280ms ease,
-      max-width 280ms ease,
-      opacity 220ms ease,
-      transform 280ms ease;
-  }
-
-  .header--home.crest-in .brand {
-    gap: 0.75rem;
+    will-change: opacity, transform, width;
   }
 
   .header--home.crest-in .brand-logo {
-    width: 2.4rem;
-    max-width: 2.4rem;
-    opacity: 1;
-    transform: scale(1);
     pointer-events: auto;
   }
 
@@ -190,9 +227,8 @@ const links = [
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .header--home .brand,
     .header--home .brand-logo {
-      transition: none;
+      will-change: auto;
     }
   }
 </style>
