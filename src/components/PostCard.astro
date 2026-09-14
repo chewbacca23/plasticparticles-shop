@@ -5,9 +5,10 @@ interface Props {
   description: string;
   date: Date;
   label?: string;
+  image?: string;
 }
 
-const { href, title, description, date, label } = Astro.props;
+const { href, title, description, date, label, image } = Astro.props;
 const formatted = date.toLocaleDateString('en-GB', {
   year: 'numeric',
   month: 'short',
@@ -17,6 +18,11 @@ const formatted = date.toLocaleDateString('en-GB', {
 
 <article class="card">
   <a class="card-link" href={href}>
+    {
+      image && (
+        <img class="card-photo" src={image} alt="" width="720" height="480" loading="lazy" />
+      )
+    }
     {label && <p class="eyebrow">{label}</p>}
     <h3>{title}</h3>
     <p class="card-desc">{description}</p>
@@ -43,6 +49,14 @@ const formatted = date.toLocaleDateString('en-GB', {
   .card-link:hover {
     padding-left: 1.35rem;
     background: rgba(22, 32, 42, 0.45);
+  }
+
+  .card-photo {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 0 0.9rem;
+    border-radius: 0.75rem;
   }
 
   h3 {

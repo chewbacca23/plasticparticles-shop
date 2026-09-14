@@ -5,7 +5,7 @@ pubDate: 2026-01-18
 heroLabel: On the road
 ---
 
-Some days the route is painted on the tarmac: arrows, a bunch, a feed station. Some days the signs are gone — wet forest road, no village name, GPS spinning.
+Some days the route is painted on the tarmac: arrows, a bunch, a feed station. Some days the signs are gone, wet forest road, no village name, GPS spinning.
 
 That is still a bike ride.
 

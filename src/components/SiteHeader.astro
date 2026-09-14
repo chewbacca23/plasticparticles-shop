@@ -1,18 +1,25 @@
 ---
 import { site } from '../site.config';
+import { instagramBind } from '../lib/instagram';
+import settings from '../content/settings/instagram.json';
 
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isHome = pathname === '/';
+const instagram = instagramBind(settings);
 const links = [
   { href: '/', label: 'Home' },
+  { href: '/now', label: 'Now' },
   { href: '/stories', label: 'Rides' },
   { href: '/journal', label: 'Ride notes' },
+  { href: '/friends', label: 'Friends' },
+  { href: '/shop', label: 'Shop' },
   { href: '/path', label: 'How we ride' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
 ---
 
-<header class="header">
+<header class:list={['header', { 'header--home': isHome }]} style={isHome ? '--crest: 0;' : undefined}>
   <div class="site-shell header-inner">
     <a class="brand" href="/">
       <img class="brand-logo" src={site.logo} alt="" width="40" height="51" decoding="async" />
@@ -30,9 +37,308 @@ const links = [
           </a>
         ))
       }
+      {
+        instagram && (
+          <a
+            class="nav-link"
+            href={instagram.profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Instagram
+          </a>
+        )
+      }
     </nav>
   </div>
 </header>
+
+{
+  isHome && (
+    <script is:inline>
+      (function () {
+        function bindCrestFlight() {
+          var header = document.querySelector('.header--home');
+          var heroCrest = document.querySelector('.hero-logo');
+          var headerCrest = header && header.querySelector('.brand-logo');
+          if (!header || !headerCrest || !heroCrest) {
+            if (header) header.style.setProperty('--crest', '1');
+            return;
+          }
+
+          // Crest morph is the continuity of one mark, not decorative motion.
+          // Always run a timed glide — Mac “Reduce motion” was skipping to a flick.
+          var DURATION = 1200;
+          var state = 'hero'; // hero | flying | header
+          var flying = false;
+          var flightAnim = null;
+          var slotRaf = 0;
+
+          var flyer = document.createElement('img');
+          flyer.className = 'crest-flyer';
+          flyer.src = heroCrest.currentSrc || heroCrest.src;
+          flyer.alt = '';
+          flyer.setAttribute('aria-hidden', 'true');
+          flyer.decoding = 'async';
+          document.body.appendChild(flyer);
+
+          function easeInOut(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+          }
+
+          function copyBox(box) {
+            return {
+              left: box.left,
+              top: box.top,
+              width: Math.max(box.width, 1),
+              height: Math.max(box.height, 1),
+            };
+          }
+
+          // Land where the header crest will sit once --crest opens (brand left edge).
+          function headerSlot() {
+            var brand = header.querySelector('.brand').getBoundingClientRect();
+            var bar = header.querySelector('.header-inner').getBoundingClientRect();
+            var width = 38.4;
+            var height = width * (51 / 40);
+            return {
+              left: brand.left,
+              top: bar.top + (bar.height - height) / 2,
+              width: width,
+              height: height,
+            };
+          }
+
+          function hideFlyer() {
+            flyer.style.opacity = '0';
+            flyer.style.visibility = 'hidden';
+            flyer.style.transform = 'translate3d(-9999px, -9999px, 0)';
+          }
+
+          function showHero() {
+            heroCrest.style.removeProperty('opacity');
+            heroCrest.style.removeProperty('visibility');
+            heroCrest.style.removeProperty('transform');
+          }
+
+          function hideHero() {
+            heroCrest.style.setProperty('opacity', '0', 'important');
+            heroCrest.style.setProperty('visibility', 'hidden', 'important');
+            heroCrest.style.setProperty('transform', 'none', 'important');
+          }
+
+          function setHeaderCrest(on) {
+            header.style.setProperty('--crest', on ? '1' : '0');
+            header.classList.toggle('crest-in', !!on);
+          }
+
+          function placeFlyer(box) {
+            flyer.style.visibility = 'visible';
+            flyer.style.opacity = '1';
+            flyer.style.width = box.width.toFixed(2) + 'px';
+            flyer.style.height = 'auto';
+            flyer.style.transform =
+              'translate3d(' + box.left.toFixed(2) + 'px, ' + box.top.toFixed(2) + 'px, 0)';
+          }
+
+          function cancelFlight() {
+            if (flightAnim) {
+              try {
+                flightAnim.cancel();
+              } catch (e) {}
+              flightAnim = null;
+            }
+            if (slotRaf) {
+              window.cancelAnimationFrame(slotRaf);
+              slotRaf = 0;
+            }
+          }
+
+          function finish(up) {
+            cancelFlight();
+            flying = false;
+            hideFlyer();
+            if (up) {
+              state = 'header';
+              hideHero();
+              setHeaderCrest(true);
+            } else {
+              state = 'hero';
+              showHero();
+              setHeaderCrest(false);
+            }
+          }
+
+          function animateSlot(up, startedAt) {
+            function tick(now) {
+              if (!flying) return;
+              var t = (now - startedAt) / DURATION;
+              if (t > 1) t = 1;
+              var e = easeInOut(t);
+              var slot = up ? e : 1 - e;
+              header.style.setProperty('--crest', slot.toFixed(4));
+              if (t < 1) {
+                slotRaf = window.requestAnimationFrame(tick);
+              } else {
+                slotRaf = 0;
+              }
+            }
+            slotRaf = window.requestAnimationFrame(tick);
+          }
+
+          function startFlight(up) {
+            cancelFlight();
+
+            var fromBox;
+            var toBox;
+
+            if (up) {
+              fromBox = copyBox(heroCrest.getBoundingClientRect());
+              toBox = headerSlot();
+              // Trackpad jumps leave the crest already at the bar — invent a start
+              // so the eye still gets a full on-screen glide.
+              var minTravel = 240;
+              if (fromBox.top < toBox.top + minTravel) {
+                fromBox.top = Math.min(window.innerHeight * 0.55, toBox.top + 380);
+                fromBox.left = Math.max(
+                  16,
+                  Math.min(fromBox.left || toBox.left + 48, window.innerWidth * 0.42)
+                );
+                fromBox.width = Math.max(fromBox.width, 112);
+                fromBox.height = fromBox.width * (51 / 40);
+              }
+              hideHero();
+              setHeaderCrest(false);
+            } else {
+              fromBox = headerSlot();
+              setHeaderCrest(false);
+              showHero();
+              toBox = copyBox(heroCrest.getBoundingClientRect());
+              hideHero();
+              // If the hero mark is off-screen, drop toward mid viewport.
+              if (toBox.top < 80 || toBox.top > window.innerHeight) {
+                toBox.top = Math.min(window.innerHeight * 0.5, 360);
+                toBox.left = Math.max(16, Math.min(toBox.left, window.innerWidth * 0.4));
+                toBox.width = Math.max(toBox.width, 112);
+                toBox.height = toBox.width * (51 / 40);
+              }
+            }
+
+            flying = true;
+            state = 'flying';
+            placeFlyer(fromBox);
+            animateSlot(up, performance.now());
+
+            var fromTf =
+              'translate3d(' + fromBox.left.toFixed(2) + 'px, ' + fromBox.top.toFixed(2) + 'px, 0)';
+            var toTf =
+              'translate3d(' + toBox.left.toFixed(2) + 'px, ' + toBox.top.toFixed(2) + 'px, 0)';
+
+            if (typeof flyer.animate === 'function') {
+              flightAnim = flyer.animate(
+                [
+                  { transform: fromTf, width: fromBox.width.toFixed(2) + 'px', opacity: 1 },
+                  { transform: toTf, width: toBox.width.toFixed(2) + 'px', opacity: 1 },
+                ],
+                {
+                  duration: DURATION,
+                  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                  fill: 'forwards',
+                }
+              );
+              flightAnim.onfinish = function () {
+                finish(up);
+              };
+              flightAnim.oncancel = function () {
+                /* finish() also cancels */
+              };
+            } else {
+              // Fallback: rAF lerp if WAAPI missing
+              var startedAt = performance.now();
+              function step(now) {
+                if (!flying) return;
+                var t = (now - startedAt) / DURATION;
+                if (t >= 1) {
+                  placeFlyer(toBox);
+                  finish(up);
+                  return;
+                }
+                var e = easeInOut(t);
+                placeFlyer({
+                  left: fromBox.left + (toBox.left - fromBox.left) * e,
+                  top: fromBox.top + (toBox.top - fromBox.top) * e,
+                  width: fromBox.width + (toBox.width - fromBox.width) * e,
+                  height: fromBox.height + (toBox.height - fromBox.height) * e,
+                });
+                window.requestAnimationFrame(step);
+              }
+              window.requestAnimationFrame(step);
+            }
+          }
+
+          function shouldFlyUp() {
+            if (window.scrollY < 48) return false;
+            var hero = heroCrest.getBoundingClientRect();
+            var barBottom = header.getBoundingClientRect().bottom;
+            return hero.top < barBottom + 240 || hero.top < window.innerHeight * 0.4;
+          }
+
+          function shouldFlyDown() {
+            if (window.scrollY < 24) return true;
+            var hero = heroCrest.getBoundingClientRect();
+            return hero.top > window.innerHeight * 0.55;
+          }
+
+          function onScroll() {
+            if (flying) return;
+            if (state === 'hero' && shouldFlyUp()) {
+              startFlight(true);
+              return;
+            }
+            if (state === 'header' && shouldFlyDown()) {
+              startFlight(false);
+            }
+          }
+
+          hideFlyer();
+          setHeaderCrest(false);
+          showHero();
+          window.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', function () {
+            if (state === 'header') setHeaderCrest(true);
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', bindCrestFlight);
+        } else {
+          bindCrestFlight();
+        }
+      })();
+    </script>
+  )
+}
+
+<style is:global>
+  .crest-flyer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 120;
+    width: 4rem;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: translate3d(-9999px, -9999px, 0);
+    filter: drop-shadow(0 14px 34px rgba(212, 163, 90, 0.45));
+    will-change: transform, width, opacity;
+    transform-origin: top left;
+  }
+</style>
 
 <style>
   .header {
@@ -42,6 +348,7 @@ const links = [
     border-bottom: 1px solid rgba(215, 224, 232, 0.06);
     background: rgba(10, 14, 20, 0.65);
     backdrop-filter: blur(16px) saturate(1.1);
+    overflow: visible;
   }
 
   .header-inner {
@@ -50,6 +357,7 @@ const links = [
     justify-content: space-between;
     gap: 1rem;
     min-height: 4.25rem;
+    overflow: visible;
   }
 
   .brand {
@@ -65,6 +373,27 @@ const links = [
     height: auto;
     object-fit: contain;
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
+  }
+
+  .header--home {
+    --crest: 0;
+  }
+
+  .header--home .brand {
+    gap: calc(0.75rem * var(--crest));
+  }
+
+  .header--home .brand-logo {
+    width: 2.4rem;
+    max-width: calc(2.4rem * var(--crest));
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .header--home.crest-in .brand-logo {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .brand-text {

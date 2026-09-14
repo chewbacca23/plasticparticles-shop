@@ -6,5 +6,12 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://thenewsoulsearchers.de',
   trailingSlash: 'never',
-  integrations: [sitemap()],
+  redirects: {
+    '/patches': '/shop',
+  },
+  integrations: [
+    sitemap({
+      filter: (page) => !page.includes('/looks'),
+    }),
+  ],
 });

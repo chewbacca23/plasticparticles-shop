@@ -15,14 +15,14 @@ function resolvePublicDir(): string {
   return candidates.find((dir) => existsSync(dir)) ?? candidates[0];
 }
 
-const publicDir = resolvePublicDir();
-
 /**
  * Photos get deleted from the CMS media library without touching the rides
  * that point at them, so a referenced file may simply be gone. Check at build
  * time rather than shipping a broken <img>.
+ *
+ * `publicRoot` is for tests. Production always resolves `public/` from cwd.
  */
-export function mediaExists(mediaPath?: string | null): boolean {
+export function mediaExists(mediaPath?: string | null, publicRoot?: string): boolean {
   if (!mediaPath) return false;
   if (/^(https?:)?\/\//.test(mediaPath)) return true;
 
@@ -35,11 +35,20 @@ export function mediaExists(mediaPath?: string | null): boolean {
   }
   if (relative === '') return false;
 
+  const publicDir = publicRoot ?? resolvePublicDir();
   const resolved = path.resolve(publicDir, relative);
   // Keep the lookup inside public/ even if a path contains "..".
   if (resolved !== publicDir && !resolved.startsWith(publicDir + path.sep)) return false;
 
-  return existsSync(resolved);
+  if (existsSync(resolved)) return true;
+
+  // Cloudflare sometimes builds with a cwd that cannot see public/. Hide a
+  // photo only when we can prove the stories folder is there and this file
+  // is not. Otherwise keep the published /stories/ path so the live page
+  // still shows what the editor saved.
+  const storiesDir = path.join(publicDir, 'stories');
+  if (existsSync(storiesDir)) return false;
+  return relative.startsWith(`stories${path.sep}`) && /\.(jpe?g|png|webp|gif|avif)$/i.test(relative);
 }
 
 /** Keep only the gallery entries whose files are still present. */

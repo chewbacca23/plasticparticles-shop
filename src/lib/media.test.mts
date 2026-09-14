@@ -40,6 +40,11 @@ describe('mediaExists', () => {
     assert.equal(mediaExists('https://example.com/photo.jpg'), true);
     assert.equal(mediaExists('//example.com/photo.jpg'), true);
   });
+
+  it('keeps a published ride photo when public/stories is not on disk', () => {
+    assert.equal(mediaExists('/stories/img_6440-2.jpg', '/tmp/ss-no-public'), true);
+    assert.equal(mediaExists('/not-a-photo.txt', '/tmp/ss-no-public'), false);
+  });
 });
 
 describe('existingMedia', () => {

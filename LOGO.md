@@ -1,17 +1,22 @@
 # Your logo on the site
 
-The header, hero, and watermark all load **`/logo.svg`** (lowercase).
+- **Header / favicon:** `/logo.svg` (embeds `public/logo.png`)
+- **Big faint backdrop:** `/logo-watermark.png` (soft, pre-blurred so the crest does not look pixelated when huge)
 
-That filename must stay **exactly** `public/logo.svg`. Linux and Cloudflare treat `Logo.svg` and `logo.svg` as **two different files**. If both exist, the site keeps the placeholder.
+Those names must stay lowercase. Linux and Cloudflare treat `Logo.svg` and `logo.svg` as two different files.
 
 ## What is in the file now
 
-`public/logo.svg` is the shield crest, cropped from the Illustrator A4 export (`viewBox="244 50 96 122"`). The original artboard was a full page with the mark in the corner — without that crop the logo looks like a tiny stamp on empty paper.
+Henrik’s crest with the red **SOUL SEARCHERS** banner, white dog, and lightning colours. Cropped from a larger PNG (~549×875, saved at 627×1000). A real Illustrator SVG will still look sharper in the header.
 
-## If you re-export from Illustrator
+The watermark is a separate soft PNG (upscaled + blurred) so the background mark reads as atmosphere instead of blocky pixels.
 
-1. Overwrite **`public/logo.svg`** (not `Logo.svg`)
-2. If the export is a full A4 page again, crop the viewBox to the crest, or export only the artwork
-3. Rebuild (`npm run build`) or retry the Cloudflare deploy
+## If you send a better export
+
+1. Overwrite **`public/logo.png`** with a bigger PNG, or send an SVG from Illustrator
+2. If Illustrator exports a full A4 page, crop to the crest
+3. Keep the public filename **`logo.png`** / **`logo.svg`** (not `Logo.svg`)
+4. Re-generate **`public/logo-watermark.png`** from the new crest (or ask the agent to) so the backdrop stays soft
+5. Rebuild or retry the Cloudflare deploy
 
 Do not keep a second file named `Logo.svg` in `public/`.

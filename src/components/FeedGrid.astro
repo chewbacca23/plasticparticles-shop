@@ -1,0 +1,289 @@
+---
+import type { FeedEntry } from '../lib/feed';
+
+interface Props {
+  items: FeedEntry[];
+  limit?: number;
+  moreHref?: string;
+}
+
+const { items, limit, moreHref } = Astro.props;
+const visible = typeof limit === 'number' ? items.slice(0, limit) : items;
+const payload = visible.map((item) => ({
+  id: item.id,
+  photo: item.photo,
+  caption: item.caption,
+  date: item.date.toISOString(),
+  href: item.href,
+}));
+---
+
+{
+  visible.length === 0 ? (
+    <p class="feed-empty">No shots yet. Post a photo in the editor and it shows up here.</p>
+  ) : (
+    <div class="feed" data-feed>
+      <div class="feed-grid" role="list">
+        {
+          visible.map((item, index) => (
+            <button
+              type="button"
+              class="feed-tile"
+              role="listitem"
+              data-index={index}
+              aria-label={item.caption}
+            >
+              <img src={item.photo} alt="" width="800" height="800" loading={index < 6 ? 'eager' : 'lazy'} />
+            </button>
+          ))
+        }
+      </div>
+
+      {
+        moreHref && items.length > visible.length && (
+          <p class="feed-more">
+            <a class="btn btn-ghost" href={moreHref}>
+              See all shots
+            </a>
+          </p>
+        )
+      }
+
+      <dialog class="feed-dialog" data-feed-dialog aria-label="Shot">
+        <div class="feed-stage">
+          <img data-feed-image alt="" />
+          <button type="button" class="feed-nav feed-prev" data-feed-prev aria-label="Previous shot">
+            ‹
+          </button>
+          <button type="button" class="feed-nav feed-next" data-feed-next aria-label="Next shot">
+            ›
+          </button>
+          <button type="button" class="feed-close" data-feed-close aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div class="feed-meta">
+          <p class="feed-caption" data-feed-caption></p>
+          <p class="feed-sub">
+            <time data-feed-date></time>
+            <span data-feed-count></span>
+            <a class="feed-ride" data-feed-href hidden>Read the ride</a>
+          </p>
+        </div>
+      </dialog>
+    </div>
+  )
+}
+
+<script define:vars={{ payload }}>
+  const root = document.querySelector('[data-feed]');
+  if (root && Array.isArray(payload) && payload.length) {
+    const dialog = root.querySelector('[data-feed-dialog]');
+    const image = root.querySelector('[data-feed-image]');
+    const caption = root.querySelector('[data-feed-caption]');
+    const dateEl = root.querySelector('[data-feed-date]');
+    const count = root.querySelector('[data-feed-count]');
+    const rideLink = root.querySelector('[data-feed-href]');
+    const tiles = [...root.querySelectorAll('[data-index]')];
+    let current = 0;
+
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        });
+      } catch {
+        return '';
+      }
+    }
+
+    function show(index) {
+      current = (index + payload.length) % payload.length;
+      const item = payload[current];
+      image.src = item.photo;
+      image.alt = item.caption;
+      caption.textContent = item.caption;
+      dateEl.textContent = formatDate(item.date);
+      dateEl.dateTime = item.date;
+      count.textContent = current + 1 + ' / ' + payload.length;
+      if (item.href) {
+        rideLink.href = item.href;
+        rideLink.hidden = false;
+      } else {
+        rideLink.removeAttribute('href');
+        rideLink.hidden = true;
+      }
+      if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+    }
+
+    tiles.forEach((tile) => {
+      tile.addEventListener('click', () => show(Number(tile.getAttribute('data-index'))));
+    });
+    root.querySelector('[data-feed-prev]').addEventListener('click', (event) => {
+      event.stopPropagation();
+      show(current - 1);
+    });
+    root.querySelector('[data-feed-next]').addEventListener('click', (event) => {
+      event.stopPropagation();
+      show(current + 1);
+    });
+    root.querySelector('[data-feed-close]').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') show(current - 1);
+      if (event.key === 'ArrowRight') show(current + 1);
+    });
+  }
+</script>
+
+<style>
+  .feed-empty {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.62);
+  }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.28rem;
+  }
+
+  .feed-tile {
+    position: relative;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    background: #121820;
+    cursor: pointer;
+  }
+
+  .feed-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .feed-tile:hover img,
+  .feed-tile:focus-visible img {
+    transform: scale(1.04);
+  }
+
+  .feed-tile:focus-visible {
+    outline: 2px solid var(--amber-hot);
+    outline-offset: 2px;
+  }
+
+  .feed-more {
+    display: flex;
+    justify-content: center;
+    margin: 1.75rem 0 0;
+  }
+
+  .feed-dialog {
+    width: min(100% - 1.5rem, 42rem);
+    max-width: 42rem;
+    padding: 0;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1rem;
+    background: #0c1218;
+    color: var(--paper);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .feed-dialog::backdrop {
+    background: rgba(6, 10, 14, 0.78);
+  }
+
+  .feed-stage {
+    position: relative;
+    background: #080c11;
+  }
+
+  .feed-stage img {
+    width: 100%;
+    height: auto;
+    max-height: min(72vh, 40rem);
+    object-fit: contain;
+    margin: 0 auto;
+  }
+
+  .feed-nav,
+  .feed-close {
+    position: absolute;
+    border: 0;
+    background: rgba(12, 18, 24, 0.55);
+    color: var(--paper);
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .feed-nav {
+    top: 50%;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    font-size: 1.6rem;
+    transform: translateY(-50%);
+  }
+
+  .feed-prev {
+    left: 0.6rem;
+  }
+
+  .feed-next {
+    right: 0.6rem;
+  }
+
+  .feed-close {
+    top: 0.55rem;
+    right: 0.55rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 999px;
+    font-size: 1.4rem;
+  }
+
+  .feed-meta {
+    padding: 1rem 1.15rem 1.15rem;
+  }
+
+  .feed-caption {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--paper);
+  }
+
+  .feed-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    margin: 0;
+    color: rgba(215, 224, 232, 0.62);
+    font-size: 0.88rem;
+  }
+
+  .feed-ride {
+    color: var(--amber-hot);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feed-tile img {
+      transition: none;
+    }
+
+    .feed-tile:hover img,
+    .feed-tile:focus-visible img {
+      transform: none;
+    }
+  }
+</style>

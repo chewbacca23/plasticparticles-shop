@@ -1,36 +1,88 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LogoBackdrop from '../components/LogoBackdrop.astro';
+import FeedGrid from '../components/FeedGrid.astro';
+import InstagramLatest from '../components/InstagramLatest.astro';
+import { getCollection } from 'astro:content';
+import { collectFeed } from '../lib/feed';
+import { resolveHomeHero } from '../lib/home-hero';
 import { site } from '../site.config';
+import homeSettings from '../content/settings/home.json';
+
+const [shots, stories] = await Promise.all([
+  getCollection('shots', ({ data }) => !data.draft),
+  getCollection('stories', ({ data }) => !data.draft),
+]);
+
+const nowItems = collectFeed(
+  shots.map((shot) => ({ id: shot.id, ...shot.data })),
+  stories.map((story) => ({ id: story.id, ...story.data })),
+);
+
+const heroPhoto = resolveHomeHero(
+  homeSettings.heroPhoto,
+  nowItems.map((item) => item.photo),
+);
 ---
 
 <BaseLayout watermark={false}>
-  <section class="hero" aria-label="Welcome">
+  <section class:list={['hero', { 'has-photo': Boolean(heroPhoto) }]} aria-label="Welcome">
     <div class="sky" aria-hidden="true">
-      <LogoBackdrop variant="hero" />
-      <div class="sky-aurora"></div>
-      <div class="sky-stars">
-        <span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span>
-      </div>
-      <div class="sky-horizon"></div>
+      {
+        heroPhoto ? (
+          <>
+            <img
+              class="hero-photo"
+              src={heroPhoto}
+              alt=""
+              width="1920"
+              height="1080"
+              decoding="async"
+              fetchpriority="high"
+            />
+            <div class="hero-scrim"></div>
+          </>
+        ) : (
+          <>
+            <LogoBackdrop variant="hero" />
+            <div class="sky-aurora"></div>
+            <div class="sky-stars">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="sky-horizon"></div>
+          </>
+        )
+      }
     </div>
 
     <div class="site-shell hero-copy">
       <img class="hero-logo reveal" src={site.logo} alt="The New Soul Searchers" width="88" height="112" decoding="async" />
       <p class="brand-hero reveal reveal-delay-1">{site.name}</p>
-      <h1 class="reveal reveal-delay-2">This is a cycling blog.</h1>
+      <h1 class="reveal reveal-delay-2">A cycling Blog</h1>
       <p class="hero-lead reveal reveal-delay-3">
         Tours, climbs, coast roads, café stops, and a bike in the luggage car. We ride to see this
-        planet — not to sit in a car. Six rides below. Clip in.
+        planet, not to sit in a car. Photos from the road below. Clip in.
       </p>
       <div class="hero-actions reveal reveal-delay-3">
-        <a class="btn btn-primary" href="/stories">The rides</a>
-        <a class="btn btn-ghost" href="/journal">Ride notes</a>
+        <a class="btn btn-primary" href="#now">Now</a>
+        <a class="btn btn-ghost" href="/stories">The rides</a>
       </div>
       <p class="scroll-hint reveal reveal-delay-3">
-        <a href="/stories">Open the ride gallery ↓</a>
+        <a href="#now">See the latest shots ↓</a>
       </p>
+    </div>
+  </section>
+
+  <section class="section now-home" id="now" aria-label="Now">
+    <div class="site-shell">
+      <p class="eyebrow">Now</p>
+      <h2 class="section-title">From the road</h2>
+      <p class="section-lead">
+        Newest photos first. Tap one and stay. There is always another shot.
+      </p>
+      <InstagramLatest />
+      <FeedGrid items={nowItems} limit={12} moreHref="/now" />
     </div>
   </section>
 </BaseLayout>
@@ -38,8 +90,9 @@ import { site } from '../site.config';
 <style>
   .hero {
     position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
+    /* Header sits in normal flow above this, so 100vh alone pushes CTAs under the fold. */
+    min-height: calc(100vh - 4.25rem);
+    min-height: calc(100dvh - 4.25rem);
     display: grid;
     align-items: end;
     overflow: hidden;
@@ -54,6 +107,25 @@ import { site } from '../site.config';
       radial-gradient(ellipse 85% 60% at 72% 18%, rgba(61, 107, 122, 0.38), transparent 62%),
       radial-gradient(ellipse 55% 50% at 12% 28%, rgba(212, 163, 90, 0.14), transparent 58%),
       linear-gradient(180deg, #080c11 0%, #0f1820 45%, #182a36 70%, #2a2218 100%);
+  }
+
+  .hero-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 42%;
+    transform: scale(1.06);
+    animation: hero-drift 28s ease-in-out infinite alternate;
+  }
+
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(8, 12, 17, 0.28) 0%, rgba(8, 12, 17, 0.12) 34%, rgba(8, 12, 17, 0.55) 68%, rgba(8, 12, 17, 0.88) 100%),
+      radial-gradient(ellipse 70% 55% at 18% 78%, rgba(8, 12, 17, 0.45), transparent 70%);
   }
 
   .sky :global(.logo-backdrop) {
@@ -126,7 +198,7 @@ import { site } from '../site.config';
     line-height: 0.96;
     letter-spacing: -0.03em;
     color: var(--paper);
-    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
   }
 
   h1 {
@@ -135,13 +207,15 @@ import { site } from '../site.config';
     font-size: clamp(1.35rem, 2.8vw, 1.9rem);
     font-weight: 500;
     color: rgba(238, 243, 247, 0.92);
+    text-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
   }
 
   .hero-lead {
     margin: 0 0 1.75rem;
     max-width: 34rem;
-    color: rgba(215, 224, 232, 0.82);
+    color: rgba(215, 224, 232, 0.88);
     font-size: 1.08rem;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
   }
 
   .hero-actions {
@@ -162,5 +236,67 @@ import { site } from '../site.config';
 
   .scroll-hint a:hover {
     color: var(--amber-hot);
+  }
+
+  .now-home {
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
+  }
+
+  @keyframes hero-drift {
+    from {
+      transform: scale(1.06) translate3d(0, 0, 0);
+    }
+    to {
+      transform: scale(1.12) translate3d(-1.2%, -0.8%, 0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      /* Wrapped nav makes the sticky header taller on small screens. */
+      min-height: calc(100vh - 10rem);
+      min-height: calc(100dvh - 10rem);
+    }
+
+    .hero-copy {
+      padding: 2.25rem 0 1.35rem;
+    }
+
+    .hero-logo {
+      width: 2.35rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .brand-hero {
+      margin-bottom: 0.45rem;
+      font-size: clamp(1.75rem, 8vw, 2.2rem);
+      line-height: 1.02;
+    }
+
+    h1 {
+      margin-bottom: 0.45rem;
+      font-size: 1.08rem;
+    }
+
+    .hero-lead {
+      margin-bottom: 0.9rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .scroll-hint {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-photo {
+      animation: none;
+      transform: scale(1.04);
+    }
   }
 </style>

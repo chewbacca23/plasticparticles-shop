@@ -81,10 +81,37 @@ Two things to know about iPhone photos: they carry your **GPS location** in EXIF
 
 1. Open **https://thenewsoulsearchers.de/admin/** (apex, not www)
 2. **Login with GitHub** → authorize **Soul Searchers CMS**
-3. **Ride notes** or **Rides** → New → write → **Publish**
-4. Wait about a minute (Cloudflare rebuild) → hard-refresh the public page
+3. **Ride notes** or **Rides** → New → write → **Save this ride** / **Publish**
+4. Open the ride page itself (not only the list) and hard-refresh
+
+The editor writes GitHub immediately. If Cloudflare has not rebuilt yet, the Worker still
+reads that ride and its photos from GitHub so the public page is not blank. If a photo URL
+still 404s, **Workers → thenewsoulsearchersblogc → Deployments → Retry**, then
+`Cmd+Shift+R`.
 
 If the GitHub popup says login is not wired yet, secrets from **B** are missing.
+
+### Looks (how many people opened a page)
+
+After **Login with GitHub** in `/admin/`, open the gold **Looks** chip (or bookmark
+`/looks`). It stays private: no footer link, and strangers without the login cookie get a blank
+gate page. Today, last 7 days, this year, all time, which pages, which country, and which site
+sent them. No visitor names. Numbers start after this Worker is live. Your own clicks count.
+
+A Worker-only HTML page for `/looks` was challenged by Bot Fight, so the count page never
+opened. The Worker now fills the numbers into the real Astro page instead.
+
+### Looks storage (so counts survive deploys)
+
+Looks uses Cloudflare KV binding **`STATS`** → namespace **`soulsearchers-looks`**
+(`id` is in `wrangler.toml`). After a Mac-push, open
+**https://thenewsoulsearchers.de/cms-status** and confirm:
+
+- `"looksStorage": "kv"`
+- `"looksDurable": true`
+
+If it says `"cache"` or `statsBinding.present` is false, the deploy landed on the wrong
+Worker, or Bindings still need a Retry on **`thenewsoulsearchersblogc`**.
 
 ### Stuck? Ask the Worker instead of guessing
 
@@ -96,6 +123,23 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 | Names listed but `"loginWired": false` | Names are close but unmatched. Rename to `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET`. |
 | `"clientIdShape": "does NOT look like a GitHub client id"` | The Client **ID** box holds the wrong value (GitHub ids start `Ov23`). |
 | `"loginWired": true` | Login is ready. Go to `/admin/`. |
+| `"looksStorage": "cache"` or `"memory"` | Looks is temporary. Finish the KV steps above. |
+| `"looksStorage": "kv"` / `"looksDurable": true` | Looks is durable. Counts survive deploys. |
+
+### Contact form (real send, no mail app)
+
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**.
+
+Wire it once with Resend (simplest):
+
+1. Create a free account at [resend.com](https://resend.com)
+2. Add and verify domain **`thenewsoulsearchers.de`** (DNS records Resend shows)
+3. Create an API key
+4. Cloudflare → Workers → **`thenewsoulsearchersblogc`** → Settings → Variables and Secrets
+5. Add **`RESEND_API_KEY`** as a **Secret** → paste the key → Save
+6. Deployments → **Retry**, hard-refresh `/contact`, send yourself a test note
+
+Until that secret is there, Send still opens a filled mailto as a fallback so nothing is lost.
 
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 

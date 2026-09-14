@@ -1,7 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { galleryMedia } from '../../lib/media';
+import { renderMarkdown } from '../../../cloudflare/fresh-ride.js';
+import { planRidePhotos } from '../../../cloudflare/story-photos.js';
 
 export async function getStaticPaths() {
   const stories = await getCollection('stories', ({ data }) => !data.draft);
@@ -12,8 +14,9 @@ export async function getStaticPaths() {
 }
 
 const { story } = Astro.props;
-const { Content } = await render(story);
-const gallery = galleryMedia(story.data.cover, story.data.gallery);
+const photos = galleryMedia(story.data.cover, story.data.gallery);
+const plan = planRidePhotos(photos, story.body, story.data.cover);
+const storyHtml = renderMarkdown(plan.wovenBody);
 ---
 
 <BaseLayout title={story.data.title} description={story.data.description} ogType="article">
@@ -24,26 +27,14 @@ const gallery = galleryMedia(story.data.cover, story.data.gallery);
       <p class="dek">{story.data.description}</p>
 
       {
-        gallery.length > 0 && (
-          <div class="gallery">
-            {gallery.map((src, i) => (
-              <figure>
-                <img
-                  src={src}
-                  alt=""
-                  width="1200"
-                  height="900"
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                />
-              </figure>
-            ))}
-          </div>
+        plan.hero && (
+          <figure class="hero">
+            <img src={plan.hero} alt="" width="1200" height="900" loading="eager" />
+          </figure>
         )
       }
 
-      <div class="prose">
-        <Content />
-      </div>
+      <div class="prose" set:html={storyHtml} />
 
       <p class="back">
         <a href="/stories">← All rides</a>
@@ -68,23 +59,29 @@ const gallery = galleryMedia(story.data.cover, story.data.gallery);
     font-size: 1.1rem;
   }
 
-  .gallery {
-    display: grid;
-    gap: 1rem;
-    margin: 0 0 2.5rem;
-  }
-
-  figure {
-    margin: 0;
+  .hero {
+    margin: 0 0 2rem;
     overflow: hidden;
     border-radius: 0.9rem;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   }
 
-  figure img {
+  .hero img {
     width: 100%;
     height: auto;
     display: block;
+  }
+
+  .prose :global(figure) {
+    margin: 1.8rem 0;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .prose :global(figure img) {
+    margin: 0;
+    box-shadow: none;
   }
 
   .back {

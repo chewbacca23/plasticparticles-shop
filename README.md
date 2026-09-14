@@ -1,8 +1,8 @@
 # The Soul Searchers
 
-Cycling blog for **thenewsoulsearchers.de** — rides, ride notes, how we ride, about, contact.
+Cycling blog for **thenewsoulsearchers.de**: now, rides, ride notes, how we ride, about, contact.
 
-> A cycling blog — tours, roads, and travel by bike.
+> A cycling blog. Tours, roads, and travel by bike.
 
 **Game shop (separate repo):** [plasticparticles-shop](https://github.com/chewbacca23/plasticparticles-shop)
 
@@ -53,7 +53,9 @@ First-time OAuth clicks: [`CLOUDFLARE.md`](./CLOUDFLARE.md).
 4. Click **Login to Local Backend** (not GitHub)
 
 In the CMS:
-- **Rides** = six photo tiles and ride pages
+- **Shots** = one photo + a line. Shows on **Now**, newest first
+- **Instagram** = username + latest photo link. One shot on the site, tap through to follow
+- **Rides** = photo tiles and ride pages, newest first. **＋ Ride** asks for a name, then photos and text. Click a ride so it turns green, then **− Ride** erases it
 - **Ride notes** = packing, trains, café kilometres, touring posts
 - image uploads go into `public/stories/`
 
@@ -71,7 +73,7 @@ Domain: **https://thenewsoulsearchers.de**
 
 | Change | File |
 | --- | --- |
-| **Your logo** | Replace `public/logo.svg` — see [`LOGO.md`](./LOGO.md) |
+| **Your logo** | Replace `public/logo.svg`, see [`LOGO.md`](./LOGO.md) |
 | Site name / tagline | `src/site.config.ts` |
 | Watermark strength | `logoWatermarkOpacity` in `site.config.ts` |
 | Home headline | `src/pages/index.astro` |

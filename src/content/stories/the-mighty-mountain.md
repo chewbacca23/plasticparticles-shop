@@ -1,0 +1,32 @@
+---
+title: The mighty Mountain
+pubDate: 2026-09-13
+cover: /stories/img_1442.jpeg
+gallery:
+  - /stories/img_1442.jpeg
+  - /stories/img_1459.jpeg
+  - /stories/img_1424.jpeg
+  - /stories/img_1422.jpeg
+  - /stories/img_1428.jpeg
+  - /stories/img_1426.jpeg
+  - /stories/img_1463.jpeg
+headline: The mighty Mountain
+description: Write a few lines about this ride.
+draft: false
+order: 0
+---
+The Giant of Provence, Conquered My Way
+
+There are climbs you do because they're on the way, and then there are climbs you do because they've been sitting in the back of your mind for years, waiting for the right day. Mont Ventoux is the second kind. Everyone who rides a bike seriously knows its name before they ever see it, and everyone who has seen it knows why it carries the nickname "The Giant of Provence." It doesn't announce itself gently. It rises out of the Provençal countryside like something that doesn't belong there, a lonely limestone dome towering over lavender fields and vineyards, visible from towns thirty or forty kilometers away on a clear day. And on the day I finally rode it, the sky was about as clear as it gets.
+
+I chose to climb from Malaucène, which locals and seasoned Ventoux riders will tell you is the harder of the classic ascents, tougher even than the famous route from Bédoin that most cyclists default to. Malaucène doesn't offer the same rhythm. It throws ramps at you early, backs off just enough to make you think you've found your legs, and then reintroduces the pain in the forest section with a relentlessness that never really lets up until you break out above the treeline. That's the moment everyone talks about, when the trees stop and the landscape turns into that otherworldly, lunar expanse of white scree that makes Ventoux look like the surface of the moon rather than a mountain in the south of France. The wind picks up there too, funneling across the exposed slope with nothing to slow it down, and you start to understand why this mountain has broken so many riders, professionals included.
+
+I wasn't racing anyone officially that day, but if you ride with people, you know there's always a race happening whether you admit it or not. This time I came up about half an hour after the boys. Not my finest split on paper, and there was a moment somewhere past Le Chalet Reynard, legs burning and lungs working overtime in that thin, dry mountain air, where I wondered if I'd gone out too conservatively at the base or simply didn't have the legs that day. But climbing Ventoux was never really about beating anyone else up that mountain. It's about getting up it at all, and finishing what you told yourself you'd do. So I kept turning the pedals, found a rhythm somewhere past the Tom Simpson memorial, that solemn stone marker that always makes you sit up a little straighter out of respect, and eventually the summit tower came into view, the old weather station standing at the top like a lighthouse for cyclists.
+
+Reaching the summit of Mont Ventoux is a strange kind of relief. Your body wants to collapse, but the view refuses to let you look away. From up there you can see across almost the entire region, the patchwork of Provence spread out below in every direction, the Alps visible in the distance on the clearest days, and the wind, always the wind, cutting straight through whatever jacket you thought would be enough. I stayed up there for about half an hour. Partly to recover, partly because you don't rush a summit like that. I ate, drank, took in the view, watched other riders arrive in ones and twos with the same mixture of exhaustion and disbelief on their faces that I probably had myself. Half an hour at altitude, wind battering the summit building, feeling like I'd earned every minute of stillness after the effort it took to get there.
+
+Then came the part I'd actually been looking forward to since I first saw the profile of this mountain on a map: the descent. Whatever ground I lost on the way up, I was determined to make up for on the way down, and Ventoux, for all the suffering it puts into your legs on the ascent, gives you something extraordinary in return once you point the bike downhill. The road from the summit is wide, smooth, and sweeping in long, fast curves that seem designed for exactly this kind of speed. I tucked in, trusted the bike, trusted the tires, trusted the road, and let it run. Somewhere on one of those long straights, tucked as low as I could manage with the wind screaming past my helmet, I glanced down and saw 118 km/h on the computer. A new personal record, and one I don't think I'll forget anytime soon. There's a particular kind of silence that happens at that speed, not literal silence, since the wind is roaring in your ears, but a mental quiet, where nothing exists except the road unspooling in front of you and the absolute focus required to hold your line. It's terrifying and exhilarating in equal measure, and it's exactly the reason so many of us keep coming back to mountains like this one.
+
+By the time I rolled into town at the bottom, legs still slightly shaking from the adrenaline as much as the effort, I found a café and ordered a coffee, the kind of coffee that tastes better after a day like that than it has any right to. I sat outside, watched the mountain from a distance for a change instead of climbing straight up its flank, and waited for Bruno and Henri to come down. It took about twenty minutes before they rolled in, and we sat there together, coffee cups in hand, going over the day. Who felt good, who suffered where, the wind at the top, the exact spot on the descent where each of us had hit our fastest speed. Comparing notes the way cyclists always do after a big ride, half bragging, half debriefing, entirely happy.
+
+Looking back on it now, the half hour deficit on the way up doesn't sting the way it might have in the moment. What stays with me is the whole shape of the day: the brutal, honest climb from Malaucène, the half hour at the summit with that view stretching out in every direction, the sheer speed of the descent and that 118 km/h flashing on the screen, and then the simple, quiet satisfaction of a coffee in the sun with friends, waiting for them to arrive, trading stories about a mountain that had just given all three of us exactly what we came for. Wonderful it was, and it's the kind of day that makes you start planning the next one before you've even finished your coffee.
