@@ -66,30 +66,24 @@ const links = [
             return;
           }
 
-          var reduce =
-            window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          // Fixed-duration flight so laptop trackpads still show a real glide.
-          var DURATION = 1100;
+          // Crest morph is the continuity of one mark, not decorative motion.
+          // Always run a timed glide — Mac “Reduce motion” was skipping to a flick.
+          var DURATION = 1200;
           var state = 'hero'; // hero | flying | header
-          var direction = 1; // 1 = up into header, -1 = back to hero
-          var fromBox = null;
-          var toBox = null;
-          var startedAt = 0;
           var flying = false;
+          var flightAnim = null;
+          var slotRaf = 0;
 
           var flyer = document.createElement('img');
           flyer.className = 'crest-flyer';
           flyer.src = heroCrest.currentSrc || heroCrest.src;
           flyer.alt = '';
           flyer.setAttribute('aria-hidden', 'true');
+          flyer.decoding = 'async';
           document.body.appendChild(flyer);
 
           function easeInOut(t) {
             return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-          }
-
-          function lerp(a, b, t) {
-            return a + (b - a) * t;
           }
 
           function copyBox(box) {
@@ -101,13 +95,14 @@ const links = [
             };
           }
 
+          // Land where the header crest will sit once --crest opens (brand left edge).
           function headerSlot() {
-            var logo = headerCrest.getBoundingClientRect();
+            var brand = header.querySelector('.brand').getBoundingClientRect();
             var bar = header.querySelector('.header-inner').getBoundingClientRect();
             var width = 38.4;
             var height = width * (51 / 40);
             return {
-              left: logo.left,
+              left: brand.left,
               top: bar.top + (bar.height - height) / 2,
               width: width,
               height: height,
@@ -117,6 +112,7 @@ const links = [
           function hideFlyer() {
             flyer.style.opacity = '0';
             flyer.style.visibility = 'hidden';
+            flyer.style.transform = 'translate3d(-9999px, -9999px, 0)';
           }
 
           function showHero() {
@@ -136,22 +132,30 @@ const links = [
             header.classList.toggle('crest-in', !!on);
           }
 
-          function paintFlyer(from, to, t) {
-            var e = easeInOut(t);
-            var left = lerp(from.left, to.left, e);
-            var top = lerp(from.top, to.top, e);
-            var width = lerp(from.width, to.width, e);
+          function placeFlyer(box) {
             flyer.style.visibility = 'visible';
             flyer.style.opacity = '1';
-            flyer.style.width = width.toFixed(2) + 'px';
+            flyer.style.width = box.width.toFixed(2) + 'px';
+            flyer.style.height = 'auto';
             flyer.style.transform =
-              'translate3d(' + left.toFixed(2) + 'px, ' + top.toFixed(2) + 'px, 0)';
-            // Open the logo slot as the crest arrives.
-            var slot = direction > 0 ? e : 1 - e;
-            header.style.setProperty('--crest', slot.toFixed(4));
+              'translate3d(' + box.left.toFixed(2) + 'px, ' + box.top.toFixed(2) + 'px, 0)';
+          }
+
+          function cancelFlight() {
+            if (flightAnim) {
+              try {
+                flightAnim.cancel();
+              } catch (e) {}
+              flightAnim = null;
+            }
+            if (slotRaf) {
+              window.cancelAnimationFrame(slotRaf);
+              slotRaf = 0;
+            }
           }
 
           function finish(up) {
+            cancelFlight();
             flying = false;
             hideFlyer();
             if (up) {
@@ -165,65 +169,118 @@ const links = [
             }
           }
 
-          function startFlight(up) {
-            if (reduce) {
-              finish(up);
-              return;
+          function animateSlot(up, startedAt) {
+            function tick(now) {
+              if (!flying) return;
+              var t = (now - startedAt) / DURATION;
+              if (t > 1) t = 1;
+              var e = easeInOut(t);
+              var slot = up ? e : 1 - e;
+              header.style.setProperty('--crest', slot.toFixed(4));
+              if (t < 1) {
+                slotRaf = window.requestAnimationFrame(tick);
+              } else {
+                slotRaf = 0;
+              }
             }
+            slotRaf = window.requestAnimationFrame(tick);
+          }
 
-            direction = up ? 1 : -1;
-            toBox = headerSlot();
+          function startFlight(up) {
+            cancelFlight();
+
+            var fromBox;
+            var toBox;
 
             if (up) {
               fromBox = copyBox(heroCrest.getBoundingClientRect());
               toBox = headerSlot();
-              // Trackpad jumps often leave the crest already at the bar.
-              // Guarantee a long, on-screen glide into the small header mark.
-              var barBottom = header.getBoundingClientRect().bottom;
-              var minTravel = 220;
+              // Trackpad jumps leave the crest already at the bar — invent a start
+              // so the eye still gets a full on-screen glide.
+              var minTravel = 240;
               if (fromBox.top < toBox.top + minTravel) {
-                fromBox.top = Math.min(window.innerHeight * 0.52, toBox.top + 320);
-                fromBox.left = Math.max(toBox.left, Math.min(fromBox.left || toBox.left + 80, window.innerWidth * 0.4));
-                fromBox.width = Math.max(fromBox.width, 110);
+                fromBox.top = Math.min(window.innerHeight * 0.55, toBox.top + 380);
+                fromBox.left = Math.max(
+                  16,
+                  Math.min(fromBox.left || toBox.left + 48, window.innerWidth * 0.42)
+                );
+                fromBox.width = Math.max(fromBox.width, 112);
                 fromBox.height = fromBox.width * (51 / 40);
               }
               hideHero();
               setHeaderCrest(false);
             } else {
               fromBox = headerSlot();
+              setHeaderCrest(false);
               showHero();
               toBox = copyBox(heroCrest.getBoundingClientRect());
               hideHero();
-              setHeaderCrest(true);
+              // If the hero mark is off-screen, drop toward mid viewport.
+              if (toBox.top < 80 || toBox.top > window.innerHeight) {
+                toBox.top = Math.min(window.innerHeight * 0.5, 360);
+                toBox.left = Math.max(16, Math.min(toBox.left, window.innerWidth * 0.4));
+                toBox.width = Math.max(toBox.width, 112);
+                toBox.height = toBox.width * (51 / 40);
+              }
             }
 
-            startedAt = performance.now();
-            state = 'flying';
             flying = true;
-            paintFlyer(fromBox, toBox, 0);
-            window.requestAnimationFrame(step);
-          }
+            state = 'flying';
+            placeFlyer(fromBox);
+            animateSlot(up, performance.now());
 
-          function step(now) {
-            if (!flying) return;
-            var t = (now - startedAt) / DURATION;
-            if (t >= 1) {
-              paintFlyer(fromBox, toBox, 1);
-              finish(direction > 0);
-              return;
+            var fromTf =
+              'translate3d(' + fromBox.left.toFixed(2) + 'px, ' + fromBox.top.toFixed(2) + 'px, 0)';
+            var toTf =
+              'translate3d(' + toBox.left.toFixed(2) + 'px, ' + toBox.top.toFixed(2) + 'px, 0)';
+
+            if (typeof flyer.animate === 'function') {
+              flightAnim = flyer.animate(
+                [
+                  { transform: fromTf, width: fromBox.width.toFixed(2) + 'px', opacity: 1 },
+                  { transform: toTf, width: toBox.width.toFixed(2) + 'px', opacity: 1 },
+                ],
+                {
+                  duration: DURATION,
+                  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                  fill: 'forwards',
+                }
+              );
+              flightAnim.onfinish = function () {
+                finish(up);
+              };
+              flightAnim.oncancel = function () {
+                /* finish() also cancels */
+              };
+            } else {
+              // Fallback: rAF lerp if WAAPI missing
+              var startedAt = performance.now();
+              function step(now) {
+                if (!flying) return;
+                var t = (now - startedAt) / DURATION;
+                if (t >= 1) {
+                  placeFlyer(toBox);
+                  finish(up);
+                  return;
+                }
+                var e = easeInOut(t);
+                placeFlyer({
+                  left: fromBox.left + (toBox.left - fromBox.left) * e,
+                  top: fromBox.top + (toBox.top - fromBox.top) * e,
+                  width: fromBox.width + (toBox.width - fromBox.width) * e,
+                  height: fromBox.height + (toBox.height - fromBox.height) * e,
+                });
+                window.requestAnimationFrame(step);
+              }
+              window.requestAnimationFrame(step);
             }
-            if (t < 0) t = 0;
-            paintFlyer(fromBox, toBox, t);
-            window.requestAnimationFrame(step);
           }
 
           function shouldFlyUp() {
-            // Never on the initial hero view — only after a real scroll.
             if (window.scrollY < 48) return false;
             var hero = heroCrest.getBoundingClientRect();
             var barBottom = header.getBoundingClientRect().bottom;
-            // Start while the big crest is still on screen, heading into the bar.
-            return hero.top < barBottom + 220 || hero.top < window.innerHeight * 0.42;
+            return hero.top < barBottom + 240 || hero.top < window.innerHeight * 0.4;
           }
 
           function shouldFlyDown() {
@@ -234,12 +291,10 @@ const links = [
 
           function onScroll() {
             if (flying) return;
-
             if (state === 'hero' && shouldFlyUp()) {
               startFlight(true);
               return;
             }
-
             if (state === 'header' && shouldFlyDown()) {
               startFlight(false);
             }
@@ -248,8 +303,6 @@ const links = [
           hideFlyer();
           setHeaderCrest(false);
           showHero();
-          // Do not run onScroll() here — on laptop the crest already sits in the
-          // upper half, which would fire the flight before any scroll.
           window.addEventListener('scroll', onScroll, { passive: true });
           window.addEventListener('resize', function () {
             if (state === 'header') setHeaderCrest(true);
@@ -271,7 +324,7 @@ const links = [
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 80;
+    z-index: 120;
     width: 4rem;
     height: auto;
     margin: 0;
@@ -283,13 +336,7 @@ const links = [
     transform: translate3d(-9999px, -9999px, 0);
     filter: drop-shadow(0 14px 34px rgba(212, 163, 90, 0.45));
     will-change: transform, width, opacity;
-    transform-origin: center center;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .crest-flyer {
-      display: none !important;
-    }
+    transform-origin: top left;
   }
 </style>
 
