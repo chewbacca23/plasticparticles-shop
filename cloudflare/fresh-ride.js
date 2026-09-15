@@ -238,7 +238,7 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)} · The Soul Searchers</title>
   <meta name="description" content="${escapeHtml(description)}" />
-  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -276,7 +276,7 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
 <body>
   <header>
     <div class="site-shell header-inner">
-      <a class="brand" href="/"><img src="/logo.svg" alt="" width="40" height="51" /><span>The Soul Searchers</span></a>
+      <a class="brand" href="/"><img src="/logo.png" alt="" width="40" height="51" /><span>The Soul Searchers</span></a>
       <nav aria-label="Primary">
         <a href="/">Home</a>
         <a href="/now">Now</a>

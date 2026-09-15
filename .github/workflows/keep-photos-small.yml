@@ -3,7 +3,7 @@ name: Keep photos under 1 MB
 # Photos uploaded in the CMS land here straight from a phone, at 2-5 MB. The
 # media library previews images through the GitHub contents API, which returns
 # no body above 1 MB, so the upload succeeds while its thumbnail stays broken.
-# This resizes them in the repo so the next preview works.
+# This also pulls shots toward a ~350 KB web target so Now / home stay snappy.
 #
 # No infinite loop: the bot's own commit re-triggers this workflow, but by then
 # nothing is oversized, so it makes no commit and stops.
@@ -53,5 +53,5 @@ jobs:
           git config user.name 'soul-searchers-bot'
           git config user.email 'bot@users.noreply.github.com'
           git add -A
-          git commit -m 'Resize photos to fit the editor preview limit'
+          git commit -m 'Shrink photos for a faster site (and editor previews)'
           git push
