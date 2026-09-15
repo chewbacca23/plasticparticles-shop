@@ -18,7 +18,7 @@ public_folder: /stories
 
 site_url: https://thenewsoulsearchers.de
 display_url: https://thenewsoulsearchers.de
-logo_url: /logo.svg
+logo_url: /logo.png
 
 commit_messages:
   create: Create {{collection}} “{{slug}}”

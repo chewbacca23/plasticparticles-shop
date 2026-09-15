@@ -34,9 +34,9 @@ BASE=$(basename "$SRC")
 STEM=${BASE%.*}
 OUT="$DIR/$STEM-web.jpg"
 
-# JPEG (HEIC is converted), long edge 2000px.
+# JPEG (HEIC is converted), long edge 1600px — enough for the site, quick to load.
 sips --setProperty format jpeg \
-     --resampleHeightWidthMax 2000 \
+     --resampleHeightWidthMax 1600 \
      "$SRC" --out "$OUT" >/dev/null
 
 SIZE=$(wc -c < "$OUT" | tr -d ' ')
@@ -44,9 +44,12 @@ printf 'Wrote %s (%s bytes)\n' "$OUT" "$SIZE"
 
 if [ "$SIZE" -gt 1000000 ]; then
   echo "Still over 1 MB — run again with a smaller max:"
+  echo "  sips --setProperty format jpeg --resampleHeightWidthMax 1200 \"$SRC\" --out \"$OUT\""
+elif [ "$SIZE" -gt 350000 ]; then
+  echo "Under 1 MB (editor OK). For a snappier site you can go smaller:"
   echo "  sips --setProperty format jpeg --resampleHeightWidthMax 1400 \"$SRC\" --out \"$OUT\""
 else
-  echo "Under 1 MB. Upload this one in the editor and the preview will load."
+  echo "Good web size. Upload this one in the editor."
 fi
 
 echo

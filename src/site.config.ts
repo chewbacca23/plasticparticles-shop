@@ -9,8 +9,8 @@ export const site = {
   locale: 'en',
   domains: ['thenewsoulsearchers.de', 'www.thenewsoulsearchers.de'],
 
-  /** Crest lives at `public/logo.svg`, which wraps `public/logo.png`. */
-  logo: '/logo.svg',
+  /** Crest PNG — lighter on the wire than the old base64-wrapped SVG. */
+  logo: '/logo.png',
   /**
    * Soft, pre-blurred crest for the page backdrop only.
    * Header / favicon keep the sharp `logo` above.
