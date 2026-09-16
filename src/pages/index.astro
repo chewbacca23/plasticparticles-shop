@@ -34,18 +34,24 @@ const heroPhoto = heroSlides[0] || null;
       {
         heroSlides.length > 0 ? (
           <>
-            <div class="hero-dia" data-hero-dia data-interval="5000">
+            <div
+              class="hero-dia"
+              data-hero-dia
+              data-count={heroSlides.length}
+              style={`--dia-count: ${heroSlides.length};`}
+            >
               {
                 heroSlides.map((photo, index) => (
                   <img
-                    class:list={['hero-photo', { 'is-active': index === 0 }]}
+                    class="hero-photo"
                     src={photo}
                     alt=""
                     width="1920"
                     height="1080"
                     decoding={index === 0 ? 'sync' : 'async'}
                     fetchpriority={index === 0 ? 'high' : 'low'}
-                    loading={index === 0 ? 'eager' : 'lazy'}
+                    loading="eager"
+                    style={`--dia-i: ${index};`}
                   />
                 ))
               }
@@ -97,37 +103,6 @@ const heroPhoto = heroSlides[0] || null;
   </section>
 </BaseLayout>
 
-{
-  heroSlides.length > 1 && (
-    <script is:inline>
-      (function () {
-        var root = document.querySelector('[data-hero-dia]');
-        if (!root) return;
-        var slides = root.querySelectorAll('.hero-photo');
-        if (slides.length < 2) return;
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          return;
-        }
-
-        var interval = Number(root.getAttribute('data-interval') || 5000);
-        if (!interval || interval < 2500) interval = 5000;
-        var index = 0;
-
-        for (var i = 1; i < slides.length; i++) {
-          var warm = new Image();
-          warm.src = slides[i].currentSrc || slides[i].src;
-        }
-
-        window.setInterval(function () {
-          slides[index].classList.remove('is-active');
-          index = (index + 1) % slides.length;
-          slides[index].classList.add('is-active');
-        }, interval);
-      })();
-    </script>
-  )
-}
-
 <style>
   .hero {
     position: relative;
@@ -161,16 +136,48 @@ const heroPhoto = heroSlides[0] || null;
     height: 100%;
     object-fit: cover;
     object-position: center 36%;
-    transform: scale(1.06);
+    transform: scale(1.05);
     opacity: 0;
-    transition: opacity 1.6s ease-in-out;
     will-change: opacity;
-    animation: hero-drift 28s ease-in-out infinite alternate;
   }
 
-  .hero-photo.is-active {
+  /* One shot: stay visible. */
+  .hero-dia[data-count='1'] .hero-photo {
     opacity: 1;
-    z-index: 1;
+  }
+
+  /*
+   * Soft dia: ~5s each including a slow blend.
+   * CSS-only so Mac Reduce Motion / blocked JS cannot freeze on the coffee shot.
+   */
+  .hero-dia[data-count='2'] .hero-photo,
+  .hero-dia[data-count='3'] .hero-photo,
+  .hero-dia[data-count='4'] .hero-photo,
+  .hero-dia[data-count='5'] .hero-photo,
+  .hero-dia[data-count='6'] .hero-photo {
+    animation-name: hero-dia-fade;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-duration: calc(var(--dia-count) * 5s);
+    animation-delay: calc(var(--dia-i) * 5s);
+  }
+
+  @keyframes hero-dia-fade {
+    0% {
+      opacity: 0;
+    }
+    6% {
+      opacity: 1;
+    }
+    30% {
+      opacity: 1;
+    }
+    38% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
   }
 
   .hero-scrim {
@@ -296,15 +303,6 @@ const heroPhoto = heroSlides[0] || null;
     border-top: 1px solid rgba(215, 224, 232, 0.08);
   }
 
-  @keyframes hero-drift {
-    from {
-      transform: scale(1.06) translate3d(0, 0, 0);
-    }
-    to {
-      transform: scale(1.12) translate3d(-1.2%, -0.8%, 0);
-    }
-  }
-
   @media (max-width: 640px) {
     .hero {
       min-height: calc(100vh - 10rem);
@@ -348,9 +346,7 @@ const heroPhoto = heroSlides[0] || null;
 
   @media (prefers-reduced-motion: reduce) {
     .hero-photo {
-      animation: none;
       transform: scale(1.04);
-      transition: none;
     }
   }
 </style>
