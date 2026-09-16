@@ -26,15 +26,25 @@ describe('resolveHomeHeroSlides', () => {
   it('uses the CMS slide list when the files are there', () => {
     assert.deepEqual(
       resolveHomeHeroSlides({
-        heroSlides: ['/stories/img_5940.jpg', '/stories/img_1442.jpeg', '/stories/img_5956.jpg'],
+        heroSlides: [
+          '/stories/img_6372.jpeg',
+          '/stories/img_5940.jpg',
+          '/stories/img_1442.jpeg',
+          '/stories/img_5956.jpg',
+        ],
       }),
-      ['/stories/img_5940.jpg', '/stories/img_1442.jpeg', '/stories/img_5956.jpg'],
+      [
+        '/stories/img_6372.jpeg',
+        '/stories/img_5940.jpg',
+        '/stories/img_1442.jpeg',
+        '/stories/img_5956.jpg',
+      ],
     );
   });
 
-  it('falls back to the default café / Henrik / moped dia', () => {
+  it('falls back to the default Nice / café / Henrik / moped dia', () => {
     const slides = resolveHomeHeroSlides({});
-    assert.equal(slides.length, 3);
+    assert.equal(slides.length, 4);
     assert.deepEqual(slides, [...DEFAULT_HERO_SLIDES]);
   });
 

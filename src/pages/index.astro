@@ -147,8 +147,8 @@ const heroPhoto = heroSlides[0] || null;
   }
 
   /*
-   * Soft dia: ~5s each including a slow blend.
-   * CSS-only so Mac Reduce Motion / blocked JS cannot freeze on the coffee shot.
+   * Soft dia: ~9s each with a long, gentle crossfade.
+   * CSS-only so Mac Reduce Motion / blocked JS cannot freeze on one shot.
    */
   .hero-dia[data-count='2'] .hero-photo,
   .hero-dia[data-count='3'] .hero-photo,
@@ -158,21 +158,23 @@ const heroPhoto = heroSlides[0] || null;
     animation-name: hero-dia-fade;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
-    animation-duration: calc(var(--dia-count) * 5s);
-    animation-delay: calc(var(--dia-i) * 5s);
+    animation-fill-mode: both;
+    animation-duration: calc(var(--dia-count) * 9s);
+    /* Pull the next slide in early so blends overlap softly (~2.4s). */
+    animation-delay: calc(var(--dia-i) * 9s - 2.4s);
   }
 
   @keyframes hero-dia-fade {
     0% {
       opacity: 0;
     }
-    6% {
+    10% {
       opacity: 1;
     }
-    30% {
+    24% {
       opacity: 1;
     }
-    38% {
+    34% {
       opacity: 0;
     }
     100% {

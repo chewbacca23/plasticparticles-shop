@@ -20,8 +20,9 @@ export function resolveHomeHero(
   return null;
 }
 
-/** Soft default dia: café cup, Henrik, little moped. */
+/** Soft default dia: Nice promenade, café cup, Henrik, little moped. */
 export const DEFAULT_HERO_SLIDES = [
+  '/stories/img_6372.jpeg',
   '/stories/img_5940.jpg',
   '/stories/img_1442.jpeg',
   '/stories/img_5956.jpg',

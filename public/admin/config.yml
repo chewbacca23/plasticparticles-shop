@@ -208,7 +208,7 @@ collections:
             widget: list
             required: false
             summary: '{{slide}}'
-            hint: "Soft dia on the home hero. Leave empty for the café cup, Henrik, and the little moped. About five seconds between blends."
+            hint: "Soft dia on the home hero. Leave empty for Nice, the café cup, Henrik, and the little moped. About nine seconds between soft blends."
             field:
               label: Slide
               name: slide
