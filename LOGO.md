@@ -5,8 +5,6 @@
 
 Those names must stay lowercase. Linux and Cloudflare treat `Logo.svg` and `logo.svg` as two different files.
 
-`public/logo.svg` may still exist as an old base64 wrapper — the live site uses the PNG so pages do not download half a megabyte for the crest.
-
 ## What is in the file now
 
 Henrik’s crest with the red **SOUL SEARCHERS** banner, white dog, and lightning colours. Cropped from a larger PNG (~549×875, saved at 627×1000). A real Illustrator SVG will still look sharper in the header.

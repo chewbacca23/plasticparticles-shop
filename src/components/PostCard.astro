@@ -20,7 +20,7 @@ const formatted = date.toLocaleDateString('en-GB', {
   <a class="card-link" href={href}>
     {
       image && (
-        <img class="card-photo" src={image} alt="" width="720" height="480" loading="lazy" />
+        <img class="card-photo" src={image} alt="" width="720" height="480" loading="lazy" decoding="async" />
       )
     }
     {label && <p class="eyebrow">{label}</p>}

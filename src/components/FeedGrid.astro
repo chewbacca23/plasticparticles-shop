@@ -5,9 +5,11 @@ interface Props {
   items: FeedEntry[];
   limit?: number;
   moreHref?: string;
+  /** How many grid thumbs to load eagerly (home should pass 0 — hero wins). */
+  eagerCount?: number;
 }
 
-const { items, limit, moreHref } = Astro.props;
+const { items, limit, moreHref, eagerCount = 2 } = Astro.props;
 const visible = typeof limit === 'number' ? items.slice(0, limit) : items;
 const payload = visible.map((item) => ({
   id: item.id,
@@ -33,7 +35,17 @@ const payload = visible.map((item) => ({
               data-index={index}
               aria-label={item.caption}
             >
-              <img src={item.photo} alt="" width="800" height="800" loading={index < 6 ? 'eager' : 'lazy'} />
+              <img
+                src={index < eagerCount ? item.photo : undefined}
+                data-src={item.photo}
+                alt=""
+                width="800"
+                height="800"
+                decoding="async"
+                sizes="(max-width: 640px) 92vw, (max-width: 980px) 45vw, 360px"
+                loading={index < eagerCount ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 && eagerCount > 0 ? 'high' : undefined}
+              />
             </button>
           ))
         }
@@ -121,6 +133,31 @@ const payload = visible.map((item) => ({
     tiles.forEach((tile) => {
       tile.addEventListener('click', () => show(Number(tile.getAttribute('data-index'))));
     });
+
+    // Load thumbs only when they near the viewport — Chrome still speculative-fetches
+    // native lazy images that sit just under the fold on a tall home hero.
+    const pending = [...root.querySelectorAll('img[data-src]')].filter((img) => !img.getAttribute('src'));
+    if (pending.length && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const img = entry.target;
+            const src = img.getAttribute('data-src');
+            if (src) img.src = src;
+            io.unobserve(img);
+          }
+        },
+        { rootMargin: '180px 0px' },
+      );
+      pending.forEach((img) => io.observe(img));
+    } else {
+      pending.forEach((img) => {
+        const src = img.getAttribute('data-src');
+        if (src) img.src = src;
+      });
+    }
+
     root.querySelector('[data-feed-prev]').addEventListener('click', (event) => {
       event.stopPropagation();
       show(current - 1);
