@@ -21,9 +21,11 @@ const watermarkSrc = site.logoWatermark ?? site.logo;
     class="logo-backdrop__mark"
     src={watermarkSrc}
     alt=""
-    width="1003"
-    height="1600"
+    width="502"
+    height="800"
     decoding="async"
+    loading="lazy"
+    fetchpriority="low"
   />
   <div class="logo-backdrop__veil"></div>
 </div>

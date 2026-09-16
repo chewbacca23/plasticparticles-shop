@@ -26,6 +26,11 @@ const heroPhoto = resolveHomeHero(
 ---
 
 <BaseLayout watermark={false}>
+  {
+    heroPhoto && (
+      <link slot="head" rel="preload" as="image" href={heroPhoto} fetchpriority="high" />
+    )
+  }
   <section class:list={['hero', { 'has-photo': Boolean(heroPhoto) }]} aria-label="Welcome">
     <div class="sky" aria-hidden="true">
       {
@@ -82,7 +87,7 @@ const heroPhoto = resolveHomeHero(
         Newest photos first. Tap one and stay. There is always another shot.
       </p>
       <InstagramLatest />
-      <FeedGrid items={nowItems} limit={12} moreHref="/now" />
+      <FeedGrid items={nowItems} limit={6} moreHref="/now" eagerCount={0} />
     </div>
   </section>
 </BaseLayout>

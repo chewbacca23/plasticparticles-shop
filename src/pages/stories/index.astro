@@ -37,7 +37,7 @@ const tiles = stories.map((story) => ({
               <span class="frame">
                 {
                   cover ? (
-                    <img src={cover} alt="" width="800" height="600" loading="lazy" />
+                    <img src={cover} alt="" width="800" height="600" loading="lazy" decoding="async" sizes="(max-width: 640px) 92vw, 400px" />
                   ) : (
                     <span class="awaiting">
                       <img src={site.logo} alt="" width="56" height="71" loading="lazy" />
