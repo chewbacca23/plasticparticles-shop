@@ -5,7 +5,7 @@ import FeedGrid from '../components/FeedGrid.astro';
 import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
-import { resolveHomeHero } from '../lib/home-hero';
+import { resolveHomeHeroSlides } from '../lib/home-hero';
 import { site } from '../site.config';
 import homeSettings from '../content/settings/home.json';
 
@@ -19,10 +19,8 @@ const nowItems = collectFeed(
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
 
-const heroPhoto = resolveHomeHero(
-  homeSettings.heroPhoto,
-  nowItems.map((item) => item.photo),
-);
+const heroSlides = resolveHomeHeroSlides(homeSettings, nowItems.map((item) => item.photo));
+const heroPhoto = heroSlides[0] || null;
 ---
 
 <BaseLayout watermark={false}>
@@ -34,17 +32,30 @@ const heroPhoto = resolveHomeHero(
   <section class:list={['hero', { 'has-photo': Boolean(heroPhoto) }]} aria-label="Welcome">
     <div class="sky" aria-hidden="true">
       {
-        heroPhoto ? (
+        heroSlides.length > 0 ? (
           <>
-            <img
-              class="hero-photo"
-              src={heroPhoto}
-              alt=""
-              width="1920"
-              height="1080"
-              decoding="async"
-              fetchpriority="high"
-            />
+            <div
+              class="hero-dia"
+              data-hero-dia
+              data-count={heroSlides.length}
+              style={`--dia-count: ${heroSlides.length};`}
+            >
+              {
+                heroSlides.map((photo, index) => (
+                  <img
+                    class="hero-photo"
+                    src={photo}
+                    alt=""
+                    width="1920"
+                    height="1080"
+                    decoding={index === 0 ? 'sync' : 'async'}
+                    fetchpriority={index === 0 ? 'high' : 'low'}
+                    loading="eager"
+                    style={`--dia-i: ${index};`}
+                  />
+                ))
+              }
+            </div>
             <div class="hero-scrim"></div>
           </>
         ) : (
@@ -95,7 +106,6 @@ const heroPhoto = resolveHomeHero(
 <style>
   .hero {
     position: relative;
-    /* Header sits in normal flow above this, so 100vh alone pushes CTAs under the fold. */
     min-height: calc(100vh - 4.25rem);
     min-height: calc(100dvh - 4.25rem);
     display: grid;
@@ -114,20 +124,68 @@ const heroPhoto = resolveHomeHero(
       linear-gradient(180deg, #080c11 0%, #0f1820 45%, #182a36 70%, #2a2218 100%);
   }
 
+  .hero-dia {
+    position: absolute;
+    inset: 0;
+  }
+
   .hero-photo {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 42%;
-    transform: scale(1.06);
-    animation: hero-drift 28s ease-in-out infinite alternate;
+    object-position: center 36%;
+    transform: scale(1.05);
+    opacity: 0;
+    will-change: opacity;
+  }
+
+  /* One shot: stay visible. */
+  .hero-dia[data-count='1'] .hero-photo {
+    opacity: 1;
+  }
+
+  /*
+   * Soft dia: about nine seconds each, with a long ease-in-out crossfade.
+   * CSS-only so Mac Reduce Motion / blocked JS cannot freeze on one shot.
+   */
+  .hero-dia[data-count='2'] .hero-photo,
+  .hero-dia[data-count='3'] .hero-photo,
+  .hero-dia[data-count='4'] .hero-photo,
+  .hero-dia[data-count='5'] .hero-photo,
+  .hero-dia[data-count='6'] .hero-photo {
+    animation-name: hero-dia-fade;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    /* ~9s between shots; fade window overlaps the next start for a soft blend. */
+    animation-duration: calc(var(--dia-count) * 9s);
+    animation-delay: calc(var(--dia-i) * 9s);
+  }
+
+  @keyframes hero-dia-fade {
+    0% {
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    22% {
+      opacity: 1;
+    }
+    32% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
   }
 
   .hero-scrim {
     position: absolute;
     inset: 0;
+    z-index: 2;
     background:
       linear-gradient(180deg, rgba(8, 12, 17, 0.28) 0%, rgba(8, 12, 17, 0.12) 34%, rgba(8, 12, 17, 0.55) 68%, rgba(8, 12, 17, 0.88) 100%),
       radial-gradient(ellipse 70% 55% at 18% 78%, rgba(8, 12, 17, 0.45), transparent 70%);
@@ -247,18 +305,8 @@ const heroPhoto = resolveHomeHero(
     border-top: 1px solid rgba(215, 224, 232, 0.08);
   }
 
-  @keyframes hero-drift {
-    from {
-      transform: scale(1.06) translate3d(0, 0, 0);
-    }
-    to {
-      transform: scale(1.12) translate3d(-1.2%, -0.8%, 0);
-    }
-  }
-
   @media (max-width: 640px) {
     .hero {
-      /* Wrapped nav makes the sticky header taller on small screens. */
       min-height: calc(100vh - 10rem);
       min-height: calc(100dvh - 10rem);
     }
@@ -300,7 +348,6 @@ const heroPhoto = resolveHomeHero(
 
   @media (prefers-reduced-motion: reduce) {
     .hero-photo {
-      animation: none;
       transform: scale(1.04);
     }
   }
