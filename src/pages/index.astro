@@ -5,7 +5,7 @@ import FeedGrid from '../components/FeedGrid.astro';
 import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
-import { resolveHomeHero } from '../lib/home-hero';
+import { resolveHomeHeroSlides } from '../lib/home-hero';
 import { site } from '../site.config';
 import homeSettings from '../content/settings/home.json';
 
@@ -19,10 +19,8 @@ const nowItems = collectFeed(
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
 
-const heroPhoto = resolveHomeHero(
-  homeSettings.heroPhoto,
-  nowItems.map((item) => item.photo),
-);
+const heroSlides = resolveHomeHeroSlides(homeSettings, nowItems.map((item) => item.photo));
+const heroPhoto = heroSlides[0] || null;
 ---
 
 <BaseLayout watermark={false}>
@@ -34,17 +32,24 @@ const heroPhoto = resolveHomeHero(
   <section class:list={['hero', { 'has-photo': Boolean(heroPhoto) }]} aria-label="Welcome">
     <div class="sky" aria-hidden="true">
       {
-        heroPhoto ? (
+        heroSlides.length > 0 ? (
           <>
-            <img
-              class="hero-photo"
-              src={heroPhoto}
-              alt=""
-              width="1920"
-              height="1080"
-              decoding="async"
-              fetchpriority="high"
-            />
+            <div class="hero-dia" data-hero-dia data-interval="5000">
+              {
+                heroSlides.map((photo, index) => (
+                  <img
+                    class:list={['hero-photo', { 'is-active': index === 0 }]}
+                    src={photo}
+                    alt=""
+                    width="1920"
+                    height="1080"
+                    decoding={index === 0 ? 'sync' : 'async'}
+                    fetchpriority={index === 0 ? 'high' : 'low'}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                  />
+                ))
+              }
+            </div>
             <div class="hero-scrim"></div>
           </>
         ) : (
@@ -92,10 +97,40 @@ const heroPhoto = resolveHomeHero(
   </section>
 </BaseLayout>
 
+{
+  heroSlides.length > 1 && (
+    <script is:inline>
+      (function () {
+        var root = document.querySelector('[data-hero-dia]');
+        if (!root) return;
+        var slides = root.querySelectorAll('.hero-photo');
+        if (slides.length < 2) return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          return;
+        }
+
+        var interval = Number(root.getAttribute('data-interval') || 5000);
+        if (!interval || interval < 2500) interval = 5000;
+        var index = 0;
+
+        for (var i = 1; i < slides.length; i++) {
+          var warm = new Image();
+          warm.src = slides[i].currentSrc || slides[i].src;
+        }
+
+        window.setInterval(function () {
+          slides[index].classList.remove('is-active');
+          index = (index + 1) % slides.length;
+          slides[index].classList.add('is-active');
+        }, interval);
+      })();
+    </script>
+  )
+}
+
 <style>
   .hero {
     position: relative;
-    /* Header sits in normal flow above this, so 100vh alone pushes CTAs under the fold. */
     min-height: calc(100vh - 4.25rem);
     min-height: calc(100dvh - 4.25rem);
     display: grid;
@@ -114,20 +149,34 @@ const heroPhoto = resolveHomeHero(
       linear-gradient(180deg, #080c11 0%, #0f1820 45%, #182a36 70%, #2a2218 100%);
   }
 
+  .hero-dia {
+    position: absolute;
+    inset: 0;
+  }
+
   .hero-photo {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 42%;
+    object-position: center 36%;
     transform: scale(1.06);
+    opacity: 0;
+    transition: opacity 1.6s ease-in-out;
+    will-change: opacity;
     animation: hero-drift 28s ease-in-out infinite alternate;
+  }
+
+  .hero-photo.is-active {
+    opacity: 1;
+    z-index: 1;
   }
 
   .hero-scrim {
     position: absolute;
     inset: 0;
+    z-index: 2;
     background:
       linear-gradient(180deg, rgba(8, 12, 17, 0.28) 0%, rgba(8, 12, 17, 0.12) 34%, rgba(8, 12, 17, 0.55) 68%, rgba(8, 12, 17, 0.88) 100%),
       radial-gradient(ellipse 70% 55% at 18% 78%, rgba(8, 12, 17, 0.45), transparent 70%);
@@ -258,7 +307,6 @@ const heroPhoto = resolveHomeHero(
 
   @media (max-width: 640px) {
     .hero {
-      /* Wrapped nav makes the sticky header taller on small screens. */
       min-height: calc(100vh - 10rem);
       min-height: calc(100dvh - 10rem);
     }
@@ -302,6 +350,7 @@ const heroPhoto = resolveHomeHero(
     .hero-photo {
       animation: none;
       transform: scale(1.04);
+      transition: none;
     }
   }
 </style>

@@ -202,7 +202,21 @@ collections:
             widget: image
             required: false
             choose_url: false
-            hint: "Full-bleed opening photo on the home page. Pick one that feels like the road. Leave empty and the newest Now photo fills in. JPEG from the Mac."
+            hint: "Optional single opener. Prefer the slide list below for the home dia."
+          - label: Home hero slides
+            name: heroSlides
+            widget: list
+            required: false
+            summary: '{{slide}}'
+            hint: "Soft dia on the home hero. Leave empty for the café cup, Henrik, and the little moped. About five seconds between blends."
+            field:
+              label: Slide
+              name: slide
+              widget: image
+              choose_url: false
+              media_folder: /public/stories
+              public_folder: /stories
+              hint: "JPEG from the Mac."
       - name: imprint
         label: Mail and imprint
         file: src/content/settings/site.json
