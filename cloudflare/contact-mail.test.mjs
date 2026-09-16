@@ -3,10 +3,13 @@ import { describe, it } from 'node:test';
 import {
   CONTACT_FROM,
   CONTACT_TO,
+  contactHtml,
   contactSubject,
   contactText,
   deliverContact,
   handleContactRequest,
+  mailReady,
+  mailVia,
   parseContactBody,
   validateContact,
 } from './contact-mail.js';
@@ -38,6 +41,17 @@ describe('validateContact', () => {
   });
 });
 
+describe('mailReady', () => {
+  it('spots Resend or the Cloudflare binding', () => {
+    assert.equal(mailReady({}), false);
+    assert.equal(mailVia({}), 'none');
+    assert.equal(mailReady({ RESEND_API_KEY: 're_x' }), true);
+    assert.equal(mailVia({ RESEND_API_KEY: 're_x' }), 'resend');
+    assert.equal(mailReady({ EMAIL: { async send() {} } }), true);
+    assert.equal(mailVia({ EMAIL: { async send() {} } }), 'cloudflare');
+  });
+});
+
 describe('contact copy', () => {
   it('builds a clear subject and body', () => {
     assert.match(contactSubject('Bruno'), /Bruno/);
@@ -46,6 +60,7 @@ describe('contact copy', () => {
       /Ventoux was wild/,
     );
     assert.match(contactText({ name: 'Bruno', email: 'b@ex.com', message: 'x' }), /b@ex.com/);
+    assert.match(contactHtml({ name: 'Bruno', email: 'b@ex.com', message: '<hi>' }), /&lt;hi&gt;/);
   });
 });
 
@@ -134,5 +149,42 @@ describe('handleContactRequest', () => {
       },
     );
     assert.equal(res.status, 400);
+  });
+
+  it('reports whether mail is wired on GET', async () => {
+    const cold = await handleContactRequest(new Request('https://x.test/api/contact'), {});
+    assert.equal(cold.status, 200);
+    assert.equal((await cold.json()).mailWired, false);
+
+    const hot = await handleContactRequest(new Request('https://x.test/api/contact'), {
+      RESEND_API_KEY: 're_test',
+    });
+    assert.equal((await hot.json()).mailWired, true);
+  });
+
+  it('quietly discards honeypot spam', async () => {
+    const sent = [];
+    const res = await handleContactRequest(
+      new Request('https://x.test/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Bot',
+          email: 'bot@example.com',
+          message: 'Buy now',
+          company: 'Spam Co',
+        }),
+      }),
+      {
+        EMAIL: {
+          async send(payload) {
+            sent.push(payload);
+          },
+        },
+      },
+    );
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).via, 'discard');
+    assert.equal(sent.length, 0);
   });
 });

@@ -125,21 +125,26 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 | `"loginWired": true` | Login is ready. Go to `/admin/`. |
 | `"looksStorage": "cache"` or `"memory"` | Looks is temporary. Finish the KV steps above. |
 | `"looksStorage": "kv"` / `"looksDurable": true` | Looks is durable. Counts survive deploys. |
+| `"mailWired": true` | Contact form can send straight to Henrik’s inbox. |
+| `"mailWired": false` / `"mailVia": "none"` | Add **`RESEND_API_KEY`** (steps below), then Retry. |
 
 ### Contact form (real send, no mail app)
 
-`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**.
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**. Reply-To is the rider’s address, so you can answer from your inbox.
 
 Wire it once with Resend (simplest):
 
 1. Create a free account at [resend.com](https://resend.com)
-2. Add and verify domain **`thenewsoulsearchers.de`** (DNS records Resend shows)
+2. Add and verify domain **`thenewsoulsearchers.de`** (DNS records Resend shows — usually MX/TXT)
 3. Create an API key
 4. Cloudflare → Workers → **`thenewsoulsearchersblogc`** → Settings → Variables and Secrets
 5. Add **`RESEND_API_KEY`** as a **Secret** → paste the key → Save
-6. Deployments → **Retry**, hard-refresh `/contact`, send yourself a test note
+6. Deployments → **Retry**, open **https://thenewsoulsearchers.de/cms-status** and check `"mailWired": true`
+7. Hard-refresh `/contact`, send yourself a test note — it should land in **henrik@thenewsoulsearchers.de**
 
-Until that secret is there, Send still opens a filled mailto as a fallback so nothing is lost.
+Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
+
+Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false }` without revealing secrets.
 
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 

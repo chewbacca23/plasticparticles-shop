@@ -16,14 +16,21 @@ const email = publicEmail(saved);
       <p class="eyebrow">Contact</p>
       <h1 class="section-title">Write from the road</h1>
       <p class="section-lead">
-        A climb you loved, a bike-friendly train, a puncture story, a guest ride note. Send it.
-        This is a cycling blog. We want the kilometres.
+        A climb you loved, a bike-friendly train, a puncture story, a guest ride note. Send it
+        here and it lands in Henrik’s inbox. Reply is one click away.
       </p>
 
       <div id="form-success" class="success" hidden>
         <h2>Sent</h2>
+        <p data-success-copy>
+          Your note is in Henrik’s inbox. He can reply straight to the address you left.
+        </p>
+      </div>
+
+      <div id="form-mailto" class="success success--soft" hidden>
+        <h2>Almost there</h2>
         <p>
-          Your note is on its way to Henrik. If anything stalls, write
+          Your mail app should open with the note filled in. If it does not, write
           <a data-site="email" href={`mailto:${email}`}>{email}</a> direct.
         </p>
       </div>
@@ -43,6 +50,11 @@ const email = publicEmail(saved);
           <span>Message</span>
           <textarea name="message" rows="6" required maxlength="5000"></textarea>
         </label>
+        <!-- Honeypot: leave empty. Hidden from people, not from bots. -->
+        <label class="hp" aria-hidden="true">
+          <span>Company</span>
+          <input type="text" name="company" tabindex="-1" autocomplete="off" />
+        </label>
         <button class="btn btn-primary" type="submit">Send message</button>
       </form>
 
@@ -58,11 +70,11 @@ const email = publicEmail(saved);
   (function () {
     var form = document.getElementById('contact-form');
     var success = document.getElementById('form-success');
+    var mailtoBox = document.getElementById('form-mailto');
     var errorBox = document.getElementById('form-error');
     if (!form) return;
 
     var sending = false;
-    var fallback = form.getAttribute('action') || '/api/contact';
 
     function showError(text) {
       if (!errorBox) return;
@@ -76,10 +88,21 @@ const email = publicEmail(saved);
       errorBox.textContent = '';
     }
 
-    function showSent() {
-      if (success) success.hidden = false;
+    function hideForm() {
       form.hidden = true;
       hideError();
+    }
+
+    function showSent() {
+      if (mailtoBox) mailtoBox.hidden = true;
+      if (success) success.hidden = false;
+      hideForm();
+    }
+
+    function showMailtoFallback() {
+      if (success) success.hidden = true;
+      if (mailtoBox) mailtoBox.hidden = false;
+      hideForm();
     }
 
     function openMailto(fields) {
@@ -122,14 +145,14 @@ const email = publicEmail(saved);
 
         if (data && data.mailto) {
           openMailto(fields);
-          showSent();
+          showMailtoFallback();
           return;
         }
 
         showError((data && data.error) || 'Could not send just now.');
       } catch (_) {
         openMailto(fields);
-        showSent();
+        showMailtoFallback();
       } finally {
         sending = false;
         if (button && !form.hidden) {
@@ -146,19 +169,9 @@ const email = publicEmail(saved);
         name: String(data.get('name') || '').trim(),
         email: String(data.get('email') || '').trim(),
         message: String(data.get('message') || '').trim(),
+        company: String(data.get('company') || '').trim(),
       });
     });
-
-    // Enter in the email field sends right away when the note is ready.
-    var emailInput = form.querySelector('input[name="email"]');
-    if (emailInput) {
-      emailInput.addEventListener('keydown', function (event) {
-        if (event.key !== 'Enter') return;
-        event.preventDefault();
-        if (typeof form.requestSubmit === 'function') form.requestSubmit();
-        else form.dispatchEvent(new Event('submit', { cancelable: true }));
-      });
-    }
   })();
 </script>
 
@@ -203,6 +216,15 @@ const email = publicEmail(saved);
     border-color: var(--amber);
   }
 
+  .hp {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
   .alt {
     margin-top: 1.75rem;
     color: rgba(215, 224, 232, 0.7);
@@ -228,6 +250,11 @@ const email = publicEmail(saved);
     border: 1px solid rgba(212, 163, 90, 0.35);
     border-radius: 1rem;
     background: rgba(30, 58, 69, 0.35);
+  }
+
+  .success--soft {
+    border-color: rgba(215, 224, 232, 0.2);
+    background: rgba(26, 36, 48, 0.55);
   }
 
   .success h2 {

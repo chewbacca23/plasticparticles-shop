@@ -20,7 +20,7 @@ import {
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
-import { handleContactRequest } from './contact-mail.js';
+import { handleContactRequest, mailReady, mailVia } from './contact-mail.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -114,6 +114,8 @@ function statusPage(env) {
     looksStorage,
     looksDurable: looksStorage === 'kv',
     statsBinding,
+    mailWired: mailReady(env),
+    mailVia: mailVia(env),
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,
   };
