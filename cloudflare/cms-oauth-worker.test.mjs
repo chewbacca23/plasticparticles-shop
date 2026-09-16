@@ -150,6 +150,18 @@ describe('GET /cms-status', () => {
     assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
     assert.equal(JSON.parse(await res.text()).loginWired, false);
   });
+
+  it('reports whether contact mail is wired', async () => {
+    const cold = JSON.parse(await (await statusPage({ ASSETS: {} })).text());
+    assert.equal(cold.mailWired, false);
+    assert.equal(cold.mailVia, 'none');
+
+    const hot = JSON.parse(
+      await (await statusPage({ ASSETS: {}, RESEND_API_KEY: 're_test' })).text(),
+    );
+    assert.equal(hot.mailWired, true);
+    assert.equal(hot.mailVia, 'resend');
+  });
 });
 
 describe('GET /auth', () => {

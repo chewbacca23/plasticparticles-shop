@@ -16,6 +16,18 @@ const MAX_MESSAGE = 5000;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_MAX = 5;
 
+/** True when this Worker can send without falling back to mailto. */
+export function mailReady(env) {
+  if (env?.EMAIL && typeof env.EMAIL.send === 'function') return true;
+  return Boolean(String(env?.RESEND_API_KEY || '').trim());
+}
+
+export function mailVia(env) {
+  if (env?.EMAIL && typeof env.EMAIL.send === 'function') return 'cloudflare';
+  if (String(env?.RESEND_API_KEY || '').trim()) return 'resend';
+  return 'none';
+}
+
 export function cleanEmail(raw) {
   const value = String(raw || '').trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return '';
@@ -35,6 +47,8 @@ export function parseContactBody(raw) {
     name: cleanLine(src.name, MAX_NAME),
     email: cleanEmail(src.email),
     message: cleanLine(src.message, MAX_MESSAGE),
+    // Honeypot — bots fill this; humans never see it.
+    company: cleanLine(src.company, 80),
   };
 }
 
@@ -60,6 +74,23 @@ export function contactText(fields) {
     '—',
     'Sent from thenewsoulsearchers.de/contact',
   ].join('\n');
+}
+
+export function contactHtml(fields) {
+  const esc = (value) =>
+    String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  return [
+    '<div style="font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#122">',
+    `<p><strong>From:</strong> ${esc(fields.name)} &lt;${esc(fields.email)}&gt;</p>`,
+    `<p style="white-space:pre-wrap">${esc(fields.message)}</p>`,
+    '<hr style="border:none;border-top:1px solid #ddd;margin:1.5rem 0" />',
+    '<p style="color:#666;font-size:13px">Sent from thenewsoulsearchers.de/contact</p>',
+    '</div>',
+  ].join('');
 }
 
 function json(data, status = 200) {
@@ -88,6 +119,7 @@ async function readJson(request) {
         name: form.get('name'),
         email: form.get('email'),
         message: form.get('message'),
+        company: form.get('company'),
       };
     } catch {
       return {};
@@ -143,7 +175,9 @@ async function keepCopy(env, fields) {
   await kv.put(
     id,
     JSON.stringify({
-      ...fields,
+      name: fields.name,
+      email: fields.email,
+      message: fields.message,
       at: new Date().toISOString(),
     }),
     { expirationTtl: 60 * 60 * 24 * 120 },
@@ -157,12 +191,14 @@ async function keepCopy(env, fields) {
 export async function deliverContact(env, fields) {
   const subject = contactSubject(fields.name);
   const text = contactText(fields);
+  const html = contactHtml(fields);
   const payload = {
     from: CONTACT_FROM,
     to: CONTACT_TO,
     replyTo: fields.email,
     subject,
     text,
+    html,
   };
 
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') {
@@ -184,6 +220,7 @@ export async function deliverContact(env, fields) {
         reply_to: fields.email,
         subject,
         text,
+        html,
       }),
     });
     if (!res.ok) {
@@ -211,9 +248,18 @@ export async function handleContactRequest(request, env) {
       status: 204,
       headers: {
         'access-control-allow-origin': '*',
-        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
         'access-control-allow-headers': 'content-type',
       },
+    });
+  }
+
+  if (request.method === 'GET') {
+    return json({
+      ok: true,
+      mailWired: mailReady(env),
+      mailVia: mailVia(env),
+      to: CONTACT_TO,
     });
   }
 
@@ -226,6 +272,11 @@ export async function handleContactRequest(request, env) {
   }
 
   const fields = parseContactBody(await readJson(request));
+  // Silent honeypot — pretend success so bots move on.
+  if (fields.company) {
+    return json({ ok: true, via: 'discard' });
+  }
+
   const problem = validateContact(fields);
   if (problem) return json({ ok: false, error: problem }, 400);
 
@@ -239,7 +290,7 @@ export async function handleContactRequest(request, env) {
       return json(
         {
           ok: false,
-          error: 'Mail is not wired yet. Use the mailto fallback.',
+          error: 'Mail is not wired yet. Opening your mail app with the note filled in.',
           code,
           mailto: true,
         },
