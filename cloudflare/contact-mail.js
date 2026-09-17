@@ -7,7 +7,7 @@
  * is bound, so a note is not lost if mail is briefly down.
  */
 
-export const CONTACT_TO = 'henrik@thenewsoulsearchers.de';
+export const CONTACT_TO = 'henrik.kuerschner@web.de';
 export const CONTACT_FROM = 'hello@thenewsoulsearchers.de';
 
 const MAX_NAME = 120;
@@ -18,8 +18,8 @@ const RATE_MAX = 5;
 
 /**
  * Inbox that receives contact notes.
- * Override with Worker secret/var CONTACT_INBOX when Henrik reads a different box
- * (needed when Strato bounces same-domain Resend mail).
+ * Default is Henrik’s web.de (Strato henrik@ bounces Resend under DMARC reject).
+ * Override with Worker secret CONTACT_INBOX if that ever changes.
  * @param {any} env
  */
 export function resolveContactTo(env) {

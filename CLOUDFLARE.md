@@ -130,7 +130,9 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 
 ### Contact form (real send, no mail app)
 
-`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**. Reply-To is the rider’s address, so you can answer from your inbox.
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik.kuerschner@web.de`**
+(Strato `henrik@thenewsoulsearchers.de` was bouncing Resend under DMARC `p=reject`).
+Reply-To is the rider’s address, so you can answer from web.de.
 
 DNS first (Resend → Domains → `thenewsoulsearchers.de`):
 
