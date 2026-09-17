@@ -130,21 +130,60 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 
 ### Contact form (real send, no mail app)
 
-`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**. Reply-To is the rider’s address, so you can answer from your inbox.
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik.kuerschner@web.de`**
+(Strato `henrik@thenewsoulsearchers.de` was bouncing Resend under DMARC `p=reject`).
+Reply-To is the rider’s address, so you can answer from web.de.
 
-Wire it once with Resend (simplest):
+DNS first (Resend → Domains → `thenewsoulsearchers.de`):
 
-1. Create a free account at [resend.com](https://resend.com)
-2. Add and verify domain **`thenewsoulsearchers.de`** (DNS records Resend shows — usually MX/TXT)
-3. Create an API key
-4. Cloudflare → Workers → **`thenewsoulsearchersblogc`** → Settings → Variables and Secrets
-5. Add **`RESEND_API_KEY`** as a **Secret** → paste the key → Save
-6. Deployments → **Retry**, open **https://thenewsoulsearchers.de/cms-status** and check `"mailWired": true`
-7. Hard-refresh `/contact`, send yourself a test note — it should land in **henrik@thenewsoulsearchers.de**
+1. **Enable Sending** verified (DKIM + the `send` / `rsend` CNAMEs, DNS only)
+2. Leave **Enable Receiving** off so Strato / existing MX keeps delivering `henrik@…`
+
+Then put the key on the live Worker with wrangler (skip the dashboard — easy to land it on the wrong Worker):
+
+```sh
+# From the blog repo on the Mac
+sh scripts/set-resend-secret.sh
+```
+
+Or one shot without the script:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
+npx --yes wrangler@4 login --device
+npx --yes wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc
+```
+
+Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **https://thenewsoulsearchers.de/cms-status**:
+
+- `"mailWired": true` and `RESEND_API_KEY` inside `textBindingsVisibleToWorker` → hard-refresh `/contact` and send a test
+- Still false / key missing from that list → the secret is on a sibling Worker (`thenewsoulsearchersblog` without the **c**, or Build vars). Run the script again; do not use the dashboard.
 
 Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
 
-Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false }` without revealing secrets.
+Notes land in **`henrik.kuerschner@web.de`** by default (From `hello@thenewsoulsearchers.de`
+via Resend). Reply-To is the rider.
+
+### If Resend shows Bounced
+
+Confirm `/cms-status` → `mailTo` is `henrik.kuerschner@web.de`. If it still says
+`henrik@thenewsoulsearchers.de`, Mac-push this branch — live code is stale.
+
+To retarget later:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
+npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
+```
+
+Optional: soften Cloudflare DNS TXT `_dmarc` from `p=reject` to `p=none` if you want
+same-domain delivery to `henrik@thenewsoulsearchers.de` again later.
+
+Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
+
+(`/cms-status` shows `mailTo` / `mailFrom`.)
+
+Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false, "to": "…" }` without revealing secrets.
 
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 

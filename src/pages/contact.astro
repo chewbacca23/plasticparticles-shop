@@ -23,7 +23,9 @@ const email = publicEmail(saved);
       <div id="form-success" class="success" hidden>
         <h2>Sent</h2>
         <p data-success-copy>
-          Your note is in Henrik’s inbox. He can reply straight to the address you left.
+          Your note is on its way to Henrik’s inbox
+          (<span data-mail-to>henrik.kuerschner@web.de</span>).
+          He can reply straight to the address you left.
         </p>
       </div>
 
@@ -93,9 +95,13 @@ const email = publicEmail(saved);
       hideError();
     }
 
-    function showSent() {
+    function showSent(to) {
       if (mailtoBox) mailtoBox.hidden = true;
-      if (success) success.hidden = false;
+      if (success) {
+        var slot = success.querySelector('[data-mail-to]');
+        if (slot && to) slot.textContent = to;
+        success.hidden = false;
+      }
       hideForm();
     }
 
@@ -139,7 +145,7 @@ const email = publicEmail(saved);
         } catch (_) {}
 
         if (res.ok && data.ok) {
-          showSent();
+          showSent(data.to);
           return;
         }
 

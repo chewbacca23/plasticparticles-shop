@@ -20,7 +20,7 @@ import {
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
-import { handleContactRequest, mailReady, mailVia } from './contact-mail.js';
+import { handleContactRequest, mailReady, mailVia, resolveContactTo, resolveResendFrom } from './contact-mail.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -105,6 +105,24 @@ function statusPage(env) {
   const looksStorage = looksStoreKind(env);
   const statsBinding = looksStatsBindingInfo(env);
 
+  const mailOn = mailReady(env);
+  const mailPath = mailVia(env);
+  const seesResendName = stringKeys.includes('RESEND_API_KEY');
+  let mailHint =
+    'Mail is ready. Hard-refresh /contact and send a short test — look for Sent.';
+  if (!mailOn) {
+    if (seesResendName) {
+      mailHint =
+        'RESEND_API_KEY is present but empty. Run: npx wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc';
+    } else if (stringKeys.length === 0) {
+      mailHint =
+        'This Worker sees no text secrets. Domain may be on a sibling Worker, or keys were saved under Build variables. Put RESEND_API_KEY on thenewsoulsearchersblogc with wrangler secret put.';
+    } else {
+      mailHint =
+        'OAuth keys are on this Worker, but RESEND_API_KEY is not. On the Mac: npx wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc';
+    }
+  }
+
   const body = {
     loginWired: Boolean(creds),
     clientIdBinding: creds ? creds.idKey : null,
@@ -114,8 +132,11 @@ function statusPage(env) {
     looksStorage,
     looksDurable: looksStorage === 'kv',
     statsBinding,
-    mailWired: mailReady(env),
-    mailVia: mailVia(env),
+    mailWired: mailOn,
+    mailVia: mailPath,
+    mailTo: resolveContactTo(env),
+    mailFrom: mailPath === 'resend' ? resolveResendFrom(env) : 'hello@thenewsoulsearchers.de',
+    mailHint,
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,
   };

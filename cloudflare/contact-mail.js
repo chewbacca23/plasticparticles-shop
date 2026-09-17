@@ -7,7 +7,7 @@
  * is bound, so a note is not lost if mail is briefly down.
  */
 
-export const CONTACT_TO = 'henrik@thenewsoulsearchers.de';
+export const CONTACT_TO = 'henrik.kuerschner@web.de';
 export const CONTACT_FROM = 'hello@thenewsoulsearchers.de';
 
 const MAX_NAME = 120;
@@ -15,6 +15,28 @@ const MAX_EMAIL = 200;
 const MAX_MESSAGE = 5000;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_MAX = 5;
+
+/**
+ * Inbox that receives contact notes.
+ * Default is Henrik’s web.de (Strato henrik@ bounces Resend under DMARC reject).
+ * Override with Worker secret CONTACT_INBOX if that ever changes.
+ * @param {any} env
+ */
+export function resolveContactTo(env) {
+  const override = cleanEmail(env?.CONTACT_INBOX);
+  return override || CONTACT_TO;
+}
+
+/**
+ * Resend From — must be on the verified domain (not resend.dev) to reach any inbox.
+ * Optional CONTACT_FROM secret overrides the local part/domain.
+ * @param {any} env
+ */
+export function resolveResendFrom(env) {
+  const custom = cleanEmail(env?.CONTACT_FROM);
+  if (custom) return `Soul Searchers <${custom}>`;
+  return `Soul Searchers <${CONTACT_FROM}>`;
+}
 
 /** True when this Worker can send without falling back to mailto. */
 export function mailReady(env) {
@@ -192,9 +214,10 @@ export async function deliverContact(env, fields) {
   const subject = contactSubject(fields.name);
   const text = contactText(fields);
   const html = contactHtml(fields);
+  const to = resolveContactTo(env);
   const payload = {
     from: CONTACT_FROM,
-    to: CONTACT_TO,
+    to,
     replyTo: fields.email,
     subject,
     text,
@@ -203,7 +226,7 @@ export async function deliverContact(env, fields) {
 
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') {
     await env.EMAIL.send(payload);
-    return { via: 'cloudflare' };
+    return { via: 'cloudflare', to };
   }
 
   const key = String(env?.RESEND_API_KEY || '').trim();
@@ -215,8 +238,8 @@ export async function deliverContact(env, fields) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Soul Searchers <${CONTACT_FROM}>`,
-        to: [CONTACT_TO],
+        from: resolveResendFrom(env),
+        to: [to],
         reply_to: fields.email,
         subject,
         text,
@@ -227,7 +250,7 @@ export async function deliverContact(env, fields) {
       const detail = await res.text();
       throw new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
     }
-    return { via: 'resend' };
+    return { via: 'resend', to, from: resolveResendFrom(env) };
   }
 
   const err = new Error('Mail is not wired on this Worker yet.');
@@ -259,7 +282,8 @@ export async function handleContactRequest(request, env) {
       ok: true,
       mailWired: mailReady(env),
       mailVia: mailVia(env),
-      to: CONTACT_TO,
+      to: resolveContactTo(env),
+      from: mailVia(env) === 'resend' ? resolveResendFrom(env) : CONTACT_FROM,
     });
   }
 
@@ -283,7 +307,7 @@ export async function handleContactRequest(request, env) {
   try {
     await keepCopy(env, fields);
     const sent = await deliverContact(env, fields);
-    return json({ ok: true, via: sent.via });
+    return json({ ok: true, via: sent.via, to: sent.to });
   } catch (error) {
     const code = error && typeof error === 'object' ? error.code : '';
     if (code === 'E_MAIL_NOT_CONFIGURED') {
