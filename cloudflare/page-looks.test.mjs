@@ -24,6 +24,9 @@ import {
   sanitizePath,
   fromSiteHref,
   looksFromRows,
+  looksBarsHtml,
+  recentDayBars,
+  recentWeekBars,
   shouldCountDocument,
   shouldRecordPath,
   summarizeLooks,
@@ -51,6 +54,8 @@ const SITE_LOOKS = `<html><body>
 <p class="card-num" data-looks="week">—</p>
 <p class="card-num" data-looks="year">—</p>
 <p class="card-num" data-looks="total">—</p>
+<ol class="looks-bars" data-looks-days><li class="empty">no days</li></ol>
+<ol class="looks-bars" data-looks-weeks><li class="empty">no weeks</li></ol>
 <ol class="pages" data-looks-years><li class="empty">no years</li></ol>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
 <ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
@@ -111,6 +116,43 @@ describe('summarizeLooks', () => {
     assert.deepEqual(summary.pages[0], { path: '/now', looks: 2 });
     assert.deepEqual(summary.countries[0], { name: 'Germany', looks: 2 });
     assert.deepEqual(summary.from[0], { name: 'Instagram', looks: 2 });
+    assert.equal(summary.dayBars.length, 14);
+    assert.equal(summary.dayBars.at(-1).looks, 3);
+    assert.equal(summary.weekBars.length, 8);
+    assert.equal(summary.weekBars.at(-1).looks, 3);
+  });
+});
+
+describe('recentDayBars and recentWeekBars', () => {
+  it('builds day and week chart rows for Henrik', () => {
+    const now = new Date('2026-09-04T12:00:00+02:00');
+    const today = berlinDay(now);
+    const days = { [today]: 5, '2026-09-03': 2 };
+    const dayBars = recentDayBars(days, now, 3);
+    assert.equal(dayBars.length, 3);
+    assert.equal(dayBars.at(-1).day, today);
+    assert.equal(dayBars.at(-1).looks, 5);
+    assert.equal(dayBars.at(-2).looks, 2);
+
+    const weekBars = recentWeekBars(days, now, 2);
+    assert.equal(weekBars.length, 2);
+    assert.equal(weekBars.at(-1).looks, 7);
+    assert.match(weekBars.at(-1).label, /–/);
+  });
+});
+
+describe('looksBarsHtml', () => {
+  it('scales bars against the busiest day', () => {
+    const html = looksBarsHtml(
+      [
+        { label: 'Mon', looks: 2 },
+        { label: 'Tue', looks: 4 },
+      ],
+      'empty',
+    );
+    assert.match(html, /--looks-bar:50%/);
+    assert.match(html, /--looks-bar:100%/);
+    assert.match(html, /looks-bar-num">4</);
   });
 });
 
@@ -393,6 +435,11 @@ describe('fillLooksInHtml', () => {
       pages: [{ path: '/', looks: 4 }],
       countries: [{ name: 'Germany', looks: 3 }],
       from: [{ name: 'Instagram', looks: 2 }],
+      dayBars: [
+        { label: 'Wed', looks: 1 },
+        { label: 'Thu', looks: 2 },
+      ],
+      weekBars: [{ label: '1–7 Sep', looks: 5 }],
     });
     assert.match(html, /data-looks="today">2</);
     assert.match(html, /data-looks="week">5</);
@@ -403,6 +450,8 @@ describe('fillLooksInHtml', () => {
     assert.match(html, /class="looks-name">2026</);
     assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
     assert.match(html, />Instagram</);
+    assert.match(html, /looks-bar-label">Thu</);
+    assert.match(html, /1–7 Sep/);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
 });

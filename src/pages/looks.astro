@@ -12,8 +12,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="eyebrow">Open counts</p>
       <h1 class="section-title">Looks</h1>
       <p class="section-lead">
-        How many times someone opened a page, which country, and which site sent them. No names.
-        Counts start after this Worker is live.
+        Private for you. How many times someone opened a page, day by day and week by week.
+        No names. Counts start after this Worker is live.
       </p>
 
       <div class="cards">
@@ -34,6 +34,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <p class="card-num" data-looks="total">—</p>
         </article>
       </div>
+
+      <h2 class="pages-title">Last 14 days</h2>
+      <p class="note">Berlin days. Tallest bar is the busiest day in this window.</p>
+      <ol class="looks-bars" data-looks-days>
+        <li class="empty">Day bars show once people have opened the site.</li>
+      </ol>
+
+      <h2 class="pages-title">Last 8 weeks</h2>
+      <p class="note">Each bar is seven days. Handy for “this week vs last week”.</p>
+      <ol class="looks-bars" data-looks-weeks>
+        <li class="empty">Week bars show once people have opened the site.</li>
+      </ol>
 
       <h2 class="pages-title">All the years</h2>
       <ol class="pages" data-looks-years>
@@ -107,5 +119,61 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-family: var(--font-display);
     font-size: 2.4rem;
     line-height: 1;
+  }
+
+  .looks-bars {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0 0 0.5rem;
+    padding: 1rem 1.15rem;
+    list-style: none;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.55);
+  }
+
+  .looks-bar {
+    display: grid;
+    grid-template-columns: 3.6rem 1fr 2.4rem;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .looks-bars[data-looks-weeks] .looks-bar {
+    grid-template-columns: 7.5rem 1fr 2.4rem;
+  }
+
+  .looks-bar-label {
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .looks-bar-track {
+    display: block;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: rgba(215, 224, 232, 0.1);
+    overflow: hidden;
+  }
+
+  .looks-bar-fill {
+    display: block;
+    height: 100%;
+    width: var(--looks-bar, 0%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--amber-hot), var(--amber));
+  }
+
+  .looks-bar-num {
+    text-align: right;
+    color: var(--amber-hot);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .looks-bars .empty {
+    color: rgba(215, 224, 232, 0.68);
   }
 </style>
