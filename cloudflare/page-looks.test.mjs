@@ -451,8 +451,9 @@ describe('fillLooksInHtml', () => {
     assert.match(html, /class="looks-name">2026</);
     assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
     assert.match(html, />Instagram</);
-    assert.match(html, /looks-bar-label">Thu</);
+    assert.match(html, /looks-bar-label"[^>]*>Thu</);
     assert.match(html, /1–7 Sep/);
+    assert.match(html, /width:100%/);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
 });
