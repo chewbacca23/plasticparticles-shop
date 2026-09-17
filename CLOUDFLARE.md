@@ -161,32 +161,23 @@ Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **htt
 
 Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
 
-Notes land in **`henrik@thenewsoulsearchers.de`** (Strato) by default, From
-`hello@thenewsoulsearchers.de` via Resend. Reply-To is the rider.
+Notes land in **`henrik.kuerschner@web.de`** by default (From `hello@thenewsoulsearchers.de`
+via Resend). Reply-To is the rider.
 
 ### If Resend shows Bounced
 
-Strato’s DMARC is `p=reject` and apex SPF is Strato-only, so same-domain mail
-(`hello@` → `henrik@` via Resend) often bounces. Two fixes — do **A**, or **B**, or both:
+Confirm `/cms-status` → `mailTo` is `henrik.kuerschner@web.de`. If it still says
+`henrik@thenewsoulsearchers.de`, Mac-push this branch — live code is stale.
 
-**A. Point the form at an inbox that accepts Resend (fastest)**
+To retarget later:
 
 ```sh
 export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
 npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
 ```
 
-Paste the address you actually open (Gmail / iCloud / etc.). Hard-refresh
-`/cms-status` until `mailTo` matches. Test `/contact` again — Resend should say Delivered.
-
-**B. Soften DMARC so Strato can accept same-domain Resend (keeps henrik@)**
-
-Cloudflare DNS for `thenewsoulsearchers.de` → TXT `_dmarc`:
-
-- was: `v=DMARC1;p=reject;`
-- set: `v=DMARC1;p=none;`
-
-Save, wait a few minutes, send again to `henrik@`. Later you can raise policy once SPF/DKIM for Resend are solid.
+Optional: soften Cloudflare DNS TXT `_dmarc` from `p=reject` to `p=none` if you want
+same-domain delivery to `henrik@thenewsoulsearchers.de` again later.
 
 Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
 
