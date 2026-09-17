@@ -8,14 +8,7 @@
  */
 
 export const CONTACT_TO = 'henrik@thenewsoulsearchers.de';
-/** Public “write us” address shown on the site — not always the Resend From. */
 export const CONTACT_FROM = 'hello@thenewsoulsearchers.de';
-/**
- * Resend From for API sends. Strato + DMARC p=reject bounce same-domain mail
- * (hello@ → henrik@ via Resend). Sending as resend.dev lands in the Strato box;
- * Reply-To stays the rider so Henrik can answer in one click.
- */
-export const RESEND_FROM = 'Soul Searchers <onboarding@resend.dev>';
 
 const MAX_NAME = 120;
 const MAX_EMAIL = 200;
@@ -25,7 +18,8 @@ const RATE_MAX = 5;
 
 /**
  * Inbox that receives contact notes.
- * Override with Worker secret/var CONTACT_INBOX when Henrik reads a different box.
+ * Override with Worker secret/var CONTACT_INBOX when Henrik reads a different box
+ * (needed when Strato bounces same-domain Resend mail).
  * @param {any} env
  */
 export function resolveContactTo(env) {
@@ -34,12 +28,14 @@ export function resolveContactTo(env) {
 }
 
 /**
+ * Resend From — must be on the verified domain (not resend.dev) to reach any inbox.
+ * Optional CONTACT_FROM secret overrides the local part/domain.
  * @param {any} env
  */
 export function resolveResendFrom(env) {
   const custom = cleanEmail(env?.CONTACT_FROM);
   if (custom) return `Soul Searchers <${custom}>`;
-  return RESEND_FROM;
+  return `Soul Searchers <${CONTACT_FROM}>`;
 }
 
 /** True when this Worker can send without falling back to mailto. */

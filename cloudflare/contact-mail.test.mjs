@@ -3,7 +3,6 @@ import { describe, it } from 'node:test';
 import {
   CONTACT_FROM,
   CONTACT_TO,
-  RESEND_FROM,
   contactHtml,
   contactSubject,
   contactText,
@@ -12,6 +11,7 @@ import {
   mailReady,
   mailVia,
   parseContactBody,
+  resolveResendFrom,
   validateContact,
 } from './contact-mail.js';
 
@@ -100,7 +100,7 @@ describe('deliverContact', () => {
       assert.equal(via.via, 'resend');
       assert.equal(via.to, CONTACT_TO);
       assert.deepEqual(body.to, [CONTACT_TO]);
-      assert.equal(body.from, RESEND_FROM);
+      assert.equal(body.from, `Soul Searchers <${CONTACT_FROM}>`);
       assert.equal(body.reply_to, 'ana@example.com');
     } finally {
       globalThis.fetch = original;

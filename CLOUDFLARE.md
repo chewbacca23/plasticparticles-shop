@@ -159,20 +159,36 @@ Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **htt
 
 Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
 
-Notes land in **`henrik@thenewsoulsearchers.de`** (Strato). Resend sends as
-`Soul Searchers <onboarding@resend.dev>` so Strato does not bounce same-domain
-DMARC rejects (hello@ → henrik@ via Resend). Reply-To is still the rider.
+Notes land in **`henrik@thenewsoulsearchers.de`** (Strato) by default, From
+`hello@thenewsoulsearchers.de` via Resend. Reply-To is the rider.
 
-If you later want branded From (`hello@…`), fix Resend return-path / SPF on the
-`send` subdomain first, then set Worker secret `CONTACT_FROM=hello@thenewsoulsearchers.de`.
+### If Resend shows Bounced
 
-To point notes at a different inbox you actually open:
+Strato’s DMARC is `p=reject` and apex SPF is Strato-only, so same-domain mail
+(`hello@` → `henrik@` via Resend) often bounces. Two fixes — do **A**, or **B**, or both:
+
+**A. Point the form at an inbox that accepts Resend (fastest)**
 
 ```sh
+export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
 npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
 ```
 
-(`/cms-status` shows `mailTo` / `mailFrom` so you can confirm.)
+Paste the address you actually open (Gmail / iCloud / etc.). Hard-refresh
+`/cms-status` until `mailTo` matches. Test `/contact` again — Resend should say Delivered.
+
+**B. Soften DMARC so Strato can accept same-domain Resend (keeps henrik@)**
+
+Cloudflare DNS for `thenewsoulsearchers.de` → TXT `_dmarc`:
+
+- was: `v=DMARC1;p=reject;`
+- set: `v=DMARC1;p=none;`
+
+Save, wait a few minutes, send again to `henrik@`. Later you can raise policy once SPF/DKIM for Resend are solid.
+
+Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
+
+(`/cms-status` shows `mailTo` / `mailFrom`.)
 
 Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false, "to": "…" }` without revealing secrets.
 
