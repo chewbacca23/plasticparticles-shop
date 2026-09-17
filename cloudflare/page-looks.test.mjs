@@ -150,9 +150,10 @@ describe('looksBarsHtml', () => {
       ],
       'empty',
     );
-    assert.match(html, /--looks-bar:50%/);
-    assert.match(html, /--looks-bar:100%/);
-    assert.match(html, /looks-bar-num">4</);
+    assert.match(html, /width:50%/);
+    assert.match(html, /width:100%/);
+    assert.match(html, /looks-bar-num"[^>]*>4</);
+    assert.match(html, /display:grid/);
   });
 });
 

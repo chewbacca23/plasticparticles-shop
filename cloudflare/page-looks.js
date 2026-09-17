@@ -609,6 +609,7 @@ export function looksDashboardPage(summary) {
   const weekBars = looksBarsHtml(
     summary?.weekBars,
     'Week bars show once people have opened the site.',
+    { wideLabel: true },
   );
 
   return new Response(
@@ -668,9 +669,9 @@ export function looksDashboardPage(summary) {
       <article class="card"><p class="card-label">All time</p><p class="card-num">${total}</p></article>
     </div>
     <h2>Last 14 days</h2>
-    <ol class="looks-bars">${dayBars}</ol>
+    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>
     <h2>Last 8 weeks</h2>
-    <ol class="looks-bars">${weekBars}</ol>
+    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${weekBars}</ol>
     <h2>All the years</h2>
     <ol>${yearRows}</ol>
     <h2>Pages people opened</h2>
@@ -740,30 +741,54 @@ export function looksFromRows(items, emptyText) {
 
 /**
  * CSS bar chart rows for day/week Looks graphics.
+ * Inline styles on purpose: Worker-injected nodes miss Astro scoped CSS,
+ * and a stale deploy without global.css still needs visible bars.
  * @param {{ label?: string, looks?: number }[]} bars
  * @param {string} emptyText
+ * @param {{ wideLabel?: boolean }} [opts]
  */
-export function looksBarsHtml(bars, emptyText) {
+export function looksBarsHtml(bars, emptyText, opts = {}) {
   const list = Array.isArray(bars) ? bars : [];
   if (!list.length) {
     return `<li class="empty">${emptyText}</li>`;
   }
   const max = Math.max(1, ...list.map((row) => Number(row.looks) || 0));
+  const labelCol = opts.wideLabel ? 'minmax(5.5rem, 7.5rem)' : '3.6rem';
+  const rowStyle =
+    `display:grid;grid-template-columns:${labelCol} minmax(0,1fr) 2.75rem;` +
+    'align-items:center;gap:0.65rem;padding:0;border:0;margin:0;list-style:none';
+  const labelStyle =
+    'color:rgba(215,224,232,0.78);font-size:0.82rem;font-weight:600;white-space:nowrap';
+  const trackStyle =
+    'display:block;height:0.55rem;border-radius:999px;background:rgba(215,224,232,0.12);overflow:hidden';
+  const numStyle =
+    'text-align:right;color:#f0c27a;font-weight:700;font-variant-numeric:tabular-nums';
   return list
     .map((row) => {
       const looks = Number(row.looks) || 0;
       const pct = Math.round((looks / max) * 100);
       const label = escapeHtml(row.label || '—');
+      const fillStyle =
+        `display:block;height:100%;width:${pct}%;min-width:${looks > 0 ? '0.35rem' : '0'};` +
+        'border-radius:inherit;background:linear-gradient(90deg,#f0c27a,#d4a35a)';
       return (
-        `<li class="looks-bar" style="--looks-bar:${pct}%">` +
-        `<span class="looks-bar-label">${label}</span>` +
-        `<span class="looks-bar-track" aria-hidden="true"><span class="looks-bar-fill"></span></span>` +
-        `<span class="looks-bar-num">${looks}</span>` +
+        `<li class="looks-bar" style="${rowStyle}">` +
+        `<span class="looks-bar-label" style="${labelStyle}">${label}</span>` +
+        `<span class="looks-bar-track" style="${trackStyle}" aria-hidden="true">` +
+        `<span class="looks-bar-fill" style="${fillStyle}"></span>` +
+        `</span>` +
+        `<span class="looks-bar-num" style="${numStyle}">${looks}</span>` +
         `</li>`
       );
     })
     .join('');
 }
+
+/** List shell styles so the chart box shows even without global.css. */
+export const LOOKS_BARS_LIST_STYLE =
+  'display:grid;gap:0.55rem;margin:0 0 0.5rem;padding:1rem 1.15rem;list-style:none;' +
+  'border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
+
 
 export function fillLooksInHtml(html, summary) {
   const today = String(Number(summary?.today) || 0);
@@ -790,6 +815,7 @@ export function fillLooksInHtml(html, summary) {
   const weekBars = looksBarsHtml(
     summary?.weekBars,
     'Week bars show once people have opened the site.',
+    { wideLabel: true },
   );
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
@@ -802,11 +828,11 @@ export function fillLooksInHtml(html, summary) {
     )
     .replace(
       /<ol([^>]*data-looks-days[^>]*)>[\s\S]*?<\/ol>/,
-      `<ol$1>${dayBars}</ol>`,
+      `<ol$1 style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-weeks[^>]*)>[\s\S]*?<\/ol>/,
-      `<ol$1>${weekBars}</ol>`,
+      `<ol$1 style="${LOOKS_BARS_LIST_STYLE}">${weekBars}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,
