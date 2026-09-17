@@ -155,12 +155,26 @@ describe('GET /cms-status', () => {
     const cold = JSON.parse(await (await statusPage({ ASSETS: {} })).text());
     assert.equal(cold.mailWired, false);
     assert.equal(cold.mailVia, 'none');
+    assert.match(cold.mailHint, /no text secrets|RESEND_API_KEY/);
 
     const hot = JSON.parse(
       await (await statusPage({ ASSETS: {}, RESEND_API_KEY: 're_test' })).text(),
     );
     assert.equal(hot.mailWired, true);
     assert.equal(hot.mailVia, 'resend');
+    assert.match(hot.mailHint, /Mail is ready/);
+
+    const oauthOnly = JSON.parse(
+      await (
+        await statusPage({
+          ASSETS: {},
+          GITHUB_OAUTH_CLIENT_ID: 'Ov23li8qq16feoZZ0VOo',
+          GITHUB_OAUTH_CLIENT_SECRET: 'b'.repeat(40),
+        })
+      ).text(),
+    );
+    assert.equal(oauthOnly.mailWired, false);
+    assert.match(oauthOnly.mailHint, /RESEND_API_KEY is not/);
   });
 });
 

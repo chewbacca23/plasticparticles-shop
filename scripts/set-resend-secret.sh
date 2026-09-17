@@ -36,13 +36,17 @@ echo "------------------------------------------------------------"
 echo "Paste the Resend API key (starts with re_), then press Return."
 echo "Nothing will appear as you paste — that is normal."
 echo "------------------------------------------------------------"
+# secret put deploys a new Worker version with the key attached.
 $WRANGLER secret put RESEND_API_KEY --name "$WORKER"
 
 echo
-echo "Secrets now on $WORKER:"
+echo "Secrets now on $WORKER (names only):"
 $WRANGLER secret list --name "$WORKER"
 
 echo
-echo "Done. Hard-refresh https://thenewsoulsearchers.de/cms-status"
-echo "Expect \"mailWired\": true and RESEND_API_KEY in textBindingsVisibleToWorker."
+echo "If RESEND_API_KEY is missing from that list, the put failed — paste the"
+echo "error above into chat. If it is listed, hard-refresh:"
+echo "  https://thenewsoulsearchers.de/cms-status"
+echo "Expect mailWired true. If still false, paste the whole JSON here"
+echo "(safe — no secret values)."
 echo "Then hard-refresh /contact and send yourself a short test."
