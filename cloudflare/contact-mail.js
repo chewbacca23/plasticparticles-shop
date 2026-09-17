@@ -8,7 +8,14 @@
  */
 
 export const CONTACT_TO = 'henrik@thenewsoulsearchers.de';
+/** Public “write us” address shown on the site — not always the Resend From. */
 export const CONTACT_FROM = 'hello@thenewsoulsearchers.de';
+/**
+ * Resend From for API sends. Strato + DMARC p=reject bounce same-domain mail
+ * (hello@ → henrik@ via Resend). Sending as resend.dev lands in the Strato box;
+ * Reply-To stays the rider so Henrik can answer in one click.
+ */
+export const RESEND_FROM = 'Soul Searchers <onboarding@resend.dev>';
 
 const MAX_NAME = 120;
 const MAX_EMAIL = 200;
@@ -24,6 +31,15 @@ const RATE_MAX = 5;
 export function resolveContactTo(env) {
   const override = cleanEmail(env?.CONTACT_INBOX);
   return override || CONTACT_TO;
+}
+
+/**
+ * @param {any} env
+ */
+export function resolveResendFrom(env) {
+  const custom = cleanEmail(env?.CONTACT_FROM);
+  if (custom) return `Soul Searchers <${custom}>`;
+  return RESEND_FROM;
 }
 
 /** True when this Worker can send without falling back to mailto. */
@@ -226,7 +242,7 @@ export async function deliverContact(env, fields) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Soul Searchers <${CONTACT_FROM}>`,
+        from: resolveResendFrom(env),
         to: [to],
         reply_to: fields.email,
         subject,
@@ -238,7 +254,7 @@ export async function deliverContact(env, fields) {
       const detail = await res.text();
       throw new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
     }
-    return { via: 'resend', to };
+    return { via: 'resend', to, from: resolveResendFrom(env) };
   }
 
   const err = new Error('Mail is not wired on this Worker yet.');
@@ -271,7 +287,7 @@ export async function handleContactRequest(request, env) {
       mailWired: mailReady(env),
       mailVia: mailVia(env),
       to: resolveContactTo(env),
-      from: CONTACT_FROM,
+      from: mailVia(env) === 'resend' ? resolveResendFrom(env) : CONTACT_FROM,
     });
   }
 

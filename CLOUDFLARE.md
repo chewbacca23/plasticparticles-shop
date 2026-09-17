@@ -159,13 +159,20 @@ Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **htt
 
 Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
 
-Notes land in **`henrik@thenewsoulsearchers.de`** (Strato). From address is `hello@thenewsoulsearchers.de`. Check Resend → **Emails** for Delivered / Bounced / spam clues. To point notes at a different inbox you actually open:
+Notes land in **`henrik@thenewsoulsearchers.de`** (Strato). Resend sends as
+`Soul Searchers <onboarding@resend.dev>` so Strato does not bounce same-domain
+DMARC rejects (hello@ → henrik@ via Resend). Reply-To is still the rider.
+
+If you later want branded From (`hello@…`), fix Resend return-path / SPF on the
+`send` subdomain first, then set Worker secret `CONTACT_FROM=hello@thenewsoulsearchers.de`.
+
+To point notes at a different inbox you actually open:
 
 ```sh
 npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
 ```
 
-(`/cms-status` shows `mailTo` so you can confirm the target.)
+(`/cms-status` shows `mailTo` / `mailFrom` so you can confirm.)
 
 Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false, "to": "…" }` without revealing secrets.
 
