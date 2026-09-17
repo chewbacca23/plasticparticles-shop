@@ -363,6 +363,66 @@ p {
   padding-left: 1.15rem;
 }
 
+/* Bar charts are Worker-injected too — keep these global. */
+.looks .looks-bars {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 0.5rem;
+  padding: 1rem 1.15rem;
+  list-style: none;
+  border: 1px solid rgba(215, 224, 232, 0.1);
+  border-radius: 1rem;
+  background: rgba(18, 26, 34, 0.55);
+}
+
+.looks .looks-bar {
+  display: grid;
+  grid-template-columns: 3.6rem minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0;
+  border: 0;
+}
+
+.looks .looks-bars[data-looks-weeks] .looks-bar {
+  grid-template-columns: minmax(5.5rem, 7.5rem) minmax(0, 1fr) 2.75rem;
+}
+
+.looks .looks-bar-label {
+  color: rgba(215, 224, 232, 0.78);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.looks .looks-bar-track {
+  display: block;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(215, 224, 232, 0.1);
+  overflow: hidden;
+}
+
+.looks .looks-bar-fill {
+  display: block;
+  height: 100%;
+  width: var(--looks-bar, 0%);
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--amber-hot), var(--amber));
+}
+
+.looks .looks-bar-num {
+  text-align: right;
+  color: var(--amber-hot);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.looks .looks-bars .empty {
+  color: rgba(215, 224, 232, 0.68);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
