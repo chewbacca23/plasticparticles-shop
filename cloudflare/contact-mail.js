@@ -16,6 +16,16 @@ const MAX_MESSAGE = 5000;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_MAX = 5;
 
+/**
+ * Inbox that receives contact notes.
+ * Override with Worker secret/var CONTACT_INBOX when Henrik reads a different box.
+ * @param {any} env
+ */
+export function resolveContactTo(env) {
+  const override = cleanEmail(env?.CONTACT_INBOX);
+  return override || CONTACT_TO;
+}
+
 /** True when this Worker can send without falling back to mailto. */
 export function mailReady(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return true;
@@ -192,9 +202,10 @@ export async function deliverContact(env, fields) {
   const subject = contactSubject(fields.name);
   const text = contactText(fields);
   const html = contactHtml(fields);
+  const to = resolveContactTo(env);
   const payload = {
     from: CONTACT_FROM,
-    to: CONTACT_TO,
+    to,
     replyTo: fields.email,
     subject,
     text,
@@ -203,7 +214,7 @@ export async function deliverContact(env, fields) {
 
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') {
     await env.EMAIL.send(payload);
-    return { via: 'cloudflare' };
+    return { via: 'cloudflare', to };
   }
 
   const key = String(env?.RESEND_API_KEY || '').trim();
@@ -216,7 +227,7 @@ export async function deliverContact(env, fields) {
       },
       body: JSON.stringify({
         from: `Soul Searchers <${CONTACT_FROM}>`,
-        to: [CONTACT_TO],
+        to: [to],
         reply_to: fields.email,
         subject,
         text,
@@ -227,7 +238,7 @@ export async function deliverContact(env, fields) {
       const detail = await res.text();
       throw new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
     }
-    return { via: 'resend' };
+    return { via: 'resend', to };
   }
 
   const err = new Error('Mail is not wired on this Worker yet.');
@@ -259,7 +270,8 @@ export async function handleContactRequest(request, env) {
       ok: true,
       mailWired: mailReady(env),
       mailVia: mailVia(env),
-      to: CONTACT_TO,
+      to: resolveContactTo(env),
+      from: CONTACT_FROM,
     });
   }
 
@@ -283,7 +295,7 @@ export async function handleContactRequest(request, env) {
   try {
     await keepCopy(env, fields);
     const sent = await deliverContact(env, fields);
-    return json({ ok: true, via: sent.via });
+    return json({ ok: true, via: sent.via, to: sent.to });
   } catch (error) {
     const code = error && typeof error === 'object' ? error.code : '';
     if (code === 'E_MAIL_NOT_CONFIGURED') {

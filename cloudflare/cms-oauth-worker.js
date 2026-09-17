@@ -20,7 +20,7 @@ import {
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
-import { handleContactRequest, mailReady, mailVia } from './contact-mail.js';
+import { handleContactRequest, mailReady, mailVia, resolveContactTo } from './contact-mail.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -134,6 +134,8 @@ function statusPage(env) {
     statsBinding,
     mailWired: mailOn,
     mailVia: mailPath,
+    mailTo: resolveContactTo(env),
+    mailFrom: 'hello@thenewsoulsearchers.de',
     mailHint,
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,

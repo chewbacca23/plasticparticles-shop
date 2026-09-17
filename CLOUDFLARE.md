@@ -159,7 +159,15 @@ Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **htt
 
 Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
 
-Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false }` without revealing secrets.
+Notes land in **`henrik@thenewsoulsearchers.de`** (Strato). From address is `hello@thenewsoulsearchers.de`. Check Resend → **Emails** for Delivered / Bounced / spam clues. To point notes at a different inbox you actually open:
+
+```sh
+npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
+```
+
+(`/cms-status` shows `mailTo` so you can confirm the target.)
+
+Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false, "to": "…" }` without revealing secrets.
 
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 

@@ -97,8 +97,28 @@ describe('deliverContact', () => {
         { name: 'Ana', email: 'ana@example.com', message: 'Hello' },
       );
       assert.equal(via.via, 'resend');
+      assert.equal(via.to, CONTACT_TO);
       assert.deepEqual(body.to, [CONTACT_TO]);
       assert.equal(body.reply_to, 'ana@example.com');
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('honours CONTACT_INBOX when Henrik reads a different box', async () => {
+    const original = globalThis.fetch;
+    let body;
+    globalThis.fetch = async (_url, init) => {
+      body = JSON.parse(String(init.body));
+      return new Response('{}', { status: 200 });
+    };
+    try {
+      const via = await deliverContact(
+        { RESEND_API_KEY: 're_test', CONTACT_INBOX: 'henrik.personal@example.com' },
+        { name: 'Ana', email: 'ana@example.com', message: 'Hello' },
+      );
+      assert.equal(via.to, 'henrik.personal@example.com');
+      assert.deepEqual(body.to, ['henrik.personal@example.com']);
     } finally {
       globalThis.fetch = original;
     }
