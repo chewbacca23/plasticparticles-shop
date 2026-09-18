@@ -30,9 +30,10 @@ const email = publicEmail(saved);
       </div>
 
       <div id="form-mailto" class="success success--soft" hidden>
-        <h2>Almost there</h2>
+        <h2>Not delivered yet</h2>
         <p>
-          Your mail app should open with the note filled in. If it does not, write
+          The site could not hand the note to the mail service just now. Your mail app was
+          <strong>not</strong> opened on purpose. Try Send again in a moment, or write
           <a data-site="email" href={`mailto:${email}`}>{email}</a> direct.
         </p>
       </div>
