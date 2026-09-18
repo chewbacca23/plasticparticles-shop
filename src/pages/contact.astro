@@ -108,18 +108,6 @@ const email = publicEmail(saved);
       hideForm();
     }
 
-    function openMailto(fields) {
-      var mail =
-        (document.querySelector('[data-site="email"]') || {}).getAttribute('href') ||
-        'mailto:hello@thenewsoulsearchers.de';
-      var to = String(mail).replace(/^mailto:/i, '').split('?')[0];
-      var subject = encodeURIComponent('Soul Searchers note from ' + fields.name);
-      var body = encodeURIComponent(
-        'From: ' + fields.name + ' <' + fields.email + '>\n\n' + fields.message,
-      );
-      window.location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
-    }
-
     async function sendNote(fields) {
       if (sending) return;
       sending = true;
@@ -146,15 +134,15 @@ const email = publicEmail(saved);
           return;
         }
 
+        // Never auto-open the visitor’s mail app — that feels like “reply to an email”.
+        // Show a calm retry message instead; they can still tap the mailto link if needed.
         if (data && data.mailto) {
-          openMailto(fields);
           showMailtoFallback();
           return;
         }
 
         showError((data && data.error) || 'Could not send just now.');
       } catch (_) {
-        openMailto(fields);
         showMailtoFallback();
       } finally {
         sending = false;
