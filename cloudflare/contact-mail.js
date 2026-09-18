@@ -102,6 +102,7 @@ export function describeResendKey(raw) {
 
 /**
  * Ask Resend if this key is alive (no email sent).
+ * sending_access keys cannot list domains — that still counts as ok for the form.
  * @param {any} env
  */
 export async function probeResendKey(env) {
@@ -109,15 +110,35 @@ export async function probeResendKey(env) {
   if (!key) {
     return { ok: false, status: 0, detail: 'no key' };
   }
+  if (!key.startsWith('re_') || key.length < 20) {
+    return {
+      ok: false,
+      status: 0,
+      detail: `not a full Resend key (got ${key.length} chars; paste the whole re_… value)`,
+    };
+  }
   try {
     const res = await fetch('https://api.resend.com/domains', {
       method: 'GET',
       headers: { authorization: `Bearer ${key}` },
     });
     if (res.ok) return { ok: true, status: res.status, detail: 'accepted' };
-    if (res.status === 401) return { ok: false, status: 401, detail: 'rejected (dead or wrong key)' };
-    if (res.status === 403) return { ok: false, status: 403, detail: 'forbidden (key lacks access)' };
-    const body = (await res.text()).slice(0, 120);
+    const body = (await res.text()).slice(0, 160);
+    // Full-access check failed, but sending-only keys are fine for /contact.
+    if (res.status === 401 && /restricted/i.test(body)) {
+      return {
+        ok: true,
+        status: res.status,
+        detail: 'sending_access key (ok for contact form)',
+      };
+    }
+    if (res.status === 401 || res.status === 400 || res.status === 403) {
+      return {
+        ok: false,
+        status: res.status,
+        detail: body || 'rejected (dead or wrong key)',
+      };
+    }
     return { ok: false, status: res.status, detail: body || res.statusText || 'error' };
   } catch (error) {
     return {

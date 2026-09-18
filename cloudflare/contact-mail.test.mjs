@@ -92,6 +92,13 @@ describe('describeResendKey', () => {
 });
 
 describe('probeResendKey', () => {
+  it('rejects tiny / non-re_ values before calling Resend', async () => {
+    const probe = await probeResendKey({ RESEND_API_KEY: 'short' });
+    assert.equal(probe.ok, false);
+    assert.equal(probe.status, 0);
+    assert.match(probe.detail, /not a full Resend key/);
+  });
+
   it('reports 401 without sending mail', async () => {
     const original = globalThis.fetch;
     globalThis.fetch = async () => new Response('nope', { status: 401 });
@@ -99,6 +106,19 @@ describe('probeResendKey', () => {
       const probe = await probeResendKey({ RESEND_API_KEY: 're_dead_key_value_here_xx' });
       assert.equal(probe.ok, false);
       assert.equal(probe.status, 401);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('treats sending_access restriction as ok for the form', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response('{"message":"This API key is restricted to only send emails."}', { status: 401 });
+    try {
+      const probe = await probeResendKey({ RESEND_API_KEY: 're_send_only_key_value_xxx' });
+      assert.equal(probe.ok, true);
+      assert.match(probe.detail, /sending_access/);
     } finally {
       globalThis.fetch = original;
     }

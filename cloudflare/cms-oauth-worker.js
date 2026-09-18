@@ -133,6 +133,9 @@ async function statusPage(env) {
       mailHint =
         'OAuth keys are on this Worker, but RESEND_API_KEY is not. Add it on thenewsoulsearchersblogc → Settings → Variables.';
     }
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyShape.length > 0 && mailKeyShape.length < 20) {
+    mailHint =
+      'RESEND_API_KEY on the Worker is too short (not a full re_… key). In Resend create a new key, copy the WHOLE value once, then on the Mac run: sh scripts/set-resend-secret.sh';
   } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status === 401) {
     mailHint =
       'Resend rejected this API key (401). Create a fresh key at resend.com/api-keys, paste it into RESEND_API_KEY on thenewsoulsearchersblogc only, Save, then refresh this page until mailKeyProbe.ok is true.';
