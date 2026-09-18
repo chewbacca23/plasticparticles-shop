@@ -20,7 +20,15 @@ import {
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
-import { handleContactRequest, mailReady, mailVia, resolveContactTo, resolveResendFrom } from './contact-mail.js';
+import {
+  describeResendKey,
+  handleContactRequest,
+  mailReady,
+  mailVia,
+  probeResendKey,
+  resolveContactTo,
+  resolveResendFrom,
+} from './contact-mail.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -92,7 +100,7 @@ function describeClientId(id) {
  * values — so it is safe to open in a browser and paste into a chat.
  * @param {Record<string, unknown>} env
  */
-function statusPage(env) {
+async function statusPage(env) {
   const creds = oauthCreds(env);
   const stringKeys = Object.keys(env)
     .filter((key) => typeof env[key] === 'string')
@@ -108,19 +116,30 @@ function statusPage(env) {
   const mailOn = mailReady(env);
   const mailPath = mailVia(env);
   const seesResendName = stringKeys.includes('RESEND_API_KEY');
+  const mailKeyShape = describeResendKey(env?.RESEND_API_KEY);
+  const mailKeyProbe = mailPath === 'resend' ? await probeResendKey(env) : { ok: false, status: 0, detail: 'n/a' };
+
   let mailHint =
     'Mail is ready. Hard-refresh /contact and send a short test — look for Sent.';
   if (!mailOn) {
     if (seesResendName) {
       mailHint =
-        'RESEND_API_KEY is present but empty. Run: npx wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc';
+        'RESEND_API_KEY is present but empty. Edit it on thenewsoulsearchersblogc (Settings → Variables) or run scripts/set-resend-secret.sh.';
     } else if (stringKeys.length === 0) {
       mailHint =
-        'This Worker sees no text secrets. Domain may be on a sibling Worker, or keys were saved under Build variables. Put RESEND_API_KEY on thenewsoulsearchersblogc with wrangler secret put.';
+        'This Worker sees no text secrets. Domain may be on a sibling Worker, or keys were saved under Build variables. Put RESEND_API_KEY on thenewsoulsearchersblogc.';
     } else {
       mailHint =
-        'OAuth keys are on this Worker, but RESEND_API_KEY is not. On the Mac: npx wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc';
+        'OAuth keys are on this Worker, but RESEND_API_KEY is not. Add it on thenewsoulsearchersblogc → Settings → Variables.';
     }
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status === 401) {
+    mailHint =
+      'Resend rejected this API key (401). Create a fresh key at resend.com/api-keys, paste it into RESEND_API_KEY on thenewsoulsearchersblogc only, Save, then refresh this page until mailKeyProbe.ok is true.';
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status) {
+    mailHint = `Resend probe failed (${mailKeyProbe.status}): ${mailKeyProbe.detail}. Fix the key, then refresh this page.`;
+  } else if (mailKeyProbe && mailKeyProbe.ok) {
+    mailHint =
+      'Resend accepted the key. Hard-refresh /contact and send a short test — look for Sent.';
   }
 
   const body = {
@@ -136,6 +155,8 @@ function statusPage(env) {
     mailVia: mailPath,
     mailTo: resolveContactTo(env),
     mailFrom: mailPath === 'resend' ? resolveResendFrom(env) : 'hello@thenewsoulsearchers.de',
+    mailKeyShape,
+    mailKeyProbe,
     mailHint,
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,
@@ -382,7 +403,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/cms-status') return statusPage(env);
+    if (url.pathname === '/cms-status') return await statusPage(env);
 
     const contact = await handleContactRequest(request, env);
     if (contact) return contact;

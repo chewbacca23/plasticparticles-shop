@@ -38,15 +38,88 @@ export function resolveResendFrom(env) {
   return `The Soul Searchers form <${CONTACT_FROM}>`;
 }
 
+/**
+ * Resend keys often get pasted with quotes or a Bearer prefix from docs.
+ * @param {unknown} raw
+ */
+export function cleanResendKey(raw) {
+  let value = String(raw || '')
+    .replace(/^\uFEFF/, '')
+    .trim();
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+  value = value.replace(/^Bearer\s+/i, '').trim();
+  return value;
+}
+
+/**
+ * Safe shape for /cms-status — never the key itself.
+ * @param {unknown} raw
+ */
+export function describeResendKey(raw) {
+  const key = cleanResendKey(raw);
+  if (!key) {
+    return {
+      present: false,
+      length: 0,
+      startsWithRe: false,
+      shape: 'missing',
+    };
+  }
+  const startsWithRe = /^re_[A-Za-z0-9_]+$/.test(key);
+  let shape = 'odd';
+  if (startsWithRe && key.length >= 20) shape = 'looks like a Resend key';
+  else if (key.startsWith('re_')) shape = 'starts with re_ but has odd characters';
+  else if (key.length > 0) shape = 'does NOT look like a Resend key (should start re_)';
+  return {
+    present: true,
+    length: key.length,
+    startsWithRe: key.startsWith('re_'),
+    shape,
+  };
+}
+
+/**
+ * Ask Resend if this key is alive (no email sent).
+ * @param {any} env
+ */
+export async function probeResendKey(env) {
+  const key = cleanResendKey(env?.RESEND_API_KEY);
+  if (!key) {
+    return { ok: false, status: 0, detail: 'no key' };
+  }
+  try {
+    const res = await fetch('https://api.resend.com/domains', {
+      method: 'GET',
+      headers: { authorization: `Bearer ${key}` },
+    });
+    if (res.ok) return { ok: true, status: res.status, detail: 'accepted' };
+    if (res.status === 401) return { ok: false, status: 401, detail: 'rejected (dead or wrong key)' };
+    if (res.status === 403) return { ok: false, status: 403, detail: 'forbidden (key lacks access)' };
+    const body = (await res.text()).slice(0, 120);
+    return { ok: false, status: res.status, detail: body || res.statusText || 'error' };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      detail: error && error.message ? String(error.message).slice(0, 120) : 'network error',
+    };
+  }
+}
+
 /** True when this Worker can send without falling back to mailto. */
 export function mailReady(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return true;
-  return Boolean(String(env?.RESEND_API_KEY || '').trim());
+  return Boolean(cleanResendKey(env?.RESEND_API_KEY));
 }
 
 export function mailVia(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return 'cloudflare';
-  if (String(env?.RESEND_API_KEY || '').trim()) return 'resend';
+  if (cleanResendKey(env?.RESEND_API_KEY)) return 'resend';
   return 'none';
 }
 
@@ -240,7 +313,7 @@ export async function deliverContact(env, fields) {
     return { via: 'cloudflare', to };
   }
 
-  const key = String(env?.RESEND_API_KEY || '').trim();
+  const key = cleanResendKey(env?.RESEND_API_KEY);
   if (key) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

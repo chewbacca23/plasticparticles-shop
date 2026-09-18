@@ -3,14 +3,17 @@ import { describe, it } from 'node:test';
 import {
   CONTACT_FROM,
   CONTACT_TO,
+  cleanResendKey,
   contactHtml,
   contactSubject,
   contactText,
   deliverContact,
+  describeResendKey,
   handleContactRequest,
   mailReady,
   mailVia,
   parseContactBody,
+  probeResendKey,
   resolveResendFrom,
   validateContact,
 } from './contact-mail.js';
@@ -50,6 +53,51 @@ describe('mailReady', () => {
     assert.equal(mailVia({ RESEND_API_KEY: 're_x' }), 'resend');
     assert.equal(mailReady({ EMAIL: { async send() {} } }), true);
     assert.equal(mailVia({ EMAIL: { async send() {} } }), 'cloudflare');
+  });
+});
+
+describe('cleanResendKey', () => {
+  it('strips quotes and a Bearer prefix', () => {
+    assert.equal(cleanResendKey('  "re_abc"  '), 're_abc');
+    assert.equal(cleanResendKey("Bearer re_abc"), 're_abc');
+    assert.equal(cleanResendKey("'re_abc'"), 're_abc');
+  });
+});
+
+describe('describeResendKey', () => {
+  it('reports shape without the value', () => {
+    assert.equal(describeResendKey('').present, false);
+    assert.match(describeResendKey('re_testkey_abcdefghijklmnopqrstuvwxyz12').shape, /looks like a Resend key/);
+    assert.match(describeResendKey('not-a-key').shape, /does NOT look like/);
+  });
+});
+
+describe('probeResendKey', () => {
+  it('reports 401 without sending mail', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async () => new Response('nope', { status: 401 });
+    try {
+      const probe = await probeResendKey({ RESEND_API_KEY: 're_dead_key_value_here_xx' });
+      assert.equal(probe.ok, false);
+      assert.equal(probe.status, 401);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('reports ok when Resend accepts the key', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      assert.match(String(url), /api\.resend\.com\/domains/);
+      return new Response('{"data":[]}', { status: 200 });
+    };
+    try {
+      const probe = await probeResendKey({ RESEND_API_KEY: 're_live_key_value_here_xx' });
+      assert.equal(probe.ok, true);
+      assert.equal(probe.status, 200);
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });
 
