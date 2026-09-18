@@ -325,19 +325,21 @@ export async function handleContactRequest(request, env) {
       return json(
         {
           ok: false,
-          error: 'Mail is not wired yet. Opening your mail app with the note filled in.',
+          error: 'Mail is not wired on the site yet. Write Henrik direct for now.',
           code,
+          // Soft flag for the form UI — never means “open the visitor mail app”.
           mailto: true,
         },
         503,
       );
     }
     console.error('contact send failed', error);
+    // Do not set mailto here. A flaky Resend reply used to flip the form into
+    // endless “try again / open Mail” loops. One calm error is enough.
     return json(
       {
         ok: false,
-        error: 'Could not send just now. Try again, or write Henrik direct.',
-        mailto: true,
+        error: 'Could not send just now. Write Henrik direct if it stalls again.',
       },
       502,
     );

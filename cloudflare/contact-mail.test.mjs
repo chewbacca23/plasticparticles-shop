@@ -215,4 +215,46 @@ describe('handleContactRequest', () => {
     assert.equal((await res.json()).via, 'discard');
     assert.equal(sent.length, 0);
   });
+
+  it('marks unwired mail with mailto, but not a Resend outage', async () => {
+    const cold = await handleContactRequest(
+      new Request('https://x.test/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Ana',
+          email: 'ana@example.com',
+          message: 'Still on the climb.',
+        }),
+      }),
+      {},
+    );
+    assert.equal(cold.status, 503);
+    const coldBody = await cold.json();
+    assert.equal(coldBody.mailto, true);
+
+    const original = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response('upstream down', { status: 500, statusText: 'Error' });
+    try {
+      const hot = await handleContactRequest(
+        new Request('https://x.test/api/contact', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Ana',
+            email: 'ana@example.com',
+            message: 'Still on the climb.',
+          }),
+        }),
+        { RESEND_API_KEY: 're_test' },
+      );
+      assert.equal(hot.status, 502);
+      const body = await hot.json();
+      assert.equal(body.ok, false);
+      assert.equal(body.mailto, undefined);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });

@@ -31,10 +31,10 @@ const email = publicEmail(saved);
 
       <div id="form-mailto" class="success success--soft" hidden>
         <h2>Not delivered yet</h2>
-        <p>
-          The site could not hand the note to the mail service just now. Your mail app was
-          <strong>not</strong> opened on purpose. Try Send again in a moment, or write
-          <a data-site="email" href={`mailto:${email}`}>{email}</a> direct.
+        <p data-fail-copy>
+          The site could not hand the note to the mail service. Your mail app was not opened.
+          Write <a data-site="email" href={`mailto:${email}`}>{email}</a> direct, or come back
+          later with one fresh try.
         </p>
       </div>
 
@@ -78,6 +78,10 @@ const email = publicEmail(saved);
     if (!form) return;
 
     var sending = false;
+    var locked = false;
+    var attempts = 0;
+    var MAX_ATTEMPTS = 2;
+    var SEND_TIMEOUT_MS = 20000;
 
     function showError(text) {
       if (!errorBox) return;
@@ -96,34 +100,96 @@ const email = publicEmail(saved);
       hideError();
     }
 
+    function setBusy(button, busy) {
+      var fields = form.querySelectorAll('input, textarea, button');
+      for (var i = 0; i < fields.length; i++) fields[i].disabled = busy || locked;
+      if (!button) return;
+      if (busy) {
+        button.textContent = 'Sending…';
+        return;
+      }
+      if (locked) {
+        button.textContent = 'Stopped';
+        return;
+      }
+      button.textContent = attempts > 0 ? 'Try once more' : 'Send message';
+    }
+
     function showSent(_to) {
+      locked = true;
       if (mailtoBox) mailtoBox.hidden = true;
       if (success) success.hidden = false;
       hideForm();
     }
 
-    function showMailtoFallback() {
+    function failEmail() {
+      var link = document.querySelector('[data-site="email"]');
+      var href = link && link.getAttribute('href');
+      if (href && /^mailto:/i.test(href)) return String(href).replace(/^mailto:/i, '').split('?')[0];
+      return 'hello@thenewsoulsearchers.de';
+    }
+
+    function showStopped(message) {
+      locked = true;
       if (success) success.hidden = true;
-      if (mailtoBox) mailtoBox.hidden = false;
+      if (mailtoBox) {
+        var copy = mailtoBox.querySelector('[data-fail-copy]');
+        if (copy) {
+          var addr = failEmail();
+          copy.innerHTML =
+            (message || 'The site could not hand the note to the mail service.') +
+            ' Your mail app was not opened. Write <a data-site="email" href="mailto:' +
+            addr +
+            '">' +
+            addr +
+            '</a> direct.';
+        }
+        mailtoBox.hidden = false;
+      }
       hideForm();
     }
 
+    function fetchWithTimeout(url, options, ms) {
+      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timer = null;
+      var opts = options || {};
+      if (ctrl) opts.signal = ctrl.signal;
+      var pending = fetch(url, opts);
+      if (ctrl) {
+        timer = setTimeout(function () {
+          try {
+            ctrl.abort();
+          } catch (_) {}
+        }, ms);
+      }
+      return pending.finally(function () {
+        if (timer) clearTimeout(timer);
+      });
+    }
+
     async function sendNote(fields) {
-      if (sending) return;
-      sending = true;
-      hideError();
-      var button = form.querySelector('button[type="submit"]');
-      if (button) {
-        button.disabled = true;
-        button.textContent = 'Sending…';
+      if (sending || locked) return;
+      if (attempts >= MAX_ATTEMPTS) {
+        showStopped('Stopped after two tries so this does not loop.');
+        return;
       }
 
+      sending = true;
+      attempts += 1;
+      hideError();
+      var button = form.querySelector('button[type="submit"]');
+      setBusy(button, true);
+
       try {
-        var res = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(fields),
-        });
+        var res = await fetchWithTimeout(
+          '/api/contact',
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(fields),
+          },
+          SEND_TIMEOUT_MS,
+        );
         var data = {};
         try {
           data = await res.json();
@@ -134,27 +200,32 @@ const email = publicEmail(saved);
           return;
         }
 
-        // Never auto-open the visitor’s mail app — that feels like “reply to an email”.
-        // Show a calm retry message instead; they can still tap the mailto link if needed.
-        if (data && data.mailto) {
-          showMailtoFallback();
+        // Hard stop: mail not wired, or we already used both tries.
+        // Never open the visitor mail app — that was the old “send forever” loop.
+        if ((data && data.mailto) || attempts >= MAX_ATTEMPTS) {
+          showStopped((data && data.error) || 'The site could not hand the note to the mail service.');
           return;
         }
 
-        showError((data && data.error) || 'Could not send just now.');
+        showError(
+          ((data && data.error) || 'Could not send just now.') + ' One more try, then we stop.',
+        );
       } catch (_) {
-        showMailtoFallback();
+        if (attempts >= MAX_ATTEMPTS) {
+          showStopped('The send timed out twice. Stopped so it does not keep trying.');
+          return;
+        }
+        showError('That send stalled. One more try, then we stop.');
       } finally {
         sending = false;
-        if (button && !form.hidden) {
-          button.disabled = false;
-          button.textContent = 'Send message';
-        }
+        setBusy(button, false);
       }
     }
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
+      event.stopPropagation();
+      if (sending || locked) return;
       var data = new FormData(form);
       sendNote({
         name: String(data.get('name') || '').trim(),
