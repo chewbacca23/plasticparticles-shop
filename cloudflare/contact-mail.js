@@ -34,8 +34,8 @@ export function resolveContactTo(env) {
  */
 export function resolveResendFrom(env) {
   const custom = cleanEmail(env?.CONTACT_FROM);
-  if (custom) return `Soul Searchers <${custom}>`;
-  return `Soul Searchers <${CONTACT_FROM}>`;
+  if (custom) return `The Soul Searchers form <${custom}>`;
+  return `The Soul Searchers form <${CONTACT_FROM}>`;
 }
 
 /** True when this Worker can send without falling back to mailto. */
@@ -82,19 +82,22 @@ export function validateContact(fields) {
 }
 
 export function contactSubject(name) {
-  const who = cleanLine(name, 60) || 'rider';
-  return `Soul Searchers note from ${who}`;
+  const who = cleanLine(name, 60) || 'a rider';
+  return `Contact form · thenewsoulsearchers.de · ${who}`;
 }
 
 export function contactText(fields) {
   return [
-    `From: ${fields.name}`,
-    `Email: ${fields.email}`,
+    'New note from the contact form on thenewsoulsearchers.de',
+    '',
+    `Name: ${fields.name}`,
+    `Reply to: ${fields.email}`,
     '',
     fields.message,
     '',
     '—',
-    'Sent from thenewsoulsearchers.de/contact',
+    'Hit Reply to answer them. This mail was sent by the site form (not their mail app).',
+    'https://thenewsoulsearchers.de/contact',
   ].join('\n');
 }
 
@@ -107,10 +110,18 @@ export function contactHtml(fields) {
       .replace(/"/g, '&quot;');
   return [
     '<div style="font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#122">',
-    `<p><strong>From:</strong> ${esc(fields.name)} &lt;${esc(fields.email)}&gt;</p>`,
-    `<p style="white-space:pre-wrap">${esc(fields.message)}</p>`,
-    '<hr style="border:none;border-top:1px solid #ddd;margin:1.5rem 0" />',
-    '<p style="color:#666;font-size:13px">Sent from thenewsoulsearchers.de/contact</p>',
+    '<p style="margin:0 0 1rem;color:#3d6b7a;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">',
+    'Contact form · thenewsoulsearchers.de',
+    '</p>',
+    `<p style="margin:0 0 .35rem"><strong>Name:</strong> ${esc(fields.name)}</p>`,
+    `<p style="margin:0 0 1rem"><strong>Reply to:</strong> <a href="mailto:${esc(fields.email)}">${esc(fields.email)}</a></p>`,
+    `<p style="white-space:pre-wrap;margin:0 0 1.25rem">${esc(fields.message)}</p>`,
+    '<hr style="border:none;border-top:1px solid #ddd;margin:1.25rem 0" />',
+    '<p style="color:#666;font-size:13px;margin:0">',
+    'Hit Reply to answer them. This mail was sent by the site form (not their mail app).',
+    '<br />',
+    '<a href="https://thenewsoulsearchers.de/contact">thenewsoulsearchers.de/contact</a>',
+    '</p>',
     '</div>',
   ].join('');
 }

@@ -17,14 +17,14 @@ const email = publicEmail(saved);
       <h1 class="section-title">Write from the road</h1>
       <p class="section-lead">
         A climb you loved, a bike-friendly train, a puncture story, a guest ride note. Send it
-        here and it lands in Henrik’s inbox. Reply is one click away.
+        here and the site delivers it for you. No need to open your own mail app. Reply is one
+        click for Henrik.
       </p>
 
       <div id="form-success" class="success" hidden>
         <h2>Sent</h2>
         <p data-success-copy>
-          Your note is on its way to Henrik’s inbox
-          (<span data-mail-to>henrik.kuerschner@web.de</span>).
+          Your note left from the Soul Searchers form and is on its way to Henrik.
           He can reply straight to the address you left.
         </p>
       </div>
@@ -95,13 +95,9 @@ const email = publicEmail(saved);
       hideError();
     }
 
-    function showSent(to) {
+    function showSent(_to) {
       if (mailtoBox) mailtoBox.hidden = true;
-      if (success) {
-        var slot = success.querySelector('[data-mail-to]');
-        if (slot && to) slot.textContent = to;
-        success.hidden = false;
-      }
+      if (success) success.hidden = false;
       hideForm();
     }
 

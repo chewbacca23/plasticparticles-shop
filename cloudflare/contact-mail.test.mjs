@@ -55,13 +55,19 @@ describe('mailReady', () => {
 
 describe('contact copy', () => {
   it('builds a clear subject and body', () => {
+    assert.match(contactSubject('Bruno'), /Contact form/);
     assert.match(contactSubject('Bruno'), /Bruno/);
     assert.match(
       contactText({ name: 'Bruno', email: 'b@ex.com', message: 'Ventoux was wild.' }),
       /Ventoux was wild/,
     );
+    assert.match(
+      contactText({ name: 'Bruno', email: 'b@ex.com', message: 'x' }),
+      /contact form on thenewsoulsearchers\.de/,
+    );
     assert.match(contactText({ name: 'Bruno', email: 'b@ex.com', message: 'x' }), /b@ex.com/);
     assert.match(contactHtml({ name: 'Bruno', email: 'b@ex.com', message: '<hi>' }), /&lt;hi&gt;/);
+    assert.match(contactHtml({ name: 'Bruno', email: 'b@ex.com', message: 'x' }), /Contact form/);
   });
 });
 
@@ -100,7 +106,7 @@ describe('deliverContact', () => {
       assert.equal(via.via, 'resend');
       assert.equal(via.to, CONTACT_TO);
       assert.deepEqual(body.to, [CONTACT_TO]);
-      assert.equal(body.from, `Soul Searchers <${CONTACT_FROM}>`);
+      assert.equal(body.from, `The Soul Searchers form <${CONTACT_FROM}>`);
       assert.equal(body.reply_to, 'ana@example.com');
     } finally {
       globalThis.fetch = original;
