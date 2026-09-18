@@ -159,7 +159,7 @@ Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **htt
 - `"mailWired": true` and `RESEND_API_KEY` inside `textBindingsVisibleToWorker` → hard-refresh `/contact` and send a test
 - Still false / key missing from that list → the secret is on a sibling Worker (`thenewsoulsearchersblog` without the **c**, or Build vars). Run the script again; do not use the dashboard.
 
-Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
+Until that secret is there, Send shows **Not delivered yet** and never opens a mail app.
 
 Notes land in **`henrik.kuerschner@web.de`** by default (From `hello@thenewsoulsearchers.de`
 via Resend). Reply-To is the rider.

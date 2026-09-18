@@ -33,12 +33,12 @@ const email = publicEmail(saved);
         <h2>Not delivered yet</h2>
         <p data-fail-copy>
           The site could not hand the note to the mail service. Your mail app was not opened.
-          Write <a data-site="email" href={`mailto:${email}`}>{email}</a> direct, or come back
-          later with one fresh try.
+          Write <a data-site="email" href={`mailto:${email}`}>{email}</a> direct.
         </p>
       </div>
 
       <p id="form-error" class="error" hidden></p>
+      <p id="form-mail-hint" class="hint" hidden></p>
 
       <form id="contact-form" class="form" method="post" action="/api/contact" data-site="mail-form">
         <label>
@@ -75,6 +75,7 @@ const email = publicEmail(saved);
     var success = document.getElementById('form-success');
     var mailtoBox = document.getElementById('form-mailto');
     var errorBox = document.getElementById('form-error');
+    var mailHint = document.getElementById('form-mail-hint');
     if (!form) return;
 
     var sending = false;
@@ -82,6 +83,19 @@ const email = publicEmail(saved);
     var attempts = 0;
     var MAX_ATTEMPTS = 2;
     var SEND_TIMEOUT_MS = 20000;
+
+    // Quiet status check so a missing Resend key is visible before the first Send.
+    fetch('/api/contact', { method: 'GET', headers: { accept: 'application/json' } })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!mailHint || !data || data.mailWired) return;
+        mailHint.hidden = false;
+        mailHint.textContent =
+          'Mail is not wired on this Worker yet (no Resend key). Notes cannot leave the site until that secret is set.';
+      })
+      .catch(function () {});
 
     function showError(text) {
       if (!errorBox) return;
@@ -250,7 +264,8 @@ const email = publicEmail(saved);
   .form[hidden],
   #form-success[hidden],
   #form-mailto[hidden],
-  #form-error[hidden] {
+  #form-error[hidden],
+  #form-mail-hint[hidden] {
     display: none !important;
   }
 
@@ -311,6 +326,15 @@ const email = publicEmail(saved);
     border-radius: 0.85rem;
     background: rgba(80, 24, 24, 0.35);
     color: rgba(255, 220, 220, 0.92);
+  }
+
+  .hint {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    border-radius: 0.85rem;
+    background: rgba(30, 58, 69, 0.35);
+    color: rgba(215, 224, 232, 0.88);
   }
 
   .success {

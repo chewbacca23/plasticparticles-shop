@@ -259,7 +259,10 @@ export async function deliverContact(env, fields) {
     });
     if (!res.ok) {
       const detail = await res.text();
-      throw new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
+      const err = new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
+      err.code = 'E_RESEND';
+      err.status = res.status;
+      throw err;
     }
     return { via: 'resend', to, from: resolveResendFrom(env) };
   }
@@ -316,8 +319,13 @@ export async function handleContactRequest(request, env) {
   if (problem) return json({ ok: false, error: problem }, 400);
 
   try {
-    await keepCopy(env, fields);
+    // Deliver first. A KV copy failure must never block the rider’s note.
     const sent = await deliverContact(env, fields);
+    try {
+      await keepCopy(env, fields);
+    } catch (copyErr) {
+      console.error('contact keepCopy failed', copyErr);
+    }
     return json({ ok: true, via: sent.via, to: sent.to });
   } catch (error) {
     const code = error && typeof error === 'object' ? error.code : '';
@@ -334,12 +342,22 @@ export async function handleContactRequest(request, env) {
       );
     }
     console.error('contact send failed', error);
+    const resendStatus =
+      error && typeof error === 'object' && typeof error.status === 'number' ? error.status : 0;
+    let message = 'Could not send just now. Write Henrik direct if it stalls again.';
+    if (code === 'E_RESEND' && resendStatus === 401) {
+      message = 'Mail key was rejected. Refresh the Resend API key on the Worker, then try once.';
+    } else if (code === 'E_RESEND' && (resendStatus === 403 || resendStatus === 422)) {
+      message =
+        'Mail service refused the note (domain or From address). Check Resend for thenewsoulsearchers.de.';
+    }
     // Do not set mailto here. A flaky Resend reply used to flip the form into
     // endless “try again / open Mail” loops. One calm error is enough.
     return json(
       {
         ok: false,
-        error: 'Could not send just now. Write Henrik direct if it stalls again.',
+        error: message,
+        code: code || 'E_SEND',
       },
       502,
     );

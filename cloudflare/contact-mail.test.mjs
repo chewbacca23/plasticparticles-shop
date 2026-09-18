@@ -253,8 +253,39 @@ describe('handleContactRequest', () => {
       const body = await hot.json();
       assert.equal(body.ok, false);
       assert.equal(body.mailto, undefined);
+      assert.equal(body.code, 'E_RESEND');
     } finally {
       globalThis.fetch = original;
     }
+  });
+
+  it('still sends when the KV copy fails', async () => {
+    const sent = [];
+    const res = await handleContactRequest(
+      new Request('https://x.test/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Ana',
+          email: 'ana@example.com',
+          message: 'Still on the climb.',
+        }),
+      }),
+      {
+        EMAIL: {
+          async send(payload) {
+            sent.push(payload);
+          },
+        },
+        STATS: {
+          async put() {
+            throw new Error('kv down');
+          },
+        },
+      },
+    );
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).ok, true);
+    assert.equal(sent.length, 1);
   });
 });
