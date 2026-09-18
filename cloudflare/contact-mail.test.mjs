@@ -45,6 +45,25 @@ describe('validateContact', () => {
   });
 });
 
+describe('resolveContactTo', () => {
+  it('defaults to web.de and refuses domain inboxes that bounce Resend', async () => {
+    const { resolveContactTo, CONTACT_TO, contactInboxOverridden } = await import(
+      './contact-mail.js'
+    );
+    assert.equal(resolveContactTo({}), CONTACT_TO);
+    assert.equal(
+      resolveContactTo({ CONTACT_INBOX: 'henrik.kuerschner@web.de' }),
+      'henrik.kuerschner@web.de',
+    );
+    assert.equal(
+      resolveContactTo({ CONTACT_INBOX: 'henrik@thenewsoulsearchers.de' }),
+      CONTACT_TO,
+    );
+    assert.equal(contactInboxOverridden({ CONTACT_INBOX: 'henrik@thenewsoulsearchers.de' }), true);
+    assert.equal(contactInboxOverridden({ CONTACT_INBOX: 'henrik.kuerschner@web.de' }), false);
+  });
+});
+
 describe('mailReady', () => {
   it('spots Resend or the Cloudflare binding', () => {
     assert.equal(mailReady({}), false);

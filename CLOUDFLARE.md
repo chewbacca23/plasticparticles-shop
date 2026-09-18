@@ -179,22 +179,25 @@ via Resend). Reply-To is the rider.
 
 ### If Resend shows Bounced
 
-Confirm `/cms-status` → `mailTo` is `henrik.kuerschner@web.de`. If it still says
-`henrik@thenewsoulsearchers.de`, Mac-push this branch — live code is stale.
+That means the API key worked — Resend accepted the note, then the inbox refused it.
 
-To retarget later:
+1. Open the **newest** row in Resend → Emails
+2. Read **To** and the bounce / error text
+3. Confirm `/cms-status` → `mailTo` is `henrik.kuerschner@web.de`
+
+- **To** is `henrik@thenewsoulsearchers.de` → that Strato inbox rejects Resend. Delete or fix Worker secret `CONTACT_INBOX` (must be web.de or empty). Live code also forces web.de.
+- **To** is `henrik.kuerschner@web.de` → check web.de spam; paste the Resend bounce reason into chat.
+
+Root DNS already has `DMARC p=none` and Resend DKIM on `resend._domainkey`. Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
+
+To retarget later (only to a non-domain inbox):
 
 ```sh
 export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
 npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
 ```
 
-Optional: soften Cloudflare DNS TXT `_dmarc` from `p=reject` to `p=none` if you want
-same-domain delivery to `henrik@thenewsoulsearchers.de` again later.
-
-Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
-
-(`/cms-status` shows `mailTo` / `mailFrom`.)
+(`/cms-status` shows `mailTo` / `mailFrom` / `mailKeyProbe`.)
 
 Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false, "to": "…" }` without revealing secrets.
 
