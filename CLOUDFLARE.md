@@ -139,7 +139,20 @@ DNS first (Resend → Domains → `thenewsoulsearchers.de`):
 1. **Enable Sending** verified (DKIM + the `send` / `rsend` CNAMEs, DNS only)
 2. Leave **Enable Receiving** off so Strato / existing MX keeps delivering `henrik@…`
 
-Then put the key on the live Worker with wrangler (skip the dashboard — easy to land it on the wrong Worker):
+#### Dashboard path (no Terminal)
+
+Do this on Worker **`thenewsoulsearchersblogc`** only (name ends with **c**).
+
+1. Resend → [API Keys](https://resend.com/api-keys) → delete old keys → **Create API Key** → copy the `re_…` once
+2. Cloudflare → Workers & Pages → **`thenewsoulsearchersblogc`** → Settings → Variables and secrets
+3. Delete Variables named `thenewsoulsearchers` or `soulsearchers` (wrong names; unused)
+4. On **`RESEND_API_KEY`**: Edit → paste the new `re_…` → Save  
+   (Secret is nicer than Variable; either works. The *value* must be the fresh key.)
+5. Hard-refresh **https://thenewsoulsearchers.de/contact** → one short Send → look for **Sent**
+
+If Send says the mail key was rejected, the `re_…` value is still wrong. Make another key in Resend and edit `RESEND_API_KEY` again.
+
+#### Terminal path (also fine)
 
 ```sh
 # From the blog repo on the Mac
@@ -157,9 +170,9 @@ npx --yes wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc
 Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **https://thenewsoulsearchers.de/cms-status**:
 
 - `"mailWired": true` and `RESEND_API_KEY` inside `textBindingsVisibleToWorker` → hard-refresh `/contact` and send a test
-- Still false / key missing from that list → the secret is on a sibling Worker (`thenewsoulsearchersblog` without the **c**, or Build vars). Run the script again; do not use the dashboard.
+- Still false / key missing from that list → the secret is on a sibling Worker (`thenewsoulsearchersblog` without the **c**, or Build vars). Run the script again.
 
-Until that secret is there, Send shows **Not delivered yet** and never opens a mail app.
+Until a **working** key is there, Send shows **Not delivered yet** (or “Mail key was rejected”) and never opens a mail app.
 
 Notes land in **`henrik.kuerschner@web.de`** by default (From `hello@thenewsoulsearchers.de`
 via Resend). Reply-To is the rider.
