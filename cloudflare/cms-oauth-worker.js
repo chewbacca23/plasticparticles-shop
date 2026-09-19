@@ -135,7 +135,7 @@ async function statusPage(env) {
     }
   } else if (mailKeyProbe && mailKeyProbe.ok === false && !mailKeyShape.startsWithRe) {
     mailHint =
-      'RESEND_API_KEY on the Worker does not start with re_. Delete it, create a fresh key in Resend, then on the Mac run: sh scripts/set-resend-secret.sh and paste ONLY the re_… value (no name, no Bearer, no quotes).';
+      'Your Resend key starts with re_, but the value saved on the Worker does not. In Cloudflare → thenewsoulsearchersblogc → Variables: DELETE Resend API key (Variable and Secret). Then on the Mac run the wrangler secret put one-liner and paste ONLY re_…';
   } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyShape.length > 0 && mailKeyShape.length < 20) {
     mailHint =
       'RESEND_API_KEY on the Worker is too short (not a full re_… key). In Resend create a new key, copy the WHOLE value once, then on the Mac run: sh scripts/set-resend-secret.sh';

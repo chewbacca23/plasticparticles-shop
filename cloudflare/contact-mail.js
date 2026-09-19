@@ -84,8 +84,9 @@ export function cleanResendKey(raw) {
  * @param {unknown} raw
  */
 export function describeResendKey(raw) {
+  const original = String(raw || '');
   const key = cleanResendKey(raw);
-  if (!key) {
+  if (!key && !original.trim()) {
     return {
       present: false,
       length: 0,
@@ -93,16 +94,26 @@ export function describeResendKey(raw) {
       shape: 'missing',
     };
   }
-  const startsWithRe = /^re_[A-Za-z0-9_]+$/.test(key);
+  const startsWithRe = key.startsWith('re_');
+  const looksClean = /^re_[A-Za-z0-9_]+$/.test(key);
   let shape = 'odd';
-  if (startsWithRe && key.length >= 20) shape = 'looks like a Resend key';
-  else if (key.startsWith('re_')) shape = 'starts with re_ but has odd characters';
+  if (looksClean && key.length >= 20) shape = 'looks like a Resend key';
+  else if (startsWithRe) shape = 'starts with re_ but has odd characters';
   else if (key.length > 0) shape = 'does NOT look like a Resend key (should start re_)';
+
+  // Leading char codes of the RAW Worker value (not the secret text).
+  // Lets us see invisible junk / wrong paste without printing the key.
+  const rawTrim = original.replace(/^\uFEFF/, '').trim();
+  const leadingCodes = [...rawTrim.slice(0, 6)].map((c) => c.charCodeAt(0));
+
   return {
     present: true,
     length: key.length,
-    startsWithRe: key.startsWith('re_'),
+    rawLength: rawTrim.length,
+    startsWithRe,
     shape,
+    leadingCodes,
+    expectedReCodes: [114, 101, 95], // r e _
   };
 }
 
