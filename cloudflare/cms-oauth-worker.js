@@ -150,6 +150,15 @@ async function statusPage(env) {
     mailHint =
       'Resend accepted the key. Hard-refresh /contact and send a short test — look for Sent.';
   }
+  const mailToNow = resolveContactTo(env);
+  if (
+    mailKeyProbe &&
+    mailKeyProbe.ok &&
+    mailToNow.toLowerCase().endsWith('@thenewsoulsearchers.de')
+  ) {
+    mailHint =
+      'Key is fine. If Resend still Bounces to henrik@thenewsoulsearchers.de, Strato is rejecting same-domain mail from Resend (anti-spoof). Soften root SPF (-all → ~all, add include:amazonses.com) or set CONTACT_INBOX to a Gmail you read on the laptop.';
+  }
 
   const body = {
     loginWired: Boolean(creds),
@@ -162,7 +171,7 @@ async function statusPage(env) {
     statsBinding,
     mailWired: mailOn,
     mailVia: mailPath,
-    mailTo: resolveContactTo(env),
+    mailTo: mailToNow,
     mailFrom: mailPath === 'resend' ? resolveResendFrom(env) : 'hello@thenewsoulsearchers.de',
     mailKeyBinding: resolvedKey.binding,
     mailKeyShape,

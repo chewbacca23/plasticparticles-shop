@@ -179,17 +179,36 @@ Until a **working** key is there, Send shows **Not delivered yet** (or “Mail k
 Notes land in **`henrik@thenewsoulsearchers.de`** by default (From `hello@thenewsoulsearchers.de`
 via Resend). Reply-To is the rider.
 
-### If Resend shows Bounced
+### If Resend shows Bounced to henrik@thenewsoulsearchers.de
 
-That means the API key worked — Resend accepted the note, then the inbox refused it.
+Your **key is fine**. Strato (`smtpin.rzone.de`) often rejects mail that is:
 
-1. Open the **newest** row in Resend → Emails
-2. Read **To** and the bounce / error text
-3. Confirm `/cms-status` → `mailTo` is the inbox you want
+- **From** `@thenewsoulsearchers.de` (via Resend / Amazon)
+- **To** `@thenewsoulsearchers.de` (your Strato mailbox)
 
-If Strato rejects again, soften root SPF (keep Strato, add Resend’s include) or temporarily set `CONTACT_INBOX` to another mailbox. DMARC should stay soft (`p=none`).
+It looks like spoofing to them, even when DMARC is `p=none` and DKIM is valid.
 
-Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
+**Try DNS (Cloudflare → DNS → TXT on the root `thenewsoulsearchers.de`):**
+
+Change SPF from:
+
+```txt
+v=spf1 include:_spf.strato.com -all
+```
+
+to:
+
+```txt
+v=spf1 include:_spf.strato.com include:amazonses.com ~all
+```
+
+(Keep Strato; soften `-all` to `~all`; allow Resend’s Amazon SES path.)
+
+Wait a few minutes, send one new `/contact` test, check the **newest** Resend row.
+
+**If it still bounces:** set `CONTACT_INBOX` to a Gmail (or other) inbox you open on the laptop, and optionally in Strato set a forward from `henrik@…` → that Gmail so the domain address still feeds the laptop.
+
+Do **not** turn on Resend **Receiving** on the root domain (that steals Strato MX).
 
 To retarget:
 
