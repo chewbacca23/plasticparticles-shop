@@ -78,8 +78,19 @@ describe('mailReady', () => {
 describe('cleanResendKey', () => {
   it('strips quotes and a Bearer prefix', () => {
     assert.equal(cleanResendKey('  "re_abc"  '), 're_abc');
-    assert.equal(cleanResendKey("Bearer re_abc"), 're_abc');
+    assert.equal(cleanResendKey('Bearer re_abc'), 're_abc');
     assert.equal(cleanResendKey("'re_abc'"), 're_abc');
+  });
+
+  it('pulls re_ out of a messy paste', () => {
+    assert.equal(
+      cleanResendKey('RESEND_API_KEY=re_testkey_abcdefghijklmnopqrstuvwxyz12'),
+      're_testkey_abcdefghijklmnopqrstuvwxyz12',
+    );
+    assert.equal(
+      cleanResendKey('Token: re_testkey_abcdefghijklmnopqrstuvwxyz12 please'),
+      're_testkey_abcdefghijklmnopqrstuvwxyz12',
+    );
   });
 });
 

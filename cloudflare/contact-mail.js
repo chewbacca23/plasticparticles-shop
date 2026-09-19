@@ -56,12 +56,14 @@ export function resolveResendFrom(env) {
 }
 
 /**
- * Resend keys often get pasted with quotes or a Bearer prefix from docs.
+ * Resend keys often get pasted with quotes, Bearer, or `NAME=re_…` junk.
+ * Pull out the real `re_…` token when it is buried in the paste.
  * @param {unknown} raw
  */
 export function cleanResendKey(raw) {
   let value = String(raw || '')
     .replace(/^\uFEFF/, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .trim();
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
@@ -70,6 +72,10 @@ export function cleanResendKey(raw) {
     value = value.slice(1, -1).trim();
   }
   value = value.replace(/^Bearer\s+/i, '').trim();
+  value = value.replace(/^RESEND_API_KEY\s*[:=]\s*/i, '').trim();
+  // If junk was pasted around the token, keep only the Resend key itself.
+  const embedded = value.match(/re_[A-Za-z0-9_]+/);
+  if (embedded) return embedded[0];
   return value;
 }
 
