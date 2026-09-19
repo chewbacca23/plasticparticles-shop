@@ -456,11 +456,15 @@ export async function handleContactRequest(request, env) {
     const resendStatus =
       error && typeof error === 'object' && typeof error.status === 'number' ? error.status : 0;
     let message = 'Could not send just now. Write Henrik direct if it stalls again.';
-    if (code === 'E_RESEND' && resendStatus === 401) {
-      message = 'Mail key was rejected. Refresh the Resend API key on the Worker, then try once.';
+    // Resend uses 400 and 401 for a bad/missing key depending on the route.
+    if (code === 'E_RESEND' && (resendStatus === 400 || resendStatus === 401)) {
+      message =
+        'Mail key was rejected. Open /cms-status — mailKeyProbe must be ok before Send works.';
     } else if (code === 'E_RESEND' && (resendStatus === 403 || resendStatus === 422)) {
       message =
         'Mail service refused the note (domain or From address). Check Resend for thenewsoulsearchers.de.';
+    } else if (code === 'E_RESEND' && resendStatus === 429) {
+      message = 'Mail service asked us to slow down. Wait a minute, then try once.';
     }
     // Do not set mailto here. A flaky Resend reply used to flip the form into
     // endless “try again / open Mail” loops. One calm error is enough.
@@ -469,6 +473,7 @@ export async function handleContactRequest(request, env) {
         ok: false,
         error: message,
         code: code || 'E_SEND',
+        resendStatus: resendStatus || undefined,
       },
       502,
     );
