@@ -173,6 +173,10 @@ async function statusPage(env) {
     mailKeyShape,
     mailKeyProbe,
     mailHint,
+    // Helps Henrik: Resend dashboard / wrong Worker can show re_… while THIS
+    // live Worker still holds a different 8-char scrap.
+    whereThisJsonComesFrom:
+      'thenewsoulsearchers.de → Worker thenewsoulsearchersblogc (name ends with c). If Cloudflare UI shows re_… on another Worker, that is not this JSON.',
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,
   };
