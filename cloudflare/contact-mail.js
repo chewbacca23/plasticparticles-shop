@@ -7,8 +7,11 @@
  * is bound, so a note is not lost if mail is briefly down.
  */
 
-export const CONTACT_TO = 'henrik@thenewsoulsearchers.de';
+export const CONTACT_TO = 'henrik.kuerschner@web.de';
 export const CONTACT_FROM = 'hello@thenewsoulsearchers.de';
+
+/** Domain inboxes under Strato have been bouncing Resend (SPF/DMARC). */
+const DOMAIN_INBOX_SUFFIX = '@thenewsoulsearchers.de';
 
 const MAX_NAME = 120;
 const MAX_EMAIL = 200;
@@ -16,15 +19,189 @@ const MAX_MESSAGE = 5000;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_MAX = 5;
 
+/**
+ * Inbox that receives contact notes.
+ * Default is Henrik’s web.de (Strato henrik@ bounces Resend under DMARC reject).
+ * Override with Worker secret CONTACT_INBOX if that ever changes.
+ * Never delivers to *@thenewsoulsearchers.de via Resend — that path bounced.
+ * @param {any} env
+ */
+export function resolveContactTo(env) {
+  const override = cleanEmail(env?.CONTACT_INBOX);
+  const candidate = override || CONTACT_TO;
+  if (candidate.toLowerCase().endsWith(DOMAIN_INBOX_SUFFIX)) {
+    return CONTACT_TO;
+  }
+  return candidate;
+}
+
+/**
+ * True when CONTACT_INBOX pointed at the domain address we refuse to use.
+ * @param {any} env
+ */
+export function contactInboxOverridden(env) {
+  const override = cleanEmail(env?.CONTACT_INBOX);
+  return Boolean(override && override.toLowerCase().endsWith(DOMAIN_INBOX_SUFFIX));
+}
+
+/**
+ * Resend From — must be on the verified domain (not resend.dev) to reach any inbox.
+ * Optional CONTACT_FROM secret overrides the local part/domain.
+ * @param {any} env
+ */
+export function resolveResendFrom(env) {
+  const custom = cleanEmail(env?.CONTACT_FROM);
+  if (custom) return `The Soul Searchers form <${custom}>`;
+  return `The Soul Searchers form <${CONTACT_FROM}>`;
+}
+
+/** Preferred → fallback secret names. SOUL_RESEND_KEY bypasses a cursed RESEND_API_KEY slot. */
+export const RESEND_KEY_BINDINGS = ['SOUL_RESEND_KEY', 'RESEND_KEY', 'RESEND_API_KEY'];
+
+/**
+ * Resend keys often get pasted with quotes, Bearer, or `NAME=re_…` junk.
+ * Pull out the real `re_…` token when it is buried in the paste.
+ * @param {unknown} raw
+ */
+export function cleanResendKey(raw) {
+  let value = String(raw || '')
+    .replace(/^\uFEFF/, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+  value = value.replace(/^Bearer\s+/i, '').trim();
+  value = value.replace(/^(RESEND_API_KEY|RESEND_KEY|SOUL_RESEND_KEY)\s*[:=]\s*/i, '').trim();
+  // If junk was pasted around the token, keep only the Resend key itself.
+  const embedded = value.match(/re_[A-Za-z0-9_]+/);
+  if (embedded) return embedded[0];
+  return value;
+}
+
+/**
+ * Pick the first usable Resend key binding on this Worker.
+ * @param {any} env
+ * @returns {{ key: string, binding: string | null, raw: string }}
+ */
+export function resolveResendKey(env) {
+  for (const binding of RESEND_KEY_BINDINGS) {
+    const raw = env?.[binding];
+    if (typeof raw !== 'string' || !raw.trim()) continue;
+    const key = cleanResendKey(raw);
+    if (key) return { key, binding, raw };
+  }
+  return { key: '', binding: null, raw: '' };
+}
+
+/**
+ * Safe shape for /cms-status — never the key itself.
+ * @param {unknown} raw
+ * @param {string | null} [binding]
+ */
+export function describeResendKey(raw, binding = null) {
+  const original = String(raw || '');
+  const key = cleanResendKey(raw);
+  if (!key && !original.trim()) {
+    return {
+      present: false,
+      binding: binding || null,
+      length: 0,
+      startsWithRe: false,
+      shape: 'missing',
+    };
+  }
+  const startsWithRe = key.startsWith('re_');
+  const looksClean = /^re_[A-Za-z0-9_]+$/.test(key);
+  let shape = 'odd';
+  if (looksClean && key.length >= 20) shape = 'looks like a Resend key';
+  else if (startsWithRe) shape = 'starts with re_ but has odd characters';
+  else if (key.length > 0) shape = 'does NOT look like a Resend key (should start re_)';
+
+  // Leading char codes of the RAW Worker value (not the secret text).
+  // Lets us see invisible junk / wrong paste without printing the key.
+  const rawTrim = original.replace(/^\uFEFF/, '').trim();
+  const leadingCodes = [...rawTrim.slice(0, 6)].map((c) => c.charCodeAt(0));
+
+  return {
+    present: true,
+    binding: binding || null,
+    length: key.length,
+    rawLength: rawTrim.length,
+    startsWithRe,
+    shape,
+    leadingCodes,
+    expectedReCodes: [114, 101, 95], // r e _
+  };
+}
+
+/**
+ * Ask Resend if this key is alive (no email sent).
+ * sending_access keys cannot list domains — that still counts as ok for the form.
+ * @param {any} env
+ */
+export async function probeResendKey(env) {
+  const { key, binding } = resolveResendKey(env);
+  if (!key) {
+    return { ok: false, status: 0, detail: 'no key', binding: null };
+  }
+  if (!key.startsWith('re_') || key.length < 20) {
+    return {
+      ok: false,
+      status: 0,
+      detail: `not a full Resend key (got ${key.length} chars; paste the whole re_… value)`,
+      binding,
+    };
+  }
+  try {
+    const res = await fetch('https://api.resend.com/domains', {
+      method: 'GET',
+      headers: { authorization: `Bearer ${key}` },
+    });
+    if (res.ok) return { ok: true, status: res.status, detail: 'accepted', binding };
+    const body = (await res.text()).slice(0, 160);
+    // Full-access check failed, but sending-only keys are fine for /contact.
+    if (res.status === 401 && /restricted/i.test(body)) {
+      return {
+        ok: true,
+        status: res.status,
+        detail: 'sending_access key (ok for contact form)',
+        binding,
+      };
+    }
+    if (res.status === 401 || res.status === 400 || res.status === 403) {
+      return {
+        ok: false,
+        status: res.status,
+        detail: body || 'rejected (dead or wrong key)',
+        binding,
+      };
+    }
+    return { ok: false, status: res.status, detail: body || res.statusText || 'error', binding };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      detail: error && error.message ? String(error.message).slice(0, 120) : 'network error',
+      binding,
+    };
+  }
+}
+
 /** True when this Worker can send without falling back to mailto. */
 export function mailReady(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return true;
-  return Boolean(String(env?.RESEND_API_KEY || '').trim());
+  const { key } = resolveResendKey(env);
+  return Boolean(key && key.startsWith('re_') && key.length >= 20);
 }
 
 export function mailVia(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return 'cloudflare';
-  if (String(env?.RESEND_API_KEY || '').trim()) return 'resend';
+  const { key } = resolveResendKey(env);
+  if (key && key.startsWith('re_') && key.length >= 20) return 'resend';
   return 'none';
 }
 
@@ -60,19 +237,22 @@ export function validateContact(fields) {
 }
 
 export function contactSubject(name) {
-  const who = cleanLine(name, 60) || 'rider';
-  return `Soul Searchers note from ${who}`;
+  const who = cleanLine(name, 60) || 'a rider';
+  return `Contact form · thenewsoulsearchers.de · ${who}`;
 }
 
 export function contactText(fields) {
   return [
-    `From: ${fields.name}`,
-    `Email: ${fields.email}`,
+    'New note from the contact form on thenewsoulsearchers.de',
+    '',
+    `Name: ${fields.name}`,
+    `Reply to: ${fields.email}`,
     '',
     fields.message,
     '',
     '—',
-    'Sent from thenewsoulsearchers.de/contact',
+    'Hit Reply to answer them. This mail was sent by the site form (not their mail app).',
+    'https://thenewsoulsearchers.de/contact',
   ].join('\n');
 }
 
@@ -85,10 +265,18 @@ export function contactHtml(fields) {
       .replace(/"/g, '&quot;');
   return [
     '<div style="font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#122">',
-    `<p><strong>From:</strong> ${esc(fields.name)} &lt;${esc(fields.email)}&gt;</p>`,
-    `<p style="white-space:pre-wrap">${esc(fields.message)}</p>`,
-    '<hr style="border:none;border-top:1px solid #ddd;margin:1.5rem 0" />',
-    '<p style="color:#666;font-size:13px">Sent from thenewsoulsearchers.de/contact</p>',
+    '<p style="margin:0 0 1rem;color:#3d6b7a;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">',
+    'Contact form · thenewsoulsearchers.de',
+    '</p>',
+    `<p style="margin:0 0 .35rem"><strong>Name:</strong> ${esc(fields.name)}</p>`,
+    `<p style="margin:0 0 1rem"><strong>Reply to:</strong> <a href="mailto:${esc(fields.email)}">${esc(fields.email)}</a></p>`,
+    `<p style="white-space:pre-wrap;margin:0 0 1.25rem">${esc(fields.message)}</p>`,
+    '<hr style="border:none;border-top:1px solid #ddd;margin:1.25rem 0" />',
+    '<p style="color:#666;font-size:13px;margin:0">',
+    'Hit Reply to answer them. This mail was sent by the site form (not their mail app).',
+    '<br />',
+    '<a href="https://thenewsoulsearchers.de/contact">thenewsoulsearchers.de/contact</a>',
+    '</p>',
     '</div>',
   ].join('');
 }
@@ -192,9 +380,10 @@ export async function deliverContact(env, fields) {
   const subject = contactSubject(fields.name);
   const text = contactText(fields);
   const html = contactHtml(fields);
+  const to = resolveContactTo(env);
   const payload = {
     from: CONTACT_FROM,
-    to: CONTACT_TO,
+    to,
     replyTo: fields.email,
     subject,
     text,
@@ -203,10 +392,10 @@ export async function deliverContact(env, fields) {
 
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') {
     await env.EMAIL.send(payload);
-    return { via: 'cloudflare' };
+    return { via: 'cloudflare', to };
   }
 
-  const key = String(env?.RESEND_API_KEY || '').trim();
+  const key = resolveResendKey(env).key;
   if (key) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -215,8 +404,8 @@ export async function deliverContact(env, fields) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Soul Searchers <${CONTACT_FROM}>`,
-        to: [CONTACT_TO],
+        from: resolveResendFrom(env),
+        to: [to],
         reply_to: fields.email,
         subject,
         text,
@@ -225,9 +414,12 @@ export async function deliverContact(env, fields) {
     });
     if (!res.ok) {
       const detail = await res.text();
-      throw new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
+      const err = new Error(`Resend failed (${res.status}): ${detail.slice(0, 200)}`);
+      err.code = 'E_RESEND';
+      err.status = res.status;
+      throw err;
     }
-    return { via: 'resend' };
+    return { via: 'resend', to, from: resolveResendFrom(env) };
   }
 
   const err = new Error('Mail is not wired on this Worker yet.');
@@ -259,7 +451,8 @@ export async function handleContactRequest(request, env) {
       ok: true,
       mailWired: mailReady(env),
       mailVia: mailVia(env),
-      to: CONTACT_TO,
+      to: resolveContactTo(env),
+      from: mailVia(env) === 'resend' ? resolveResendFrom(env) : CONTACT_FROM,
     });
   }
 
@@ -281,28 +474,50 @@ export async function handleContactRequest(request, env) {
   if (problem) return json({ ok: false, error: problem }, 400);
 
   try {
-    await keepCopy(env, fields);
+    // Deliver first. A KV copy failure must never block the rider’s note.
     const sent = await deliverContact(env, fields);
-    return json({ ok: true, via: sent.via });
+    try {
+      await keepCopy(env, fields);
+    } catch (copyErr) {
+      console.error('contact keepCopy failed', copyErr);
+    }
+    return json({ ok: true, via: sent.via, to: sent.to });
   } catch (error) {
     const code = error && typeof error === 'object' ? error.code : '';
     if (code === 'E_MAIL_NOT_CONFIGURED') {
       return json(
         {
           ok: false,
-          error: 'Mail is not wired yet. Opening your mail app with the note filled in.',
+          error: 'Mail is not wired on the site yet. Write Henrik direct for now.',
           code,
+          // Soft flag for the form UI — never means “open the visitor mail app”.
           mailto: true,
         },
         503,
       );
     }
     console.error('contact send failed', error);
+    const resendStatus =
+      error && typeof error === 'object' && typeof error.status === 'number' ? error.status : 0;
+    let message = 'Could not send just now. Write Henrik direct if it stalls again.';
+    // Resend uses 400 and 401 for a bad/missing key depending on the route.
+    if (code === 'E_RESEND' && (resendStatus === 400 || resendStatus === 401)) {
+      message =
+        'Mail key was rejected. Open /cms-status — mailKeyProbe must be ok before Send works.';
+    } else if (code === 'E_RESEND' && (resendStatus === 403 || resendStatus === 422)) {
+      message =
+        'Mail service refused the note (domain or From address). Check Resend for thenewsoulsearchers.de.';
+    } else if (code === 'E_RESEND' && resendStatus === 429) {
+      message = 'Mail service asked us to slow down. Wait a minute, then try once.';
+    }
+    // Do not set mailto here. A flaky Resend reply used to flip the form into
+    // endless “try again / open Mail” loops. One calm error is enough.
     return json(
       {
         ok: false,
-        error: 'Could not send just now. Try again, or write Henrik direct.',
-        mailto: true,
+        error: message,
+        code: code || 'E_SEND',
+        resendStatus: resendStatus || undefined,
       },
       502,
     );
