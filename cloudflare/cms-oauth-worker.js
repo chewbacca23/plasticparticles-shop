@@ -29,6 +29,8 @@ import {
   probeResendKey,
   resolveContactTo,
   resolveResendFrom,
+  resolveResendKey,
+  RESEND_KEY_BINDINGS,
 } from './contact-mail.js';
 
 const PROVIDER = 'github';
@@ -116,8 +118,9 @@ async function statusPage(env) {
 
   const mailOn = mailReady(env);
   const mailPath = mailVia(env);
-  const seesResendName = stringKeys.includes('RESEND_API_KEY');
-  const mailKeyShape = describeResendKey(env?.RESEND_API_KEY);
+  const resolvedKey = resolveResendKey(env);
+  const seesResendName = RESEND_KEY_BINDINGS.some((name) => stringKeys.includes(name));
+  const mailKeyShape = describeResendKey(resolvedKey.raw || env?.RESEND_API_KEY, resolvedKey.binding);
   const mailKeyProbe = mailPath === 'resend' ? await probeResendKey(env) : { ok: false, status: 0, detail: 'n/a' };
 
   let mailHint =
@@ -125,25 +128,25 @@ async function statusPage(env) {
   if (!mailOn) {
     if (seesResendName) {
       mailHint =
-        'RESEND_API_KEY is present but empty. Edit it on thenewsoulsearchersblogc (Settings → Variables) or run scripts/set-resend-secret.sh.';
+        'A Resend binding exists but is empty. Prefer a new secret named SOUL_RESEND_KEY on thenewsoulsearchersblogc.';
     } else if (stringKeys.length === 0) {
       mailHint =
-        'This Worker sees no text secrets. Domain may be on a sibling Worker, or keys were saved under Build variables. Put RESEND_API_KEY on thenewsoulsearchersblogc.';
+        'This Worker sees no text secrets. Put SOUL_RESEND_KEY on thenewsoulsearchersblogc (not a sibling Worker, not Build vars).';
     } else {
       mailHint =
-        'OAuth keys are on this Worker, but RESEND_API_KEY is not. Add it on thenewsoulsearchersblogc → Settings → Variables.';
+        'OAuth keys are on this Worker, but no Resend key is. Add secret SOUL_RESEND_KEY on thenewsoulsearchersblogc.';
     }
   } else if (mailKeyProbe && mailKeyProbe.ok === false && !mailKeyShape.startsWithRe) {
     mailHint =
-      'Your Resend key starts with re_, but the value saved on the Worker does not. In Cloudflare → thenewsoulsearchersblogc → Variables: DELETE Resend API key (Variable and Secret). Then on the Mac run the wrangler secret put one-liner and paste ONLY re_…';
+      'The saved key still does not start with re_. Ignore RESEND_API_KEY. Create secret SOUL_RESEND_KEY with a fresh re_… value (wrangler secret put SOUL_RESEND_KEY --name thenewsoulsearchersblogc).';
   } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyShape.length > 0 && mailKeyShape.length < 20) {
     mailHint =
-      'RESEND_API_KEY on the Worker is too short (not a full re_… key). In Resend create a new key, copy the WHOLE value once, then on the Mac run: sh scripts/set-resend-secret.sh';
+      'Resend key is too short. Create SOUL_RESEND_KEY with the full re_… token via wrangler secret put.';
   } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status === 401) {
     mailHint =
-      'Resend rejected this API key (401). Create a fresh key at resend.com/api-keys, paste it into RESEND_API_KEY on thenewsoulsearchersblogc only, Save, then refresh this page until mailKeyProbe.ok is true.';
+      'Resend rejected this API key (401). Create a fresh key, put it in SOUL_RESEND_KEY on thenewsoulsearchersblogc, refresh until mailKeyProbe.ok is true.';
   } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status) {
-    mailHint = `Resend probe failed (${mailKeyProbe.status}): ${mailKeyProbe.detail}. Fix the key, then refresh this page.`;
+    mailHint = `Resend probe failed (${mailKeyProbe.status}): ${mailKeyProbe.detail}. Fix the key on ${mailKeyProbe.binding || 'SOUL_RESEND_KEY'}, then refresh this page.`;
   } else if (mailKeyProbe && mailKeyProbe.ok) {
     mailHint =
       'Resend accepted the key. Hard-refresh /contact and send a short test — look for Sent.';
@@ -166,6 +169,7 @@ async function statusPage(env) {
     mailVia: mailPath,
     mailTo: resolveContactTo(env),
     mailFrom: mailPath === 'resend' ? resolveResendFrom(env) : 'hello@thenewsoulsearchers.de',
+    mailKeyBinding: resolvedKey.binding,
     mailKeyShape,
     mailKeyProbe,
     mailHint,

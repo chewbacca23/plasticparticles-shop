@@ -55,6 +55,9 @@ export function resolveResendFrom(env) {
   return `The Soul Searchers form <${CONTACT_FROM}>`;
 }
 
+/** Preferred → fallback secret names. SOUL_RESEND_KEY bypasses a cursed RESEND_API_KEY slot. */
+export const RESEND_KEY_BINDINGS = ['SOUL_RESEND_KEY', 'RESEND_KEY', 'RESEND_API_KEY'];
+
 /**
  * Resend keys often get pasted with quotes, Bearer, or `NAME=re_…` junk.
  * Pull out the real `re_…` token when it is buried in the paste.
@@ -72,7 +75,7 @@ export function cleanResendKey(raw) {
     value = value.slice(1, -1).trim();
   }
   value = value.replace(/^Bearer\s+/i, '').trim();
-  value = value.replace(/^RESEND_API_KEY\s*[:=]\s*/i, '').trim();
+  value = value.replace(/^(RESEND_API_KEY|RESEND_KEY|SOUL_RESEND_KEY)\s*[:=]\s*/i, '').trim();
   // If junk was pasted around the token, keep only the Resend key itself.
   const embedded = value.match(/re_[A-Za-z0-9_]+/);
   if (embedded) return embedded[0];
@@ -80,15 +83,32 @@ export function cleanResendKey(raw) {
 }
 
 /**
+ * Pick the first usable Resend key binding on this Worker.
+ * @param {any} env
+ * @returns {{ key: string, binding: string | null, raw: string }}
+ */
+export function resolveResendKey(env) {
+  for (const binding of RESEND_KEY_BINDINGS) {
+    const raw = env?.[binding];
+    if (typeof raw !== 'string' || !raw.trim()) continue;
+    const key = cleanResendKey(raw);
+    if (key) return { key, binding, raw };
+  }
+  return { key: '', binding: null, raw: '' };
+}
+
+/**
  * Safe shape for /cms-status — never the key itself.
  * @param {unknown} raw
+ * @param {string | null} [binding]
  */
-export function describeResendKey(raw) {
+export function describeResendKey(raw, binding = null) {
   const original = String(raw || '');
   const key = cleanResendKey(raw);
   if (!key && !original.trim()) {
     return {
       present: false,
+      binding: binding || null,
       length: 0,
       startsWithRe: false,
       shape: 'missing',
@@ -108,6 +128,7 @@ export function describeResendKey(raw) {
 
   return {
     present: true,
+    binding: binding || null,
     length: key.length,
     rawLength: rawTrim.length,
     startsWithRe,
@@ -123,15 +144,16 @@ export function describeResendKey(raw) {
  * @param {any} env
  */
 export async function probeResendKey(env) {
-  const key = cleanResendKey(env?.RESEND_API_KEY);
+  const { key, binding } = resolveResendKey(env);
   if (!key) {
-    return { ok: false, status: 0, detail: 'no key' };
+    return { ok: false, status: 0, detail: 'no key', binding: null };
   }
   if (!key.startsWith('re_') || key.length < 20) {
     return {
       ok: false,
       status: 0,
       detail: `not a full Resend key (got ${key.length} chars; paste the whole re_… value)`,
+      binding,
     };
   }
   try {
@@ -139,7 +161,7 @@ export async function probeResendKey(env) {
       method: 'GET',
       headers: { authorization: `Bearer ${key}` },
     });
-    if (res.ok) return { ok: true, status: res.status, detail: 'accepted' };
+    if (res.ok) return { ok: true, status: res.status, detail: 'accepted', binding };
     const body = (await res.text()).slice(0, 160);
     // Full-access check failed, but sending-only keys are fine for /contact.
     if (res.status === 401 && /restricted/i.test(body)) {
@@ -147,6 +169,7 @@ export async function probeResendKey(env) {
         ok: true,
         status: res.status,
         detail: 'sending_access key (ok for contact form)',
+        binding,
       };
     }
     if (res.status === 401 || res.status === 400 || res.status === 403) {
@@ -154,14 +177,16 @@ export async function probeResendKey(env) {
         ok: false,
         status: res.status,
         detail: body || 'rejected (dead or wrong key)',
+        binding,
       };
     }
-    return { ok: false, status: res.status, detail: body || res.statusText || 'error' };
+    return { ok: false, status: res.status, detail: body || res.statusText || 'error', binding };
   } catch (error) {
     return {
       ok: false,
       status: 0,
       detail: error && error.message ? String(error.message).slice(0, 120) : 'network error',
+      binding,
     };
   }
 }
@@ -169,12 +194,14 @@ export async function probeResendKey(env) {
 /** True when this Worker can send without falling back to mailto. */
 export function mailReady(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return true;
-  return Boolean(cleanResendKey(env?.RESEND_API_KEY));
+  const { key } = resolveResendKey(env);
+  return Boolean(key && key.startsWith('re_') && key.length >= 20);
 }
 
 export function mailVia(env) {
   if (env?.EMAIL && typeof env.EMAIL.send === 'function') return 'cloudflare';
-  if (cleanResendKey(env?.RESEND_API_KEY)) return 'resend';
+  const { key } = resolveResendKey(env);
+  if (key && key.startsWith('re_') && key.length >= 20) return 'resend';
   return 'none';
 }
 
@@ -368,7 +395,7 @@ export async function deliverContact(env, fields) {
     return { via: 'cloudflare', to };
   }
 
-  const key = cleanResendKey(env?.RESEND_API_KEY);
+  const key = resolveResendKey(env).key;
   if (key) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

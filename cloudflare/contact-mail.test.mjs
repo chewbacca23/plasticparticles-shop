@@ -15,6 +15,7 @@ import {
   parseContactBody,
   probeResendKey,
   resolveResendFrom,
+  resolveResendKey,
   validateContact,
 } from './contact-mail.js';
 
@@ -64,12 +65,32 @@ describe('resolveContactTo', () => {
   });
 });
 
+describe('resolveResendKey', () => {
+  it('prefers SOUL_RESEND_KEY over a cursed RESEND_API_KEY', () => {
+    const resolved = resolveResendKey({
+      RESEND_API_KEY: 'garbage-not-a-key-xxxxxxxxxx',
+      SOUL_RESEND_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
+    });
+    assert.equal(resolved.binding, 'SOUL_RESEND_KEY');
+    assert.equal(resolved.key, 're_testkey_abcdefghijklmnopqrstuvwxyz12');
+    assert.equal(mailReady({ RESEND_API_KEY: 'garbage-not-a-key-xxxxxxxxxx' }), false);
+    assert.equal(
+      mailReady({
+        RESEND_API_KEY: 'garbage-not-a-key-xxxxxxxxxx',
+        SOUL_RESEND_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
+      }),
+      true,
+    );
+  });
+});
+
 describe('mailReady', () => {
   it('spots Resend or the Cloudflare binding', () => {
     assert.equal(mailReady({}), false);
     assert.equal(mailVia({}), 'none');
-    assert.equal(mailReady({ RESEND_API_KEY: 're_x' }), true);
-    assert.equal(mailVia({ RESEND_API_KEY: 're_x' }), 'resend');
+    assert.equal(mailReady({ RESEND_API_KEY: 're_x' }), false);
+    assert.equal(mailReady({ RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' }), true);
+    assert.equal(mailVia({ RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' }), 'resend');
     assert.equal(mailReady({ EMAIL: { async send() {} } }), true);
     assert.equal(mailVia({ EMAIL: { async send() {} } }), 'cloudflare');
   });
@@ -198,7 +219,7 @@ describe('deliverContact', () => {
     };
     try {
       const via = await deliverContact(
-        { RESEND_API_KEY: 're_test' },
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' },
         { name: 'Ana', email: 'ana@example.com', message: 'Hello' },
       );
       assert.equal(via.via, 'resend');
@@ -220,7 +241,7 @@ describe('deliverContact', () => {
     };
     try {
       const via = await deliverContact(
-        { RESEND_API_KEY: 're_test', CONTACT_INBOX: 'henrik.personal@example.com' },
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12', CONTACT_INBOX: 'henrik.personal@example.com' },
         { name: 'Ana', email: 'ana@example.com', message: 'Hello' },
       );
       assert.equal(via.to, 'henrik.personal@example.com');
@@ -283,7 +304,7 @@ describe('handleContactRequest', () => {
     assert.equal((await cold.json()).mailWired, false);
 
     const hot = await handleContactRequest(new Request('https://x.test/api/contact'), {
-      RESEND_API_KEY: 're_test',
+      RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
     });
     assert.equal((await hot.json()).mailWired, true);
   });
@@ -345,7 +366,7 @@ describe('handleContactRequest', () => {
             message: 'Still on the climb.',
           }),
         }),
-        { RESEND_API_KEY: 're_test' },
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' },
       );
       assert.equal(hot.status, 502);
       const body = await hot.json();

@@ -187,7 +187,7 @@ describe('GET /cms-status', () => {
       ).text(),
     );
     assert.equal(oauthOnly.mailWired, false);
-    assert.match(oauthOnly.mailHint, /RESEND_API_KEY is not/);
+    assert.match(oauthOnly.mailHint, /SOUL_RESEND_KEY/);
   });
 
   it('tells Henrik when Resend rejects the key', async () => {
