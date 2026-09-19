@@ -130,14 +130,16 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 
 ### Contact form (real send, no mail app)
 
-`/contact` posts to **`/api/contact`**. The note goes to **`henrik.kuerschner@web.de`**
-(Strato `henrik@thenewsoulsearchers.de` was bouncing Resend under DMARC `p=reject`).
-Reply-To is the rider’s address, so you can answer from web.de.
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**
+by default (Henrik’s laptop / Strato mailbox). Reply-To is the rider’s address.
+
+Override with Worker secret **`CONTACT_INBOX`** if needed (e.g. temporary web.de while Strato is down).
 
 DNS first (Resend → Domains → `thenewsoulsearchers.de`):
 
 1. **Enable Sending** verified (DKIM + the `send` / `rsend` CNAMEs, DNS only)
 2. Leave **Enable Receiving** off so Strato / existing MX keeps delivering `henrik@…`
+3. DMARC on the root should be soft (`p=none` or `p=quarantine`) so Resend → Strato does not hard-bounce
 
 #### Dashboard path (no Terminal)
 
@@ -174,7 +176,7 @@ Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **htt
 
 Until a **working** key is there, Send shows **Not delivered yet** (or “Mail key was rejected”) and never opens a mail app.
 
-Notes land in **`henrik.kuerschner@web.de`** by default (From `hello@thenewsoulsearchers.de`
+Notes land in **`henrik@thenewsoulsearchers.de`** by default (From `hello@thenewsoulsearchers.de`
 via Resend). Reply-To is the rider.
 
 ### If Resend shows Bounced
@@ -183,14 +185,13 @@ That means the API key worked — Resend accepted the note, then the inbox refus
 
 1. Open the **newest** row in Resend → Emails
 2. Read **To** and the bounce / error text
-3. Confirm `/cms-status` → `mailTo` is `henrik.kuerschner@web.de`
+3. Confirm `/cms-status` → `mailTo` is the inbox you want
 
-- **To** is `henrik@thenewsoulsearchers.de` → that Strato inbox rejects Resend. Delete or fix Worker secret `CONTACT_INBOX` (must be web.de or empty). Live code also forces web.de.
-- **To** is `henrik.kuerschner@web.de` → check web.de spam; paste the Resend bounce reason into chat.
+If Strato rejects again, soften root SPF (keep Strato, add Resend’s include) or temporarily set `CONTACT_INBOX` to another mailbox. DMARC should stay soft (`p=none`).
 
-Root DNS already has `DMARC p=none` and Resend DKIM on `resend._domainkey`. Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
+Do **not** turn on Resend **Receiving** for the root domain (that steals Strato mail).
 
-To retarget later (only to a non-domain inbox):
+To retarget:
 
 ```sh
 export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382

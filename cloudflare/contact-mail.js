@@ -7,11 +7,8 @@
  * is bound, so a note is not lost if mail is briefly down.
  */
 
-export const CONTACT_TO = 'henrik.kuerschner@web.de';
+export const CONTACT_TO = 'henrik@thenewsoulsearchers.de';
 export const CONTACT_FROM = 'hello@thenewsoulsearchers.de';
-
-/** Domain inboxes under Strato have been bouncing Resend (SPF/DMARC). */
-const DOMAIN_INBOX_SUFFIX = '@thenewsoulsearchers.de';
 
 const MAX_NAME = 120;
 const MAX_EMAIL = 200;
@@ -21,27 +18,13 @@ const RATE_MAX = 5;
 
 /**
  * Inbox that receives contact notes.
- * Default is Henrik’s web.de (Strato henrik@ bounces Resend under DMARC reject).
+ * Default is Henrik’s domain mailbox (laptop / Strato).
  * Override with Worker secret CONTACT_INBOX if that ever changes.
- * Never delivers to *@thenewsoulsearchers.de via Resend — that path bounced.
  * @param {any} env
  */
 export function resolveContactTo(env) {
   const override = cleanEmail(env?.CONTACT_INBOX);
-  const candidate = override || CONTACT_TO;
-  if (candidate.toLowerCase().endsWith(DOMAIN_INBOX_SUFFIX)) {
-    return CONTACT_TO;
-  }
-  return candidate;
-}
-
-/**
- * True when CONTACT_INBOX pointed at the domain address we refuse to use.
- * @param {any} env
- */
-export function contactInboxOverridden(env) {
-  const override = cleanEmail(env?.CONTACT_INBOX);
-  return Boolean(override && override.toLowerCase().endsWith(DOMAIN_INBOX_SUFFIX));
+  return override || CONTACT_TO;
 }
 
 /**

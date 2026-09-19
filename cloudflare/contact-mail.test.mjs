@@ -47,21 +47,18 @@ describe('validateContact', () => {
 });
 
 describe('resolveContactTo', () => {
-  it('defaults to web.de and refuses domain inboxes that bounce Resend', async () => {
-    const { resolveContactTo, CONTACT_TO, contactInboxOverridden } = await import(
-      './contact-mail.js'
-    );
+  it('defaults to the domain mailbox and honours CONTACT_INBOX', async () => {
+    const { resolveContactTo, CONTACT_TO } = await import('./contact-mail.js');
     assert.equal(resolveContactTo({}), CONTACT_TO);
+    assert.equal(CONTACT_TO, 'henrik@thenewsoulsearchers.de');
     assert.equal(
       resolveContactTo({ CONTACT_INBOX: 'henrik.kuerschner@web.de' }),
       'henrik.kuerschner@web.de',
     );
     assert.equal(
       resolveContactTo({ CONTACT_INBOX: 'henrik@thenewsoulsearchers.de' }),
-      CONTACT_TO,
+      'henrik@thenewsoulsearchers.de',
     );
-    assert.equal(contactInboxOverridden({ CONTACT_INBOX: 'henrik@thenewsoulsearchers.de' }), true);
-    assert.equal(contactInboxOverridden({ CONTACT_INBOX: 'henrik.kuerschner@web.de' }), false);
   });
 });
 

@@ -21,7 +21,6 @@ import {
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
 import {
-  contactInboxOverridden,
   describeResendKey,
   handleContactRequest,
   mailReady,
@@ -150,10 +149,6 @@ async function statusPage(env) {
   } else if (mailKeyProbe && mailKeyProbe.ok) {
     mailHint =
       'Resend accepted the key. Hard-refresh /contact and send a short test — look for Sent.';
-  }
-  if (contactInboxOverridden(env)) {
-    mailHint =
-      'CONTACT_INBOX was set to an @thenewsoulsearchers.de address (those bounce via Resend). Delivering to henrik.kuerschner@web.de instead. Remove or fix CONTACT_INBOX on the Worker.';
   }
 
   const body = {
