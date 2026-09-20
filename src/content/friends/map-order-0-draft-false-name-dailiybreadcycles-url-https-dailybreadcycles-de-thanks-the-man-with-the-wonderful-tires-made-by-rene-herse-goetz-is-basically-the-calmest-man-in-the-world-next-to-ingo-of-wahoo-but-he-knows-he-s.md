@@ -1,5 +1,5 @@
 ---
-name: dailiybreadcycles
+name: dailybreadcycles
 url: https://dailybreadcycles.de/
 thanks: The man with the wonderful tires made by rene herse. Goetz is basically
   the calmest man in the world, next to Ingo of Wahoo, but he knows he stuff
