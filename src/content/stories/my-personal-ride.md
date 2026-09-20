@@ -17,19 +17,21 @@ order: 0
 ---
 ## Montecruz
 
-I don't remember the exact day I first saw the frame. I remember the workshop, though: tubes racked along the wall, a jig on the bench, and Andreas standing over it with the patience of someone who had never once been in a hurry. This was back when his shop was still in Berlin. Bikes were being born in that room, and I was lucky enough to be standing in it.
+I don't remember the exact day I first saw the frame. I remember the workshop, though: tubes racked along the wall, a jig on the bench, and Andreas, Andi to everyone who knows him, standing over it with the patience of someone who had never once been in a hurry. This was back when his shop was still in Berlin. Bikes were being born in that room, and I was lucky enough to be standing in it.
 
 He is a friend, and that changes the whole story. I didn't order a product. I sat in a room with a person who wanted to understand how I ride, where I ride, and what I want from a bike when the road tilts upward and my legs start negotiating. He listened more than he talked. Then he went away and made something that, as far as I can tell, exists nowhere else in the world.
 
-The frame is built from **Columbus** tubes, made in Italy, and every one of them is carbon. That matters to me. Columbus is a name with real history behind it, the kind of tubing that has been part of bike-building for generations, and Andreas took those tubes and turned them into a frame that fits me and nobody else. It's red, not a shouting red but a deep one that catches the light differently depending on the hour. It feels alive when you lift it. You can sense that someone decided every joint on purpose.
+The frame is built from **Columbus** tubes, made in Italy, and every one of them is carbon. That matters to me. Columbus is a name with real history behind it, the kind of tubing that has been part of bike-building for generations, and Andi took those tubes and turned them into a frame that fits me and nobody else. It's red, not a shouting red but a deep one that catches the light differently depending on the hour. It feels alive when you lift it. You can sense that someone decided every joint on purpose.
 
 ### The name
 
-The bike is called Montecruz, and it's a little private joke that only Berliners get right away. *Monte* is mountain, *cruz* is cross. Put them together and you have Kreuzberg, the Berlin borough I've always loved for its mix of noise, canals, late nights and stubborn independence. The district itself is named after a hill with a cross on top, which is about as modest as a mountain gets, at least compared with the ones I like to climb.
+Andi is as good with words as he is with tubes, and he proved it with the name. He came up with it, and with everything around it.
 
-I like that. A bike named after Berlin's own little mountain, built in Berlin, by a friend. Then the builder moved to Switzerland, to the real mountains, and the bike stayed with me, carrying the name of home. Whenever I roll it out of the door, I'm riding a piece of the city under my own wheels.
+The bike is called **Montecruz**, and it's a little private joke that only Berliners get right away. *Monte* is mountain, *cruz* is cross. Put them together and you have Kreuzberg, the Berlin borough I've always loved for its mix of noise, canals, late nights and stubborn independence. The district itself is named after a hill with a cross on top, which is about as modest as a mountain gets, at least compared with the ones I like to climb.
 
-Not long after the move, the workshop was gone from Berlin. I understood it, because if you build bikes with that much care, the Alps are probably where you want to be. But it changed what the bike means to me. It stopped being just a frame and became a marker of a time and a place, a piece of Berlin cycling that left the city and left something behind in me.
+I love that it works on so many levels. A bike named after Berlin's own little mountain, built in Berlin, by a friend who found the right words for it in a language that isn't even German. Then Andi moved to Switzerland, to the real mountains, and the bike stayed with me, carrying the name of home. Whenever I roll it out of the door, I'm riding a piece of the city under my own wheels, with a name only he could have given it.
+
+When the Berlin workshop closed, I understood it, because if you build bikes with that much care, the Alps are probably where you want to be. But it changed what the bike means to me. It stopped being just a frame and became a marker of a time and a place, a piece of Berlin cycling that left the city and left something behind in me.
 
 ### The weight logic
 
@@ -57,16 +59,16 @@ That was Mont Ventoux, from Malaucène, with Bruno and Henri, and I rode it on m
 
 Then the descent, and a personal record of **118 km/h**. I'll say the number once and let it sit, because it still doesn't feel real. I remember thinking that I was going this fast and had never felt so calm.
 
-I tell this story here because it makes me understand what the red bike is. The Specialized is the one that took me up Ventoux. The Montecruz is the one I *love*. Those are different things, and I've come to think both are allowed. One is a very good tool for a very big day. The other is a friend's craft, made for me, named after home, and every ride on it feels a little bit like being looked after.
+I tell this story here because it makes me understand what the red bike is. The Specialized is the one that took me up Ventoux. The Montecruz is the one I *love*. Those are different things, and I've come to think both are allowed. One is a very good tool for a very big day. The other is a friend's craft, made for me, named by him, and every ride on it feels a little bit like being looked after.
 
 ### What it is to me
 
 People sometimes ask why anyone would spend this much time and care on a bike. The honest answer is that it stopped being about the parts a long time ago.
 
-Every component on it is something I chose: some quickly, some after months of reading and doubting. But the heart of it is the frame, and the frame is a person. It's Andreas, and the fact that a friend made this with his own hands out of Italian carbon. Every time I clip in, I'm riding a bit of his patience and his skill and his refusal to rush.
+Every component on it is something I chose: some quickly, some after months of reading and doubting. But the heart of it is the frame, and the frame is a person. It's Andi, and the fact that a friend made this with his own hands out of Italian carbon, then gave it a name that says where we're both from. Every time I clip in, I'm riding a bit of his patience and his skill and his refusal to rush.
 
 He lives in Switzerland now, far from the workshop where this began. Some day I'd love to ride there with him, on his roads, in his mountains, on the bike he made. I'd want him to see how it turned out, how many miles it has, and how much it has given me.
 
 Until then, it waits by the door, red against the wall. Every time I roll out I'm reminded that some things in life are worth doing slowly, worth doing by hand, and worth doing for someone you care about.
 
-That's what Montecruz is. It's Kreuzberg, with wheels.
+That's what Montecruz is. It's Kreuzberg, with wheels, named by a friend.
