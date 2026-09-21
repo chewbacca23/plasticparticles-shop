@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { DEFAULT_HERO_SLIDES, resolveHomeHero, resolveHomeHeroSlides } from './home-hero.ts';
+import {
+  DEFAULT_HERO_SLIDES,
+  feedWithoutHeroRepeats,
+  resolveHomeHero,
+  resolveHomeHeroSlides,
+} from './home-hero.ts';
 
 describe('resolveHomeHero', () => {
   it('uses the CMS photo when the file is there', () => {
@@ -54,6 +59,32 @@ describe('resolveHomeHeroSlides', () => {
         heroSlides: ['/stories/nope.jpg', '/stories/img_5940.jpg'],
       }),
       ['/stories/img_5940.jpg'],
+    );
+  });
+});
+
+describe('feedWithoutHeroRepeats', () => {
+  it('keeps the café cups and the promenade portrait off Now', () => {
+    const slides = [
+      '/stories/img_6372.jpeg',
+      '/stories/img_5940.jpg',
+      '/stories/img_1442.jpeg',
+      '/stories/img_5956.jpg',
+    ];
+    const feed = feedWithoutHeroRepeats(
+      [
+        { photo: '/stories/img_2878.jpg' },
+        { photo: '/stories/img_6344.jpg' },
+        { photo: '/stories/img_5940.jpg' },
+        { photo: '/stories/nice-promenade-detail.jpg' },
+        { photo: '/stories/img_6372.jpeg' },
+        { photo: '/stories/nice-baie-des-anges.jpg' },
+      ],
+      slides,
+    );
+    assert.deepEqual(
+      feed.map((item) => item.photo),
+      ['/stories/img_2878.jpg', '/stories/nice-baie-des-anges.jpg'],
     );
   });
 });

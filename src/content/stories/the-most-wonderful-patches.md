@@ -1,7 +1,7 @@
 ---
 title: The most wonderful Patches
 pubDate: 2026-09-04
-cover: /stories/img_5940.jpg
+cover: /stories/img_6440-2.jpg
 gallery:
   - /stories/img_6440-2.jpg
   - /stories/img_6441.jpg

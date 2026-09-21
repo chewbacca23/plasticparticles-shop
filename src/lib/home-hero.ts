@@ -29,6 +29,24 @@ export const DEFAULT_HERO_SLIDES = [
 ] as const;
 
 /**
+ * Same scene as a hero slide. Keep these off Now so the café cups and the
+ * promenade portrait do not sit beside the dia (or next to each other).
+ */
+export const HERO_ONCE_EXTRAS = [
+  '/stories/img_6344.jpg',
+  '/stories/nice-promenade-detail.jpg',
+] as const;
+
+/** Drop photos the home dia already shows, plus the extra cup and portrait. */
+export function feedWithoutHeroRepeats<T extends { photo: string }>(
+  items: readonly T[],
+  heroSlides: readonly string[] = [],
+): T[] {
+  const hide = new Set<string>([...heroSlides, ...HERO_ONCE_EXTRAS]);
+  return items.filter((item) => !hide.has(item.photo));
+}
+
+/**
  * Up to a few full-bleed hero slides for the home dia. CMS list first,
  * else the single hero photo, else the default three, else Now fallbacks.
  */
