@@ -58,7 +58,7 @@ describe('collectFeed', () => {
     assert.equal(feed[0].caption, 'Patrouille');
   });
 
-  it('fills the grid with ride photos that are not already a shot', () => {
+  it('adds one cover per ride and skips a ride whose cover is already a shot', () => {
     const feed = collectFeed(
       [
         {
@@ -74,8 +74,15 @@ describe('collectFeed', () => {
           id: 'nice',
           headline: 'Nice ride',
           cover: present,
-          gallery: [presentTwo, '/stories/packed-bike.jpg'],
+          gallery: [presentTwo, flyover],
           pubDate: new Date('2026-08-31'),
+        },
+        {
+          id: 'tour',
+          headline: 'Tour day',
+          cover: flyover,
+          gallery: [presentTwo],
+          pubDate: new Date('2026-08-30'),
         },
         {
           id: 'empty',
@@ -85,7 +92,7 @@ describe('collectFeed', () => {
         {
           id: 'draft-ride',
           headline: 'Hidden ride',
-          cover: flyover,
+          cover: presentTwo,
           draft: true,
         },
       ],
@@ -95,10 +102,30 @@ describe('collectFeed', () => {
       feed.map((item) => ({ id: item.id, caption: item.caption, href: item.href })),
       [
         { id: 'shot:nice-shot', caption: 'From the shot', href: null },
-        { id: 'ride:nice:1', caption: 'Nice ride', href: '/stories/nice' },
+        { id: 'ride:tour:0', caption: 'Tour day', href: '/stories/tour' },
       ],
     );
-    assert.equal(feed[1].date.valueOf(), new Date('2026-08-31').valueOf());
+    assert.equal(feed[1].date.valueOf(), new Date('2026-08-30').valueOf());
+  });
+
+  it('never dumps a whole ride gallery into Now — one photo per set', () => {
+    const feed = collectFeed(
+      [],
+      [
+        {
+          id: 'ventoux',
+          headline: 'Ventoux',
+          cover: flyover,
+          gallery: [present, presentTwo, '/stories/img_1422.jpeg'],
+          pubDate: new Date('2026-09-13'),
+        },
+      ],
+    );
+    assert.deepEqual(
+      feed.map((item) => item.id),
+      ['ride:ventoux:0'],
+    );
+    assert.equal(feed[0].photo, flyover);
   });
 
   it('puts a new ride above leftover photos from an older ride', () => {

@@ -19,6 +19,8 @@ const nowItems = collectFeed(
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
 
+// Newest Now covers first, then CMS picks. An inline script below shifts
+// --dia-i by calendar day so a static deploy still opens differently each morning.
 const heroSlides = resolveHomeHeroSlides(homeSettings, nowItems.map((item) => item.photo));
 const heroPhoto = heroSlides[0] || null;
 ---
@@ -56,6 +58,23 @@ const heroPhoto = heroSlides[0] || null;
                 ))
               }
             </div>
+            {/*
+              Rebuilds --dia-i from the calendar day so returning fans land
+              on a different opener even when the HTML was built days ago.
+            */}
+            <script is:inline>
+              (() => {
+                const dia = document.querySelector('[data-hero-dia]');
+                if (!dia) return;
+                const imgs = [...dia.querySelectorAll('.hero-photo')];
+                const n = imgs.length;
+                if (n < 2) return;
+                const offset = Math.floor(Date.now() / 86400000) % n;
+                imgs.forEach((img, i) => {
+                  img.style.setProperty('--dia-i', String((i - offset + n) % n));
+                });
+              })();
+            </script>
             <div class="hero-scrim"></div>
           </>
         ) : (
