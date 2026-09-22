@@ -7,7 +7,7 @@ blurb: >-
   fast. ;) 
 
 
-  As of Today its only 2 more weeks until they arrive as production is running on high speed :) the half is already gone :) 
+  As of Today (21.09.2026) its only 2 more weeks until they arrive as production is running on high speed :) the half is already gone :) 
 
 
   These are wonderful I`d say. And if you could afford a tenner for each patch that would help up, cheers.
