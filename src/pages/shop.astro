@@ -38,7 +38,7 @@ const products = (await getCollection('shop', ({ data }) => !data.draft)).sort((
               const usingCrest = !mediaExists(photo);
               const mailto = `mailto:${SHOP_MAIL}?subject=${encodeURIComponent(mailSubject)}`;
               return (
-                <li class="product">
+                <li class="product" data-shop-slug={product.id}>
                   <img
                     class:list={['product-photo', { 'product-photo--crest': usingCrest }]}
                     src={image}

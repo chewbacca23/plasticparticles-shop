@@ -88,6 +88,44 @@ export function parseSimpleYaml(yaml) {
       data[key] = items;
       continue;
     }
+    if (/^[>|][+-]?\s*$/.test(rest)) {
+      const fold = rest.startsWith('>');
+      const block = [];
+      i += 1;
+      let indent = 0;
+      while (i < lines.length) {
+        const line = lines[i];
+        if (line.trim() === '') {
+          block.push('');
+          i += 1;
+          continue;
+        }
+        const lead = line.match(/^( +)/);
+        if (!lead) break;
+        if (!indent) indent = lead[1].length;
+        if (lead[1].length < indent) break;
+        block.push(line.slice(indent));
+        i += 1;
+      }
+      while (block.length && block[block.length - 1] === '') block.pop();
+      if (fold) {
+        const paragraphs = [];
+        let current = [];
+        for (const line of block) {
+          if (line === '') {
+            if (current.length) paragraphs.push(current.join(' '));
+            current = [];
+          } else {
+            current.push(line.trim());
+          }
+        }
+        if (current.length) paragraphs.push(current.join(' '));
+        data[key] = paragraphs.join('\n\n');
+      } else {
+        data[key] = block.join('\n');
+      }
+      continue;
+    }
     if (rest === '[]') data[key] = [];
     else if (rest === 'true' || rest === 'false') data[key] = rest === 'true';
     else if (/^-?\d+$/.test(rest)) data[key] = Number(rest);
