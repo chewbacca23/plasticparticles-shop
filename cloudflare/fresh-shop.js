@@ -116,26 +116,35 @@ function replaceShopField(inner, className, value, tag = 'p') {
 export function fillShopInHtml(html, products) {
   let source = String(html || '');
   if (!products.length) return source;
+
+  if (products.length === 1) {
+    const lis = source.match(/<li\b[^>]*class="[^"]*\bproduct\b[^"]*"[^>]*>[\s\S]*?<\/li>/g) || [];
+    if (lis.length >= 1) {
+      const painted = paintProductLi(lis[0], /^(<li\b[^>]*>)([\s\S]*)(<\/li>)$/, products[0]);
+      if (/<ul[^>]*product-list/.test(source)) {
+        return source.replace(/(<ul[^>]*product-list[^>]*>)([\s\S]*?)(<\/ul>)/, `$1${painted}$3`);
+      }
+    }
+  }
+
   const missing = [];
   for (const product of products) {
     const slug = product.slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const liRe = new RegExp(`(<li[^>]*data-shop-slug="${slug}"[^>]*>)([\\s\\S]*?)(</li>)`);
+    const liRe = new RegExp(`(<li[^>]*data-shop-slug="${slug}"[^>]*>)([\\s\\S]*?)(<\/li>)`);
     if (!liRe.test(source)) {
       missing.push(product);
       continue;
     }
-    const blurb = product.blurb
-      ? escapeHtml(product.blurb).replace(/\n\n/g, '<br /><br />')
-      : '';
-    source = source.replace(liRe, (_, open, inner, close) => {
-      inner = inner.replace(
-        /(<h2[^>]*class="[^"]*product-title[^"]*"[^>]*>)[\s\S]*?(<\/h2>)/,
-        `$1${escapeHtml(product.title)}$2`,
-      );
-      inner = replaceShopField(inner, 'product-limit', product.limit ? escapeHtml(product.limit) : '');
-      inner = replaceShopField(inner, 'product-blurb', blurb);
-      return `${open}${inner}${close}`;
-    });
+    source = paintProductLi(source, liRe, product);
+  }
+  if (missing.length === 1) {
+    const lone = new RegExp(
+      `(<li(?![^>]*data-shop-slug=)[^>]*class="[^"]*\\bproduct\\b[^"]*"[^>]*>)([\\s\\S]*?)(</li>)`,
+    );
+    if (lone.test(source)) {
+      source = paintProductLi(source, lone, missing[0]);
+      missing.shift();
+    }
   }
   if (missing.length) {
     const items = renderShopItems(missing, shopCid(source));
@@ -149,6 +158,21 @@ export function fillShopInHtml(html, products) {
     }
   }
   return source;
+}
+
+function paintProductLi(source, liRe, product) {
+  const blurb = product.blurb
+    ? escapeHtml(product.blurb).replace(/\n\n/g, '<br /><br />')
+    : '';
+  return source.replace(liRe, (_, open, inner, close) => {
+    inner = inner.replace(
+      /(<h2[^>]*class="[^"]*product-title[^"]*"[^>]*>)[\s\S]*?(<\/h2>)/,
+      `$1${escapeHtml(product.title)}$2`,
+    );
+    inner = replaceShopField(inner, 'product-limit', product.limit ? escapeHtml(product.limit) : '');
+    inner = replaceShopField(inner, 'product-blurb', blurb);
+    return `${open}${inner}${close}`;
+  });
 }
 
 async function fetchText(url) {

@@ -75,6 +75,58 @@ draft: false
     assert.match(html, /src="\/logo.png"/);
     assert.match(html, /height="1000"/);
   });
+
+  it('updates a baked card that has no slug instead of duplicating it', () => {
+    const html = fillShopInHtml(
+      `<ul class="product-list">
+        <li class="product">
+          <img class="product-photo product-photo--crest" src="/logo.png" width="627" height="1000" alt="crest" />
+          <h2 class="product-title">Woven crest patch</h2>
+          <p class="product-blurb">Old wait line.</p>
+        </li>
+      </ul>`,
+      [
+        productFromMarkdown(
+          'woven-crest-patch',
+          `---
+title: Woven crest patch
+blurb: They are in production now.
+limit: 50 worldwide
+draft: false
+---
+`,
+        ),
+      ],
+    );
+    assert.match(html, /in production now/);
+    assert.doesNotMatch(html, /Old wait line/);
+    assert.equal((html.match(/class="product"/g) || []).length, 1);
+    assert.match(html, /src="\/logo.png"/);
+  });
+
+  it('collapses a duplicated crest card back to one', () => {
+    const html = fillShopInHtml(
+      `<ul class="product-list">
+        <li class="product"><img src="/logo.png" width="627" height="1000" alt="crest" /><h2 class="product-title">Woven crest patch</h2><p class="product-blurb">Old.</p></li>
+        <li class="product" data-shop-slug="woven-crest-patch"><img src="/logo.png" /><h2 class="product-title">Woven crest patch</h2><p class="product-blurb">New.</p></li>
+      </ul>`,
+      [
+        productFromMarkdown(
+          'woven-crest-patch',
+          `---
+title: Woven crest patch
+blurb: They are in production now.
+draft: false
+---
+`,
+        ),
+      ],
+    );
+    assert.equal((html.match(/<li /g) || []).length, 1);
+    assert.match(html, /in production now/);
+    assert.match(html, /src="\/logo.png"/);
+    assert.match(html, /height="1000"/);
+  });
 });
 
 describe('shopSlugsFromHtml', () => {
