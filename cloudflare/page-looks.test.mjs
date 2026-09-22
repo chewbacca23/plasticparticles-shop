@@ -88,6 +88,7 @@ describe('shouldRecordPath', () => {
     assert.equal(shouldRecordPath('/admin'), false);
     assert.equal(shouldRecordPath('/admin/index.html'), false);
     assert.equal(shouldRecordPath('/looks'), false);
+    assert.equal(shouldRecordPath('/kit'), false);
     assert.equal(shouldRecordPath('/logo.svg'), false);
     assert.equal(shouldRecordPath('/logo.png'), false);
   });

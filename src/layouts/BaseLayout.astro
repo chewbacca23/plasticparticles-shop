@@ -63,7 +63,8 @@ const canonical = new URL(Astro.url.pathname, site.url).toString();
       (function () {
         var path = location.pathname || '/';
         if (path.indexOf('/admin') === 0) return;
-        if (path === '/looks' || path === '/auth' || path === '/callback') return;
+        if (path === '/looks' || path === '/kit' || path.indexOf('/kit/') === 0) return;
+        if (path === '/auth' || path === '/callback') return;
         var body = JSON.stringify({ path: path });
         if (navigator.sendBeacon) {
           navigator.sendBeacon('/api/looks', new Blob([body], { type: 'application/json' }));
