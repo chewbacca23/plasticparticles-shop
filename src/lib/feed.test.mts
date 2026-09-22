@@ -58,7 +58,7 @@ describe('collectFeed', () => {
     assert.equal(feed[0].caption, 'Patrouille');
   });
 
-  it('fills the grid with ride photos that are not already a shot', () => {
+  it('skips a ride when its cover is already a shot, and does not dump the gallery', () => {
     const feed = collectFeed(
       [
         {
@@ -93,12 +93,30 @@ describe('collectFeed', () => {
 
     assert.deepEqual(
       feed.map((item) => ({ id: item.id, caption: item.caption, href: item.href })),
+      [{ id: 'shot:nice-shot', caption: 'From the shot', href: null }],
+    );
+  });
+
+  it('puts only the ride cover in Now so the rest of the set stays on the ride', () => {
+    const feed = collectFeed(
+      [],
       [
-        { id: 'shot:nice-shot', caption: 'From the shot', href: null },
-        { id: 'ride:nice:1', caption: 'Nice ride', href: '/stories/nice' },
+        {
+          id: 'personal',
+          headline: 'My personal ride',
+          cover: flyover,
+          gallery: [present, presentTwo],
+          pubDate: new Date('2026-09-20'),
+        },
       ],
     );
-    assert.equal(feed[1].date.valueOf(), new Date('2026-08-31').valueOf());
+
+    assert.deepEqual(
+      feed.map((item) => item.id),
+      ['ride:personal:0'],
+    );
+    assert.equal(feed[0].photo, flyover);
+    assert.equal(feed[0].href, '/stories/personal');
   });
 
   it('puts a new ride above leftover photos from an older ride', () => {

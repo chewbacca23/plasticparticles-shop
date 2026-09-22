@@ -130,21 +130,96 @@ Open **https://thenewsoulsearchers.de/cms-status**. It reports the binding names
 
 ### Contact form (real send, no mail app)
 
-`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**. Reply-To is the rider’s address, so you can answer from your inbox.
+`/contact` posts to **`/api/contact`**. The note goes to **`henrik@thenewsoulsearchers.de`**
+by default (Henrik’s laptop / Strato mailbox). Reply-To is the rider’s address.
 
-Wire it once with Resend (simplest):
+Override with Worker secret **`CONTACT_INBOX`** if needed (e.g. temporary web.de while Strato is down).
 
-1. Create a free account at [resend.com](https://resend.com)
-2. Add and verify domain **`thenewsoulsearchers.de`** (DNS records Resend shows — usually MX/TXT)
-3. Create an API key
-4. Cloudflare → Workers → **`thenewsoulsearchersblogc`** → Settings → Variables and Secrets
-5. Add **`RESEND_API_KEY`** as a **Secret** → paste the key → Save
-6. Deployments → **Retry**, open **https://thenewsoulsearchers.de/cms-status** and check `"mailWired": true`
-7. Hard-refresh `/contact`, send yourself a test note — it should land in **henrik@thenewsoulsearchers.de**
+DNS first (Resend → Domains → `thenewsoulsearchers.de`):
 
-Until that secret is there, Send opens a filled mailto as a fallback so nothing is lost (the page says “Almost there”, not “Sent”).
+1. **Enable Sending** verified (DKIM + the `send` / `rsend` CNAMEs, DNS only)
+2. Leave **Enable Receiving** off so Strato / existing MX keeps delivering `henrik@…`
+3. DMARC on the root should be soft (`p=none` or `p=quarantine`) so Resend → Strato does not hard-bounce
 
-Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false }` without revealing secrets.
+#### Dashboard path (no Terminal)
+
+Do this on Worker **`thenewsoulsearchersblogc`** only (name ends with **c**).
+
+1. Resend → [API Keys](https://resend.com/api-keys) → delete old keys → **Create API Key** → copy the `re_…` once
+2. Cloudflare → Workers & Pages → **`thenewsoulsearchersblogc`** → Settings → Variables and secrets
+3. Delete Variables named `thenewsoulsearchers` or `soulsearchers` (wrong names; unused)
+4. On **`RESEND_API_KEY`**: Edit → paste the new `re_…` → Save  
+   (Secret is nicer than Variable; either works. The *value* must be the fresh key.)
+5. Hard-refresh **https://thenewsoulsearchers.de/contact** → one short Send → look for **Sent**
+
+If Send says the mail key was rejected, the `re_…` value is still wrong. Make another key in Resend and edit `RESEND_API_KEY` again.
+
+#### Terminal path (also fine)
+
+```sh
+# From the blog repo on the Mac
+sh scripts/set-resend-secret.sh
+```
+
+Or one shot without the script:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
+npx --yes wrangler@4 login --device
+npx --yes wrangler@4 secret put RESEND_API_KEY --name thenewsoulsearchersblogc
+```
+
+Paste the Resend API key when asked (starts with `re_`). Then hard-refresh **https://thenewsoulsearchers.de/cms-status**:
+
+- `"mailWired": true` and `RESEND_API_KEY` inside `textBindingsVisibleToWorker` → hard-refresh `/contact` and send a test
+- Still false / key missing from that list → the secret is on a sibling Worker (`thenewsoulsearchersblog` without the **c**, or Build vars). Run the script again.
+
+Until a **working** key is there, Send shows **Not delivered yet** (or “Mail key was rejected”) and never opens a mail app.
+
+Notes land in **`henrik@thenewsoulsearchers.de`** by default (From `hello@thenewsoulsearchers.de`
+via Resend). Reply-To is the rider.
+
+### If Resend shows Bounced to henrik@thenewsoulsearchers.de
+
+Your **key is fine**. Strato (`smtpin.rzone.de`) often rejects mail that is:
+
+- **From** `@thenewsoulsearchers.de` (via Resend / Amazon)
+- **To** `@thenewsoulsearchers.de` (your Strato mailbox)
+
+It looks like spoofing to them, even when DMARC is `p=none` and DKIM is valid.
+
+**Try DNS (Cloudflare → DNS → TXT on the root `thenewsoulsearchers.de`):**
+
+Change SPF from:
+
+```txt
+v=spf1 include:_spf.strato.com -all
+```
+
+to:
+
+```txt
+v=spf1 include:_spf.strato.com include:amazonses.com ~all
+```
+
+(Keep Strato; soften `-all` to `~all`; allow Resend’s Amazon SES path.)
+
+Wait a few minutes, send one new `/contact` test, check the **newest** Resend row.
+
+**If it still bounces:** set `CONTACT_INBOX` to a Gmail (or other) inbox you open on the laptop, and optionally in Strato set a forward from `henrik@…` → that Gmail so the domain address still feeds the laptop.
+
+Do **not** turn on Resend **Receiving** on the root domain (that steals Strato MX).
+
+To retarget:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=a81e1d3b6d945aa2b872e4c8fd32f382
+npx --yes wrangler@4 secret put CONTACT_INBOX --name thenewsoulsearchersblogc
+```
+
+(`/cms-status` shows `mailTo` / `mailFrom` / `mailKeyProbe`.)
+
+Check live status anytime: **GET /api/contact** returns `{ "mailWired": true/false, "to": "…" }` without revealing secrets.
 
 Five Workers (`thenewsoulsearchersblogc`, `bloga`, `blogb`, `bl`, `blo`) are Git-connected to this repo and all serve this code. `thenewsoulsearchersblogc` is the one on the domain, so its secrets are the ones that count.
 

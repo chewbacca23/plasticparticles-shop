@@ -20,7 +20,17 @@ import {
 } from './page-looks.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshSite } from './fresh-site.js';
-import { handleContactRequest, mailReady, mailVia } from './contact-mail.js';
+import {
+  describeResendKey,
+  handleContactRequest,
+  mailReady,
+  mailVia,
+  probeResendKey,
+  resolveContactTo,
+  resolveResendFrom,
+  resolveResendKey,
+  RESEND_KEY_BINDINGS,
+} from './contact-mail.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -92,7 +102,7 @@ function describeClientId(id) {
  * values — so it is safe to open in a browser and paste into a chat.
  * @param {Record<string, unknown>} env
  */
-function statusPage(env) {
+async function statusPage(env) {
   const creds = oauthCreds(env);
   const stringKeys = Object.keys(env)
     .filter((key) => typeof env[key] === 'string')
@@ -105,6 +115,51 @@ function statusPage(env) {
   const looksStorage = looksStoreKind(env);
   const statsBinding = looksStatsBindingInfo(env);
 
+  const mailOn = mailReady(env);
+  const mailPath = mailVia(env);
+  const resolvedKey = resolveResendKey(env);
+  const seesResendName = RESEND_KEY_BINDINGS.some((name) => stringKeys.includes(name));
+  const mailKeyShape = describeResendKey(resolvedKey.raw || env?.RESEND_API_KEY, resolvedKey.binding);
+  const mailKeyProbe = mailPath === 'resend' ? await probeResendKey(env) : { ok: false, status: 0, detail: 'n/a' };
+
+  let mailHint =
+    'Mail is ready. Hard-refresh /contact and send a short test — look for Sent.';
+  if (!mailOn) {
+    if (seesResendName) {
+      mailHint =
+        'A Resend binding exists but is empty. Prefer a new secret named SOUL_RESEND_KEY on thenewsoulsearchersblogc.';
+    } else if (stringKeys.length === 0) {
+      mailHint =
+        'This Worker sees no text secrets. Put SOUL_RESEND_KEY on thenewsoulsearchersblogc (not a sibling Worker, not Build vars).';
+    } else {
+      mailHint =
+        'OAuth keys are on this Worker, but no Resend key is. Add secret SOUL_RESEND_KEY on thenewsoulsearchersblogc.';
+    }
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && !mailKeyShape.startsWithRe) {
+    mailHint =
+      'The saved key still does not start with re_. Ignore RESEND_API_KEY. Create secret SOUL_RESEND_KEY with a fresh re_… value (wrangler secret put SOUL_RESEND_KEY --name thenewsoulsearchersblogc).';
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyShape.length > 0 && mailKeyShape.length < 20) {
+    mailHint =
+      'Resend key is too short. Create SOUL_RESEND_KEY with the full re_… token via wrangler secret put.';
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status === 401) {
+    mailHint =
+      'Resend rejected this API key (401). Create a fresh key, put it in SOUL_RESEND_KEY on thenewsoulsearchersblogc, refresh until mailKeyProbe.ok is true.';
+  } else if (mailKeyProbe && mailKeyProbe.ok === false && mailKeyProbe.status) {
+    mailHint = `Resend probe failed (${mailKeyProbe.status}): ${mailKeyProbe.detail}. Fix the key on ${mailKeyProbe.binding || 'SOUL_RESEND_KEY'}, then refresh this page.`;
+  } else if (mailKeyProbe && mailKeyProbe.ok) {
+    mailHint =
+      'Resend accepted the key. Hard-refresh /contact and send a short test — look for Sent.';
+  }
+  const mailToNow = resolveContactTo(env);
+  if (
+    mailKeyProbe &&
+    mailKeyProbe.ok &&
+    mailToNow.toLowerCase().endsWith('@thenewsoulsearchers.de')
+  ) {
+    mailHint =
+      'Key is fine. If Resend still Bounces to henrik@thenewsoulsearchers.de, Strato is rejecting same-domain mail from Resend (anti-spoof). Soften root SPF (-all → ~all, add include:amazonses.com) or set CONTACT_INBOX to a Gmail you read on the laptop.';
+  }
+
   const body = {
     loginWired: Boolean(creds),
     clientIdBinding: creds ? creds.idKey : null,
@@ -114,8 +169,18 @@ function statusPage(env) {
     looksStorage,
     looksDurable: looksStorage === 'kv',
     statsBinding,
-    mailWired: mailReady(env),
-    mailVia: mailVia(env),
+    mailWired: mailOn,
+    mailVia: mailPath,
+    mailTo: mailToNow,
+    mailFrom: mailPath === 'resend' ? resolveResendFrom(env) : 'hello@thenewsoulsearchers.de',
+    mailKeyBinding: resolvedKey.binding,
+    mailKeyShape,
+    mailKeyProbe,
+    mailHint,
+    // Helps Henrik: Resend dashboard / wrong Worker can show re_… while THIS
+    // live Worker still holds a different 8-char scrap.
+    whereThisJsonComesFrom:
+      'thenewsoulsearchers.de → Worker thenewsoulsearchersblogc (name ends with c). If Cloudflare UI shows re_… on another Worker, that is not this JSON.',
     textBindingsVisibleToWorker: stringKeys,
     otherBindingsVisibleToWorker: otherKeys,
   };
@@ -361,7 +426,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/cms-status') return statusPage(env);
+    if (url.pathname === '/cms-status') return await statusPage(env);
 
     const contact = await handleContactRequest(request, env);
     if (contact) return contact;

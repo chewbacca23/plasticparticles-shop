@@ -4,16 +4,20 @@ import FeedGrid from '../components/FeedGrid.astro';
 import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
+import { feedWithoutHeroRepeats, resolveHomeHeroSlides } from '../lib/home-hero';
+import homeSettings from '../content/settings/home.json';
 
 const [shots, stories] = await Promise.all([
   getCollection('shots', ({ data }) => !data.draft),
   getCollection('stories', ({ data }) => !data.draft),
 ]);
 
-const items = collectFeed(
+const allNow = collectFeed(
   shots.map((shot) => ({ id: shot.id, ...shot.data })),
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
+const heroSlides = resolveHomeHeroSlides(homeSettings, allNow.map((item) => item.photo));
+const items = feedWithoutHeroRepeats(allNow, heroSlides);
 ---
 
 <BaseLayout

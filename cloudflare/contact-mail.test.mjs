@@ -3,14 +3,19 @@ import { describe, it } from 'node:test';
 import {
   CONTACT_FROM,
   CONTACT_TO,
+  cleanResendKey,
   contactHtml,
   contactSubject,
   contactText,
   deliverContact,
+  describeResendKey,
   handleContactRequest,
   mailReady,
   mailVia,
   parseContactBody,
+  probeResendKey,
+  resolveResendFrom,
+  resolveResendKey,
   validateContact,
 } from './contact-mail.js';
 
@@ -41,26 +46,144 @@ describe('validateContact', () => {
   });
 });
 
+describe('resolveContactTo', () => {
+  it('defaults to the domain mailbox and honours CONTACT_INBOX', async () => {
+    const { resolveContactTo, CONTACT_TO } = await import('./contact-mail.js');
+    assert.equal(resolveContactTo({}), CONTACT_TO);
+    assert.equal(CONTACT_TO, 'henrik@thenewsoulsearchers.de');
+    assert.equal(
+      resolveContactTo({ CONTACT_INBOX: 'henrik.kuerschner@web.de' }),
+      'henrik.kuerschner@web.de',
+    );
+    assert.equal(
+      resolveContactTo({ CONTACT_INBOX: 'henrik@thenewsoulsearchers.de' }),
+      'henrik@thenewsoulsearchers.de',
+    );
+  });
+});
+
+describe('resolveResendKey', () => {
+  it('prefers SOUL_RESEND_KEY over a cursed RESEND_API_KEY', () => {
+    const resolved = resolveResendKey({
+      RESEND_API_KEY: 'garbage-not-a-key-xxxxxxxxxx',
+      SOUL_RESEND_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
+    });
+    assert.equal(resolved.binding, 'SOUL_RESEND_KEY');
+    assert.equal(resolved.key, 're_testkey_abcdefghijklmnopqrstuvwxyz12');
+    assert.equal(mailReady({ RESEND_API_KEY: 'garbage-not-a-key-xxxxxxxxxx' }), false);
+    assert.equal(
+      mailReady({
+        RESEND_API_KEY: 'garbage-not-a-key-xxxxxxxxxx',
+        SOUL_RESEND_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
+      }),
+      true,
+    );
+  });
+});
+
 describe('mailReady', () => {
   it('spots Resend or the Cloudflare binding', () => {
     assert.equal(mailReady({}), false);
     assert.equal(mailVia({}), 'none');
-    assert.equal(mailReady({ RESEND_API_KEY: 're_x' }), true);
-    assert.equal(mailVia({ RESEND_API_KEY: 're_x' }), 'resend');
+    assert.equal(mailReady({ RESEND_API_KEY: 're_x' }), false);
+    assert.equal(mailReady({ RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' }), true);
+    assert.equal(mailVia({ RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' }), 'resend');
     assert.equal(mailReady({ EMAIL: { async send() {} } }), true);
     assert.equal(mailVia({ EMAIL: { async send() {} } }), 'cloudflare');
   });
 });
 
+describe('cleanResendKey', () => {
+  it('strips quotes and a Bearer prefix', () => {
+    assert.equal(cleanResendKey('  "re_abc"  '), 're_abc');
+    assert.equal(cleanResendKey('Bearer re_abc'), 're_abc');
+    assert.equal(cleanResendKey("'re_abc'"), 're_abc');
+  });
+
+  it('pulls re_ out of a messy paste', () => {
+    assert.equal(
+      cleanResendKey('RESEND_API_KEY=re_testkey_abcdefghijklmnopqrstuvwxyz12'),
+      're_testkey_abcdefghijklmnopqrstuvwxyz12',
+    );
+    assert.equal(
+      cleanResendKey('Token: re_testkey_abcdefghijklmnopqrstuvwxyz12 please'),
+      're_testkey_abcdefghijklmnopqrstuvwxyz12',
+    );
+  });
+});
+
+describe('describeResendKey', () => {
+  it('reports shape without the value', () => {
+    assert.equal(describeResendKey('').present, false);
+    assert.match(describeResendKey('re_testkey_abcdefghijklmnopqrstuvwxyz12').shape, /looks like a Resend key/);
+    assert.match(describeResendKey('not-a-key').shape, /does NOT look like/);
+  });
+});
+
+describe('probeResendKey', () => {
+  it('rejects tiny / non-re_ values before calling Resend', async () => {
+    const probe = await probeResendKey({ RESEND_API_KEY: 'short' });
+    assert.equal(probe.ok, false);
+    assert.equal(probe.status, 0);
+    assert.match(probe.detail, /not a full Resend key/);
+  });
+
+  it('reports 401 without sending mail', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async () => new Response('nope', { status: 401 });
+    try {
+      const probe = await probeResendKey({ RESEND_API_KEY: 're_dead_key_value_here_xx' });
+      assert.equal(probe.ok, false);
+      assert.equal(probe.status, 401);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('treats sending_access restriction as ok for the form', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response('{"message":"This API key is restricted to only send emails."}', { status: 401 });
+    try {
+      const probe = await probeResendKey({ RESEND_API_KEY: 're_send_only_key_value_xxx' });
+      assert.equal(probe.ok, true);
+      assert.match(probe.detail, /sending_access/);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('reports ok when Resend accepts the key', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      assert.match(String(url), /api\.resend\.com\/domains/);
+      return new Response('{"data":[]}', { status: 200 });
+    };
+    try {
+      const probe = await probeResendKey({ RESEND_API_KEY: 're_live_key_value_here_xx' });
+      assert.equal(probe.ok, true);
+      assert.equal(probe.status, 200);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+});
+
 describe('contact copy', () => {
   it('builds a clear subject and body', () => {
+    assert.match(contactSubject('Bruno'), /Contact form/);
     assert.match(contactSubject('Bruno'), /Bruno/);
     assert.match(
       contactText({ name: 'Bruno', email: 'b@ex.com', message: 'Ventoux was wild.' }),
       /Ventoux was wild/,
     );
+    assert.match(
+      contactText({ name: 'Bruno', email: 'b@ex.com', message: 'x' }),
+      /contact form on thenewsoulsearchers\.de/,
+    );
     assert.match(contactText({ name: 'Bruno', email: 'b@ex.com', message: 'x' }), /b@ex.com/);
     assert.match(contactHtml({ name: 'Bruno', email: 'b@ex.com', message: '<hi>' }), /&lt;hi&gt;/);
+    assert.match(contactHtml({ name: 'Bruno', email: 'b@ex.com', message: 'x' }), /Contact form/);
   });
 });
 
@@ -93,12 +216,33 @@ describe('deliverContact', () => {
     };
     try {
       const via = await deliverContact(
-        { RESEND_API_KEY: 're_test' },
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' },
         { name: 'Ana', email: 'ana@example.com', message: 'Hello' },
       );
       assert.equal(via.via, 'resend');
+      assert.equal(via.to, CONTACT_TO);
       assert.deepEqual(body.to, [CONTACT_TO]);
+      assert.equal(body.from, `The Soul Searchers form <${CONTACT_FROM}>`);
       assert.equal(body.reply_to, 'ana@example.com');
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('honours CONTACT_INBOX when Henrik reads a different box', async () => {
+    const original = globalThis.fetch;
+    let body;
+    globalThis.fetch = async (_url, init) => {
+      body = JSON.parse(String(init.body));
+      return new Response('{}', { status: 200 });
+    };
+    try {
+      const via = await deliverContact(
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12', CONTACT_INBOX: 'henrik.personal@example.com' },
+        { name: 'Ana', email: 'ana@example.com', message: 'Hello' },
+      );
+      assert.equal(via.to, 'henrik.personal@example.com');
+      assert.deepEqual(body.to, ['henrik.personal@example.com']);
     } finally {
       globalThis.fetch = original;
     }
@@ -157,7 +301,7 @@ describe('handleContactRequest', () => {
     assert.equal((await cold.json()).mailWired, false);
 
     const hot = await handleContactRequest(new Request('https://x.test/api/contact'), {
-      RESEND_API_KEY: 're_test',
+      RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
     });
     assert.equal((await hot.json()).mailWired, true);
   });
@@ -186,5 +330,78 @@ describe('handleContactRequest', () => {
     assert.equal(res.status, 200);
     assert.equal((await res.json()).via, 'discard');
     assert.equal(sent.length, 0);
+  });
+
+  it('marks unwired mail with mailto, but not a Resend outage', async () => {
+    const cold = await handleContactRequest(
+      new Request('https://x.test/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Ana',
+          email: 'ana@example.com',
+          message: 'Still on the climb.',
+        }),
+      }),
+      {},
+    );
+    assert.equal(cold.status, 503);
+    const coldBody = await cold.json();
+    assert.equal(coldBody.mailto, true);
+
+    const original = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response('upstream down', { status: 500, statusText: 'Error' });
+    try {
+      const hot = await handleContactRequest(
+        new Request('https://x.test/api/contact', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Ana',
+            email: 'ana@example.com',
+            message: 'Still on the climb.',
+          }),
+        }),
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12' },
+      );
+      assert.equal(hot.status, 502);
+      const body = await hot.json();
+      assert.equal(body.ok, false);
+      assert.equal(body.mailto, undefined);
+      assert.equal(body.code, 'E_RESEND');
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('still sends when the KV copy fails', async () => {
+    const sent = [];
+    const res = await handleContactRequest(
+      new Request('https://x.test/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Ana',
+          email: 'ana@example.com',
+          message: 'Still on the climb.',
+        }),
+      }),
+      {
+        EMAIL: {
+          async send(payload) {
+            sent.push(payload);
+          },
+        },
+        STATS: {
+          async put() {
+            throw new Error('kv down');
+          },
+        },
+      },
+    );
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).ok, true);
+    assert.equal(sent.length, 1);
   });
 });

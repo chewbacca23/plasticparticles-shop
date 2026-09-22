@@ -12,8 +12,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="eyebrow">Open counts</p>
       <h1 class="section-title">Looks</h1>
       <p class="section-lead">
-        How many times someone opened a page, which country, and which site sent them. No names.
-        Counts start after this Worker is live.
+        Private for you. How many times someone opened a page, day by day and week by week.
+        No names. Counts start after this Worker is live.
       </p>
 
       <div class="cards">
@@ -34,6 +34,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <p class="card-num" data-looks="total">—</p>
         </article>
       </div>
+
+      <h2 class="pages-title">Last 14 days</h2>
+      <p class="note">Berlin days. Tallest bar is the busiest day in this window.</p>
+      <ol class="looks-bars" data-looks-days>
+        <li class="empty">Day bars show once people have opened the site.</li>
+      </ol>
+
+      <h2 class="pages-title">Last 8 weeks</h2>
+      <p class="note">Each bar is seven days. Handy for “this week vs last week”.</p>
+      <ol class="looks-bars" data-looks-weeks>
+        <li class="empty">Week bars show once people have opened the site.</li>
+      </ol>
 
       <h2 class="pages-title">All the years</h2>
       <ol class="pages" data-looks-years>
