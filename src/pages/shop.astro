@@ -43,8 +43,8 @@ const products = (await getCollection('shop', ({ data }) => !data.draft)).sort((
                     class:list={['product-photo', { 'product-photo--crest': usingCrest }]}
                     src={image}
                     alt={usingCrest ? 'The Soul Searchers crest' : title}
-                    width="640"
-                    height="640"
+                    width="627"
+                    height="1000"
                     loading="lazy"
                     decoding="async"
                   />
@@ -71,7 +71,7 @@ const products = (await getCollection('shop', ({ data }) => !data.draft)).sort((
   </section>
 </BaseLayout>
 
-<style>
+<style is:global>
   .shop {
     max-width: 44rem;
   }
@@ -103,12 +103,14 @@ const products = (await getCollection('shop', ({ data }) => !data.draft)).sort((
   .product-photo {
     width: 100%;
     height: auto;
+    object-fit: contain;
     border: 1px solid rgba(215, 224, 232, 0.12);
     background: rgba(238, 243, 247, 0.03);
   }
 
   .product-photo--crest {
     padding: 1rem;
+    object-fit: contain;
     background: radial-gradient(circle at 30% 25%, rgba(240, 194, 122, 0.12), transparent 60%),
       rgba(238, 243, 247, 0.03);
   }

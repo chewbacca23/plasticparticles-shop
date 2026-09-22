@@ -24,7 +24,8 @@ export function shopSlugsFromHtml(html) {
 }
 
 function shopCid(html) {
-  const match = String(html || '').match(/data-astro-cid-[a-z0-9]+/);
+  const list = String(html || '').match(/<ul[^>]*product-list[^>]*>/);
+  const match = (list?.[0] || '').match(/data-astro-cid-[a-z0-9]+/);
   return match ? match[0] : '';
 }
 
@@ -77,8 +78,8 @@ export function renderShopItems(products, cid = '') {
                     class="${photoClass}"
                     src="${escapeHtml(image)}"
                     alt="${escapeHtml(usingCrest ? 'The Soul Searchers crest' : product.title)}"
-                    width="640"
-                    height="640"
+                    width="627"
+                    height="1000"
                     loading="lazy"
                     decoding="async"
                   />
@@ -100,21 +101,52 @@ export function renderShopItems(products, cid = '') {
     .join('');
 }
 
+function replaceShopField(inner, className, value, tag = 'p') {
+  const re = new RegExp(
+    `(<${tag}[^>]*class="[^"]*${className}[^"]*"[^>]*)>([\\s\\S]*?)(</${tag}>)`,
+  );
+  if (!value) return inner.replace(re, '');
+  if (re.test(inner)) return inner.replace(re, `$1>${value}$3`);
+  return inner.replace(
+    /(<\/h2>)/,
+    `$1\n                    <${tag} class="${className}">${value}</${tag}>`,
+  );
+}
+
 export function fillShopInHtml(html, products) {
-  const source = String(html || '');
+  let source = String(html || '');
   if (!products.length) return source;
-  const items = renderShopItems(products, shopCid(source));
-  if (/<ul[^>]*product-list/.test(source)) {
-    return source.replace(
-      /<ul([^>]*class="[^"]*product-list[^"]*"[^>]*)>[\s\S]*?<\/ul>/,
-      `<ul$1>${items}</ul>`,
-    );
+  const missing = [];
+  for (const product of products) {
+    const slug = product.slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const liRe = new RegExp(`(<li[^>]*data-shop-slug="${slug}"[^>]*>)([\\s\\S]*?)(</li>)`);
+    if (!liRe.test(source)) {
+      missing.push(product);
+      continue;
+    }
+    const blurb = product.blurb
+      ? escapeHtml(product.blurb).replace(/\n\n/g, '<br /><br />')
+      : '';
+    source = source.replace(liRe, (_, open, inner, close) => {
+      inner = inner.replace(
+        /(<h2[^>]*class="[^"]*product-title[^"]*"[^>]*>)[\s\S]*?(<\/h2>)/,
+        `$1${escapeHtml(product.title)}$2`,
+      );
+      inner = replaceShopField(inner, 'product-limit', product.limit ? escapeHtml(product.limit) : '');
+      inner = replaceShopField(inner, 'product-blurb', blurb);
+      return `${open}${inner}${close}`;
+    });
   }
-  if (/class="[^"]*empty[^"]*"/.test(source)) {
-    return source.replace(
-      /<p([^>]*class="[^"]*empty[^"]*"[^>]*)>[\s\S]*?<\/p>/,
-      `<ul class="product-list">${items}</ul>`,
-    );
+  if (missing.length) {
+    const items = renderShopItems(missing, shopCid(source));
+    if (/<ul[^>]*product-list/.test(source)) {
+      source = source.replace(/(<ul[^>]*product-list[^>]*>)([\s\S]*?)(<\/ul>)/, `$1$2${items}$3`);
+    } else if (/class="[^"]*empty[^"]*"/.test(source)) {
+      source = source.replace(
+        /<p([^>]*class="[^"]*empty[^"]*"[^>]*)>[\s\S]*?<\/p>/,
+        `<ul class="product-list">${items}</ul>`,
+      );
+    }
   }
   return source;
 }

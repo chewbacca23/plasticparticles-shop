@@ -47,6 +47,7 @@ describe('fillShopInHtml', () => {
     const html = fillShopInHtml(
       `<ul class="product-list" data-astro-cid-abc123>
         <li class="product" data-shop-slug="woven-crest-patch" data-astro-cid-abc123>
+          <img class="product-photo product-photo--crest" src="/logo.png" width="627" height="1000" alt="crest" />
           <h2 class="product-title">Woven crest patch</h2>
           <p class="product-blurb">Old wait line.</p>
         </li>
@@ -71,6 +72,8 @@ draft: false
     assert.doesNotMatch(html, /Old wait line/);
     assert.match(html, /data-astro-cid-abc123/);
     assert.match(html, /50 worldwide/);
+    assert.match(html, /src="\/logo.png"/);
+    assert.match(html, /height="1000"/);
   });
 });
 
@@ -113,7 +116,7 @@ draft: false
       ASSETS: {
         fetch: async () =>
           new Response(
-            '<ul class="product-list"><li class="product" data-shop-slug="woven-crest-patch"><p class="product-blurb">Old wait line.</p></li></ul>',
+            '<ul class="product-list"><li class="product" data-shop-slug="woven-crest-patch"><img class="product-photo product-photo--crest" src="/logo.png" width="627" height="1000" alt="crest" /><p class="product-blurb">Old wait line.</p></li></ul>',
             { headers: { 'content-type': 'text/html' } },
           ),
       },
@@ -122,6 +125,8 @@ draft: false
     const body = await res.text();
     assert.match(body, /in production now/);
     assert.doesNotMatch(body, /Old wait line/);
+    assert.match(body, /src="\/logo.png"/);
+    assert.match(body, /height="1000"/);
     assert.equal(res.headers.get('cache-control'), 'no-store');
   });
 });
