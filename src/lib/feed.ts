@@ -66,8 +66,7 @@ export function collectFeed(shots: readonly ShotInput[], rides: readonly RideInp
     if (ride.draft) continue;
     // One tile per ride set: cover (or first gallery shot). Full galleries
     // stay on the ride page — Now should not dump every folder photo.
-    const photos = galleryMedia(ride.cover, ride.gallery ?? []);
-    const photo = photos[0];
+    const photo = galleryMedia(ride.cover, ride.gallery ?? [])[0];
     if (!photo || seen.has(photo)) continue;
     seen.add(photo);
     items.push({

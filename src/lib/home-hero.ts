@@ -28,6 +28,15 @@ export const DEFAULT_HERO_SLIDES = [
   '/stories/img_5956.jpg',
 ] as const;
 
+/**
+ * Same scene as a hero slide. Keep these off Now so the café cups and the
+ * promenade portrait do not sit beside the dia (or next to each other).
+ */
+export const HERO_ONCE_EXTRAS = [
+  '/stories/img_6344.jpg',
+  '/stories/nice-promenade-detail.jpg',
+] as const;
+
 const HERO_SLIDE_LIMIT = 6;
 
 function uniqueExisting(paths: readonly (string | null | undefined)[]): string[] {
@@ -54,6 +63,15 @@ function parseCmsSlides(heroSlides: unknown): string[] {
       return '';
     }),
   );
+}
+
+/** Drop photos the home dia already shows, plus the extra cup and portrait. */
+export function feedWithoutHeroRepeats<T extends { photo: string }>(
+  items: readonly T[],
+  heroSlides: readonly string[] = [],
+): T[] {
+  const hide = new Set<string>([...heroSlides, ...HERO_ONCE_EXTRAS]);
+  return items.filter((item) => !hide.has(item.photo));
 }
 
 /**

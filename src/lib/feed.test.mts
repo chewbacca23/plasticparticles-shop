@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { RIDE_PHOTO_DATE, collectFeed } from './feed.ts';
+import { collectFeed } from './feed.ts';
 
 const present = '/stories/nice-baie-des-anges.jpg';
 const presentTwo = '/stories/nice-promenade-detail.jpg';
@@ -58,7 +58,7 @@ describe('collectFeed', () => {
     assert.equal(feed[0].caption, 'Patrouille');
   });
 
-  it('adds one cover per ride and skips a ride whose cover is already a shot', () => {
+  it('skips a ride when its cover is already a shot, and does not dump the gallery', () => {
     const feed = collectFeed(
       [
         {
@@ -74,15 +74,8 @@ describe('collectFeed', () => {
           id: 'nice',
           headline: 'Nice ride',
           cover: present,
-          gallery: [presentTwo, flyover],
+          gallery: [presentTwo, '/stories/packed-bike.jpg'],
           pubDate: new Date('2026-08-31'),
-        },
-        {
-          id: 'tour',
-          headline: 'Tour day',
-          cover: flyover,
-          gallery: [presentTwo],
-          pubDate: new Date('2026-08-30'),
         },
         {
           id: 'empty',
@@ -92,7 +85,7 @@ describe('collectFeed', () => {
         {
           id: 'draft-ride',
           headline: 'Hidden ride',
-          cover: presentTwo,
+          cover: flyover,
           draft: true,
         },
       ],
@@ -100,32 +93,30 @@ describe('collectFeed', () => {
 
     assert.deepEqual(
       feed.map((item) => ({ id: item.id, caption: item.caption, href: item.href })),
-      [
-        { id: 'shot:nice-shot', caption: 'From the shot', href: null },
-        { id: 'ride:tour:0', caption: 'Tour day', href: '/stories/tour' },
-      ],
+      [{ id: 'shot:nice-shot', caption: 'From the shot', href: null }],
     );
-    assert.equal(feed[1].date.valueOf(), new Date('2026-08-30').valueOf());
   });
 
-  it('never dumps a whole ride gallery into Now — one photo per set', () => {
+  it('puts only the ride cover in Now so the rest of the set stays on the ride', () => {
     const feed = collectFeed(
       [],
       [
         {
-          id: 'ventoux',
-          headline: 'Ventoux',
+          id: 'personal',
+          headline: 'My personal ride',
           cover: flyover,
-          gallery: [present, presentTwo, '/stories/img_1422.jpeg'],
-          pubDate: new Date('2026-09-13'),
+          gallery: [present, presentTwo],
+          pubDate: new Date('2026-09-20'),
         },
       ],
     );
+
     assert.deepEqual(
       feed.map((item) => item.id),
-      ['ride:ventoux:0'],
+      ['ride:personal:0'],
     );
     assert.equal(feed[0].photo, flyover);
+    assert.equal(feed[0].href, '/stories/personal');
   });
 
   it('puts a new ride above leftover photos from an older ride', () => {
