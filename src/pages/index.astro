@@ -5,7 +5,7 @@ import FeedGrid from '../components/FeedGrid.astro';
 import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
-import { resolveHomeHero } from '../lib/home-hero';
+import { feedWithoutHeroRepeats, resolveHomeHeroSlides } from '../lib/home-hero';
 import { site } from '../site.config';
 import homeSettings from '../content/settings/home.json';
 
@@ -14,15 +14,14 @@ const [shots, stories] = await Promise.all([
   getCollection('stories', ({ data }) => !data.draft),
 ]);
 
-const nowItems = collectFeed(
+const allNow = collectFeed(
   shots.map((shot) => ({ id: shot.id, ...shot.data })),
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
 
-const heroPhoto = resolveHomeHero(
-  homeSettings.heroPhoto,
-  nowItems.map((item) => item.photo),
-);
+const heroSlides = resolveHomeHeroSlides(homeSettings, allNow.map((item) => item.photo));
+const nowItems = feedWithoutHeroRepeats(allNow, heroSlides);
+const heroPhoto = heroSlides[0] || null;
 ---
 
 <BaseLayout watermark={false}>
@@ -34,17 +33,30 @@ const heroPhoto = resolveHomeHero(
   <section class:list={['hero', { 'has-photo': Boolean(heroPhoto) }]} aria-label="Welcome">
     <div class="sky" aria-hidden="true">
       {
-        heroPhoto ? (
+        heroSlides.length > 0 ? (
           <>
-            <img
-              class="hero-photo"
-              src={heroPhoto}
-              alt=""
-              width="1920"
-              height="1080"
-              decoding="async"
-              fetchpriority="high"
-            />
+            <div
+              class="hero-dia"
+              data-hero-dia
+              data-count={heroSlides.length}
+              style={`--dia-count: ${heroSlides.length};`}
+            >
+              {
+                heroSlides.map((photo, index) => (
+                  <img
+                    class="hero-photo"
+                    src={photo}
+                    alt=""
+                    width="1920"
+                    height="1080"
+                    decoding={index === 0 ? 'sync' : 'async'}
+                    fetchpriority={index === 0 ? 'high' : 'low'}
+                    loading="eager"
+                    style={`--dia-i: ${index};`}
+                  />
+                ))
+              }
+            </div>
             <div class="hero-scrim"></div>
           </>
         ) : (
@@ -95,7 +107,6 @@ const heroPhoto = resolveHomeHero(
 <style>
   .hero {
     position: relative;
-    /* Header sits in normal flow above this, so 100vh alone pushes CTAs under the fold. */
     min-height: calc(100vh - 4.25rem);
     min-height: calc(100dvh - 4.25rem);
     display: grid;
@@ -114,20 +125,82 @@ const heroPhoto = resolveHomeHero(
       linear-gradient(180deg, #080c11 0%, #0f1820 45%, #182a36 70%, #2a2218 100%);
   }
 
+  .hero-dia {
+    position: absolute;
+    inset: 0;
+  }
+
   .hero-photo {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 42%;
-    transform: scale(1.06);
-    animation: hero-drift 28s ease-in-out infinite alternate;
+    object-position: center 36%;
+    transform: scale(1.05);
+    opacity: 0;
+    will-change: opacity;
+  }
+
+  /* One shot: stay visible. */
+  .hero-dia[data-count='1'] .hero-photo {
+    opacity: 1;
+  }
+
+  /*
+   * Soft dia: about nine seconds each. One slot per shot (100% / N) so a
+   * frame cannot linger into the one after next. Short ease-in-out overlap.
+   * CSS-only so Mac Reduce Motion / blocked JS cannot freeze on one shot.
+   */
+  .hero-dia[data-count='2'] .hero-photo,
+  .hero-dia[data-count='3'] .hero-photo,
+  .hero-dia[data-count='4'] .hero-photo,
+  .hero-dia[data-count='5'] .hero-photo,
+  .hero-dia[data-count='6'] .hero-photo {
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    animation-duration: calc(var(--dia-count) * 9s);
+    animation-delay: calc(var(--dia-i) * 9s);
+  }
+
+  .hero-dia[data-count='2'] .hero-photo { animation-name: hero-dia-fade-2; }
+  .hero-dia[data-count='3'] .hero-photo { animation-name: hero-dia-fade-3; }
+  .hero-dia[data-count='4'] .hero-photo { animation-name: hero-dia-fade-4; }
+  .hero-dia[data-count='5'] .hero-photo { animation-name: hero-dia-fade-5; }
+  .hero-dia[data-count='6'] .hero-photo { animation-name: hero-dia-fade-6; }
+
+  /* Hold until the next slot, then a short crossfade (~8% of the loop). */
+  @keyframes hero-dia-fade-2 {
+    0%, 4% { opacity: 0; }
+    10%, 50% { opacity: 1; }
+    58%, 100% { opacity: 0; }
+  }
+  @keyframes hero-dia-fade-3 {
+    0%, 3% { opacity: 0; }
+    8%, 33% { opacity: 1; }
+    41%, 100% { opacity: 0; }
+  }
+  @keyframes hero-dia-fade-4 {
+    0%, 2% { opacity: 0; }
+    7%, 25% { opacity: 1; }
+    33%, 100% { opacity: 0; }
+  }
+  @keyframes hero-dia-fade-5 {
+    0%, 2% { opacity: 0; }
+    6%, 20% { opacity: 1; }
+    28%, 100% { opacity: 0; }
+  }
+  @keyframes hero-dia-fade-6 {
+    0%, 2% { opacity: 0; }
+    5%, 17% { opacity: 1; }
+    24%, 100% { opacity: 0; }
   }
 
   .hero-scrim {
     position: absolute;
     inset: 0;
+    z-index: 2;
     background:
       linear-gradient(180deg, rgba(8, 12, 17, 0.28) 0%, rgba(8, 12, 17, 0.12) 34%, rgba(8, 12, 17, 0.55) 68%, rgba(8, 12, 17, 0.88) 100%),
       radial-gradient(ellipse 70% 55% at 18% 78%, rgba(8, 12, 17, 0.45), transparent 70%);
@@ -247,18 +320,8 @@ const heroPhoto = resolveHomeHero(
     border-top: 1px solid rgba(215, 224, 232, 0.08);
   }
 
-  @keyframes hero-drift {
-    from {
-      transform: scale(1.06) translate3d(0, 0, 0);
-    }
-    to {
-      transform: scale(1.12) translate3d(-1.2%, -0.8%, 0);
-    }
-  }
-
   @media (max-width: 640px) {
     .hero {
-      /* Wrapped nav makes the sticky header taller on small screens. */
       min-height: calc(100vh - 10rem);
       min-height: calc(100dvh - 10rem);
     }
@@ -300,7 +363,6 @@ const heroPhoto = resolveHomeHero(
 
   @media (prefers-reduced-motion: reduce) {
     .hero-photo {
-      animation: none;
       transform: scale(1.04);
     }
   }

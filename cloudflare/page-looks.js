@@ -91,6 +91,77 @@ export function yearTotals(days) {
     .sort((a, b) => b.name.localeCompare(a.name) || b.looks - a.looks);
 }
 
+/** Short Berlin weekday for chart labels (Mo, Tu, …). */
+export function berlinWeekdayLabel(dayKey) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dayKey || ''));
+  if (!match) return '—';
+  const at = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', weekday: 'short' }).format(at);
+}
+
+/** Day/month for week range labels (3 Sep). */
+export function berlinShortDate(dayKey) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dayKey || ''));
+  if (!match) return '—';
+  const at = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    day: 'numeric',
+    month: 'short',
+  }).format(at);
+}
+
+/**
+ * Last N Berlin calendar days for the day chart (oldest → newest).
+ * @param {Record<string, number>} days
+ * @param {Date} [now]
+ * @param {number} [count]
+ */
+export function recentDayBars(days, now = new Date(), count = 14) {
+  const bars = [];
+  const n = Math.max(1, Math.min(31, Number(count) || 14));
+  for (let i = n - 1; i >= 0; i--) {
+    const at = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const day = berlinDay(at);
+    bars.push({
+      day,
+      label: berlinWeekdayLabel(day),
+      looks: Number(days?.[day]) || 0,
+    });
+  }
+  return bars;
+}
+
+/**
+ * Last N rolling 7-day weeks ending today (oldest → newest).
+ * @param {Record<string, number>} days
+ * @param {Date} [now]
+ * @param {number} [count]
+ */
+export function recentWeekBars(days, now = new Date(), count = 8) {
+  const bars = [];
+  const n = Math.max(1, Math.min(26, Number(count) || 8));
+  for (let w = n - 1; w >= 0; w--) {
+    let looks = 0;
+    let start = '';
+    let end = '';
+    for (let d = 6; d >= 0; d--) {
+      const at = new Date(now.getTime() - (w * 7 + d) * 24 * 60 * 60 * 1000);
+      const day = berlinDay(at);
+      if (!start) start = day;
+      end = day;
+      looks += Number(days?.[day]) || 0;
+    }
+    bars.push({
+      start,
+      end,
+      label: `${berlinShortDate(start)}–${berlinShortDate(end)}`,
+      looks,
+    });
+  }
+  return bars;
+}
+
 export function summarizeLooks(data, now = new Date()) {
   const days = data.days || {};
   const today = berlinDay(now);
@@ -109,6 +180,8 @@ export function summarizeLooks(data, now = new Date()) {
     .slice(0, 12);
   const countries = topNamedCounts(data.countries, countryLabel);
   const from = topNamedCounts(data.from);
+  const dayBars = recentDayBars(days, now, 14);
+  const weekBars = recentWeekBars(days, now, 8);
   return {
     today: Number(days[today]) || 0,
     week,
@@ -118,6 +191,8 @@ export function summarizeLooks(data, now = new Date()) {
     pages,
     countries,
     from,
+    dayBars,
+    weekBars,
   };
 }
 
@@ -527,6 +602,15 @@ export function looksDashboardPage(summary) {
     summary?.years,
     'Years show once people have opened the site.',
   );
+  const dayBars = looksBarsHtml(
+    summary?.dayBars,
+    'Day bars show once people have opened the site.',
+  );
+  const weekBars = looksBarsHtml(
+    summary?.weekBars,
+    'Week bars show once people have opened the site.',
+    { wideLabel: true },
+  );
 
   return new Response(
     `<!doctype html>
@@ -563,6 +647,12 @@ export function looksDashboardPage(summary) {
     li span { color:var(--amber-hot); font-weight:600; }
     li .looks-name { color:var(--paper); font-weight:400; }
     .empty { color:rgba(215,224,232,.68); }
+    .looks-bars { display:grid; gap:.55rem; margin:0; padding:1rem 1.15rem; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); }
+    .looks-bar { display:grid; grid-template-columns:3.6rem 1fr 2.4rem; align-items:center; gap:.65rem; padding:0; border:0; }
+    .looks-bar-label { color:rgba(215,224,232,.78); font-size:.82rem; font-weight:600; }
+    .looks-bar-track { display:block; height:.55rem; border-radius:999px; background:rgba(215,224,232,.1); overflow:hidden; }
+    .looks-bar-fill { display:block; height:100%; width:var(--looks-bar,0%); border-radius:inherit; background:linear-gradient(90deg,#f0c27a,#d4a35a); }
+    .looks-bar-num { text-align:right; color:var(--amber-hot); font-weight:700; font-variant-numeric:tabular-nums; }
     .back { margin:1.5rem 0 0; padding-left:1.15rem; }
     .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
   </style>
@@ -571,13 +661,17 @@ export function looksDashboardPage(summary) {
   <main class="site-shell">
     <p class="eyebrow">Looks</p>
     <h1>Looks</h1>
-    <p class="lead">How many times someone opened a page. No names.</p>
+    <p class="lead">How many times someone opened a page. No names. Private for you.</p>
     <div class="cards">
       <article class="card"><p class="card-label">Today</p><p class="card-num">${today}</p></article>
       <article class="card"><p class="card-label">Last 7 days</p><p class="card-num">${week}</p></article>
       <article class="card"><p class="card-label">This year</p><p class="card-num">${year}</p></article>
       <article class="card"><p class="card-label">All time</p><p class="card-num">${total}</p></article>
     </div>
+    <h2>Last 14 days</h2>
+    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>
+    <h2>Last 8 weeks</h2>
+    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${weekBars}</ol>
     <h2>All the years</h2>
     <ol>${yearRows}</ol>
     <h2>Pages people opened</h2>
@@ -645,6 +739,57 @@ export function looksFromRows(items, emptyText) {
     .join('');
 }
 
+/**
+ * CSS bar chart rows for day/week Looks graphics.
+ * Inline styles on purpose: Worker-injected nodes miss Astro scoped CSS,
+ * and a stale deploy without global.css still needs visible bars.
+ * @param {{ label?: string, looks?: number }[]} bars
+ * @param {string} emptyText
+ * @param {{ wideLabel?: boolean }} [opts]
+ */
+export function looksBarsHtml(bars, emptyText, opts = {}) {
+  const list = Array.isArray(bars) ? bars : [];
+  if (!list.length) {
+    return `<li class="empty">${emptyText}</li>`;
+  }
+  const max = Math.max(1, ...list.map((row) => Number(row.looks) || 0));
+  const labelCol = opts.wideLabel ? 'minmax(5.5rem, 7.5rem)' : '3.6rem';
+  const rowStyle =
+    `display:grid;grid-template-columns:${labelCol} minmax(0,1fr) 2.75rem;` +
+    'align-items:center;gap:0.65rem;padding:0;border:0;margin:0;list-style:none';
+  const labelStyle =
+    'color:rgba(215,224,232,0.78);font-size:0.82rem;font-weight:600;white-space:nowrap';
+  const trackStyle =
+    'display:block;height:0.55rem;border-radius:999px;background:rgba(215,224,232,0.12);overflow:hidden';
+  const numStyle =
+    'text-align:right;color:#f0c27a;font-weight:700;font-variant-numeric:tabular-nums';
+  return list
+    .map((row) => {
+      const looks = Number(row.looks) || 0;
+      const pct = Math.round((looks / max) * 100);
+      const label = escapeHtml(row.label || '—');
+      const fillStyle =
+        `display:block;height:100%;width:${pct}%;min-width:${looks > 0 ? '0.35rem' : '0'};` +
+        'border-radius:inherit;background:linear-gradient(90deg,#f0c27a,#d4a35a)';
+      return (
+        `<li class="looks-bar" style="${rowStyle}">` +
+        `<span class="looks-bar-label" style="${labelStyle}">${label}</span>` +
+        `<span class="looks-bar-track" style="${trackStyle}" aria-hidden="true">` +
+        `<span class="looks-bar-fill" style="${fillStyle}"></span>` +
+        `</span>` +
+        `<span class="looks-bar-num" style="${numStyle}">${looks}</span>` +
+        `</li>`
+      );
+    })
+    .join('');
+}
+
+/** List shell styles so the chart box shows even without global.css. */
+export const LOOKS_BARS_LIST_STYLE =
+  'display:grid;gap:0.55rem;margin:0 0 0.5rem;padding:1rem 1.15rem;list-style:none;' +
+  'border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
+
+
 export function fillLooksInHtml(html, summary) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
@@ -663,6 +808,15 @@ export function fillLooksInHtml(html, summary) {
     summary?.years,
     'Years show once people have opened the site.',
   );
+  const dayBars = looksBarsHtml(
+    summary?.dayBars,
+    'Day bars show once people have opened the site.',
+  );
+  const weekBars = looksBarsHtml(
+    summary?.weekBars,
+    'Week bars show once people have opened the site.',
+    { wideLabel: true },
+  );
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
@@ -671,6 +825,14 @@ export function fillLooksInHtml(html, summary) {
     .replace(
       /<ol([^>]*data-looks-years[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${yearRows}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-days[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1 style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-weeks[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1 style="${LOOKS_BARS_LIST_STYLE}">${weekBars}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,

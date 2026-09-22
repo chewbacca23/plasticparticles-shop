@@ -39,8 +39,8 @@ function captionFor(shot: ShotInput): string {
 }
 
 /**
- * Newest shots first. Ride photos fill any gaps so Now is never empty just
- * because Henrik has not posted a Shot yet. The same file is never shown twice.
+ * Newest shots first. Each ride contributes only its cover so the rest of
+ * the set lives on the ride page. The same file is never shown twice.
  */
 export function collectFeed(shots: readonly ShotInput[], rides: readonly RideInput[] = []): FeedEntry[] {
   const items: FeedEntry[] = [];
@@ -63,18 +63,16 @@ export function collectFeed(shots: readonly ShotInput[], rides: readonly RideInp
 
   for (const ride of rides) {
     if (ride.draft) continue;
-    const photos = galleryMedia(ride.cover, ride.gallery ?? []);
-    for (const [index, photo] of photos.entries()) {
-      if (seen.has(photo)) continue;
-      seen.add(photo);
-      items.push({
-        id: `ride:${ride.id}:${index}`,
-        photo,
-        caption: ride.headline,
-        date: ride.pubDate ? new Date(ride.pubDate) : RIDE_PHOTO_DATE,
-        href: `/stories/${ride.id}`,
-      });
-    }
+    const photo = galleryMedia(ride.cover, ride.gallery ?? [])[0];
+    if (!photo || seen.has(photo)) continue;
+    seen.add(photo);
+    items.push({
+      id: `ride:${ride.id}:0`,
+      photo,
+      caption: ride.headline,
+      date: ride.pubDate ? new Date(ride.pubDate) : RIDE_PHOTO_DATE,
+      href: `/stories/${ride.id}`,
+    });
   }
 
   return items.sort((a, b) => {

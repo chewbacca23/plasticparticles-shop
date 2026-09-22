@@ -5,7 +5,6 @@ description: Riding up the Hill, but only 4 times that is ;)
 cover: /stories/img_2878.jpg
 gallery:
   - /stories/img_6344.jpg
-  - /stories/img_5940.jpg
   - /stories/img_6072.jpg
   - /stories/img_6125.jpg
 pubDate: 2026-09-02

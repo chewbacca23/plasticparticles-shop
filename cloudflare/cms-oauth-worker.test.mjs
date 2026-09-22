@@ -150,6 +150,66 @@ describe('GET /cms-status', () => {
     assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
     assert.equal(JSON.parse(await res.text()).loginWired, false);
   });
+
+  it('reports whether contact mail is wired', async () => {
+    const cold = JSON.parse(await (await statusPage({ ASSETS: {} })).text());
+    assert.equal(cold.mailWired, false);
+    assert.equal(cold.mailVia, 'none');
+    assert.match(cold.mailHint, /no text secrets|RESEND_API_KEY/);
+
+    const original = globalThis.fetch;
+    globalThis.fetch = async () => new Response('{"data":[]}', { status: 200 });
+    try {
+      const hot = JSON.parse(
+        await (
+          await statusPage({
+            ASSETS: {},
+            RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
+          })
+        ).text(),
+      );
+      assert.equal(hot.mailWired, true);
+      assert.equal(hot.mailVia, 'resend');
+      assert.equal(hot.mailKeyProbe.ok, true);
+      assert.match(hot.mailHint, /Resend accepted|Mail is ready|send a short test/);
+      assert.match(hot.mailKeyShape.shape, /looks like a Resend key/);
+    } finally {
+      globalThis.fetch = original;
+    }
+
+    const oauthOnly = JSON.parse(
+      await (
+        await statusPage({
+          ASSETS: {},
+          GITHUB_OAUTH_CLIENT_ID: 'Ov23li8qq16feoZZ0VOo',
+          GITHUB_OAUTH_CLIENT_SECRET: 'b'.repeat(40),
+        })
+      ).text(),
+    );
+    assert.equal(oauthOnly.mailWired, false);
+    assert.match(oauthOnly.mailHint, /SOUL_RESEND_KEY/);
+  });
+
+  it('tells Henrik when Resend rejects the key', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async () => new Response('unauthorized', { status: 401 });
+    try {
+      const body = JSON.parse(
+        await (
+          await statusPage({
+            ASSETS: {},
+            RESEND_API_KEY: 're_dead_key_value_here_xxxx',
+          })
+        ).text(),
+      );
+      assert.equal(body.mailWired, true);
+      assert.equal(body.mailKeyProbe.ok, false);
+      assert.equal(body.mailKeyProbe.status, 401);
+      assert.match(body.mailHint, /Resend rejected this API key/);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });
 
 describe('GET /auth', () => {
