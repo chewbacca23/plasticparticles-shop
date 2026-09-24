@@ -12,7 +12,7 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
-      filter: (page) => !page.includes('/looks') && !page.includes('/kit'),
+      filter: (page) => !page.includes('/looks'),
     }),
   ],
   vite: {

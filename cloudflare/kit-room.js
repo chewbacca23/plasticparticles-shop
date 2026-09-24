@@ -170,20 +170,7 @@ function privateAsset(asset) {
   return new Response(asset.body, { status: asset.status, headers });
 }
 
-export async function handleKitRoom(request, env) {
-  const url = new URL(request.url);
-  if (!isKitRoomPath(url.pathname)) return null;
-
-  if (request.method === 'POST') {
-    return handleKitUnlock(request, env);
-  }
-
-  if (!(await requestHasKitAccess(request, env))) {
-    if (isKitPath(url.pathname)) return kitGatePage({ wired: Boolean(kitPassword(env)) });
-    return kitHiddenAsset();
-  }
-
-  if (!env?.ASSETS?.fetch) return null;
-  const asset = await env.ASSETS.fetch(request);
-  return privateAsset(asset);
+export async function handleKitRoom(_request, _env) {
+  // Kit is public. Leave the lock in this file if Henrik wants the door shut again.
+  return null;
 }

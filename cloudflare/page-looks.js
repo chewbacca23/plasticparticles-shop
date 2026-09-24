@@ -12,8 +12,6 @@ const SKIP = new Set([
   '/api/looks',
   '/looks',
   '/looks/',
-  '/kit',
-  '/kit/',
   '/rss.xml',
   '/sitemap-index.xml',
   '/sitemap-0.xml',
@@ -56,7 +54,6 @@ export function shouldRecordPath(path) {
   if (!path) return false;
   if (SKIP.has(path)) return false;
   if (path.startsWith('/admin')) return false;
-  if (path.startsWith('/kit')) return false;
   if (path.startsWith('/api/')) return false;
   if (/\.[a-z0-9]{1,8}$/i.test(path)) return false;
   return true;

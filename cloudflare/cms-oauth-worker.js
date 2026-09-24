@@ -6,7 +6,7 @@
  * Variables and Secrets):
  *   GITHUB_OAUTH_CLIENT_ID
  *   GITHUB_OAUTH_CLIENT_SECRET
- *   KIT_PASSWORD (private /kit room for riders)
+ *   KIT_PASSWORD (unused while /kit is public)
  */
 
 import {

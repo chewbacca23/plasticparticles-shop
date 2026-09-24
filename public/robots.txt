@@ -1,7 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /kit
 Disallow: /looks
 
 Sitemap: https://thenewsoulsearchers.de/sitemap-index.xml

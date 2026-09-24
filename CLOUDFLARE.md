@@ -3,7 +3,7 @@
 Live Worker: **`thenewsoulsearchersblogc`** — owns the domain, holds the OAuth secrets, and is the `name` in `wrangler.toml`. The GitHub repo is `thenewsoulsearchersblog` (no `c`); the two are deliberately different, so do not "fix" `wrangler.toml` to match the repo name.  
 Git source: **`chewbacca23/thenewsoulsearchersblog`** (`main`)  
 Admin: **https://thenewsoulsearchers.de/admin/** (not `www`)  
-Riders kit room: **https://thenewsoulsearchers.de/kit** (not in the nav). Worker secret **`KIT_PASSWORD`**.
+Kit: **https://thenewsoulsearchers.de/kit** (public)
 
 ---
 
@@ -43,14 +43,6 @@ To check any time, without revealing values:
 
 ```sh
 npx wrangler secret list --name thenewsoulsearchersblogc
-```
-
-### Riders kit room
-
-`/kit` is hidden from the nav and from search. The Worker secret **`KIT_PASSWORD`** is the word riders type.
-
-```sh
-npx wrangler secret put KIT_PASSWORD --name thenewsoulsearchersblogc
 ```
 
 ### B2. Cloudflare secrets — via the dashboard

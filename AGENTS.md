@@ -21,7 +21,7 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 - Ride notes: `src/content/journal/*.md`
 - Config / Impressum fields: `src/site.config.ts`
 - Routes: `/`, `/stories` (Rides), `/journal` (Ride notes), `/path` (How we ride), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
-- Private riders kit room: `/kit` (password `KIT_PASSWORD` on the Worker; not in the nav)
+- Kit: `/kit` (public)
 
 ### Live domain
 
