@@ -20,6 +20,7 @@ import {
   recordDocumentLook,
 } from './page-looks.js';
 import { handleKitRoom } from './kit-room.js';
+import { handleHooksRequest } from './hooks-board.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshShop } from './fresh-shop.js';
 import { handleFreshSite } from './fresh-site.js';
@@ -436,6 +437,9 @@ export default {
 
     const contact = await handleContactRequest(request, env);
     if (contact) return contact;
+
+    const hooks = await handleHooksRequest(request, env);
+    if (hooks) return hooks;
 
     const looks = await handleLooksRequest(request, env);
     if (looks) return looks;

@@ -1,0 +1,443 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Hooks"
+  description="A small board for like-minded cyclists. Pin yourself. Write a rider. Mail stays off the page."
+>
+  <section class="section">
+    <div class="site-shell hooks">
+      <p class="eyebrow">Hooks</p>
+      <h1 class="section-title">Find a rider</h1>
+      <p class="section-lead">
+        A small board, not a network. Leave a line — where you ride, a climb, a coffee, a spare
+        sofa. Someone writes you through the site. Your email never sits on the page.
+      </p>
+
+      <p id="board-error" class="error" hidden></p>
+      <p id="board-hint" class="hint" hidden></p>
+
+      <ol id="hook-list" class="hook-list">
+        <li class="empty">The board is quiet. Be the first pin.</li>
+      </ol>
+
+      <div id="pin-success" class="success" hidden>
+        <h2>You’re on the board</h2>
+        <p>Your mail stays hidden. If someone writes, it lands in your inbox. Reply from there.</p>
+      </div>
+
+      <form id="pin-form" class="form" method="post" action="/api/hooks">
+        <h2 class="form-title">Pin yourself</h2>
+        <label>
+          <span>Name</span>
+          <input type="text" name="name" required autocomplete="name" maxlength="80" />
+        </label>
+        <label>
+          <span>Where</span>
+          <input
+            type="text"
+            name="place"
+            required
+            maxlength="80"
+            placeholder="Berlin, Nice, a train, a climb"
+          />
+        </label>
+        <label>
+          <span>A line</span>
+          <textarea
+            name="note"
+            rows="3"
+            required
+            maxlength="400"
+            placeholder="Coffee after the park. A spare room in Kreuzberg. Looking for the Madeleine."
+          ></textarea>
+        </label>
+        <label>
+          <span>Email — stays off the page</span>
+          <input type="email" name="email" required autocomplete="email" maxlength="200" />
+        </label>
+        <label class="hp" aria-hidden="true">
+          <span>Company</span>
+          <input type="text" name="company" tabindex="-1" autocomplete="off" />
+        </label>
+        <button class="btn btn-primary" type="submit">Pin me</button>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    var list = document.getElementById('hook-list');
+    var pinForm = document.getElementById('pin-form');
+    var pinSuccess = document.getElementById('pin-success');
+    var errorBox = document.getElementById('board-error');
+    var hintBox = document.getElementById('board-hint');
+    var canModerate = false;
+
+    function showError(text) {
+      if (!errorBox) return;
+      errorBox.textContent = text || 'Could not do that just now.';
+      errorBox.hidden = false;
+    }
+
+    function hideError() {
+      if (!errorBox) return;
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
+
+    function esc(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function render(hooks) {
+      if (!list) return;
+      if (!hooks || !hooks.length) {
+        list.innerHTML = '<li class="empty">The board is quiet. Be the first pin.</li>';
+        return;
+      }
+      list.innerHTML = hooks
+        .map(function (hook) {
+          var remove = canModerate
+            ? '<button type="button" class="hook-remove" data-remove="' +
+              esc(hook.id) +
+              '">Take down</button>'
+            : '';
+          return (
+            '<li class="hook" data-id="' +
+            esc(hook.id) +
+            '">' +
+            '<p class="hook-place">' +
+            esc(hook.place) +
+            '</p>' +
+            '<h2 class="hook-name">' +
+            esc(hook.name) +
+            '</h2>' +
+            '<p class="hook-note">' +
+            esc(hook.note) +
+            '</p>' +
+            '<button type="button" class="btn btn-ghost hook-write" data-write="' +
+            esc(hook.id) +
+            '">Write</button>' +
+            remove +
+            '<form class="write-form" hidden data-for="' +
+            esc(hook.id) +
+            '">' +
+            '<label><span>Your name</span><input type="text" name="name" required maxlength="80" /></label>' +
+            '<label><span>Your email</span><input type="email" name="email" required maxlength="200" /></label>' +
+            '<label><span>Note</span><textarea name="message" rows="4" required maxlength="2000"></textarea></label>' +
+            '<label class="hp" aria-hidden="true"><span>Company</span><input type="text" name="company" tabindex="-1" autocomplete="off" /></label>' +
+            '<button class="btn btn-primary" type="submit">Send</button>' +
+            '</form>' +
+            '</li>'
+          );
+        })
+        .join('');
+    }
+
+    function load() {
+      fetch('/api/hooks', { headers: { accept: 'application/json' } })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          canModerate = !!(data && data.canModerate);
+          if (hintBox && data && data.mailWired === false) {
+            hintBox.hidden = false;
+            hintBox.textContent =
+              'Mail is not wired yet, so notes cannot leave the site. Pins can still go up.';
+          }
+          render(data && data.hooks);
+        })
+        .catch(function () {
+          showError('The board could not load just now.');
+        });
+    }
+
+    if (pinForm) {
+      pinForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        hideError();
+        var data = new FormData(pinForm);
+        var button = pinForm.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        fetch('/api/hooks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: String(data.get('name') || '').trim(),
+            place: String(data.get('place') || '').trim(),
+            note: String(data.get('note') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            company: String(data.get('company') || '').trim(),
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { res: res, body: body };
+            });
+          })
+          .then(function (out) {
+            if (out.res.ok && out.body.ok) {
+              pinForm.hidden = true;
+              if (pinSuccess) pinSuccess.hidden = false;
+              render(out.body.hooks);
+              return;
+            }
+            showError((out.body && out.body.error) || 'Could not pin you just now.');
+          })
+          .catch(function () {
+            showError('Could not pin you just now.');
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
+    if (list) {
+      list.addEventListener('click', function (event) {
+        var write = event.target.closest('[data-write]');
+        if (write) {
+          var form = list.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
+          if (form) form.hidden = !form.hidden;
+          return;
+        }
+        var remove = event.target.closest('[data-remove]');
+        if (!remove) return;
+        hideError();
+        fetch('/api/hooks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', id: remove.getAttribute('data-remove') }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (body) {
+            if (body && body.ok) {
+              render(body.hooks);
+              return;
+            }
+            showError((body && body.error) || 'Could not take that down.');
+          })
+          .catch(function () {
+            showError('Could not take that down.');
+          });
+      });
+
+      list.addEventListener('submit', function (event) {
+        var form = event.target.closest('.write-form');
+        if (!form) return;
+        event.preventDefault();
+        hideError();
+        var data = new FormData(form);
+        var button = form.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        fetch('/api/hooks/write', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            hookId: form.getAttribute('data-for'),
+            name: String(data.get('name') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            message: String(data.get('message') || '').trim(),
+            company: String(data.get('company') || '').trim(),
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { res: res, body: body };
+            });
+          })
+          .then(function (out) {
+            if (out.res.ok && out.body.ok) {
+              form.hidden = true;
+              form.reset();
+              var thanks = document.createElement('p');
+              thanks.className = 'hook-sent';
+              thanks.textContent = 'Sent. If they want to ride, they will reply.';
+              form.parentNode.insertBefore(thanks, form);
+              return;
+            }
+            showError((out.body && out.body.error) || 'Could not send that note.');
+          })
+          .catch(function () {
+            showError('Could not send that note.');
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
+    load();
+  })();
+</script>
+
+<style>
+  .hooks {
+    max-width: 36rem;
+  }
+
+  .form,
+  .write-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .form {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .form-title {
+    margin: 0;
+    font-size: 1.45rem;
+  }
+
+  .form[hidden],
+  .write-form[hidden],
+  .success[hidden],
+  .error[hidden],
+  .hint[hidden] {
+    display: none !important;
+  }
+
+  label {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  label span {
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(215, 224, 232, 0.18);
+    border-radius: 0.85rem;
+    background: rgba(26, 36, 48, 0.7);
+    color: var(--paper);
+    font: inherit;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: 2px solid rgba(212, 163, 90, 0.55);
+    outline-offset: 2px;
+    border-color: var(--amber);
+  }
+
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .hook-list {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .hook {
+    padding: 1.15rem 1.2rem 1.25rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.55);
+  }
+
+  .hook-place {
+    margin: 0;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hook-name {
+    margin: 0.35rem 0 0;
+    font-size: 1.35rem;
+  }
+
+  .hook-note {
+    margin: 0.45rem 0 0.9rem;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .hook-sent {
+    margin: 0.85rem 0 0;
+    color: var(--amber-hot);
+  }
+
+  .write-form {
+    margin-top: 1rem;
+  }
+
+  .hook-remove {
+    margin-left: 0.6rem;
+    border: 0;
+    background: none;
+    color: rgba(215, 224, 232, 0.55);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .empty {
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .success {
+    margin: 1.5rem 0 0;
+    padding: 1.1rem 1.15rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    border-radius: 1rem;
+  }
+
+  .success h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.35rem;
+  }
+
+  .success p {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .error {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(220, 90, 90, 0.45);
+    border-radius: 0.85rem;
+    background: rgba(80, 24, 24, 0.35);
+    color: rgba(255, 220, 220, 0.92);
+  }
+
+  .hint {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.85rem;
+    color: rgba(215, 224, 232, 0.78);
+  }
+</style>
