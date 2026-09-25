@@ -25,8 +25,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="group-dots" id="group-dots">
             <p class="group-empty">No one standing here yet.</p>
           </div>
+          <aside class="group-open" id="group-open" hidden></aside>
         </div>
-        <aside class="group-open" id="group-open" hidden></aside>
       </section>
 
       <p class="floor-kicker">The floor</p>
@@ -89,6 +89,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var dotsBox = document.getElementById('group-dots');
     var linksBox = document.getElementById('group-links');
     var openBox = document.getElementById('group-open');
+    var roomBox = document.getElementById('group-room');
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
@@ -261,11 +262,37 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       return '';
     }
 
+    function floatOpen(person) {
+      if (!openBox || !person) return;
+      openBox.style.left = person.x + '%';
+      openBox.style.top = person.y + '%';
+      openBox.style.setProperty('--nudge-x', '0px');
+      openBox.style.setProperty('--nudge-y', '0px');
+      openBox.classList.toggle('is-left', Number(person.x) >= 55);
+      openBox.classList.toggle('is-below', Number(person.y) < 36);
+      requestAnimationFrame(function () {
+        if (!roomBox || openBox.hidden) return;
+        var room = roomBox.getBoundingClientRect();
+        var card = openBox.getBoundingClientRect();
+        var pad = 12;
+        var dx = 0;
+        var dy = 0;
+        if (card.right > room.right - pad) dx -= card.right - (room.right - pad);
+        if (card.left < room.left + pad) dx += room.left + pad - card.left;
+        if (card.bottom > room.bottom - pad) dy -= card.bottom - (room.bottom - pad);
+        if (card.top < room.top + pad) dy += room.top + pad - card.top;
+        openBox.style.setProperty('--nudge-x', dx + 'px');
+        openBox.style.setProperty('--nudge-y', dy + 'px');
+      });
+    }
+
     function renderOpen(person) {
       if (!openBox) return;
       if (!person) {
         openBox.hidden = true;
         openBox.innerHTML = '';
+        openBox.removeAttribute('style');
+        openBox.classList.remove('is-left', 'is-below');
         return;
       }
       var hookId = writeTarget(person);
@@ -332,6 +359,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             remove +
             writeForm(hookId)
           : '');
+      floatOpen(person);
     }
 
     function renderGroup(payload) {
@@ -580,6 +608,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         if (write && openBox) {
           var form = openBox.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
           if (form) form.hidden = !form.hidden;
+          var opened = peopleFrom(lastPayload).find(function (row) {
+            return row.key === openKey;
+          });
+          if (opened) floatOpen(opened);
           return;
         }
         var remove = event.target.closest('[data-remove]');
@@ -842,11 +874,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     pointer-events: none;
   }
 
+  .dot.is-open {
+    z-index: 5;
+  }
+
   .dot:hover .dot-name,
   .dot:focus-visible .dot-name,
-  .dot.is-open .dot-name,
   .dot.is-near .dot-name {
     opacity: 1;
+  }
+
+  .dot.is-open .dot-name {
+    opacity: 0;
   }
 
   .dot:focus-visible {
@@ -859,15 +898,86 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .group-open {
-    margin-top: 0.85rem;
-    padding: 1.15rem 1.2rem 1.25rem;
-    border: 1px solid rgba(212, 163, 90, 0.22);
-    border-radius: 1.1rem;
-    background: rgba(18, 26, 34, 0.72);
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    top: 50%;
+    width: min(20.5rem, calc(100% - 1.5rem));
+    max-height: calc(100% - 1.5rem);
+    overflow: auto;
+    margin: 0;
+    padding: 1rem 1.1rem 1.1rem;
+    border: 1px solid rgba(212, 163, 90, 0.3);
+    border-radius: 1rem;
+    background: rgba(12, 18, 24, 0.94);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
+    --nudge-x: 0px;
+    --nudge-y: 0px;
+    transform: translate(1.15rem, -46%) translate(var(--nudge-x), var(--nudge-y));
+    animation: open-float 0.22s ease;
+  }
+
+  .group-open.is-left {
+    transform: translate(calc(-100% - 1.15rem), -46%) translate(var(--nudge-x), var(--nudge-y));
+  }
+
+  .group-open.is-below {
+    transform: translate(1.15rem, 1.15rem) translate(var(--nudge-x), var(--nudge-y));
+  }
+
+  .group-open.is-left.is-below {
+    transform: translate(calc(-100% - 1.15rem), 1.15rem) translate(var(--nudge-x), var(--nudge-y));
+  }
+
+  .group-open::before {
+    content: '';
+    position: absolute;
+    top: 1.45rem;
+    left: -0.34rem;
+    width: 0.68rem;
+    height: 0.68rem;
+    background: rgba(12, 18, 24, 0.94);
+    border-left: 1px solid rgba(212, 163, 90, 0.3);
+    border-bottom: 1px solid rgba(212, 163, 90, 0.3);
+    transform: rotate(45deg);
+  }
+
+  .group-open.is-left::before {
+    left: auto;
+    right: -0.34rem;
+    border-left: 0;
+    border-bottom: 0;
+    border-right: 1px solid rgba(212, 163, 90, 0.3);
+    border-top: 1px solid rgba(212, 163, 90, 0.3);
+  }
+
+  .group-open.is-below::before {
+    top: -0.34rem;
+    left: 1.35rem;
+    border-left: 1px solid rgba(212, 163, 90, 0.3);
+    border-bottom: 0;
+    border-top: 1px solid rgba(212, 163, 90, 0.3);
+  }
+
+  .group-open.is-left.is-below::before {
+    left: auto;
+    right: 1.35rem;
+    border-left: 0;
+    border-right: 1px solid rgba(212, 163, 90, 0.3);
+    border-top: 1px solid rgba(212, 163, 90, 0.3);
   }
 
   .group-open[hidden] {
     display: none !important;
+  }
+
+  @keyframes open-float {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   .open-head {
