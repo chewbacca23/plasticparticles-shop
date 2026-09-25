@@ -71,7 +71,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </label>
         <label class="hp" aria-hidden="true">
           <span>Company</span>
-          <input type="text" name="company" tabindex="-1" autocomplete="off" />
+          <input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" />
         </label>
         <button class="btn btn-primary" type="submit">Put it on the floor</button>
       </form>
@@ -159,7 +159,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
         '<label><span>Your offer</span><textarea name="message" rows="3" required maxlength="2000"></textarea></label>' +
         '<label><span>Email — optional</span><input type="email" name="email" maxlength="200" /></label>' +
-        '<label class="hp" aria-hidden="true"><span>Company</span><input type="text" name="company" tabindex="-1" autocomplete="off" /></label>' +
+        '<label class="hp" aria-hidden="true"><span>Fax</span><input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" /></label>' +
         '<button class="btn btn-primary" type="submit">Leave offer</button>' +
         '</form>'
       );
@@ -440,6 +440,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     function render(payload) {
+      if (payload && payload.ok && !payload.hooks && !payload.market && !payload.group) {
+        load();
+        return;
+      }
       lastPayload = payload || lastPayload;
       renderGroup(lastPayload);
       if (!list) return;
@@ -490,7 +494,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             place: String(data.get('place') || '').trim(),
             note: String(data.get('note') || '').trim(),
             email: String(data.get('email') || '').trim(),
-            company: String(data.get('company') || '').trim(),
+            company: String(data.get('fax_number_leave_blank') || data.get('company') || '').trim(),
           }),
         })
           .then(function (res) {
@@ -564,7 +568,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             name: String(data.get('name') || '').trim(),
             email: String(data.get('email') || '').trim(),
             message: String(data.get('message') || '').trim(),
-            company: String(data.get('company') || '').trim(),
+            company: String(data.get('fax_number_leave_blank') || data.get('company') || '').trim(),
           }),
         })
           .then(function (res) {
@@ -654,7 +658,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             name: String(data.get('name') || '').trim(),
             email: String(data.get('email') || '').trim(),
             message: String(data.get('message') || '').trim(),
-            company: String(data.get('company') || '').trim(),
+            company: String(data.get('fax_number_leave_blank') || data.get('company') || '').trim(),
           }),
         })
           .then(function (res) {

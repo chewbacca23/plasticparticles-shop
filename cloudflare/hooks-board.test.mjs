@@ -164,23 +164,36 @@ describe('hooks pin', () => {
     assert.doesNotMatch(JSON.stringify(data), /goetz@example.com/);
   });
 
-  it('swallows the honeypot', async () => {
-    const res = await handleHooksRequest(
+  it('swallows an empty honeypot and still saves a real stall', async () => {
+    const kv = memoryKv();
+    const bot = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ company: 'Acme' }),
+      }),
+      { STATS: kv },
+    );
+    assert.equal(bot.status, 200);
+    assert.equal((await bot.json()).hooks.length, 0);
+
+    const human = await handleHooksRequest(
       new Request('https://thenewsoulsearchers.de/api/hooks', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          name: 'Bot',
-          place: 'Spam',
-          note: 'Buy this',
-          email: 'bot@example.com',
-          company: 'Acme',
+          name: 'Alex',
+          place: 'Berlin',
+          note: 'Coffee after the park.',
+          company: 'Safari filled this',
         }),
       }),
-      { STATS: memoryKv() },
+      { STATS: kv },
     );
-    assert.equal(res.status, 200);
-    assert.equal((await res.json()).ok, true);
+    assert.equal(human.status, 200);
+    const body = await human.json();
+    assert.equal(body.hooks[0].name, 'Alex');
+    assert.equal(body.market[0].kind, 'stall');
   });
 });
 

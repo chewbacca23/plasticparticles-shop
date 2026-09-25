@@ -54,7 +54,7 @@ export function parseHookPin(raw) {
     place: cleanLine(src.place, MAX_PLACE),
     note: cleanLine(src.note, MAX_NOTE),
     email: cleanEmail(src.email),
-    company: cleanLine(src.company, 80),
+    company: cleanLine(src.company || src.fax_number_leave_blank, 80),
   };
 }
 
@@ -65,8 +65,15 @@ export function parseHookWrite(raw) {
     name: cleanLine(src.name, MAX_NAME),
     email: cleanEmail(src.email),
     message: cleanLine(src.message, MAX_MESSAGE),
-    company: cleanLine(src.company, 80),
+    company: cleanLine(src.company || src.fax_number_leave_blank, 80),
   };
+}
+
+function isEmptyHoneypot(fields) {
+  if (!fields.company) return false;
+  const hasPin = !!(fields.name && fields.place && fields.note);
+  const hasWrite = !!(fields.hookId && fields.name && fields.message);
+  return !hasPin && !hasWrite;
 }
 
 export function validatePin(fields) {
@@ -501,7 +508,9 @@ export async function handleHooksRequest(request, env) {
 
   if (isHooksWritePath(url.pathname)) {
     const fields = parseHookWrite(body);
-    if (fields.company) return json({ ok: true });
+    if (isEmptyHoneypot(fields)) {
+      return json({ ok: true, ...boardPayload(await readHooks(env)) });
+    }
     const bad = validateWrite(fields);
     if (bad) return json({ error: bad }, 400);
     if (!(await underRateLimit(env, clientKey(request, 'write'), RATE_WRITE))) {
@@ -538,7 +547,9 @@ export async function handleHooksRequest(request, env) {
   }
 
   const fields = parseHookPin(body);
-  if (fields.company) return json({ ok: true });
+  if (isEmptyHoneypot(fields)) {
+    return json({ ok: true, ...boardPayload(await readHooks(env)) });
+  }
   const bad = validatePin(fields);
   if (bad) return json({ error: bad }, 400);
   if (!(await underRateLimit(env, clientKey(request, 'pin'), RATE_PIN))) {
