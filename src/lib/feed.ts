@@ -39,8 +39,9 @@ function captionFor(shot: ShotInput): string {
 }
 
 /**
- * Newest shots first. Each ride contributes only its cover so the rest of
- * the set lives on the ride page. The same file is never shown twice.
+ * Newest shots first. One cover (or first gallery photo) per ride fills gaps
+ * so Now is never empty just because Henrik has not posted a Shot yet.
+ * Full ride galleries stay on the ride page. The same file is never shown twice.
  */
 export function collectFeed(shots: readonly ShotInput[], rides: readonly RideInput[] = []): FeedEntry[] {
   const items: FeedEntry[] = [];
@@ -63,6 +64,8 @@ export function collectFeed(shots: readonly ShotInput[], rides: readonly RideInp
 
   for (const ride of rides) {
     if (ride.draft) continue;
+    // One tile per ride set: cover (or first gallery shot). Full galleries
+    // stay on the ride page — Now should not dump every folder photo.
     const photo = galleryMedia(ride.cover, ride.gallery ?? [])[0];
     if (!photo || seen.has(photo)) continue;
     seen.add(photo);

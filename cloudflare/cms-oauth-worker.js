@@ -6,6 +6,7 @@
  * Variables and Secrets):
  *   GITHUB_OAUTH_CLIENT_ID
  *   GITHUB_OAUTH_CLIENT_SECRET
+ *   KIT_PASSWORD (unused while /kit is public)
  */
 
 import {
@@ -18,6 +19,8 @@ import {
   looksToken,
   recordDocumentLook,
 } from './page-looks.js';
+import { handleKitRoom } from './kit-room.js';
+import { handleHooksRequest } from './hooks-board.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshShop } from './fresh-shop.js';
 import { handleFreshSite } from './fresh-site.js';
@@ -429,8 +432,14 @@ export default {
 
     if (url.pathname === '/cms-status') return await statusPage(env);
 
+    const kit = await handleKitRoom(request, env);
+    if (kit) return kit;
+
     const contact = await handleContactRequest(request, env);
     if (contact) return contact;
+
+    const hooks = await handleHooksRequest(request, env);
+    if (hooks) return hooks;
 
     const looks = await handleLooksRequest(request, env);
     if (looks) return looks;

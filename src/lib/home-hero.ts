@@ -37,6 +37,34 @@ export const HERO_ONCE_EXTRAS = [
   '/stories/nice-promenade-detail.jpg',
 ] as const;
 
+const HERO_SLIDE_LIMIT = 6;
+
+function uniqueExisting(paths: readonly (string | null | undefined)[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of paths) {
+    const photo = String(entry || '').trim();
+    if (!photo || seen.has(photo) || !mediaExists(photo)) continue;
+    seen.add(photo);
+    out.push(photo);
+  }
+  return out;
+}
+
+function parseCmsSlides(heroSlides: unknown): string[] {
+  if (!Array.isArray(heroSlides)) return [];
+  return uniqueExisting(
+    heroSlides.map((entry) => {
+      if (typeof entry === 'string') return entry.trim();
+      if (entry && typeof entry === 'object') {
+        const rec = entry as { slide?: string; image?: string; photo?: string };
+        return String(rec.slide || rec.image || rec.photo || '').trim();
+      }
+      return '';
+    }),
+  );
+}
+
 /** Drop photos the home dia already shows, plus the extra cup and portrait. */
 export function feedWithoutHeroRepeats<T extends { photo: string }>(
   items: readonly T[],
@@ -47,38 +75,42 @@ export function feedWithoutHeroRepeats<T extends { photo: string }>(
 }
 
 /**
- * Up to a few full-bleed hero slides for the home dia. CMS list first,
- * else the single hero photo, else the default three, else Now fallbacks.
+ * Rotate the dia so each calendar day opens on a different shot. Static
+ * builds freeze at deploy time; pass Date.now() from the client when needed.
+ */
+export function rotateSlidesForDay(
+  slides: readonly string[],
+  dayMs: number = Date.now(),
+): string[] {
+  if (slides.length < 2) return [...slides];
+  const offset = Math.floor(dayMs / 86_400_000) % slides.length;
+  return [...slides.slice(offset), ...slides.slice(0, offset)];
+}
+
+/**
+ * Up to a few full-bleed hero slides for the home dia.
+ * Newest Now photos lead so occasional fans catch fresh road shots;
+ * CMS Site → Home picks and soft defaults fill any gaps.
  */
 export function resolveHomeHeroSlides(
   settings: { heroPhoto?: string | null; heroSlides?: unknown } = {},
   fallbacks: readonly (string | null | undefined)[] = [],
 ): string[] {
-  const fromCms = Array.isArray(settings.heroSlides)
-    ? settings.heroSlides
-        .map((entry) => {
-          if (typeof entry === 'string') return entry.trim();
-          if (entry && typeof entry === 'object') {
-            const rec = entry as { slide?: string; image?: string; photo?: string };
-            return String(rec.slide || rec.image || rec.photo || '').trim();
-          }
-          return '';
-        })
-        .filter((photo) => photo && mediaExists(photo))
-    : [];
+  const fromCms = parseCmsSlides(settings.heroSlides);
+  const fromFeed = uniqueExisting(fallbacks);
+  const defaults = uniqueExisting(DEFAULT_HERO_SLIDES);
 
-  if (fromCms.length > 0) return [...new Set(fromCms)].slice(0, 6);
-
-  const single = resolveHomeHero(settings.heroPhoto, fallbacks);
-  const defaults = DEFAULT_HERO_SLIDES.filter((photo) => mediaExists(photo));
-
-  if (defaults.length >= 2) {
-    // Keep a custom single hero first when Henrik picked one that is not already in the dia.
-    if (single && !defaults.includes(single as (typeof DEFAULT_HERO_SLIDES)[number])) {
-      return [single, ...defaults].slice(0, 6);
+  const pool: string[] = [];
+  for (const source of [fromFeed, fromCms, defaults]) {
+    for (const photo of source) {
+      if (pool.includes(photo)) continue;
+      pool.push(photo);
+      if (pool.length >= HERO_SLIDE_LIMIT) return pool;
     }
-    return [...defaults];
   }
 
+  if (pool.length >= 2) return pool;
+
+  const single = resolveHomeHero(settings.heroPhoto, fallbacks);
   return single ? [single] : [];
 }

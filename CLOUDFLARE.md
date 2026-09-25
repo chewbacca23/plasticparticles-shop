@@ -2,7 +2,8 @@
 
 Live Worker: **`thenewsoulsearchersblogc`** — owns the domain, holds the OAuth secrets, and is the `name` in `wrangler.toml`. The GitHub repo is `thenewsoulsearchersblog` (no `c`); the two are deliberately different, so do not "fix" `wrangler.toml` to match the repo name.  
 Git source: **`chewbacca23/thenewsoulsearchersblog`** (`main`)  
-Admin: **https://thenewsoulsearchers.de/admin/** (not `www`)
+Admin: **https://thenewsoulsearchers.de/admin/** (not `www`)  
+Kit: **https://thenewsoulsearchers.de/kit** (public)
 
 ---
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { RIDE_PHOTO_DATE, collectFeed } from './feed.ts';
+import { collectFeed } from './feed.ts';
 
 const present = '/stories/nice-baie-des-anges.jpg';
 const presentTwo = '/stories/nice-promenade-detail.jpg';

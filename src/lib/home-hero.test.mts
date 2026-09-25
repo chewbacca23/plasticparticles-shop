@@ -5,6 +5,7 @@ import {
   feedWithoutHeroRepeats,
   resolveHomeHero,
   resolveHomeHeroSlides,
+  rotateSlidesForDay,
 } from './home-hero.ts';
 
 describe('resolveHomeHero', () => {
@@ -28,17 +29,20 @@ describe('resolveHomeHero', () => {
 });
 
 describe('resolveHomeHeroSlides', () => {
-  it('uses the CMS slide list when the files are there', () => {
+  it('leads with newest Now photos so fans see fresh road shots', () => {
     assert.deepEqual(
-      resolveHomeHeroSlides({
-        heroSlides: [
-          '/stories/img_6372.jpeg',
-          '/stories/img_5940.jpg',
-          '/stories/img_1442.jpeg',
-          '/stories/img_5956.jpg',
-        ],
-      }),
+      resolveHomeHeroSlides(
+        {
+          heroSlides: [
+            '/stories/img_6372.jpeg',
+            '/stories/img_5940.jpg',
+          ],
+        },
+        ['/stories/img_2878.jpg', '/stories/nice-baie-des-anges.jpg'],
+      ),
       [
+        '/stories/img_2878.jpg',
+        '/stories/nice-baie-des-anges.jpg',
         '/stories/img_6372.jpeg',
         '/stories/img_5940.jpg',
         '/stories/img_1442.jpeg',
@@ -53,13 +57,52 @@ describe('resolveHomeHeroSlides', () => {
     assert.deepEqual(slides, [...DEFAULT_HERO_SLIDES]);
   });
 
-  it('skips missing CMS entries', () => {
+  it('skips missing CMS entries and still fills from defaults', () => {
     assert.deepEqual(
       resolveHomeHeroSlides({
         heroSlides: ['/stories/nope.jpg', '/stories/img_5940.jpg'],
       }),
-      ['/stories/img_5940.jpg'],
+      [
+        '/stories/img_5940.jpg',
+        '/stories/img_6372.jpeg',
+        '/stories/img_1442.jpeg',
+        '/stories/img_5956.jpg',
+      ],
     );
+  });
+
+  it('caps the dia at six slides', () => {
+    const slides = resolveHomeHeroSlides(
+      {},
+      [
+        '/stories/img_2878.jpg',
+        '/stories/nice-baie-des-anges.jpg',
+        '/stories/nice-promenade-detail.jpg',
+        '/stories/img_6344.jpg',
+        '/stories/img_6125.jpg',
+        '/stories/img_6072.jpg',
+        '/stories/img_6400.jpeg',
+      ],
+    );
+    assert.equal(slides.length, 6);
+    assert.equal(slides[0], '/stories/img_2878.jpg');
+    assert.ok(!slides.includes('/stories/img_6400.jpeg'));
+  });
+});
+
+describe('rotateSlidesForDay', () => {
+  it('opens on a different slide each calendar day', () => {
+    const slides = ['a', 'b', 'c', 'd'];
+    const day0 = 0;
+    const day1 = 86_400_000;
+    const day2 = 86_400_000 * 2;
+    assert.deepEqual(rotateSlidesForDay(slides, day0), ['a', 'b', 'c', 'd']);
+    assert.deepEqual(rotateSlidesForDay(slides, day1), ['b', 'c', 'd', 'a']);
+    assert.deepEqual(rotateSlidesForDay(slides, day2), ['c', 'd', 'a', 'b']);
+  });
+
+  it('leaves a single slide alone', () => {
+    assert.deepEqual(rotateSlidesForDay(['only'], 86_400_000), ['only']);
   });
 });
 

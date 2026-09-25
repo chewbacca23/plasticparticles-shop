@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pieces = [
+  {
+    src: '/kit/jersey-white.png',
+    title: 'The white jersey',
+    note: 'Navy collar and cuffs, red zip, small crest on the chest. beinghunted. on the left sleeve, Bar Italia on the right, René Herse above the pockets.',
+  },
+  {
+    src: '/kit/bib-shorts.png',
+    title: 'Navy bib shorts',
+    note: 'Short legs, straps over the shoulders, red grippers. beinghunted. and René Herse on the thighs, Bar Italia under the little dog.',
+  },
+  {
+    src: '/kit/musette.png',
+    title: 'The musette',
+    note: 'A real feed bag. Thin cotton, open top, one long red strap. About 34 × 25 cm. If a laptop fits, it is wrong.',
+  },
+  {
+    src: '/kit/kit-on-bike.png',
+    title: 'On the bike',
+    note: 'White jersey, navy bibs, small musette. The three friends sit on sleeves, back, and thighs.',
+  },
+  {
+    src: '/kit/kit-flat.png',
+    title: 'The three pieces',
+    note: 'Jersey, bibs, musette. Crest stays quiet. The sponsors are the friends.',
+  },
+];
+---
+
+<BaseLayout
+  title="Soul Searchers Kit"
+  description="The Soul Searchers Kit. White jersey, navy bibs, a small musette."
+>
+  <section class="section">
+    <div class="site-shell kit">
+      <p class="eyebrow">Kit</p>
+      <h1 class="section-title">Soul Searchers Kit</h1>
+      <p class="section-lead">
+        White jersey, navy bib shorts, a small musette. Friends on the kit: beinghunted., Bar
+        Italia, René Herse. Sketches for now. If you want one, write Henrik with your size.
+      </p>
+
+      <ul class="kit-list">
+        {
+          pieces.map((piece) => (
+            <li class="kit-piece">
+              <figure>
+                <img
+                  src={piece.src}
+                  alt={piece.title}
+                  width="1200"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <figcaption>
+                  <h2>{piece.title}</h2>
+                  <p>{piece.note}</p>
+                </figcaption>
+              </figure>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="kit-mail">
+        Sizes and a yes:
+        <a href="mailto:henrik@thenewsoulsearchers.de?subject=Soul Searchers Kit">henrik@thenewsoulsearchers.de</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .kit {
+    max-width: 48rem;
+  }
+
+  .kit-list {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 2.25rem;
+  }
+
+  .kit-piece figure {
+    margin: 0;
+  }
+
+  .kit-piece img {
+    width: 100%;
+    height: auto;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    background: rgba(238, 243, 247, 0.04);
+  }
+
+  .kit-piece h2 {
+    margin: 0.9rem 0 0.35rem;
+    font-size: 1.35rem;
+  }
+
+  .kit-piece p {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.72);
+    max-width: 36rem;
+  }
+
+  .kit-mail {
+    margin: 2.5rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .kit-mail a {
+    color: var(--amber-hot);
+  }
+</style>
