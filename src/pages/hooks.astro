@@ -691,7 +691,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   })();
 </script>
 
-<style>
+<style is:global>
   .hooks {
     max-width: 64rem;
   }
@@ -722,12 +722,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: none !important;
   }
 
-  label {
+  .hooks label {
     display: grid;
     gap: 0.4rem;
   }
 
-  label span {
+  .hooks label span {
     font-size: 0.86rem;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -735,8 +735,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     color: rgba(215, 224, 232, 0.72);
   }
 
-  input,
-  textarea {
+  .hooks input,
+  .hooks textarea {
     width: 100%;
     padding: 0.85rem 1rem;
     border: 1px solid rgba(215, 224, 232, 0.18);
@@ -746,8 +746,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font: inherit;
   }
 
-  input:focus,
-  textarea:focus {
+  .hooks input:focus,
+  .hooks textarea:focus {
     outline: 2px solid rgba(212, 163, 90, 0.55);
     outline-offset: 2px;
     border-color: var(--amber);
