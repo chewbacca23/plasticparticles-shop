@@ -1,6 +1,6 @@
 /**
- * Small riders marketplace. Pick a name, open a stall, others offer back.
- * Every stall and offer sits on the same floor. Emails never appear on the page.
+ * Riders marketplace. Room for a thousand people. Ride together, or trade
+ * a tire, a stem, a saddle, a frame. Emails never appear on the page.
  *
  * GET  /api/hooks           public stalls + market + group dots (no emails)
  * POST /api/hooks           pin { name, place, note, email?, company }
@@ -24,8 +24,8 @@ const MAX_NAME = 80;
 const MAX_PLACE = 80;
 const MAX_NOTE = 400;
 const MAX_MESSAGE = 2000;
-const MAX_HOOKS = 80;
-const MAX_OFFERS = 40;
+export const MAX_HOOKS = 1000;
+export const MAX_OFFERS = 80;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_PIN = 3;
 const RATE_WRITE = 8;
@@ -190,6 +190,29 @@ function personWeight(person) {
   return person.stalls.length * 10 + person.neighborKeys.length * 3 + person.offers.length;
 }
 
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+
+function clampSpot(value, lo, hi) {
+  return Math.min(hi, Math.max(lo, value));
+}
+
+function packCrowd(clusters) {
+  const n = Math.max(1, clusters.length);
+  clusters.forEach((members, index) => {
+    const angle = index * GOLDEN;
+    const r = n === 1 ? 0 : 36 * Math.sqrt(index / n);
+    const cx = 50 + Math.cos(angle) * r * 1.12;
+    const cy = 52 + Math.sin(angle) * r * 0.72;
+    members.forEach((person, j) => {
+      const spin = j * GOLDEN + (nameHash(person.key) % 9) / 50;
+      const local = members.length === 1 ? 0 : Math.min(16, 2.2 + Math.sqrt(j) * 2.4);
+      person.x = Math.round(clampSpot(cx + Math.cos(spin) * local, 6, 94) * 10) / 10;
+      person.y = Math.round(clampSpot(cy + Math.sin(spin) * local * 0.82, 10, 90) * 10) / 10;
+      person.cluster = index;
+    });
+  });
+}
+
 export function groupFromHooks(hooks) {
   const peopleMap = new Map();
 
@@ -263,34 +286,7 @@ export function groupFromHooks(hooks) {
   });
   clusters.sort((a, b) => personWeight(b[0]) - personWeight(a[0]) || a[0].name.localeCompare(b[0].name));
 
-  const cols = Math.max(1, Math.ceil(Math.sqrt(clusters.length)));
-  const rows = Math.max(1, Math.ceil(clusters.length / cols));
-
-  clusters.forEach((members, index) => {
-    const col = index % cols;
-    const row = Math.floor(index / cols);
-    const cx = ((col + 0.5) / cols) * 78 + 11;
-    const cy = ((row + 0.5) / rows) * 70 + 16;
-    const jitter = nameHash(members[0].key);
-    const ox = ((jitter % 7) - 3) * 0.45;
-    const oy = (((jitter >> 3) % 7) - 3) * 0.4;
-    const host = members[0];
-    const rest = members.slice(1);
-    const reach = members.length === 1 ? 0 : members.length === 2 ? 8.5 : Math.min(12, 5 + rest.length * 1.6);
-
-    host.x = Math.round((cx + ox) * 10) / 10;
-    host.y = Math.round((cy + oy) * 10) / 10;
-    host.cluster = index;
-
-    rest.forEach((person, i) => {
-      const angle = -Math.PI / 2 + (i * (Math.PI * 2)) / rest.length + ((nameHash(person.key) % 20) - 10) / 70;
-      const x = host.x + Math.cos(angle) * reach;
-      const y = host.y + Math.sin(angle) * reach * 0.82;
-      person.x = Math.round(Math.min(92, Math.max(8, x)) * 10) / 10;
-      person.y = Math.round(Math.min(88, Math.max(12, y)) * 10) / 10;
-      person.cluster = index;
-    });
-  });
+  packCrowd(clusters);
 
   return { people, clusters: clusters.map((members) => members.map((person) => person.key)) };
 }
@@ -581,6 +577,8 @@ export async function handleHooksRequest(request, env) {
 
 export const testables = {
   HOOKS_KEY,
+  MAX_HOOKS,
+  MAX_OFFERS,
   publicHook,
   publicOffer,
   publicHookList,

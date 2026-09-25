@@ -4,22 +4,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="Marketplace"
-  description="The Soul Searchers marketplace. Each dot is a person. Click one and it opens."
+  description="The Soul Searchers marketplace. A crowd of riders — ride together, or trade a tire, a stem, a saddle, a frame."
 >
   <section class="section">
     <div class="site-shell hooks">
       <p class="eyebrow">Marketplace</p>
       <h1 class="section-title">The marketplace</h1>
       <p class="section-lead">
-        A small group page. Each dot is a person. The one standing next to them was drawn there.
-        Click a dot and it opens — stall, offer, the lot. Email stays off the page.
+        Room for a thousand. People who want to ride, and people with a tire, a stem, a saddle,
+        even a frame from time to time. Each dot is a person. Neighbours were drawn there. Click
+        one and it opens. Email stays off the page.
       </p>
 
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
 
       <section class="group" id="group" aria-label="The group">
-        <p class="group-kicker">The group</p>
+        <p class="group-kicker">The crowd <span id="group-count"></span></p>
         <div class="group-room" id="group-room">
           <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div class="group-dots" id="group-dots">
@@ -62,7 +63,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             rows="3"
             required
             maxlength="400"
-            placeholder="Spare room in Kreuzberg. Looking for the Madeleine. Old 28mm tires, take them."
+            placeholder="Sunday ride from Kreuzberg. 28mm tires, take them. A stem, a saddle, a frame from time to time."
           ></textarea>
         </label>
         <label>
@@ -90,6 +91,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var linksBox = document.getElementById('group-links');
     var openBox = document.getElementById('group-open');
     var roomBox = document.getElementById('group-room');
+    var countBox = document.getElementById('group-count');
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
@@ -365,15 +367,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     function renderGroup(payload) {
       if (!dotsBox) return;
       var people = peopleFrom(payload);
+      if (countBox) {
+        countBox.textContent = people.length
+          ? people.length === 1
+            ? '· 1 standing'
+            : '· ' + people.length + ' standing'
+          : '';
+      }
       if (!people.length) {
+        dotsBox.className = 'group-dots';
         dotsBox.innerHTML = '<p class="group-empty">No one standing here yet.</p>';
         if (linksBox) linksBox.innerHTML = '';
         renderOpen(null);
         return;
       }
-      var selected = people.find(function (person) {
-        return person.key === openKey;
+      dotsBox.className =
+        'group-dots' + (people.length > 200 ? ' is-pack' : people.length > 40 ? ' is-crowd' : '');
+      var byKey = {};
+      people.forEach(function (person) {
+        byKey[person.key] = person;
       });
+      var selected = byKey[openKey] || null;
       if (openKey && !selected) openKey = '';
       var near = {};
       if (selected) {
@@ -383,16 +397,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
       var lines = [];
       var seen = {};
+      var drawAll = people.length < 80;
       people.forEach(function (person) {
+        if (!drawAll && (!selected || (person.key !== selected.key && !near[person.key]))) return;
         (person.neighborKeys || []).forEach(function (key) {
           var edge = person.key < key ? person.key + '|' + key : key + '|' + person.key;
           if (seen[edge]) return;
           seen[edge] = true;
-          var other = people.find(function (row) {
-            return row.key === key;
-          });
+          var other = byKey[key];
           if (!other) return;
           var hot = selected && (person.key === selected.key || other.key === selected.key);
+          if (!drawAll && !hot) return;
           lines.push(
             '<line x1="' +
               person.x +
@@ -785,12 +800,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .group-room {
     position: relative;
-    min-height: 22rem;
+    min-height: 26rem;
     overflow: hidden;
     border: 1px solid rgba(215, 224, 232, 0.12);
     border-radius: 1.25rem;
     background:
-      radial-gradient(ellipse at 28% 36%, rgba(212, 163, 90, 0.07), transparent 46%),
+      radial-gradient(ellipse at 50% 52%, rgba(212, 163, 90, 0.09), transparent 42%),
+      radial-gradient(ellipse at 28% 36%, rgba(212, 163, 90, 0.05), transparent 46%),
       radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.04), transparent 42%),
       rgba(10, 16, 22, 0.72);
   }
@@ -1024,8 +1040,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   @media (min-width: 720px) {
     .group-room {
-      min-height: 26rem;
+      min-height: 34rem;
     }
+  }
+
+  .group-dots.is-crowd .dot {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .group-dots.is-crowd .dot-mark {
+    width: 0.48rem;
+    height: 0.48rem;
+    margin-top: 0.61rem;
+    box-shadow: 0 0 0 3px rgba(215, 224, 232, 0.08);
+  }
+
+  .group-dots.is-crowd .dot.is-host .dot-mark {
+    width: 0.58rem;
+    height: 0.58rem;
+    margin-top: 0.56rem;
+  }
+
+  .group-dots.is-pack .dot {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .group-dots.is-pack .dot-mark {
+    width: 0.34rem;
+    height: 0.34rem;
+    margin-top: 0.4rem;
+    box-shadow: 0 0 0 2px rgba(215, 224, 232, 0.07);
+  }
+
+  .group-dots.is-pack .dot.is-host .dot-mark {
+    width: 0.42rem;
+    height: 0.42rem;
+    margin-top: 0.36rem;
   }
 
   .market {

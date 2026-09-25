@@ -116,6 +116,26 @@ describe('hooks privacy', () => {
     assert.ok(ab < ac);
     assert.equal(groupFromHooks([{ id: 'h3', name: 'A', note: 'x', offers: [{ id: 'o2', name: 'a', note: 'self' }] }]).people.length, 1);
   });
+
+  it('packs a thousand people inside the room', () => {
+    const hooks = Array.from({ length: 1000 }, (_, i) => ({
+      id: `h${i}`,
+      name: `Rider${i}`,
+      place: 'Berlin',
+      note: i % 5 === 0 ? 'Old 28mm tires, take them.' : 'Looking for a Sunday ride.',
+      offers:
+        i > 0 && i % 6 === 0
+          ? [{ id: `o${i}`, name: `Rider${i - 1}`, note: 'I have a stem.' }]
+          : [],
+      at: '2026-09-25T00:00:00.000Z',
+    }));
+    const group = groupFromHooks(hooks);
+    assert.equal(group.people.length, 1000);
+    for (const person of group.people) {
+      assert.ok(person.x >= 6 && person.x <= 94);
+      assert.ok(person.y >= 10 && person.y <= 90);
+    }
+  });
 });
 
 describe('hooks pin', () => {
