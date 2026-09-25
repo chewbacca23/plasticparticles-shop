@@ -1,0 +1,1179 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Marketplace"
+  description="The Soul Searchers marketplace. Each dot is a person. Click one and it opens."
+>
+  <section class="section">
+    <div class="site-shell hooks">
+      <p class="eyebrow">Marketplace</p>
+      <h1 class="section-title">The marketplace</h1>
+      <p class="section-lead">
+        A small group page. Each dot is a person. The one standing next to them was drawn there.
+        Click a dot and it opens — stall, offer, the lot. Email stays off the page.
+      </p>
+
+      <p id="board-error" class="error" hidden></p>
+      <p id="board-hint" class="hint" hidden></p>
+
+      <section class="group" id="group" aria-label="The group">
+        <p class="group-kicker">The group</p>
+        <div class="group-room" id="group-room">
+          <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="group-dots" id="group-dots">
+            <p class="group-empty">No one standing here yet.</p>
+          </div>
+          <aside class="group-open" id="group-open" hidden></aside>
+        </div>
+      </section>
+
+      <p class="floor-kicker">The floor</p>
+      <ol id="hook-list" class="market">
+        <li class="empty">The market is empty. Open the first stall.</li>
+      </ol>
+
+      <div id="pin-success" class="success" hidden>
+        <h2>It’s on the floor</h2>
+        <p>If you left a mail, offers can also land in your inbox. Either way, they show here.</p>
+      </div>
+
+      <form id="pin-form" class="form" method="post" action="/api/hooks">
+        <h2 class="form-title">Open a stall</h2>
+        <label>
+          <span>A name — any name</span>
+          <input type="text" name="name" required maxlength="80" placeholder="The dog, Alex, nobody" />
+        </label>
+        <label>
+          <span>Where</span>
+          <input
+            type="text"
+            name="place"
+            required
+            maxlength="80"
+            placeholder="Berlin, Nice, a train, a climb"
+          />
+        </label>
+        <label>
+          <span>The offer</span>
+          <textarea
+            name="note"
+            rows="3"
+            required
+            maxlength="400"
+            placeholder="Spare room in Kreuzberg. Looking for the Madeleine. Old 28mm tires, take them."
+          ></textarea>
+        </label>
+        <label>
+          <span>Email — optional, stays off the page</span>
+          <input type="email" name="email" autocomplete="email" maxlength="200" />
+        </label>
+        <label class="hp" aria-hidden="true">
+          <span>Company</span>
+          <input type="text" name="company" tabindex="-1" autocomplete="off" />
+        </label>
+        <button class="btn btn-primary" type="submit">Put it on the floor</button>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    var list = document.getElementById('hook-list');
+    var pinForm = document.getElementById('pin-form');
+    var pinSuccess = document.getElementById('pin-success');
+    var errorBox = document.getElementById('board-error');
+    var hintBox = document.getElementById('board-hint');
+    var dotsBox = document.getElementById('group-dots');
+    var linksBox = document.getElementById('group-links');
+    var openBox = document.getElementById('group-open');
+    var roomBox = document.getElementById('group-room');
+    var canModerate = false;
+    var lastPayload = null;
+    var openKey = '';
+
+    function showError(text) {
+      if (!errorBox) return;
+      errorBox.textContent = text || 'Could not do that just now.';
+      errorBox.hidden = false;
+    }
+
+    function hideError() {
+      if (!errorBox) return;
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
+
+    function esc(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function flatten(hooks) {
+      var cards = [];
+      (hooks || []).forEach(function (hook) {
+        cards.push({
+          kind: 'stall',
+          id: hook.id,
+          hookId: hook.id,
+          name: hook.name,
+          place: hook.place,
+          note: hook.note,
+          at: hook.at,
+          offerCount: (hook.offers || []).length,
+        });
+        (hook.offers || []).forEach(function (offer) {
+          cards.push({
+            kind: 'offer',
+            id: offer.id,
+            hookId: hook.id,
+            name: offer.name,
+            place: hook.place,
+            forName: hook.name,
+            note: offer.note,
+            at: offer.at,
+          });
+        });
+      });
+      cards.sort(function (a, b) {
+        return String(b.at || '').localeCompare(String(a.at || ''));
+      });
+      return cards;
+    }
+
+    function cardsFrom(payload) {
+      if (payload && payload.market) return payload.market;
+      return flatten(payload && payload.hooks);
+    }
+
+    function writeForm(hookId) {
+      return (
+        '<form class="write-form" hidden data-for="' +
+        esc(hookId) +
+        '">' +
+        '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
+        '<label><span>Your offer</span><textarea name="message" rows="3" required maxlength="2000"></textarea></label>' +
+        '<label><span>Email — optional</span><input type="email" name="email" maxlength="200" /></label>' +
+        '<label class="hp" aria-hidden="true"><span>Company</span><input type="text" name="company" tabindex="-1" autocomplete="off" /></label>' +
+        '<button class="btn btn-primary" type="submit">Leave offer</button>' +
+        '</form>'
+      );
+    }
+
+    function renderCard(card) {
+      var isStall = card.kind !== 'offer';
+      var hookId = card.hookId || card.id;
+      var remove =
+        canModerate && isStall
+          ? '<button type="button" class="hook-remove" data-remove="' +
+            esc(hookId) +
+            '">Take down</button>'
+          : '';
+      var kind = isStall ? 'Stall' : 'Offer';
+      var forLine = !isStall && card.forName
+        ? '<p class="card-for">for ' + esc(card.forName) + '</p>'
+        : isStall && card.offerCount
+          ? '<p class="card-for">' +
+            card.offerCount +
+            (card.offerCount === 1 ? ' offer on the floor' : ' offers on the floor') +
+            '</p>'
+          : '';
+      return (
+        '<li class="card card-' +
+        (isStall ? 'stall' : 'offer') +
+        '" data-id="' +
+        esc(card.id) +
+        '">' +
+        '<p class="card-kind">' +
+        kind +
+        '</p>' +
+        '<p class="hook-place">' +
+        esc(card.place) +
+        '</p>' +
+        '<h2 class="hook-name">' +
+        esc(card.name) +
+        '</h2>' +
+        forLine +
+        '<p class="hook-note">' +
+        esc(card.note) +
+        '</p>' +
+        '<button type="button" class="btn btn-ghost hook-write" data-write="' +
+        esc(hookId) +
+        '">' +
+        (isStall ? 'Make an offer' : 'Offer on that stall') +
+        '</button>' +
+        remove +
+        writeForm(hookId) +
+        '</li>'
+      );
+    }
+
+    function peopleFrom(payload) {
+      if (payload && payload.group && payload.group.people) return payload.group.people;
+      var cards = cardsFrom(payload);
+      var byKey = {};
+      cards.forEach(function (card, index) {
+        var key = String(card.name || '').trim().toLowerCase();
+        if (!key) return;
+        if (!byKey[key]) {
+          byKey[key] = {
+            key: key,
+            name: card.name,
+            stalls: [],
+            offers: [],
+            neighborKeys: [],
+            x: 22 + (index * 17) % 60,
+            y: 28 + (index * 11) % 48,
+            cluster: 0,
+          };
+        }
+        if (card.kind === 'offer') {
+          byKey[key].offers.push({
+            id: card.id,
+            hookId: card.hookId,
+            forName: card.forName,
+            place: card.place,
+            note: card.note,
+            at: card.at,
+          });
+        } else {
+          byKey[key].stalls.push({
+            id: card.id,
+            place: card.place,
+            note: card.note,
+            at: card.at,
+            offerCount: card.offerCount,
+          });
+        }
+      });
+      return Object.keys(byKey).map(function (key) {
+        return byKey[key];
+      });
+    }
+
+    function writeTarget(person) {
+      if (person.stalls && person.stalls[0]) return person.stalls[0].id;
+      if (person.offers && person.offers[0]) return person.offers[0].hookId;
+      return '';
+    }
+
+    function floatOpen(person) {
+      if (!openBox || !person) return;
+      openBox.style.left = person.x + '%';
+      openBox.style.top = person.y + '%';
+      openBox.style.setProperty('--nudge-x', '0px');
+      openBox.style.setProperty('--nudge-y', '0px');
+      openBox.classList.toggle('is-left', Number(person.x) >= 55);
+      openBox.classList.toggle('is-below', Number(person.y) < 36);
+      requestAnimationFrame(function () {
+        if (!roomBox || openBox.hidden) return;
+        var room = roomBox.getBoundingClientRect();
+        var card = openBox.getBoundingClientRect();
+        var pad = 12;
+        var dx = 0;
+        var dy = 0;
+        if (card.right > room.right - pad) dx -= card.right - (room.right - pad);
+        if (card.left < room.left + pad) dx += room.left + pad - card.left;
+        if (card.bottom > room.bottom - pad) dy -= card.bottom - (room.bottom - pad);
+        if (card.top < room.top + pad) dy += room.top + pad - card.top;
+        openBox.style.setProperty('--nudge-x', dx + 'px');
+        openBox.style.setProperty('--nudge-y', dy + 'px');
+      });
+    }
+
+    function renderOpen(person) {
+      if (!openBox) return;
+      if (!person) {
+        openBox.hidden = true;
+        openBox.innerHTML = '';
+        openBox.removeAttribute('style');
+        openBox.classList.remove('is-left', 'is-below');
+        return;
+      }
+      var hookId = writeTarget(person);
+      var remove =
+        canModerate && person.stalls && person.stalls[0]
+          ? '<button type="button" class="hook-remove" data-remove="' +
+            esc(person.stalls[0].id) +
+            '">Take down</button>'
+          : '';
+      var stalls = (person.stalls || [])
+        .map(function (stall) {
+          return (
+            '<article class="open-bit">' +
+            '<p class="card-kind">Stall</p>' +
+            '<p class="hook-place">' +
+            esc(stall.place) +
+            '</p>' +
+            '<p class="hook-note">' +
+            esc(stall.note) +
+            '</p>' +
+            '</article>'
+          );
+        })
+        .join('');
+      var offers = (person.offers || [])
+        .map(function (offer) {
+          return (
+            '<article class="open-bit">' +
+            '<p class="card-kind">Offer</p>' +
+            '<p class="card-for">for ' +
+            esc(offer.forName) +
+            '</p>' +
+            '<p class="hook-note">' +
+            esc(offer.note) +
+            '</p>' +
+            '</article>'
+          );
+        })
+        .join('');
+      var near = (person.neighborKeys || [])
+        .map(function (key) {
+          var other = peopleFrom(lastPayload).find(function (row) {
+            return row.key === key;
+          });
+          return other ? '<button type="button" class="near-name" data-open="' + esc(other.key) + '">' + esc(other.name) + '</button>' : '';
+        })
+        .filter(Boolean)
+        .join('');
+      openBox.hidden = false;
+      openBox.innerHTML =
+        '<div class="open-head">' +
+        '<p class="card-kind">Opened</p>' +
+        '<h2 class="hook-name">' +
+        esc(person.name) +
+        '</h2>' +
+        (near ? '<p class="open-near">Standing with ' + near + '</p>' : '') +
+        '<button type="button" class="open-close" data-close="1">Close</button>' +
+        '</div>' +
+        (stalls || offers ? stalls + offers : '<p class="hook-note">Nothing pinned yet.</p>') +
+        (hookId
+          ? '<button type="button" class="btn btn-ghost hook-write" data-write="' +
+            esc(hookId) +
+            '">Make an offer</button>' +
+            remove +
+            writeForm(hookId)
+          : '');
+      floatOpen(person);
+    }
+
+    function renderGroup(payload) {
+      if (!dotsBox) return;
+      var people = peopleFrom(payload);
+      if (!people.length) {
+        dotsBox.innerHTML = '<p class="group-empty">No one standing here yet.</p>';
+        if (linksBox) linksBox.innerHTML = '';
+        renderOpen(null);
+        return;
+      }
+      var selected = people.find(function (person) {
+        return person.key === openKey;
+      });
+      if (openKey && !selected) openKey = '';
+      var near = {};
+      if (selected) {
+        (selected.neighborKeys || []).forEach(function (key) {
+          near[key] = true;
+        });
+      }
+      var lines = [];
+      var seen = {};
+      people.forEach(function (person) {
+        (person.neighborKeys || []).forEach(function (key) {
+          var edge = person.key < key ? person.key + '|' + key : key + '|' + person.key;
+          if (seen[edge]) return;
+          seen[edge] = true;
+          var other = people.find(function (row) {
+            return row.key === key;
+          });
+          if (!other) return;
+          var hot = selected && (person.key === selected.key || other.key === selected.key);
+          lines.push(
+            '<line x1="' +
+              person.x +
+              '" y1="' +
+              person.y +
+              '" x2="' +
+              other.x +
+              '" y2="' +
+              other.y +
+              '" class="' +
+              (hot ? 'is-hot' : '') +
+              '" />',
+          );
+        });
+      });
+      if (linksBox) linksBox.innerHTML = lines.join('');
+      dotsBox.innerHTML = people
+        .map(function (person) {
+          var host = person.stalls && person.stalls.length;
+          var state = person.key === openKey ? ' is-open' : near[person.key] ? ' is-near' : '';
+          return (
+            '<button type="button" class="dot' +
+            (host ? ' is-host' : '') +
+            state +
+            '" style="left:' +
+            person.x +
+            '%;top:' +
+            person.y +
+            '%" data-open="' +
+            esc(person.key) +
+            '" aria-pressed="' +
+            (person.key === openKey ? 'true' : 'false') +
+            '" aria-label="' +
+            esc(person.name) +
+            '">' +
+            '<span class="dot-mark"></span>' +
+            '<span class="dot-name">' +
+            esc(person.name) +
+            '</span>' +
+            '</button>'
+          );
+        })
+        .join('');
+      renderOpen(selected || null);
+    }
+
+    function render(payload) {
+      lastPayload = payload || lastPayload;
+      renderGroup(lastPayload);
+      if (!list) return;
+      var cards = cardsFrom(lastPayload);
+      if (!cards.length) {
+        list.innerHTML = '<li class="empty">The market is empty. Open the first stall.</li>';
+        return;
+      }
+      list.innerHTML = cards.map(renderCard).join('');
+    }
+
+    function openPerson(key) {
+      openKey = openKey === key ? '' : key;
+      render(lastPayload);
+    }
+
+    function load() {
+      fetch('/api/hooks', { headers: { accept: 'application/json' } })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          canModerate = !!(data && data.canModerate);
+          if (hintBox && data && data.mailWired === false) {
+            hintBox.hidden = false;
+            hintBox.textContent =
+              'Mail is not wired yet. Offers still show on the floor.';
+          }
+          render(data);
+        })
+        .catch(function () {
+          showError('The board could not load just now.');
+        });
+    }
+
+    if (pinForm) {
+      pinForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        hideError();
+        var data = new FormData(pinForm);
+        var button = pinForm.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        fetch('/api/hooks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: String(data.get('name') || '').trim(),
+            place: String(data.get('place') || '').trim(),
+            note: String(data.get('note') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            company: String(data.get('company') || '').trim(),
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { res: res, body: body };
+            });
+          })
+          .then(function (out) {
+            if (out.res.ok && out.body.ok) {
+              pinForm.hidden = true;
+              if (pinSuccess) pinSuccess.hidden = false;
+              render(out.body);
+              return;
+            }
+            showError((out.body && out.body.error) || 'Could not pin that just now.');
+          })
+          .catch(function () {
+            showError('Could not pin that just now.');
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
+    if (list) {
+      list.addEventListener('click', function (event) {
+        var write = event.target.closest('[data-write]');
+        if (write) {
+          var card = write.closest('.card');
+          var form = card && card.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
+          if (form) form.hidden = !form.hidden;
+          return;
+        }
+        var remove = event.target.closest('[data-remove]');
+        if (!remove) return;
+        hideError();
+        fetch('/api/hooks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', id: remove.getAttribute('data-remove') }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (body) {
+            if (body && body.ok) {
+              render(body);
+              return;
+            }
+            showError((body && body.error) || 'Could not take that down.');
+          })
+          .catch(function () {
+            showError('Could not take that down.');
+          });
+      });
+
+      list.addEventListener('submit', function (event) {
+        var form = event.target.closest('.write-form');
+        if (!form) return;
+        event.preventDefault();
+        hideError();
+        var data = new FormData(form);
+        var button = form.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        fetch('/api/hooks/write', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            hookId: form.getAttribute('data-for'),
+            name: String(data.get('name') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            message: String(data.get('message') || '').trim(),
+            company: String(data.get('company') || '').trim(),
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { res: res, body: body };
+            });
+          })
+          .then(function (out) {
+            if (out.res.ok && out.body.ok) {
+              form.hidden = true;
+              form.reset();
+              render(out.body);
+              return;
+            }
+            showError((out.body && out.body.error) || 'Could not leave that offer.');
+          })
+          .catch(function () {
+            showError('Could not leave that offer.');
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
+    var group = document.getElementById('group');
+    if (group) {
+      group.addEventListener('click', function (event) {
+        var close = event.target.closest('[data-close]');
+        if (close) {
+          openKey = '';
+          render(lastPayload);
+          return;
+        }
+        var pick = event.target.closest('[data-open]');
+        if (pick) {
+          openPerson(pick.getAttribute('data-open'));
+          return;
+        }
+        var write = event.target.closest('[data-write]');
+        if (write && openBox) {
+          var form = openBox.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
+          if (form) form.hidden = !form.hidden;
+          var opened = peopleFrom(lastPayload).find(function (row) {
+            return row.key === openKey;
+          });
+          if (opened) floatOpen(opened);
+          return;
+        }
+        var remove = event.target.closest('[data-remove]');
+        if (!remove) return;
+        hideError();
+        fetch('/api/hooks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', id: remove.getAttribute('data-remove') }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (body) {
+            if (body && body.ok) {
+              openKey = '';
+              render(body);
+              return;
+            }
+            showError((body && body.error) || 'Could not take that down.');
+          })
+          .catch(function () {
+            showError('Could not take that down.');
+          });
+      });
+
+      group.addEventListener('submit', function (event) {
+        var form = event.target.closest('.write-form');
+        if (!form) return;
+        event.preventDefault();
+        hideError();
+        var data = new FormData(form);
+        var button = form.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        fetch('/api/hooks/write', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            hookId: form.getAttribute('data-for'),
+            name: String(data.get('name') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            message: String(data.get('message') || '').trim(),
+            company: String(data.get('company') || '').trim(),
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { res: res, body: body };
+            });
+          })
+          .then(function (out) {
+            if (out.res.ok && out.body.ok) {
+              form.hidden = true;
+              form.reset();
+              render(out.body);
+              return;
+            }
+            showError((out.body && out.body.error) || 'Could not leave that offer.');
+          })
+          .catch(function () {
+            showError('Could not leave that offer.');
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && openKey) {
+        openKey = '';
+        render(lastPayload);
+      }
+    });
+
+    load();
+  })();
+</script>
+
+<style is:global>
+  .hooks {
+    max-width: 64rem;
+  }
+
+  .form,
+  .write-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .form {
+    max-width: 36rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .form-title {
+    margin: 0;
+    font-size: 1.45rem;
+  }
+
+  .form[hidden],
+  .write-form[hidden],
+  .success[hidden],
+  .error[hidden],
+  .hint[hidden] {
+    display: none !important;
+  }
+
+  .hooks label {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .hooks label span {
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .hooks input,
+  .hooks textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(215, 224, 232, 0.18);
+    border-radius: 0.85rem;
+    background: rgba(26, 36, 48, 0.7);
+    color: var(--paper);
+    font: inherit;
+  }
+
+  .hooks input:focus,
+  .hooks textarea:focus {
+    outline: 2px solid rgba(212, 163, 90, 0.55);
+    outline-offset: 2px;
+    border-color: var(--amber);
+  }
+
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .group {
+    margin: 2rem 0 0;
+  }
+
+  .group-kicker,
+  .floor-kicker {
+    margin: 0 0 0.7rem;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .floor-kicker {
+    margin: 2.4rem 0 0;
+  }
+
+  .group-room {
+    position: relative;
+    min-height: 22rem;
+    overflow: hidden;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(ellipse at 28% 36%, rgba(212, 163, 90, 0.07), transparent 46%),
+      radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.04), transparent 42%),
+      rgba(10, 16, 22, 0.72);
+  }
+
+  .group-links {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .group-links line {
+    stroke: rgba(215, 224, 232, 0.16);
+    stroke-width: 0.35;
+  }
+
+  .group-links line.is-hot {
+    stroke: rgba(212, 163, 90, 0.55);
+    stroke-width: 0.45;
+  }
+
+  .group-dots {
+    position: absolute;
+    inset: 0;
+  }
+
+  .group-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    color: rgba(215, 224, 232, 0.55);
+  }
+
+  .dot {
+    position: absolute;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+
+  .dot-mark {
+    display: block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin: 0.95rem auto 0;
+    border-radius: 50%;
+    background: rgba(215, 224, 232, 0.82);
+    box-shadow: 0 0 0 4px rgba(215, 224, 232, 0.08);
+  }
+
+  .dot.is-host .dot-mark {
+    width: 0.86rem;
+    height: 0.86rem;
+    margin-top: 0.87rem;
+    background: var(--amber);
+    box-shadow: 0 0 0 5px rgba(212, 163, 90, 0.14);
+  }
+
+  .dot.is-near .dot-mark {
+    box-shadow: 0 0 0 6px rgba(212, 163, 90, 0.22);
+  }
+
+  .dot.is-open .dot-mark {
+    transform: scale(1.28);
+    box-shadow: 0 0 0 7px rgba(212, 163, 90, 0.32);
+  }
+
+  .dot-name {
+    position: absolute;
+    left: 50%;
+    top: calc(100% - 0.15rem);
+    transform: translateX(-50%);
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .dot.is-open {
+    z-index: 5;
+  }
+
+  .dot:hover .dot-name,
+  .dot:focus-visible .dot-name,
+  .dot.is-near .dot-name {
+    opacity: 1;
+  }
+
+  .dot.is-open .dot-name {
+    opacity: 0;
+  }
+
+  .dot:focus-visible {
+    outline: none;
+  }
+
+  .dot:focus-visible .dot-mark {
+    outline: 2px solid rgba(212, 163, 90, 0.7);
+    outline-offset: 3px;
+  }
+
+  .group-open {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    top: 50%;
+    width: min(20.5rem, calc(100% - 1.5rem));
+    max-height: calc(100% - 1.5rem);
+    overflow: auto;
+    margin: 0;
+    padding: 1rem 1.1rem 1.1rem;
+    border: 1px solid rgba(212, 163, 90, 0.3);
+    border-radius: 1rem;
+    background: rgba(12, 18, 24, 0.94);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
+    --nudge-x: 0px;
+    --nudge-y: 0px;
+    transform: translate(1.15rem, -46%) translate(var(--nudge-x), var(--nudge-y));
+    animation: open-float 0.22s ease;
+  }
+
+  .group-open.is-left {
+    transform: translate(calc(-100% - 1.15rem), -46%) translate(var(--nudge-x), var(--nudge-y));
+  }
+
+  .group-open.is-below {
+    transform: translate(1.15rem, 1.15rem) translate(var(--nudge-x), var(--nudge-y));
+  }
+
+  .group-open.is-left.is-below {
+    transform: translate(calc(-100% - 1.15rem), 1.15rem) translate(var(--nudge-x), var(--nudge-y));
+  }
+
+  .group-open::before {
+    content: '';
+    position: absolute;
+    top: 1.45rem;
+    left: -0.34rem;
+    width: 0.68rem;
+    height: 0.68rem;
+    background: rgba(12, 18, 24, 0.94);
+    border-left: 1px solid rgba(212, 163, 90, 0.3);
+    border-bottom: 1px solid rgba(212, 163, 90, 0.3);
+    transform: rotate(45deg);
+  }
+
+  .group-open.is-left::before {
+    left: auto;
+    right: -0.34rem;
+    border-left: 0;
+    border-bottom: 0;
+    border-right: 1px solid rgba(212, 163, 90, 0.3);
+    border-top: 1px solid rgba(212, 163, 90, 0.3);
+  }
+
+  .group-open.is-below::before {
+    top: -0.34rem;
+    left: 1.35rem;
+    border-left: 1px solid rgba(212, 163, 90, 0.3);
+    border-bottom: 0;
+    border-top: 1px solid rgba(212, 163, 90, 0.3);
+  }
+
+  .group-open.is-left.is-below::before {
+    left: auto;
+    right: 1.35rem;
+    border-left: 0;
+    border-right: 1px solid rgba(212, 163, 90, 0.3);
+    border-top: 1px solid rgba(212, 163, 90, 0.3);
+  }
+
+  .group-open[hidden] {
+    display: none !important;
+  }
+
+  @keyframes open-float {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .open-head {
+    position: relative;
+    padding-right: 4.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .open-near {
+    margin: 0.35rem 0 0;
+    color: rgba(215, 224, 232, 0.7);
+    font-size: 0.92rem;
+  }
+
+  .near-name {
+    margin: 0 0.15rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--amber);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .open-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
+    background: none;
+    color: rgba(215, 224, 232, 0.62);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .open-bit {
+    margin: 0 0 0.85rem;
+  }
+
+  @media (min-width: 720px) {
+    .group-room {
+      min-height: 26rem;
+    }
+  }
+
+  .market {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 1.15rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 720px) {
+    .market {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1040px) {
+    .market {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .card {
+    padding: 1.15rem 1.2rem 1.25rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.55);
+    min-height: 100%;
+  }
+
+  .card-offer {
+    border-color: rgba(212, 163, 90, 0.22);
+    background: rgba(28, 24, 16, 0.55);
+  }
+
+  .card-kind {
+    margin: 0 0 0.55rem;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .card-for {
+    margin: 0.25rem 0 0;
+    color: var(--amber);
+    font-size: 0.88rem;
+  }
+
+  .hook-place {
+    margin: 0;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hook-name {
+    margin: 0.35rem 0 0;
+    font-size: 1.35rem;
+  }
+
+  .hook-note {
+    margin: 0.45rem 0 0.9rem;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .hook-sent {
+    margin: 0.85rem 0 0;
+    color: var(--amber-hot);
+  }
+
+  .offer-list {
+    margin: 0 0 0.9rem;
+    padding: 0.75rem 0 0;
+    list-style: none;
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .offer-name {
+    margin: 0;
+    color: var(--paper);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .offer-note {
+    margin: 0.2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .offer-empty {
+    margin: 0 0 0.85rem;
+    color: rgba(215, 224, 232, 0.5);
+    font-size: 0.92rem;
+  }
+
+  .write-form {
+    margin-top: 1rem;
+  }
+
+  .hook-remove {
+    margin-left: 0.6rem;
+    border: 0;
+    background: none;
+    color: rgba(215, 224, 232, 0.55);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .success {
+    margin: 1.5rem 0 0;
+    padding: 1.1rem 1.15rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    border-radius: 1rem;
+  }
+
+  .success h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.35rem;
+  }
+
+  .success p {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .error {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(220, 90, 90, 0.45);
+    border-radius: 0.85rem;
+    background: rgba(80, 24, 24, 0.35);
+    color: rgba(255, 220, 220, 0.92);
+  }
+
+  .hint {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.85rem;
+    color: rgba(215, 224, 232, 0.78);
+  }
+</style>

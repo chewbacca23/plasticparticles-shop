@@ -413,7 +413,7 @@ async function sendMail(env, { to, replyTo, subject, text, html, bcc }) {
 
 async function notifyHenrikPin(env, hook) {
   const to = resolveContactTo(env);
-  const subject = `Hooks · new pin · ${hook.name}`;
+    const subject = `Marketplace · new pin · ${hook.name}`;
   const text = [
     'Someone pinned themselves on the Soul Searchers board.',
     '',
@@ -422,7 +422,7 @@ async function notifyHenrikPin(env, hook) {
     `Note: ${hook.note}`,
     hook.email ? `Email (hidden on the site): ${hook.email}` : 'No email left.',
     '',
-    'https://thenewsoulsearchers.de/hooks',
+    'https://thenewsoulsearchers.de/marketplace',
   ].join('\n');
   await sendMail(env, {
     to,
@@ -441,7 +441,7 @@ async function deliverWrite(env, hook, fields) {
     fields.message,
     '',
     'Hit Reply to answer them. Your email was never on the public page.',
-    'https://thenewsoulsearchers.de/hooks',
+    'https://thenewsoulsearchers.de/marketplace',
   ].join('\n');
   await sendMail(env, {
     to: hook.email,

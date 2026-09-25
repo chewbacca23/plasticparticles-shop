@@ -9,6 +9,7 @@ export default defineConfig({
   compressHTML: true,
   redirects: {
     '/patches': '/shop',
+    '/hooks': '/marketplace',
   },
   integrations: [
     sitemap({
