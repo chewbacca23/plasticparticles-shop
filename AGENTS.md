@@ -22,7 +22,7 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 - Config / Impressum fields: `src/site.config.ts`
 - Routes: `/`, `/stories` (Rides), `/journal` (Ride notes), `/path` (How we ride), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
 - Kit: `/kit` (public)
-- Hooks: `/hooks` — riders pin a line and write each other by mail (emails stay off the page)
+- Hooks: `/hooks` — messageboard. Chosen name, public offers, optional hidden email
 
 ### Live domain
 

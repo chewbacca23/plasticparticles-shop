@@ -1,16 +1,17 @@
 /**
- * Small riders board. People pin a line. Others write them by mail.
- * Emails never appear on the page.
+ * Small riders messageboard. Pick a name, pin an offer, others offer back.
+ * Emails never appear on the page. Optional mail still goes to the inbox.
  *
- * GET  /api/hooks           public cards (no emails)
- * POST /api/hooks           pin yourself { name, place, note, email, company }
+ * GET  /api/hooks           public cards + offers (no emails)
+ * POST /api/hooks           pin { name, place, note, email?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
- * POST /api/hooks/write     { hookId, name, email, message, company }
+ * POST /api/hooks/write     offer { hookId, name, message, email?, company }
  */
 
 import {
   cleanEmail,
   cleanLine,
+  CONTACT_FROM,
   mailReady,
   resolveContactTo,
   resolveResendFrom,
@@ -24,6 +25,7 @@ const MAX_PLACE = 80;
 const MAX_NOTE = 400;
 const MAX_MESSAGE = 2000;
 const MAX_HOOKS = 80;
+const MAX_OFFERS = 40;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_PIN = 3;
 const RATE_WRITE = 8;
@@ -68,19 +70,31 @@ export function parseHookWrite(raw) {
 }
 
 export function validatePin(fields) {
-  if (!fields.name) return 'Please add your name.';
+  if (!fields.name) return 'Pick a name. Any name.';
   if (!fields.place) return 'Where do you ride, or where are you going?';
-  if (!fields.note) return 'A short line so someone knows who you are.';
-  if (!fields.email) return 'Please add a real email. It stays off the page.';
+  if (!fields.note) return 'What are you offering, or what do you need?';
   return '';
 }
 
 export function validateWrite(fields) {
-  if (!fields.hookId) return 'Missing rider.';
-  if (!fields.name) return 'Please add your name.';
-  if (!fields.email) return 'Please add a real email.';
-  if (!fields.message) return 'Please write a short note.';
+  if (!fields.hookId) return 'Missing pin.';
+  if (!fields.name) return 'Pick a name. Any name.';
+  if (!fields.message) return 'Write your offer.';
   return '';
+}
+
+export function publicOffer(offer) {
+  if (!offer || typeof offer !== 'object') return null;
+  const id = cleanLine(offer.id, 40);
+  const name = cleanLine(offer.name, MAX_NAME);
+  const note = cleanLine(offer.note || offer.message, MAX_MESSAGE);
+  if (!id || !name || !note) return null;
+  return {
+    id,
+    name,
+    note,
+    at: typeof offer.at === 'string' ? offer.at : '',
+  };
 }
 
 export function publicHook(hook) {
@@ -94,6 +108,7 @@ export function publicHook(hook) {
     place: cleanLine(hook.place, MAX_PLACE),
     note: cleanLine(hook.note, MAX_NOTE),
     at: typeof hook.at === 'string' ? hook.at : '',
+    offers: (Array.isArray(hook.offers) ? hook.offers : []).map(publicOffer).filter(Boolean),
   };
 }
 
@@ -235,13 +250,13 @@ async function notifyHenrikPin(env, hook) {
     `Name: ${hook.name}`,
     `Place: ${hook.place}`,
     `Note: ${hook.note}`,
-    `Email (hidden on the site): ${hook.email}`,
+    hook.email ? `Email (hidden on the site): ${hook.email}` : 'No email left.',
     '',
     'https://thenewsoulsearchers.de/hooks',
   ].join('\n');
   await sendMail(env, {
     to,
-    replyTo: hook.email,
+    replyTo: hook.email || CONTACT_FROM,
     subject,
     text,
     html: `<p>${esc(text).replace(/\n/g, '<br />')}</p>`,
@@ -322,19 +337,34 @@ export async function handleHooksRequest(request, env) {
     if (!(await underRateLimit(env, clientKey(request, 'write'), RATE_WRITE))) {
       return json({ error: 'Easy. Try again in a few minutes.' }, 429);
     }
-    const hook = (await readHooks(env)).find((row) => row.id === fields.hookId);
-    if (!hook || !cleanEmail(hook.email)) {
-      return json({ error: 'That rider is no longer on the board.' }, 404);
+    const hooks = await readHooks(env);
+    const index = hooks.findIndex((row) => row.id === fields.hookId);
+    if (index === -1) {
+      return json({ error: 'That pin is no longer on the board.' }, 404);
     }
+    const hook = hooks[index];
+    const offer = {
+      id: newHookId(),
+      name: fields.name,
+      note: fields.message,
+      email: fields.email,
+      at: new Date().toISOString(),
+    };
+    hook.offers = [...(Array.isArray(hook.offers) ? hook.offers : []), offer].slice(-MAX_OFFERS);
+    hooks[index] = hook;
     try {
-      await deliverWrite(env, hook, fields);
-    } catch (err) {
-      if (err.code === 'E_MAIL_NOT_CONFIGURED') {
-        return json({ error: 'Mail is not wired yet.', mailto: true }, 503);
-      }
-      return json({ error: 'Could not send that note just now.' }, 502);
+      await writeHooks(env, hooks);
+    } catch {
+      return json({ error: 'The board could not save that offer.' }, 503);
     }
-    return json({ ok: true });
+    if (cleanEmail(hook.email) && fields.email) {
+      try {
+        await deliverWrite(env, hook, fields);
+      } catch {
+        // The offer is on the board even if the inbox copy fails.
+      }
+    }
+    return json({ ok: true, hooks: publicHookList(hooks) });
   }
 
   const fields = parseHookPin(body);
@@ -351,6 +381,7 @@ export async function handleHooksRequest(request, env) {
     place: fields.place,
     note: fields.note,
     email: fields.email,
+    offers: [],
     at: new Date().toISOString(),
   };
   const hooks = [hook, ...(await readHooks(env))].slice(0, MAX_HOOKS);
@@ -370,6 +401,7 @@ export async function handleHooksRequest(request, env) {
 export const testables = {
   HOOKS_KEY,
   publicHook,
+  publicOffer,
   publicHookList,
   parseHookPin,
   parseHookWrite,

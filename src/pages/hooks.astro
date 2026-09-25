@@ -4,15 +4,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="Hooks"
-  description="A small board for like-minded cyclists. Pin yourself. Write a rider. Mail stays off the page."
+  description="A small messageboard for cyclists. Pick a name, pin an offer, offer back. Mail stays off the page."
 >
   <section class="section">
     <div class="site-shell hooks">
       <p class="eyebrow">Hooks</p>
-      <h1 class="section-title">Find a rider</h1>
+      <h1 class="section-title">The board</h1>
       <p class="section-lead">
-        A small board, not a network. Leave a line — where you ride, a climb, a coffee, a spare
-        sofa. Someone writes you through the site. Your email never sits on the page.
+        A messageboard, not a network. Pick a name — any name. Pin what you have, or what you need.
+        Someone else can leave an offer right under it, like a quiet eBay. Email is optional and
+        never sits on the page.
       </p>
 
       <p id="board-error" class="error" hidden></p>
@@ -23,15 +24,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </ol>
 
       <div id="pin-success" class="success" hidden>
-        <h2>You’re on the board</h2>
-        <p>Your mail stays hidden. If someone writes, it lands in your inbox. Reply from there.</p>
+        <h2>It’s on the board</h2>
+        <p>If you left a mail, offers can also land in your inbox. Either way, they show here.</p>
       </div>
 
       <form id="pin-form" class="form" method="post" action="/api/hooks">
-        <h2 class="form-title">Pin yourself</h2>
+        <h2 class="form-title">Pin an offer</h2>
         <label>
-          <span>Name</span>
-          <input type="text" name="name" required autocomplete="name" maxlength="80" />
+          <span>A name — any name</span>
+          <input type="text" name="name" required maxlength="80" placeholder="The dog, Alex, nobody" />
         </label>
         <label>
           <span>Where</span>
@@ -44,24 +45,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           />
         </label>
         <label>
-          <span>A line</span>
+          <span>The offer</span>
           <textarea
             name="note"
             rows="3"
             required
             maxlength="400"
-            placeholder="Coffee after the park. A spare room in Kreuzberg. Looking for the Madeleine."
+            placeholder="Spare room in Kreuzberg. Looking for the Madeleine. Old 28mm tires, take them."
           ></textarea>
         </label>
         <label>
-          <span>Email — stays off the page</span>
-          <input type="email" name="email" required autocomplete="email" maxlength="200" />
+          <span>Email — optional, stays off the page</span>
+          <input type="email" name="email" autocomplete="email" maxlength="200" />
         </label>
         <label class="hp" aria-hidden="true">
           <span>Company</span>
           <input type="text" name="company" tabindex="-1" autocomplete="off" />
         </label>
-        <button class="btn btn-primary" type="submit">Pin me</button>
+        <button class="btn btn-primary" type="submit">Pin it</button>
       </form>
     </div>
   </section>
@@ -99,7 +100,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     function render(hooks) {
       if (!list) return;
       if (!hooks || !hooks.length) {
-        list.innerHTML = '<li class="empty">The board is quiet. Be the first pin.</li>';
+        list.innerHTML = '<li class="empty">The board is quiet. Pin the first offer.</li>';
         return;
       }
       list.innerHTML = hooks
@@ -109,6 +110,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               esc(hook.id) +
               '">Take down</button>'
             : '';
+          var offers = (hook.offers || [])
+            .map(function (offer) {
+              return (
+                '<li class="offer">' +
+                '<p class="offer-name">' +
+                esc(offer.name) +
+                '</p>' +
+                '<p class="offer-note">' +
+                esc(offer.note) +
+                '</p>' +
+                '</li>'
+              );
+            })
+            .join('');
           return (
             '<li class="hook" data-id="' +
             esc(hook.id) +
@@ -122,18 +137,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             '<p class="hook-note">' +
             esc(hook.note) +
             '</p>' +
+            (offers
+              ? '<ol class="offer-list">' + offers + '</ol>'
+              : '<p class="offer-empty">No offers yet.</p>') +
             '<button type="button" class="btn btn-ghost hook-write" data-write="' +
             esc(hook.id) +
-            '">Write</button>' +
+            '">Make an offer</button>' +
             remove +
             '<form class="write-form" hidden data-for="' +
             esc(hook.id) +
             '">' +
-            '<label><span>Your name</span><input type="text" name="name" required maxlength="80" /></label>' +
-            '<label><span>Your email</span><input type="email" name="email" required maxlength="200" /></label>' +
-            '<label><span>Note</span><textarea name="message" rows="4" required maxlength="2000"></textarea></label>' +
+            '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
+            '<label><span>Your offer</span><textarea name="message" rows="3" required maxlength="2000"></textarea></label>' +
+            '<label><span>Email — optional</span><input type="email" name="email" maxlength="200" /></label>' +
             '<label class="hp" aria-hidden="true"><span>Company</span><input type="text" name="company" tabindex="-1" autocomplete="off" /></label>' +
-            '<button class="btn btn-primary" type="submit">Send</button>' +
+            '<button class="btn btn-primary" type="submit">Leave offer</button>' +
             '</form>' +
             '</li>'
           );
@@ -151,7 +169,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           if (hintBox && data && data.mailWired === false) {
             hintBox.hidden = false;
             hintBox.textContent =
-              'Mail is not wired yet, so notes cannot leave the site. Pins can still go up.';
+              'Mail is not wired yet. Offers still show on the board.';
           }
           render(data && data.hooks);
         })
@@ -190,10 +208,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               render(out.body.hooks);
               return;
             }
-            showError((out.body && out.body.error) || 'Could not pin you just now.');
+            showError((out.body && out.body.error) || 'Could not pin that just now.');
           })
           .catch(function () {
-            showError('Could not pin you just now.');
+            showError('Could not pin that just now.');
           })
           .finally(function () {
             if (button) button.disabled = false;
@@ -260,16 +278,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             if (out.res.ok && out.body.ok) {
               form.hidden = true;
               form.reset();
-              var thanks = document.createElement('p');
-              thanks.className = 'hook-sent';
-              thanks.textContent = 'Sent. If they want to ride, they will reply.';
-              form.parentNode.insertBefore(thanks, form);
+              render(out.body.hooks);
               return;
             }
-            showError((out.body && out.body.error) || 'Could not send that note.');
+            showError((out.body && out.body.error) || 'Could not leave that offer.');
           })
           .catch(function () {
-            showError('Could not send that note.');
+            showError('Could not leave that offer.');
           })
           .finally(function () {
             if (button) button.disabled = false;
@@ -387,6 +402,33 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .hook-sent {
     margin: 0.85rem 0 0;
     color: var(--amber-hot);
+  }
+
+  .offer-list {
+    margin: 0 0 0.9rem;
+    padding: 0.75rem 0 0;
+    list-style: none;
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .offer-name {
+    margin: 0;
+    color: var(--paper);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .offer-note {
+    margin: 0.2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .offer-empty {
+    margin: 0 0 0.85rem;
+    color: rgba(215, 224, 232, 0.5);
+    font-size: 0.92rem;
   }
 
   .write-form {

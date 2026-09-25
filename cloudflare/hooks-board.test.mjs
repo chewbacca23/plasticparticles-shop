@@ -64,7 +64,8 @@ describe('hooks pin', () => {
       email: 'alex@example.com',
     });
     assert.equal(validatePin(fields), '');
-    assert.equal(validatePin({ ...fields, email: '' }), 'Please add a real email. It stays off the page.');
+    assert.equal(validatePin({ ...fields, email: '' }), '');
+    assert.equal(validatePin({ ...fields, name: '' }), 'Pick a name. Any name.');
   });
 
   it('saves a pin and lists it without the mail', async () => {
@@ -120,7 +121,41 @@ describe('hooks pin', () => {
 
 describe('hooks write', () => {
   it('needs a note', () => {
-    assert.equal(validateWrite({ hookId: 'h1', name: 'A', email: 'a@b.co', message: '' }), 'Please write a short note.');
+    assert.equal(validateWrite({ hookId: 'h1', name: 'A', email: '', message: '' }), 'Write your offer.');
+    assert.equal(validateWrite({ hookId: 'h1', name: 'A', email: '', message: 'Coffee?' }), '');
+  });
+
+  it('pins a public offer on the board', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify([
+        {
+          id: 'h1',
+          name: 'Hanna',
+          place: 'Nice',
+          note: 'Col d’Èze before lunch.',
+          email: '',
+          offers: [],
+          at: '2026-09-24T00:00:00.000Z',
+        },
+      ]),
+    });
+    const res = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/write', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          hookId: 'h1',
+          name: 'The Dog',
+          message: 'I bring the coffee.',
+        }),
+      }),
+      { STATS: kv },
+    );
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.hooks[0].offers[0].name, 'The Dog');
+    assert.equal(body.hooks[0].offers[0].note, 'I bring the coffee.');
+    assert.equal(body.hooks[0].offers[0].email, undefined);
   });
 
   it('mails the hidden address and not the public list', async () => {
