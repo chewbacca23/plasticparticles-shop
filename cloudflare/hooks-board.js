@@ -1,8 +1,8 @@
 /**
- * Small riders messageboard. Pick a name, pin an offer, others offer back.
- * Emails never appear on the page. Optional mail still goes to the inbox.
+ * Small riders marketplace. Pick a name, open a stall, others offer back.
+ * Every stall and offer sits on the same floor. Emails never appear on the page.
  *
- * GET  /api/hooks           public cards + offers (no emails)
+ * GET  /api/hooks           public stalls + market cards (no emails)
  * POST /api/hooks           pin { name, place, note, email?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
  * POST /api/hooks/write     offer { hookId, name, message, email?, company }
@@ -116,6 +116,40 @@ export function publicHookList(hooks) {
   return (Array.isArray(hooks) ? hooks : [])
     .map(publicHook)
     .filter(Boolean);
+}
+
+function boardPayload(hooks) {
+  return { hooks: publicHookList(hooks), market: marketFromHooks(hooks) };
+}
+
+export function marketFromHooks(hooks) {
+  const cards = [];
+  for (const hook of publicHookList(hooks)) {
+    cards.push({
+      kind: 'stall',
+      id: hook.id,
+      hookId: hook.id,
+      name: hook.name,
+      place: hook.place,
+      note: hook.note,
+      at: hook.at,
+      offerCount: hook.offers.length,
+    });
+    for (const offer of hook.offers) {
+      cards.push({
+        kind: 'offer',
+        id: offer.id,
+        hookId: hook.id,
+        name: offer.name,
+        place: hook.place,
+        forName: hook.name,
+        note: offer.note,
+        at: offer.at,
+      });
+    }
+  }
+  cards.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+  return cards;
 }
 
 async function readHooks(env) {
@@ -309,7 +343,7 @@ export async function handleHooksRequest(request, env) {
       ok: true,
       mailWired: mailReady(env),
       canModerate: await requestHasLooksAccess(request, env),
-      hooks: publicHookList(hooks),
+      ...boardPayload(hooks),
     });
   }
 
@@ -326,7 +360,7 @@ export async function handleHooksRequest(request, env) {
     const id = cleanLine(body.id, 40);
     const hooks = (await readHooks(env)).filter((hook) => hook.id !== id);
     await writeHooks(env, hooks);
-    return json({ ok: true, hooks: publicHookList(hooks) });
+    return json({ ok: true, ...boardPayload(hooks) });
   }
 
   if (isHooksWritePath(url.pathname)) {
@@ -364,7 +398,7 @@ export async function handleHooksRequest(request, env) {
         // The offer is on the board even if the inbox copy fails.
       }
     }
-    return json({ ok: true, hooks: publicHookList(hooks) });
+    return json({ ok: true, ...boardPayload(hooks) });
   }
 
   const fields = parseHookPin(body);
@@ -395,7 +429,7 @@ export async function handleHooksRequest(request, env) {
   } catch {
     // The pin is up even if the quiet copy to Henrik fails.
   }
-  return json({ ok: true, hooks: publicHookList(hooks) });
+  return json({ ok: true, ...boardPayload(hooks) });
 }
 
 export const testables = {
@@ -403,6 +437,7 @@ export const testables = {
   publicHook,
   publicOffer,
   publicHookList,
+  marketFromHooks,
   parseHookPin,
   parseHookWrite,
   validatePin,

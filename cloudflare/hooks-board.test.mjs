@@ -5,6 +5,7 @@ import {
   isHooksApiPath,
   publicHook,
   publicHookList,
+  marketFromHooks,
   parseHookPin,
   validatePin,
   validateWrite,
@@ -53,6 +54,35 @@ describe('hooks privacy', () => {
     assert.doesNotMatch(JSON.stringify(card), /hidden@example.com/);
     assert.equal(publicHookList([{ name: '' }]).length, 0);
   });
+
+  it('lays every stall and offer on the same market floor', () => {
+    const market = marketFromHooks([
+      {
+        id: 'h1',
+        name: 'A',
+        place: 'Nice',
+        note: 'Col d’Èze.',
+        offers: [{ id: 'o1', name: 'B', note: 'I bring coffee.', at: '2026-09-25T10:00:00.000Z' }],
+        at: '2026-09-25T09:00:00.000Z',
+      },
+      {
+        id: 'h2',
+        name: 'C',
+        place: 'Berlin',
+        note: 'Spare sofa.',
+        offers: [],
+        at: '2026-09-25T11:00:00.000Z',
+      },
+    ]);
+    const names = market.map((card) => card.name);
+    assert.ok(names.includes('A'));
+    assert.ok(names.includes('B'));
+    assert.ok(names.includes('C'));
+    assert.equal(market[0].name, 'C');
+    const b = market.find((card) => card.name === 'B');
+    assert.equal(b.kind, 'offer');
+    assert.equal(b.forName, 'A');
+  });
 });
 
 describe('hooks pin', () => {
@@ -87,6 +117,8 @@ describe('hooks pin', () => {
     const body = await res.json();
     assert.equal(body.ok, true);
     assert.equal(body.hooks[0].name, 'Goetz');
+    assert.equal(body.market[0].kind, 'stall');
+    assert.equal(body.market[0].name, 'Goetz');
     assert.equal(body.hooks[0].email, undefined);
 
     const listed = await handleHooksRequest(
@@ -156,6 +188,8 @@ describe('hooks write', () => {
     assert.equal(body.hooks[0].offers[0].name, 'The Dog');
     assert.equal(body.hooks[0].offers[0].note, 'I bring the coffee.');
     assert.equal(body.hooks[0].offers[0].email, undefined);
+    assert.ok(body.market.some((card) => card.kind === 'stall' && card.name === 'Hanna'));
+    assert.ok(body.market.some((card) => card.kind === 'offer' && card.name === 'The Dog' && card.forName === 'Hanna'));
   });
 
   it('mails the hidden address and not the public list', async () => {

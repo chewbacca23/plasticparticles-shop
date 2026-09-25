@@ -4,32 +4,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="Hooks"
-  description="A small messageboard for cyclists. Pick a name, pin an offer, offer back. Mail stays off the page."
+  description="The Soul Searchers marketplace. Every stall on one floor — A, B, C, the lot."
 >
   <section class="section">
     <div class="site-shell hooks">
       <p class="eyebrow">Hooks</p>
-      <h1 class="section-title">The board</h1>
+      <h1 class="section-title">The marketplace</h1>
       <p class="section-lead">
-        A messageboard, not a network. Pick a name — any name. Pin what you have, or what you need.
-        Someone else can leave an offer right under it, like a quiet eBay. Email is optional and
-        never sits on the page.
+        The whole floor. A’s stall, B’s offer, C’s spare sofa. Browse the lot, then leave your own.
+        Pick any name. Email is optional and never sits on the page.
       </p>
 
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
 
-      <ol id="hook-list" class="hook-list">
-        <li class="empty">The board is quiet. Be the first pin.</li>
+      <ol id="hook-list" class="market">
+        <li class="empty">The market is empty. Open the first stall.</li>
       </ol>
 
       <div id="pin-success" class="success" hidden>
-        <h2>It’s on the board</h2>
+        <h2>It’s on the floor</h2>
         <p>If you left a mail, offers can also land in your inbox. Either way, they show here.</p>
       </div>
 
       <form id="pin-form" class="form" method="post" action="/api/hooks">
-        <h2 class="form-title">Pin an offer</h2>
+        <h2 class="form-title">Open a stall</h2>
         <label>
           <span>A name — any name</span>
           <input type="text" name="name" required maxlength="80" placeholder="The dog, Alex, nobody" />
@@ -62,7 +61,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <span>Company</span>
           <input type="text" name="company" tabindex="-1" autocomplete="off" />
         </label>
-        <button class="btn btn-primary" type="submit">Pin it</button>
+        <button class="btn btn-primary" type="submit">Put it on the floor</button>
       </form>
     </div>
   </section>
@@ -97,66 +96,113 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         .replace(/"/g, '&quot;');
     }
 
-    function render(hooks) {
+    function flatten(hooks) {
+      var cards = [];
+      (hooks || []).forEach(function (hook) {
+        cards.push({
+          kind: 'stall',
+          id: hook.id,
+          hookId: hook.id,
+          name: hook.name,
+          place: hook.place,
+          note: hook.note,
+          at: hook.at,
+          offerCount: (hook.offers || []).length,
+        });
+        (hook.offers || []).forEach(function (offer) {
+          cards.push({
+            kind: 'offer',
+            id: offer.id,
+            hookId: hook.id,
+            name: offer.name,
+            place: hook.place,
+            forName: hook.name,
+            note: offer.note,
+            at: offer.at,
+          });
+        });
+      });
+      cards.sort(function (a, b) {
+        return String(b.at || '').localeCompare(String(a.at || ''));
+      });
+      return cards;
+    }
+
+    function cardsFrom(payload) {
+      if (payload && payload.market) return payload.market;
+      return flatten(payload && payload.hooks);
+    }
+
+    function writeForm(hookId) {
+      return (
+        '<form class="write-form" hidden data-for="' +
+        esc(hookId) +
+        '">' +
+        '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
+        '<label><span>Your offer</span><textarea name="message" rows="3" required maxlength="2000"></textarea></label>' +
+        '<label><span>Email — optional</span><input type="email" name="email" maxlength="200" /></label>' +
+        '<label class="hp" aria-hidden="true"><span>Company</span><input type="text" name="company" tabindex="-1" autocomplete="off" /></label>' +
+        '<button class="btn btn-primary" type="submit">Leave offer</button>' +
+        '</form>'
+      );
+    }
+
+    function renderCard(card) {
+      var isStall = card.kind !== 'offer';
+      var hookId = card.hookId || card.id;
+      var remove =
+        canModerate && isStall
+          ? '<button type="button" class="hook-remove" data-remove="' +
+            esc(hookId) +
+            '">Take down</button>'
+          : '';
+      var kind = isStall ? 'Stall' : 'Offer';
+      var forLine = !isStall && card.forName
+        ? '<p class="card-for">for ' + esc(card.forName) + '</p>'
+        : isStall && card.offerCount
+          ? '<p class="card-for">' +
+            card.offerCount +
+            (card.offerCount === 1 ? ' offer on the floor' : ' offers on the floor') +
+            '</p>'
+          : '';
+      return (
+        '<li class="card card-' +
+        (isStall ? 'stall' : 'offer') +
+        '" data-id="' +
+        esc(card.id) +
+        '">' +
+        '<p class="card-kind">' +
+        kind +
+        '</p>' +
+        '<p class="hook-place">' +
+        esc(card.place) +
+        '</p>' +
+        '<h2 class="hook-name">' +
+        esc(card.name) +
+        '</h2>' +
+        forLine +
+        '<p class="hook-note">' +
+        esc(card.note) +
+        '</p>' +
+        '<button type="button" class="btn btn-ghost hook-write" data-write="' +
+        esc(hookId) +
+        '">' +
+        (isStall ? 'Make an offer' : 'Offer on that stall') +
+        '</button>' +
+        remove +
+        writeForm(hookId) +
+        '</li>'
+      );
+    }
+
+    function render(payload) {
       if (!list) return;
-      if (!hooks || !hooks.length) {
-        list.innerHTML = '<li class="empty">The board is quiet. Pin the first offer.</li>';
+      var cards = cardsFrom(payload);
+      if (!cards.length) {
+        list.innerHTML = '<li class="empty">The market is empty. Open the first stall.</li>';
         return;
       }
-      list.innerHTML = hooks
-        .map(function (hook) {
-          var remove = canModerate
-            ? '<button type="button" class="hook-remove" data-remove="' +
-              esc(hook.id) +
-              '">Take down</button>'
-            : '';
-          var offers = (hook.offers || [])
-            .map(function (offer) {
-              return (
-                '<li class="offer">' +
-                '<p class="offer-name">' +
-                esc(offer.name) +
-                '</p>' +
-                '<p class="offer-note">' +
-                esc(offer.note) +
-                '</p>' +
-                '</li>'
-              );
-            })
-            .join('');
-          return (
-            '<li class="hook" data-id="' +
-            esc(hook.id) +
-            '">' +
-            '<p class="hook-place">' +
-            esc(hook.place) +
-            '</p>' +
-            '<h2 class="hook-name">' +
-            esc(hook.name) +
-            '</h2>' +
-            '<p class="hook-note">' +
-            esc(hook.note) +
-            '</p>' +
-            (offers
-              ? '<ol class="offer-list">' + offers + '</ol>'
-              : '<p class="offer-empty">No offers yet.</p>') +
-            '<button type="button" class="btn btn-ghost hook-write" data-write="' +
-            esc(hook.id) +
-            '">Make an offer</button>' +
-            remove +
-            '<form class="write-form" hidden data-for="' +
-            esc(hook.id) +
-            '">' +
-            '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
-            '<label><span>Your offer</span><textarea name="message" rows="3" required maxlength="2000"></textarea></label>' +
-            '<label><span>Email — optional</span><input type="email" name="email" maxlength="200" /></label>' +
-            '<label class="hp" aria-hidden="true"><span>Company</span><input type="text" name="company" tabindex="-1" autocomplete="off" /></label>' +
-            '<button class="btn btn-primary" type="submit">Leave offer</button>' +
-            '</form>' +
-            '</li>'
-          );
-        })
-        .join('');
+      list.innerHTML = cards.map(renderCard).join('');
     }
 
     function load() {
@@ -169,9 +215,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           if (hintBox && data && data.mailWired === false) {
             hintBox.hidden = false;
             hintBox.textContent =
-              'Mail is not wired yet. Offers still show on the board.';
+              'Mail is not wired yet. Offers still show on the floor.';
           }
-          render(data && data.hooks);
+          render(data);
         })
         .catch(function () {
           showError('The board could not load just now.');
@@ -205,7 +251,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             if (out.res.ok && out.body.ok) {
               pinForm.hidden = true;
               if (pinSuccess) pinSuccess.hidden = false;
-              render(out.body.hooks);
+              render(out.body);
               return;
             }
             showError((out.body && out.body.error) || 'Could not pin that just now.');
@@ -223,7 +269,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       list.addEventListener('click', function (event) {
         var write = event.target.closest('[data-write]');
         if (write) {
-          var form = list.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
+          var card = write.closest('.card');
+          var form = card && card.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
           if (form) form.hidden = !form.hidden;
           return;
         }
@@ -240,7 +287,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           })
           .then(function (body) {
             if (body && body.ok) {
-              render(body.hooks);
+              render(body);
               return;
             }
             showError((body && body.error) || 'Could not take that down.');
@@ -278,7 +325,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             if (out.res.ok && out.body.ok) {
               form.hidden = true;
               form.reset();
-              render(out.body.hooks);
+              render(out.body);
               return;
             }
             showError((out.body && out.body.error) || 'Could not leave that offer.');
@@ -298,7 +345,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <style>
   .hooks {
-    max-width: 36rem;
+    max-width: 64rem;
   }
 
   .form,
@@ -308,6 +355,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .form {
+    max-width: 36rem;
     margin-top: 2.5rem;
     padding-top: 2rem;
     border-top: 1px solid rgba(215, 224, 232, 0.12);
@@ -365,19 +413,53 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     overflow: hidden;
   }
 
-  .hook-list {
+  .market {
     margin: 2rem 0 0;
     padding: 0;
     list-style: none;
     display: grid;
-    gap: 1.25rem;
+    gap: 1.15rem;
+    grid-template-columns: 1fr;
   }
 
-  .hook {
+  @media (min-width: 720px) {
+    .market {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1040px) {
+    .market {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .card {
     padding: 1.15rem 1.2rem 1.25rem;
     border: 1px solid rgba(215, 224, 232, 0.1);
     border-radius: 1rem;
     background: rgba(18, 26, 34, 0.55);
+    min-height: 100%;
+  }
+
+  .card-offer {
+    border-color: rgba(212, 163, 90, 0.22);
+    background: rgba(28, 24, 16, 0.55);
+  }
+
+  .card-kind {
+    margin: 0 0 0.55rem;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .card-for {
+    margin: 0.25rem 0 0;
+    color: var(--amber);
+    font-size: 0.88rem;
   }
 
   .hook-place {
@@ -446,6 +528,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .empty {
+    grid-column: 1 / -1;
     color: rgba(215, 224, 232, 0.72);
   }
 
