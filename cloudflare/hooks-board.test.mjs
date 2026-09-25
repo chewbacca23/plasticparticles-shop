@@ -6,6 +6,7 @@ import {
   publicHook,
   publicHookList,
   marketFromHooks,
+  groupFromHooks,
   parseHookPin,
   validatePin,
   validateWrite,
@@ -82,6 +83,38 @@ describe('hooks privacy', () => {
     const b = market.find((card) => card.name === 'B');
     assert.equal(b.kind, 'offer');
     assert.equal(b.forName, 'A');
+  });
+
+  it('stands people who offered next to the person they were drawn to', () => {
+    const group = groupFromHooks([
+      {
+        id: 'h1',
+        name: 'A',
+        place: 'Nice',
+        note: 'Col d’Èze.',
+        offers: [{ id: 'o1', name: 'B', note: 'I bring coffee.', at: '2026-09-25T10:00:00.000Z' }],
+        at: '2026-09-25T09:00:00.000Z',
+      },
+      {
+        id: 'h2',
+        name: 'C',
+        place: 'Berlin',
+        note: 'Spare sofa.',
+        offers: [],
+        at: '2026-09-25T11:00:00.000Z',
+      },
+    ]);
+    const a = group.people.find((person) => person.name === 'A');
+    const b = group.people.find((person) => person.name === 'B');
+    const c = group.people.find((person) => person.name === 'C');
+    assert.equal(group.people.length, 3);
+    assert.ok(a.neighborKeys.includes(b.key));
+    assert.equal(a.cluster, b.cluster);
+    assert.notEqual(a.cluster, c.cluster);
+    const ab = Math.hypot(a.x - b.x, a.y - b.y);
+    const ac = Math.hypot(a.x - c.x, a.y - c.y);
+    assert.ok(ab < ac);
+    assert.equal(groupFromHooks([{ id: 'h3', name: 'A', note: 'x', offers: [{ id: 'o2', name: 'a', note: 'self' }] }]).people.length, 1);
   });
 });
 

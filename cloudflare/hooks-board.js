@@ -2,7 +2,7 @@
  * Small riders marketplace. Pick a name, open a stall, others offer back.
  * Every stall and offer sits on the same floor. Emails never appear on the page.
  *
- * GET  /api/hooks           public stalls + market cards (no emails)
+ * GET  /api/hooks           public stalls + market + group dots (no emails)
  * POST /api/hooks           pin { name, place, note, email?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
  * POST /api/hooks/write     offer { hookId, name, message, email?, company }
@@ -119,7 +119,11 @@ export function publicHookList(hooks) {
 }
 
 function boardPayload(hooks) {
-  return { hooks: publicHookList(hooks), market: marketFromHooks(hooks) };
+  return {
+    hooks: publicHookList(hooks),
+    market: marketFromHooks(hooks),
+    group: groupFromHooks(hooks),
+  };
 }
 
 export function marketFromHooks(hooks) {
@@ -150,6 +154,138 @@ export function marketFromHooks(hooks) {
   }
   cards.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
   return cards;
+}
+
+export function personKey(name) {
+  return cleanLine(name, MAX_NAME).toLowerCase();
+}
+
+function nameHash(value) {
+  let hash = 2166136261;
+  const text = String(value || '');
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function findCluster(parent, key) {
+  let cursor = key;
+  while (parent.get(cursor) !== cursor) {
+    parent.set(cursor, parent.get(parent.get(cursor)));
+    cursor = parent.get(cursor);
+  }
+  return cursor;
+}
+
+function personWeight(person) {
+  return person.stalls.length * 10 + person.neighborKeys.length * 3 + person.offers.length;
+}
+
+export function groupFromHooks(hooks) {
+  const peopleMap = new Map();
+
+  function ensure(name) {
+    const key = personKey(name);
+    if (!key) return null;
+    if (!peopleMap.has(key)) {
+      peopleMap.set(key, {
+        key,
+        name: cleanLine(name, MAX_NAME),
+        stalls: [],
+        offers: [],
+        neighborKeys: [],
+      });
+    }
+    return peopleMap.get(key);
+  }
+
+  function link(a, b) {
+    if (!a || !b || a.key === b.key) return;
+    if (!a.neighborKeys.includes(b.key)) a.neighborKeys.push(b.key);
+    if (!b.neighborKeys.includes(a.key)) b.neighborKeys.push(a.key);
+  }
+
+  for (const hook of publicHookList(hooks)) {
+    const host = ensure(hook.name);
+    if (!host) continue;
+    host.stalls.push({
+      id: hook.id,
+      place: hook.place,
+      note: hook.note,
+      at: hook.at,
+      offerCount: hook.offers.length,
+    });
+    for (const offer of hook.offers) {
+      const guest = ensure(offer.name);
+      if (!guest) continue;
+      guest.offers.push({
+        id: offer.id,
+        hookId: hook.id,
+        forName: hook.name,
+        forKey: host.key,
+        place: hook.place,
+        note: offer.note,
+        at: offer.at,
+      });
+      link(host, guest);
+    }
+  }
+
+  const people = [...peopleMap.values()];
+  const parent = new Map(people.map((person) => [person.key, person.key]));
+  for (const person of people) {
+    for (const neighbor of person.neighborKeys) {
+      const a = findCluster(parent, person.key);
+      const b = findCluster(parent, neighbor);
+      if (a !== b) parent.set(b, a);
+    }
+  }
+
+  const buckets = new Map();
+  for (const person of people) {
+    const root = findCluster(parent, person.key);
+    if (!buckets.has(root)) buckets.set(root, []);
+    buckets.get(root).push(person);
+  }
+
+  const clusters = [...buckets.values()].map((members) => {
+    members.sort((a, b) => personWeight(b) - personWeight(a) || a.name.localeCompare(b.name));
+    return members;
+  });
+  clusters.sort((a, b) => personWeight(b[0]) - personWeight(a[0]) || a[0].name.localeCompare(b[0].name));
+
+  const cols = Math.max(1, Math.ceil(Math.sqrt(clusters.length)));
+  const rows = Math.max(1, Math.ceil(clusters.length / cols));
+
+  clusters.forEach((members, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    const cx = ((col + 0.5) / cols) * 78 + 11;
+    const cy = ((row + 0.5) / rows) * 70 + 16;
+    const jitter = nameHash(members[0].key);
+    const ox = ((jitter % 7) - 3) * 0.45;
+    const oy = (((jitter >> 3) % 7) - 3) * 0.4;
+    const host = members[0];
+    const rest = members.slice(1);
+    const reach = members.length === 1 ? 0 : members.length === 2 ? 8.5 : Math.min(12, 5 + rest.length * 1.6);
+
+    host.x = Math.round((cx + ox) * 10) / 10;
+    host.y = Math.round((cy + oy) * 10) / 10;
+    host.cluster = index;
+
+    rest.forEach((person, i) => {
+      const angle = -Math.PI / 2 + (i * (Math.PI * 2)) / rest.length + ((nameHash(person.key) % 20) - 10) / 70;
+      const x = host.x + Math.cos(angle) * reach;
+      const y = host.y + Math.sin(angle) * reach * 0.82;
+      person.x = Math.round(Math.min(92, Math.max(8, x)) * 10) / 10;
+      person.y = Math.round(Math.min(88, Math.max(12, y)) * 10) / 10;
+      person.cluster = index;
+    });
+  });
+
+  return { people, clusters: clusters.map((members) => members.map((person) => person.key)) };
 }
 
 async function readHooks(env) {
@@ -438,6 +574,8 @@ export const testables = {
   publicOffer,
   publicHookList,
   marketFromHooks,
+  groupFromHooks,
+  personKey,
   parseHookPin,
   parseHookWrite,
   validatePin,

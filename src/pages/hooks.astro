@@ -4,20 +4,32 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="Hooks"
-  description="The Soul Searchers marketplace. Every stall on one floor — A, B, C, the lot."
+  description="The Soul Searchers group. Each dot is a person. Click one and it opens."
 >
   <section class="section">
     <div class="site-shell hooks">
       <p class="eyebrow">Hooks</p>
       <h1 class="section-title">The marketplace</h1>
       <p class="section-lead">
-        The whole floor. A’s stall, B’s offer, C’s spare sofa. Browse the lot, then leave your own.
-        Pick any name. Email is optional and never sits on the page.
+        A small group page. Each dot is a person. The one standing next to them was drawn there.
+        Click a dot and it opens — stall, offer, the lot. Email stays off the page.
       </p>
 
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
 
+      <section class="group" id="group" aria-label="The group">
+        <p class="group-kicker">The group</p>
+        <div class="group-room" id="group-room">
+          <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="group-dots" id="group-dots">
+            <p class="group-empty">No one standing here yet.</p>
+          </div>
+        </div>
+        <aside class="group-open" id="group-open" hidden></aside>
+      </section>
+
+      <p class="floor-kicker">The floor</p>
       <ol id="hook-list" class="market">
         <li class="empty">The market is empty. Open the first stall.</li>
       </ol>
@@ -74,7 +86,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var pinSuccess = document.getElementById('pin-success');
     var errorBox = document.getElementById('board-error');
     var hintBox = document.getElementById('board-hint');
+    var dotsBox = document.getElementById('group-dots');
+    var linksBox = document.getElementById('group-links');
+    var openBox = document.getElementById('group-open');
     var canModerate = false;
+    var lastPayload = null;
+    var openKey = '';
 
     function showError(text) {
       if (!errorBox) return;
@@ -195,14 +212,220 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       );
     }
 
-    function render(payload) {
-      if (!list) return;
+    function peopleFrom(payload) {
+      if (payload && payload.group && payload.group.people) return payload.group.people;
       var cards = cardsFrom(payload);
+      var byKey = {};
+      cards.forEach(function (card, index) {
+        var key = String(card.name || '').trim().toLowerCase();
+        if (!key) return;
+        if (!byKey[key]) {
+          byKey[key] = {
+            key: key,
+            name: card.name,
+            stalls: [],
+            offers: [],
+            neighborKeys: [],
+            x: 22 + (index * 17) % 60,
+            y: 28 + (index * 11) % 48,
+            cluster: 0,
+          };
+        }
+        if (card.kind === 'offer') {
+          byKey[key].offers.push({
+            id: card.id,
+            hookId: card.hookId,
+            forName: card.forName,
+            place: card.place,
+            note: card.note,
+            at: card.at,
+          });
+        } else {
+          byKey[key].stalls.push({
+            id: card.id,
+            place: card.place,
+            note: card.note,
+            at: card.at,
+            offerCount: card.offerCount,
+          });
+        }
+      });
+      return Object.keys(byKey).map(function (key) {
+        return byKey[key];
+      });
+    }
+
+    function writeTarget(person) {
+      if (person.stalls && person.stalls[0]) return person.stalls[0].id;
+      if (person.offers && person.offers[0]) return person.offers[0].hookId;
+      return '';
+    }
+
+    function renderOpen(person) {
+      if (!openBox) return;
+      if (!person) {
+        openBox.hidden = true;
+        openBox.innerHTML = '';
+        return;
+      }
+      var hookId = writeTarget(person);
+      var remove =
+        canModerate && person.stalls && person.stalls[0]
+          ? '<button type="button" class="hook-remove" data-remove="' +
+            esc(person.stalls[0].id) +
+            '">Take down</button>'
+          : '';
+      var stalls = (person.stalls || [])
+        .map(function (stall) {
+          return (
+            '<article class="open-bit">' +
+            '<p class="card-kind">Stall</p>' +
+            '<p class="hook-place">' +
+            esc(stall.place) +
+            '</p>' +
+            '<p class="hook-note">' +
+            esc(stall.note) +
+            '</p>' +
+            '</article>'
+          );
+        })
+        .join('');
+      var offers = (person.offers || [])
+        .map(function (offer) {
+          return (
+            '<article class="open-bit">' +
+            '<p class="card-kind">Offer</p>' +
+            '<p class="card-for">for ' +
+            esc(offer.forName) +
+            '</p>' +
+            '<p class="hook-note">' +
+            esc(offer.note) +
+            '</p>' +
+            '</article>'
+          );
+        })
+        .join('');
+      var near = (person.neighborKeys || [])
+        .map(function (key) {
+          var other = peopleFrom(lastPayload).find(function (row) {
+            return row.key === key;
+          });
+          return other ? '<button type="button" class="near-name" data-open="' + esc(other.key) + '">' + esc(other.name) + '</button>' : '';
+        })
+        .filter(Boolean)
+        .join('');
+      openBox.hidden = false;
+      openBox.innerHTML =
+        '<div class="open-head">' +
+        '<p class="card-kind">Opened</p>' +
+        '<h2 class="hook-name">' +
+        esc(person.name) +
+        '</h2>' +
+        (near ? '<p class="open-near">Standing with ' + near + '</p>' : '') +
+        '<button type="button" class="open-close" data-close="1">Close</button>' +
+        '</div>' +
+        (stalls || offers ? stalls + offers : '<p class="hook-note">Nothing pinned yet.</p>') +
+        (hookId
+          ? '<button type="button" class="btn btn-ghost hook-write" data-write="' +
+            esc(hookId) +
+            '">Make an offer</button>' +
+            remove +
+            writeForm(hookId)
+          : '');
+    }
+
+    function renderGroup(payload) {
+      if (!dotsBox) return;
+      var people = peopleFrom(payload);
+      if (!people.length) {
+        dotsBox.innerHTML = '<p class="group-empty">No one standing here yet.</p>';
+        if (linksBox) linksBox.innerHTML = '';
+        renderOpen(null);
+        return;
+      }
+      var selected = people.find(function (person) {
+        return person.key === openKey;
+      });
+      if (openKey && !selected) openKey = '';
+      var near = {};
+      if (selected) {
+        (selected.neighborKeys || []).forEach(function (key) {
+          near[key] = true;
+        });
+      }
+      var lines = [];
+      var seen = {};
+      people.forEach(function (person) {
+        (person.neighborKeys || []).forEach(function (key) {
+          var edge = person.key < key ? person.key + '|' + key : key + '|' + person.key;
+          if (seen[edge]) return;
+          seen[edge] = true;
+          var other = people.find(function (row) {
+            return row.key === key;
+          });
+          if (!other) return;
+          var hot = selected && (person.key === selected.key || other.key === selected.key);
+          lines.push(
+            '<line x1="' +
+              person.x +
+              '" y1="' +
+              person.y +
+              '" x2="' +
+              other.x +
+              '" y2="' +
+              other.y +
+              '" class="' +
+              (hot ? 'is-hot' : '') +
+              '" />',
+          );
+        });
+      });
+      if (linksBox) linksBox.innerHTML = lines.join('');
+      dotsBox.innerHTML = people
+        .map(function (person) {
+          var host = person.stalls && person.stalls.length;
+          var state = person.key === openKey ? ' is-open' : near[person.key] ? ' is-near' : '';
+          return (
+            '<button type="button" class="dot' +
+            (host ? ' is-host' : '') +
+            state +
+            '" style="left:' +
+            person.x +
+            '%;top:' +
+            person.y +
+            '%" data-open="' +
+            esc(person.key) +
+            '" aria-pressed="' +
+            (person.key === openKey ? 'true' : 'false') +
+            '" aria-label="' +
+            esc(person.name) +
+            '">' +
+            '<span class="dot-mark"></span>' +
+            '<span class="dot-name">' +
+            esc(person.name) +
+            '</span>' +
+            '</button>'
+          );
+        })
+        .join('');
+      renderOpen(selected || null);
+    }
+
+    function render(payload) {
+      lastPayload = payload || lastPayload;
+      renderGroup(lastPayload);
+      if (!list) return;
+      var cards = cardsFrom(lastPayload);
       if (!cards.length) {
         list.innerHTML = '<li class="empty">The market is empty. Open the first stall.</li>';
         return;
       }
       list.innerHTML = cards.map(renderCard).join('');
+    }
+
+    function openPerson(key) {
+      openKey = openKey === key ? '' : key;
+      render(lastPayload);
     }
 
     function load() {
@@ -339,6 +562,99 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
     }
 
+    var group = document.getElementById('group');
+    if (group) {
+      group.addEventListener('click', function (event) {
+        var close = event.target.closest('[data-close]');
+        if (close) {
+          openKey = '';
+          render(lastPayload);
+          return;
+        }
+        var pick = event.target.closest('[data-open]');
+        if (pick) {
+          openPerson(pick.getAttribute('data-open'));
+          return;
+        }
+        var write = event.target.closest('[data-write]');
+        if (write && openBox) {
+          var form = openBox.querySelector('[data-for="' + write.getAttribute('data-write') + '"]');
+          if (form) form.hidden = !form.hidden;
+          return;
+        }
+        var remove = event.target.closest('[data-remove]');
+        if (!remove) return;
+        hideError();
+        fetch('/api/hooks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', id: remove.getAttribute('data-remove') }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (body) {
+            if (body && body.ok) {
+              openKey = '';
+              render(body);
+              return;
+            }
+            showError((body && body.error) || 'Could not take that down.');
+          })
+          .catch(function () {
+            showError('Could not take that down.');
+          });
+      });
+
+      group.addEventListener('submit', function (event) {
+        var form = event.target.closest('.write-form');
+        if (!form) return;
+        event.preventDefault();
+        hideError();
+        var data = new FormData(form);
+        var button = form.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        fetch('/api/hooks/write', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            hookId: form.getAttribute('data-for'),
+            name: String(data.get('name') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            message: String(data.get('message') || '').trim(),
+            company: String(data.get('company') || '').trim(),
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { res: res, body: body };
+            });
+          })
+          .then(function (out) {
+            if (out.res.ok && out.body.ok) {
+              form.hidden = true;
+              form.reset();
+              render(out.body);
+              return;
+            }
+            showError((out.body && out.body.error) || 'Could not leave that offer.');
+          })
+          .catch(function () {
+            showError('Could not leave that offer.');
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && openKey) {
+        openKey = '';
+        render(lastPayload);
+      }
+    });
+
     load();
   })();
 </script>
@@ -411,6 +727,191 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     width: 1px;
     height: 1px;
     overflow: hidden;
+  }
+
+  .group {
+    margin: 2rem 0 0;
+  }
+
+  .group-kicker,
+  .floor-kicker {
+    margin: 0 0 0.7rem;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .floor-kicker {
+    margin: 2.4rem 0 0;
+  }
+
+  .group-room {
+    position: relative;
+    min-height: 22rem;
+    overflow: hidden;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(ellipse at 28% 36%, rgba(212, 163, 90, 0.07), transparent 46%),
+      radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.04), transparent 42%),
+      rgba(10, 16, 22, 0.72);
+  }
+
+  .group-links {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .group-links line {
+    stroke: rgba(215, 224, 232, 0.16);
+    stroke-width: 0.35;
+  }
+
+  .group-links line.is-hot {
+    stroke: rgba(212, 163, 90, 0.55);
+    stroke-width: 0.45;
+  }
+
+  .group-dots {
+    position: absolute;
+    inset: 0;
+  }
+
+  .group-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    color: rgba(215, 224, 232, 0.55);
+  }
+
+  .dot {
+    position: absolute;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+
+  .dot-mark {
+    display: block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin: 0.95rem auto 0;
+    border-radius: 50%;
+    background: rgba(215, 224, 232, 0.82);
+    box-shadow: 0 0 0 4px rgba(215, 224, 232, 0.08);
+  }
+
+  .dot.is-host .dot-mark {
+    width: 0.86rem;
+    height: 0.86rem;
+    margin-top: 0.87rem;
+    background: var(--amber);
+    box-shadow: 0 0 0 5px rgba(212, 163, 90, 0.14);
+  }
+
+  .dot.is-near .dot-mark {
+    box-shadow: 0 0 0 6px rgba(212, 163, 90, 0.22);
+  }
+
+  .dot.is-open .dot-mark {
+    transform: scale(1.28);
+    box-shadow: 0 0 0 7px rgba(212, 163, 90, 0.32);
+  }
+
+  .dot-name {
+    position: absolute;
+    left: 50%;
+    top: calc(100% - 0.15rem);
+    transform: translateX(-50%);
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .dot:hover .dot-name,
+  .dot:focus-visible .dot-name,
+  .dot.is-open .dot-name,
+  .dot.is-near .dot-name {
+    opacity: 1;
+  }
+
+  .dot:focus-visible {
+    outline: none;
+  }
+
+  .dot:focus-visible .dot-mark {
+    outline: 2px solid rgba(212, 163, 90, 0.7);
+    outline-offset: 3px;
+  }
+
+  .group-open {
+    margin-top: 0.85rem;
+    padding: 1.15rem 1.2rem 1.25rem;
+    border: 1px solid rgba(212, 163, 90, 0.22);
+    border-radius: 1.1rem;
+    background: rgba(18, 26, 34, 0.72);
+  }
+
+  .group-open[hidden] {
+    display: none !important;
+  }
+
+  .open-head {
+    position: relative;
+    padding-right: 4.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .open-near {
+    margin: 0.35rem 0 0;
+    color: rgba(215, 224, 232, 0.7);
+    font-size: 0.92rem;
+  }
+
+  .near-name {
+    margin: 0 0.15rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--amber);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .open-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
+    background: none;
+    color: rgba(215, 224, 232, 0.62);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .open-bit {
+    margin: 0 0 0.85rem;
+  }
+
+  @media (min-width: 720px) {
+    .group-room {
+      min-height: 26rem;
+    }
   }
 
   .market {
