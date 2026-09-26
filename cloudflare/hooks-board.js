@@ -209,8 +209,7 @@ export function normalizePlace(value) {
 
 /**
  * Approximate borough / neighbourhood spots inside the real Berlin outline
- * (percent of the group-room, which matches the SVG aspect). Educated guess
- * from borough centroids — not cadastral, but no longer a kids’ drawing.
+ * (percent of the city map before the universe zoom). Educated centroids.
  */
 const BERLIN_SPOTS = [
   { keys: ['mitte', 'alex', 'alexanderplatz', 'hackescher'], x: 42, y: 43, spread: 4.5 },
@@ -237,11 +236,57 @@ const BERLIN_SPOTS = [
   { keys: ['weissensee', 'weißensee'], x: 56, y: 30, spread: 3.2 },
   { keys: ['friedenau'], x: 36, y: 66, spread: 2.8 },
   { keys: ['tiergarten'], x: 38, y: 48, spread: 3.2 },
-  // Generic Berlin — centre of the outline, looser scatter
   { keys: ['berlin', 'berlijn', 'berlino'], x: 48, y: 48, spread: 8, generic: true },
 ];
 
-const ELSEWHERE = { x: 94, y: 90, spread: 6 };
+/** Berlin stays the centre of the lil universe (map % before zoom). */
+export const BERLIN_MAP_CENTER = { x: 50, y: 48 };
+/** Half-size of the Berlin city map in those same units. */
+const BERLIN_MAP_HALF = 42;
+const BERLIN_LAT = 52.52;
+const BERLIN_LON = 13.405;
+
+/**
+ * Other places riders name — lat/lon so they land around Berlin by real direction.
+ * Unknown places still join the map on a soft outer ring (hash angle).
+ */
+const WORLD_PLACES = [
+  { keys: ['nice', 'nizza'], lat: 43.71, lon: 7.26 },
+  { keys: ['cannes'], lat: 43.55, lon: 7.02 },
+  { keys: ['monaco'], lat: 43.74, lon: 7.42 },
+  { keys: ['marseille'], lat: 43.3, lon: 5.37 },
+  { keys: ['lyon'], lat: 45.76, lon: 4.84 },
+  { keys: ['paris'], lat: 48.86, lon: 2.35 },
+  { keys: ['amsterdam'], lat: 52.37, lon: 4.9 },
+  { keys: ['rotterdam'], lat: 51.92, lon: 4.48 },
+  { keys: ['brugge', 'bruges'], lat: 51.21, lon: 3.22 },
+  { keys: ['brussels', 'bruxelles', 'brussel'], lat: 50.85, lon: 4.35 },
+  { keys: ['copenhagen', 'kopenhagen', 'kobenhavn'], lat: 55.68, lon: 12.57 },
+  { keys: ['stockholm'], lat: 59.33, lon: 18.07 },
+  { keys: ['oslo'], lat: 59.91, lon: 10.75 },
+  { keys: ['london'], lat: 51.51, lon: -0.13 },
+  { keys: ['edinburgh'], lat: 55.95, lon: -3.19 },
+  { keys: ['prague', 'praha'], lat: 50.08, lon: 14.44 },
+  { keys: ['vienna', 'wien'], lat: 48.21, lon: 16.37 },
+  { keys: ['munich', 'munchen', 'muenchen'], lat: 48.14, lon: 11.58 },
+  { keys: ['hamburg'], lat: 53.55, lon: 9.99 },
+  { keys: ['cologne', 'koln', 'koeln'], lat: 50.94, lon: 6.96 },
+  { keys: ['frankfurt'], lat: 50.11, lon: 8.68 },
+  { keys: ['leipzig'], lat: 51.34, lon: 12.37 },
+  { keys: ['dresden'], lat: 51.05, lon: 13.74 },
+  { keys: ['zurich', 'zurich', 'zuerich'], lat: 47.38, lon: 8.54 },
+  { keys: ['milan', 'milano'], lat: 45.46, lon: 9.19 },
+  { keys: ['rome', 'roma'], lat: 41.9, lon: 12.5 },
+  { keys: ['barcelona'], lat: 41.39, lon: 2.17 },
+  { keys: ['madrid'], lat: 40.42, lon: -3.7 },
+  { keys: ['lisbon', 'lisboa'], lat: 38.72, lon: -9.14 },
+  { keys: ['mallorca', 'palma', 'palma de mallorca'], lat: 39.57, lon: 2.65 },
+  { keys: ['girona'], lat: 41.98, lon: 2.82 },
+  { keys: ['porto'], lat: 41.15, lon: -8.61 },
+  { keys: ['new york', 'nyc', 'brooklyn'], lat: 40.71, lon: -74.01 },
+  { keys: ['tokyo'], lat: 35.68, lon: 139.69 },
+  { keys: ['sydney'], lat: -33.87, lon: 151.21 },
+];
 
 function matchBerlinSpot(folded) {
   if (!folded) return null;
@@ -260,6 +305,123 @@ function matchBerlinSpot(folded) {
   return generic;
 }
 
+function matchWorldPlace(folded) {
+  if (!folded) return null;
+  for (const place of WORLD_PLACES) {
+    for (const key of place.keys) {
+      if (folded === key || folded.includes(key)) return place;
+    }
+  }
+  return null;
+}
+
+function jitterAround(baseX, baseY, spread, key, index) {
+  const h = nameHash(`${key}|${baseX}|${baseY}|${index}`);
+  const spin = ((h % 628) / 100) + index * GOLDEN;
+  const jitter = spread * (0.35 + ((h >>> 8) % 100) / 100);
+  const ring = Math.min(spread * 1.15, 0.8 + Math.sqrt(index % 11) * 1.4);
+  const r = jitter * (0.55 + ring / (spread + 0.01));
+  return {
+    x: baseX + Math.cos(spin) * r,
+    y: baseY + Math.sin(spin) * r * 0.85,
+  };
+}
+
+/** Compress real km so Nice sits outside Berlin without flying off the page. */
+function worldRadiusFromKm(km) {
+  return 1.2 + Math.log1p(Math.max(0, km) / 90) * 0.92;
+}
+
+/**
+ * Map a free-text place into Berlin-centred world units (Berlin city ≈ ±1).
+ * Final room % comes from layoutUniverse — Berlin stays the centre.
+ */
+export function spotFromPlace(place, key = '', index = 0) {
+  const folded = normalizePlace(place);
+  const berlin = matchBerlinSpot(folded);
+  if (berlin) {
+    const local = jitterAround(berlin.x, berlin.y, berlin.spread, key, index);
+    return {
+      wx: (local.x - BERLIN_MAP_CENTER.x) / BERLIN_MAP_HALF,
+      wy: (local.y - BERLIN_MAP_CENTER.y) / BERLIN_MAP_HALF,
+      inBerlin: true,
+      placeLabel: folded || 'berlin',
+    };
+  }
+
+  const world = matchWorldPlace(folded);
+  const h = nameHash(`${key}|${folded}|${index}`);
+  let east;
+  let south;
+  let radius;
+  if (world) {
+    const eastKm = (world.lon - BERLIN_LON) * 85;
+    const northKm = (world.lat - BERLIN_LAT) * 111;
+    const km = Math.hypot(eastKm, northKm) || 1;
+    radius = worldRadiusFromKm(km);
+    east = eastKm / km;
+    south = -northKm / km;
+  } else {
+    // Unknown town still joins the universe on an outer ring — Berlin stays centre.
+    const angle = ((h % 6283) / 1000) + index * 0.37;
+    radius = 1.55 + ((h >>> 5) % 90) / 100;
+    east = Math.sin(angle);
+    south = Math.cos(angle);
+  }
+  const wobble = 0.08 + ((h >>> 11) % 40) / 400;
+  const spin = ((h % 500) / 100) + index * 0.2;
+  return {
+    wx: east * radius + Math.cos(spin) * wobble,
+    wy: south * radius + Math.sin(spin) * wobble * 0.85,
+    inBerlin: false,
+    placeLabel: folded || 'somewhere',
+  };
+}
+
+/**
+ * Fit everyone into the room with Berlin locked at the centre.
+ * When only Berlin is present, zoom ≈ 1. When Nice (or more) joins, the
+ * map pulls back so the new place appears — Berlin remains the heart.
+ */
+export function layoutUniverse(people) {
+  const list = Array.isArray(people) ? people : [];
+  let maxR = 1;
+  for (const person of list) {
+    const r = Math.hypot(Number(person.wx) || 0, Number(person.wy) || 0);
+    if (r > maxR) maxR = r;
+  }
+  maxR *= 1.12;
+  const zoom = 1 / maxR;
+  const half = BERLIN_MAP_HALF * zoom;
+
+  for (const person of list) {
+    const wx = Number(person.wx) || 0;
+    const wy = Number(person.wy) || 0;
+    person.x = Math.round(clampSpot(BERLIN_MAP_CENTER.x + wx * half, 4, 96) * 10) / 10;
+    person.y = Math.round(clampSpot(BERLIN_MAP_CENTER.y + wy * half, 6, 94) * 10) / 10;
+  }
+
+  return {
+    zoom: Math.round(zoom * 1000) / 1000,
+    center: { ...BERLIN_MAP_CENTER },
+  };
+}
+
+function packCrowd(clusters) {
+  const people = [];
+  clusters.forEach((members, index) => {
+    members.forEach((person, j) => {
+      const spot = spotFromPlace(personHomePlace(person), person.key, j);
+      person.wx = spot.wx;
+      person.wy = spot.wy;
+      person.inBerlin = spot.inBerlin;
+      person.cluster = index;
+      people.push(person);
+    });
+  });
+  return layoutUniverse(people);
+}
+
 export function personHomePlace(person) {
   if (!person || typeof person !== 'object') return '';
   for (const stall of Array.isArray(person.stalls) ? person.stalls : []) {
@@ -271,40 +433,6 @@ export function personHomePlace(person) {
     if (place) return place;
   }
   return '';
-}
-
-/**
- * Map a free-text place to approximate % coords in the group room.
- * Berlin / boroughs land inside the outline; everyone else soft-edges SE.
- */
-export function spotFromPlace(place, key = '', index = 0) {
-  const folded = normalizePlace(place);
-  const base = matchBerlinSpot(folded) || ELSEWHERE;
-  const inBerlin = base !== ELSEWHERE;
-  const h = nameHash(`${key}|${folded}|${index}`);
-  const spin = ((h % 628) / 100) + index * GOLDEN;
-  const jitter = base.spread * (0.35 + ((h >>> 8) % 100) / 100);
-  const ring = Math.min(base.spread * 1.15, 0.8 + Math.sqrt(index % 11) * (inBerlin ? 1.35 : 1.6));
-  const r = jitter * (0.55 + ring / (base.spread + 0.01));
-  const x = clampSpot(base.x + Math.cos(spin) * r, 5, 95);
-  const y = clampSpot(base.y + Math.sin(spin) * r * 0.85, 8, 92);
-  return {
-    x: Math.round(x * 10) / 10,
-    y: Math.round(y * 10) / 10,
-    inBerlin,
-  };
-}
-
-function packCrowd(clusters) {
-  clusters.forEach((members, index) => {
-    members.forEach((person, j) => {
-      const spot = spotFromPlace(personHomePlace(person), person.key, j);
-      person.x = spot.x;
-      person.y = spot.y;
-      person.inBerlin = spot.inBerlin;
-      person.cluster = index;
-    });
-  });
 }
 
 export function groupFromHooks(hooks) {
@@ -380,9 +508,13 @@ export function groupFromHooks(hooks) {
   });
   clusters.sort((a, b) => personWeight(b[0]) - personWeight(a[0]) || a[0].name.localeCompare(b[0].name));
 
-  packCrowd(clusters);
+  const universe = packCrowd(clusters);
 
-  return { people, clusters: clusters.map((members) => members.map((person) => person.key)) };
+  return {
+    people,
+    clusters: clusters.map((members) => members.map((person) => person.key)),
+    universe,
+  };
 }
 
 async function readHooks(env) {
@@ -682,6 +814,8 @@ export const testables = {
   personHomePlace,
   normalizePlace,
   spotFromPlace,
+  layoutUniverse,
+  BERLIN_MAP_CENTER,
   parseHookPin,
   parseHookWrite,
   validatePin,

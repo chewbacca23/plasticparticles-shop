@@ -140,7 +140,7 @@ describe('hooks privacy', () => {
     }
   });
 
-  it('lays Berlin boroughs roughly on a Berlin map, and elsewhere soft off the edge', () => {
+  it('lays Berlin boroughs on the city map, and grows the universe around Berlin', () => {
     assert.equal(normalizePlace('Kreuzberg'), 'kreuzberg');
     assert.equal(normalizePlace('Neukölln'), 'neukolln');
 
@@ -154,10 +154,24 @@ describe('hooks privacy', () => {
     assert.equal(berlin.inBerlin, true);
     assert.equal(nice.inBerlin, false);
 
-    // Kreuzberg sits south of Mitte on our soft map.
-    assert.ok(kreuz.y > mitte.y);
-    // Elsewhere lives toward the south-east corner.
-    assert.ok(nice.x > 70 && nice.y > 70);
+    // Kreuzberg sits south of Mitte in world units (wy grows south).
+    assert.ok(kreuz.wy > mitte.wy);
+    // Nice is outside the Berlin city radius (~1).
+    assert.ok(Math.hypot(nice.wx, nice.wy) > 1.15);
+    // Roughly south of Berlin (Côte d’Azur).
+    assert.ok(nice.wy > 0.4);
+
+    const onlyBerlin = groupFromHooks([
+      {
+        id: 'h0',
+        name: 'B',
+        place: 'Berlin',
+        note: 'Home.',
+        offers: [],
+        at: '2026-09-25T08:00:00.000Z',
+      },
+    ]);
+    assert.ok(onlyBerlin.universe.zoom >= 0.85);
 
     const group = groupFromHooks([
       {
@@ -191,9 +205,12 @@ describe('hooks privacy', () => {
     assert.equal(k.inBerlin, true);
     assert.equal(n.inBerlin, true);
     assert.equal(far.inBerlin, false);
+    assert.ok(group.universe.zoom < onlyBerlin.universe.zoom);
     const kn = Math.hypot(k.x - n.x, k.y - n.y);
     const kf = Math.hypot(k.x - far.x, k.y - far.y);
     assert.ok(kn < kf);
+    // Nice still south of Berlin riders after the zoom.
+    assert.ok(far.y > k.y);
   });
 });
 
