@@ -208,39 +208,40 @@ export function normalizePlace(value) {
 }
 
 /**
- * Approximate borough / neighbourhood spots inside a poetic Berlin outline
- * (percent of the group-room). Not GIS — “well, sort of.”
+ * Approximate borough / neighbourhood spots inside the real Berlin outline
+ * (percent of the group-room, which matches the SVG aspect). Educated guess
+ * from borough centroids — not cadastral, but no longer a kids’ drawing.
  */
 const BERLIN_SPOTS = [
-  { keys: ['mitte', 'alex', 'alexanderplatz', 'hackescher'], x: 48, y: 46, spread: 5 },
-  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann'], x: 50, y: 58, spread: 4.5 },
-  { keys: ['friedrichshain', 'fhain', 'boxhagener', 'warschauer'], x: 60, y: 48, spread: 4.5 },
-  { keys: ['prenzlauer', 'prenzlberg', 'prenzl', 'helmholtz', 'mauerpark'], x: 54, y: 36, spread: 4.5 },
-  { keys: ['neukolln', 'neukoelln', 'weserstr', 'weser'], x: 56, y: 68, spread: 4.5 },
-  { keys: ['charlottenburg', 'charlottenbg', 'kurfurstendamm', 'ku damm', 'kudamm', 'savignyplatz'], x: 28, y: 48, spread: 4.5 },
-  { keys: ['wedding', 'leopoldplatz'], x: 40, y: 34, spread: 4 },
-  { keys: ['moabit'], x: 38, y: 44, spread: 3.5 },
-  { keys: ['schoneberg', 'schoeneberg', 'nollendorf'], x: 40, y: 60, spread: 4 },
-  { keys: ['tempelhof', 'tempelhofer'], x: 48, y: 70, spread: 4 },
-  { keys: ['steglitz'], x: 34, y: 72, spread: 3.5 },
-  { keys: ['zehlendorf'], x: 22, y: 78, spread: 3.5 },
-  { keys: ['wilmersdorf'], x: 30, y: 58, spread: 3.5 },
-  { keys: ['pankow'], x: 52, y: 18, spread: 4 },
-  { keys: ['reinickendorf', 'tegel'], x: 32, y: 22, spread: 4 },
-  { keys: ['spandau'], x: 12, y: 42, spread: 4 },
-  { keys: ['lichtenberg'], x: 72, y: 42, spread: 4 },
-  { keys: ['marzahn'], x: 82, y: 32, spread: 3.5 },
-  { keys: ['hellersdorf'], x: 90, y: 36, spread: 3.5 },
-  { keys: ['treptow', 'treptower'], x: 68, y: 62, spread: 3.5 },
-  { keys: ['kopenick', 'koepenick'], x: 82, y: 72, spread: 4 },
-  { keys: ['weissensee', 'weißensee'], x: 62, y: 28, spread: 3.5 },
-  { keys: ['friedenau'], x: 36, y: 66, spread: 3 },
-  { keys: ['tiergarten'], x: 42, y: 50, spread: 3.5 },
+  { keys: ['mitte', 'alex', 'alexanderplatz', 'hackescher'], x: 42, y: 43, spread: 4.5 },
+  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann'], x: 49, y: 56, spread: 4 },
+  { keys: ['friedrichshain', 'fhain', 'boxhagener', 'warschauer'], x: 54, y: 46, spread: 4 },
+  { keys: ['prenzlauer', 'prenzlberg', 'prenzl', 'helmholtz', 'mauerpark'], x: 50, y: 34, spread: 4 },
+  { keys: ['neukolln', 'neukoelln', 'weserstr', 'weser'], x: 54, y: 68, spread: 4 },
+  { keys: ['charlottenburg', 'charlottenbg', 'kurfurstendamm', 'ku damm', 'kudamm', 'savignyplatz'], x: 27, y: 48, spread: 4 },
+  { keys: ['wedding', 'leopoldplatz'], x: 36, y: 36, spread: 3.5 },
+  { keys: ['moabit'], x: 34, y: 44, spread: 3.2 },
+  { keys: ['schoneberg', 'schoeneberg', 'nollendorf'], x: 40, y: 62, spread: 3.5 },
+  { keys: ['tempelhof', 'tempelhofer'], x: 46, y: 70, spread: 3.5 },
+  { keys: ['steglitz'], x: 28, y: 68, spread: 3.2 },
+  { keys: ['zehlendorf', 'wannsee'], x: 18, y: 78, spread: 3.2 },
+  { keys: ['wilmersdorf'], x: 30, y: 56, spread: 3.2 },
+  { keys: ['pankow'], x: 52, y: 22, spread: 3.5 },
+  { keys: ['reinickendorf', 'tegel'], x: 32, y: 26, spread: 3.5 },
+  { keys: ['spandau'], x: 16, y: 45, spread: 3.8 },
+  { keys: ['lichtenberg'], x: 62, y: 42, spread: 3.5 },
+  { keys: ['marzahn'], x: 72, y: 38, spread: 3.2 },
+  { keys: ['hellersdorf'], x: 78, y: 44, spread: 3.2 },
+  { keys: ['treptow', 'treptower'], x: 66, y: 62, spread: 3.2 },
+  { keys: ['kopenick', 'koepenick', 'mueggelsee', 'muggelsee'], x: 80, y: 76, spread: 3.8 },
+  { keys: ['weissensee', 'weißensee'], x: 56, y: 30, spread: 3.2 },
+  { keys: ['friedenau'], x: 36, y: 66, spread: 2.8 },
+  { keys: ['tiergarten'], x: 38, y: 48, spread: 3.2 },
   // Generic Berlin — centre of the outline, looser scatter
-  { keys: ['berlin', 'berlijn', 'berlino'], x: 50, y: 50, spread: 9, generic: true },
+  { keys: ['berlin', 'berlijn', 'berlino'], x: 48, y: 48, spread: 8, generic: true },
 ];
 
-const ELSEWHERE = { x: 88, y: 88, spread: 7 };
+const ELSEWHERE = { x: 94, y: 90, spread: 6 };
 
 function matchBerlinSpot(folded) {
   if (!folded) return null;
