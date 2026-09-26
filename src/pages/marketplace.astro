@@ -11,10 +11,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="eyebrow">Marketplace</p>
       <h1 class="section-title">The marketplace</h1>
       <p class="section-lead">
-        Room for a thousand. People who want to ride, and people with a tire, a stem, a saddle,
-        even a frame from time to time. Each dot is a person, roughly where they said they ride —
-        Kreuzberg near Kreuzberg, Nice off the edge. Neighbours who wrote each other still lean
-        close. Click one and it opens. Email stays off the page.
+        Room for a thousand. Berlin is the centre of this little universe — when someone from Nice,
+        Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
+        and it opens. Email stays off the page.
       </p>
 
       <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
@@ -34,7 +33,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p id="board-hint" class="hint" hidden></p>
 
       <section class="group" id="group" aria-label="The group">
-        <p class="group-kicker">The crowd · over Berlin <span id="group-count"></span></p>
+        <p class="group-kicker">The crowd · Berlin at the centre <span id="group-count"></span></p>
         <div class="group-room" id="group-room">
           <!-- Soft Berlin outline — dots sit roughly where people said they ride. -->
           <svg
@@ -418,6 +417,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (!dotsBox) return;
       var people = peopleFrom(payload);
       writeCrowdSign(people.length);
+      var outline = document.querySelector('.berlin-outline');
+      var universe = (payload && payload.group && payload.group.universe) || {};
+      var zoom = Number(universe.zoom);
+      if (!zoom || zoom <= 0) zoom = 1;
+      if (outline) {
+        var cx = (universe.center && universe.center.x) || 50;
+        var cy = (universe.center && universe.center.y) || 48;
+        outline.style.transformOrigin = cx + '% ' + cy + '%';
+        outline.style.transform = 'scale(' + zoom + ')';
+        outline.classList.toggle('is-zoomed', zoom < 0.97);
+      }
       if (countBox) {
         countBox.textContent = people.length
           ? people.length === 1
@@ -959,6 +969,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     height: 100%;
     pointer-events: none;
     opacity: 0.98;
+    transform-origin: 50% 48%;
+    transition: transform 0.55s ease;
+  }
+
+  .berlin-outline.is-zoomed {
+    opacity: 0.9;
   }
 
   .berlin-fill {
