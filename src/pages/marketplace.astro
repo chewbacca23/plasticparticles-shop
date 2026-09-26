@@ -21,7 +21,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <p class="crowd-sign-kicker">Already here</p>
         <p class="crowd-sign-count">
           <span id="crowd-sign-num">0</span>
-          <span class="crowd-sign-unit" id="crowd-sign-unit">standing</span>
+          <span class="crowd-sign-unit" id="crowd-sign-unit">riders standing</span>
         </p>
         <p class="crowd-sign-line" id="crowd-sign-line">
           Be the first. Open a stall, show up for a ride, make coming back a habit.
@@ -529,6 +529,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           render(data);
         })
         .catch(function () {
+          writeCrowdSign(0);
           showError('The board could not load just now.');
         });
     }
