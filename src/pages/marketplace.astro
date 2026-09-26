@@ -43,40 +43,46 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            <!-- Soft city silhouette (poetic, not cadastral) — Spandau west, Köpenick SE. -->
+            <!-- Soft city silhouette — Spandau west, Köpenick SE. Poetic, not cadastral. -->
             <path
               class="berlin-fill"
-              d="M22 38
-                C16 36 9 38 7 44
-                C5 50 9 55 15 54
-                C17 48 19 42 22 38
-                C20 30 24 20 34 17
-                C42 12 52 11 60 14
-                C70 12 80 16 86 24
-                C92 30 96 38 94 46
-                C93 54 88 58 84 60
-                C86 66 90 72 86 78
-                C80 86 68 88 58 86
-                C48 90 38 88 30 82
-                C24 76 20 66 18 56
-                C18 48 20 42 22 38 Z"
+              d="M24 40
+                L14 38
+                C8 37 4 40 3 45
+                C2 50 5 54 11 53
+                L18 50
+                L20 36
+                C22 24 30 16 42 14
+                C52 11 62 12 70 16
+                C78 14 86 18 90 26
+                C94 34 96 42 93 50
+                C91 56 86 58 82 58
+                L84 66
+                C86 72 90 78 86 84
+                C80 90 70 91 60 88
+                C50 92 40 90 32 84
+                C26 78 22 68 20 58
+                C19 50 21 44 24 40 Z"
             />
             <path
               class="berlin-stroke"
-              d="M22 38
-                C16 36 9 38 7 44
-                C5 50 9 55 15 54
-                C17 48 19 42 22 38
-                C20 30 24 20 34 17
-                C42 12 52 11 60 14
-                C70 12 80 16 86 24
-                C92 30 96 38 94 46
-                C93 54 88 58 84 60
-                C86 66 90 72 86 78
-                C80 86 68 88 58 86
-                C48 90 38 88 30 82
-                C24 76 20 66 18 56
-                C18 48 20 42 22 38 Z"
+              d="M24 40
+                L14 38
+                C8 37 4 40 3 45
+                C2 50 5 54 11 53
+                L18 50
+                L20 36
+                C22 24 30 16 42 14
+                C52 11 62 12 70 16
+                C78 14 86 18 90 26
+                C94 34 96 42 93 50
+                C91 56 86 58 82 58
+                L84 66
+                C86 72 90 78 86 84
+                C80 90 70 91 60 88
+                C50 92 40 90 32 84
+                C26 78 22 68 20 58
+                C19 50 21 44 24 40 Z"
             />
           </svg>
           <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
@@ -988,13 +994,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .berlin-fill {
-    fill: rgba(212, 163, 90, 0.045);
+    fill: rgba(212, 163, 90, 0.055);
   }
 
   .berlin-stroke {
     fill: none;
-    stroke: rgba(212, 163, 90, 0.28);
-    stroke-width: 0.55;
+    stroke: rgba(212, 163, 90, 0.38);
+    stroke-width: 0.65;
     stroke-linejoin: round;
   }
 
