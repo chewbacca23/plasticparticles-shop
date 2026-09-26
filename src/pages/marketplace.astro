@@ -12,8 +12,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h1 class="section-title">The marketplace</h1>
       <p class="section-lead">
         Room for a thousand. People who want to ride, and people with a tire, a stem, a saddle,
-        even a frame from time to time. Each dot is a person. Neighbours were drawn there. Click
-        one and it opens. Email stays off the page.
+        even a frame from time to time. Each dot is a person, roughly where they said they ride —
+        Kreuzberg near Kreuzberg, Nice off the edge. Neighbours who wrote each other still lean
+        close. Click one and it opens. Email stays off the page.
       </p>
 
       <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
@@ -33,8 +34,51 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p id="board-hint" class="hint" hidden></p>
 
       <section class="group" id="group" aria-label="The group">
-        <p class="group-kicker">The crowd <span id="group-count"></span></p>
+        <p class="group-kicker">The crowd · over Berlin <span id="group-count"></span></p>
         <div class="group-room" id="group-room">
+          <!-- Soft Berlin outline — dots sit roughly where people said they ride. -->
+          <svg
+            class="berlin-outline"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <!-- Soft city silhouette (poetic, not cadastral) — Spandau west, Köpenick SE. -->
+            <path
+              class="berlin-fill"
+              d="M22 38
+                C16 36 9 38 7 44
+                C5 50 9 55 15 54
+                C17 48 19 42 22 38
+                C20 30 24 20 34 17
+                C42 12 52 11 60 14
+                C70 12 80 16 86 24
+                C92 30 96 38 94 46
+                C93 54 88 58 84 60
+                C86 66 90 72 86 78
+                C80 86 68 88 58 86
+                C48 90 38 88 30 82
+                C24 76 20 66 18 56
+                C18 48 20 42 22 38 Z"
+            />
+            <path
+              class="berlin-stroke"
+              d="M22 38
+                C16 36 9 38 7 44
+                C5 50 9 55 15 54
+                C17 48 19 42 22 38
+                C20 30 24 20 34 17
+                C42 12 52 11 60 14
+                C70 12 80 16 86 24
+                C92 30 96 38 94 46
+                C93 54 88 58 84 60
+                C86 66 90 72 86 78
+                C80 86 68 88 58 86
+                C48 90 38 88 30 82
+                C24 76 20 66 18 56
+                C18 48 20 42 22 38 Z"
+            />
+          </svg>
           <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div class="group-dots" id="group-dots">
             <p class="group-empty">No one standing here yet.</p>
@@ -928,10 +972,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: 1px solid rgba(215, 224, 232, 0.12);
     border-radius: 1.25rem;
     background:
-      radial-gradient(ellipse at 50% 52%, rgba(212, 163, 90, 0.09), transparent 42%),
-      radial-gradient(ellipse at 28% 36%, rgba(212, 163, 90, 0.05), transparent 46%),
-      radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.04), transparent 42%),
+      radial-gradient(ellipse at 50% 48%, rgba(212, 163, 90, 0.07), transparent 46%),
+      radial-gradient(ellipse at 22% 40%, rgba(61, 107, 122, 0.08), transparent 42%),
+      radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.035), transparent 40%),
       rgba(10, 16, 22, 0.72);
+  }
+
+  .berlin-outline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.95;
+  }
+
+  .berlin-fill {
+    fill: rgba(212, 163, 90, 0.045);
+  }
+
+  .berlin-stroke {
+    fill: none;
+    stroke: rgba(212, 163, 90, 0.28);
+    stroke-width: 0.55;
+    stroke-linejoin: round;
   }
 
   .group-links {
