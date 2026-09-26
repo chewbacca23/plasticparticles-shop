@@ -12,8 +12,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h1 class="section-title">The marketplace</h1>
       <p class="section-lead">
         Room for a thousand. People who want to ride, and people with a tire, a stem, a saddle,
-        even a frame from time to time. Each dot is a person. Neighbours were drawn there. Click
-        one and it opens. Email stays off the page.
+        even a frame from time to time. Each dot is a person, roughly where they said they ride —
+        Kreuzberg near Kreuzberg, Nice off the edge. Neighbours who wrote each other still lean
+        close. Click one and it opens. Email stays off the page.
       </p>
 
       <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
@@ -33,8 +34,57 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p id="board-hint" class="hint" hidden></p>
 
       <section class="group" id="group" aria-label="The group">
-        <p class="group-kicker">The crowd <span id="group-count"></span></p>
+        <p class="group-kicker">The crowd · over Berlin <span id="group-count"></span></p>
         <div class="group-room" id="group-room">
+          <!-- Soft Berlin outline — dots sit roughly where people said they ride. -->
+          <svg
+            class="berlin-outline"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <!-- Soft city silhouette — Spandau west, Köpenick SE. Poetic, not cadastral. -->
+            <path
+              class="berlin-fill"
+              d="M24 40
+                L14 38
+                C8 37 4 40 3 45
+                C2 50 5 54 11 53
+                L18 50
+                L20 36
+                C22 24 30 16 42 14
+                C52 11 62 12 70 16
+                C78 14 86 18 90 26
+                C94 34 96 42 93 50
+                C91 56 86 58 82 58
+                L84 66
+                C86 72 90 78 86 84
+                C80 90 70 91 60 88
+                C50 92 40 90 32 84
+                C26 78 22 68 20 58
+                C19 50 21 44 24 40 Z"
+            />
+            <path
+              class="berlin-stroke"
+              d="M24 40
+                L14 38
+                C8 37 4 40 3 45
+                C2 50 5 54 11 53
+                L18 50
+                L20 36
+                C22 24 30 16 42 14
+                C52 11 62 12 70 16
+                C78 14 86 18 90 26
+                C94 34 96 42 93 50
+                C91 56 86 58 82 58
+                L84 66
+                C86 72 90 78 86 84
+                C80 90 70 91 60 88
+                C50 92 40 90 32 84
+                C26 78 22 68 20 58
+                C19 50 21 44 24 40 Z"
+            />
+          </svg>
           <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div class="group-dots" id="group-dots">
             <p class="group-empty">No one standing here yet.</p>
@@ -931,10 +981,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: 1px solid rgba(215, 224, 232, 0.12);
     border-radius: 1.25rem;
     background:
-      radial-gradient(ellipse at 50% 52%, rgba(212, 163, 90, 0.09), transparent 42%),
-      radial-gradient(ellipse at 28% 36%, rgba(212, 163, 90, 0.05), transparent 46%),
-      radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.04), transparent 42%),
+      radial-gradient(ellipse at 50% 48%, rgba(212, 163, 90, 0.07), transparent 46%),
+      radial-gradient(ellipse at 22% 40%, rgba(61, 107, 122, 0.08), transparent 42%),
+      radial-gradient(ellipse at 78% 68%, rgba(215, 224, 232, 0.035), transparent 40%),
       rgba(10, 16, 22, 0.72);
+  }
+
+  .berlin-outline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.95;
+  }
+
+  .berlin-fill {
+    fill: rgba(212, 163, 90, 0.055);
+  }
+
+  .berlin-stroke {
+    fill: none;
+    stroke: rgba(212, 163, 90, 0.38);
+    stroke-width: 0.65;
+    stroke-linejoin: round;
   }
 
   .group-links {

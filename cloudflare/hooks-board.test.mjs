@@ -7,6 +7,8 @@ import {
   publicHookList,
   marketFromHooks,
   groupFromHooks,
+  normalizePlace,
+  spotFromPlace,
   parseHookPin,
   validatePin,
   validateWrite,
@@ -132,9 +134,66 @@ describe('hooks privacy', () => {
     const group = groupFromHooks(hooks);
     assert.equal(group.people.length, 1000);
     for (const person of group.people) {
-      assert.ok(person.x >= 6 && person.x <= 94);
-      assert.ok(person.y >= 10 && person.y <= 90);
+      assert.ok(person.x >= 5 && person.x <= 95);
+      assert.ok(person.y >= 8 && person.y <= 92);
+      assert.equal(person.inBerlin, true);
     }
+  });
+
+  it('lays Berlin boroughs roughly on a Berlin map, and elsewhere soft off the edge', () => {
+    assert.equal(normalizePlace('Kreuzberg'), 'kreuzberg');
+    assert.equal(normalizePlace('Neukölln'), 'neukolln');
+
+    const kreuz = spotFromPlace('Kreuzberg', 'a', 0);
+    const mitte = spotFromPlace('Mitte', 'b', 0);
+    const nice = spotFromPlace('Nice', 'c', 0);
+    const berlin = spotFromPlace('Berlin', 'd', 0);
+
+    assert.equal(kreuz.inBerlin, true);
+    assert.equal(mitte.inBerlin, true);
+    assert.equal(berlin.inBerlin, true);
+    assert.equal(nice.inBerlin, false);
+
+    // Kreuzberg sits south of Mitte on our soft map.
+    assert.ok(kreuz.y > mitte.y);
+    // Elsewhere lives toward the south-east corner.
+    assert.ok(nice.x > 70 && nice.y > 70);
+
+    const group = groupFromHooks([
+      {
+        id: 'h1',
+        name: 'K',
+        place: 'Kreuzberg',
+        note: 'Sunday from Görli.',
+        offers: [],
+        at: '2026-09-25T09:00:00.000Z',
+      },
+      {
+        id: 'h2',
+        name: 'N',
+        place: 'Neukölln',
+        note: 'Spare stem.',
+        offers: [],
+        at: '2026-09-25T10:00:00.000Z',
+      },
+      {
+        id: 'h3',
+        name: 'Far',
+        place: 'Nice',
+        note: 'Col d’Èze.',
+        offers: [],
+        at: '2026-09-25T11:00:00.000Z',
+      },
+    ]);
+    const k = group.people.find((person) => person.name === 'K');
+    const n = group.people.find((person) => person.name === 'N');
+    const far = group.people.find((person) => person.name === 'Far');
+    assert.equal(k.inBerlin, true);
+    assert.equal(n.inBerlin, true);
+    assert.equal(far.inBerlin, false);
+    const kn = Math.hypot(k.x - n.x, k.y - n.y);
+    const kf = Math.hypot(k.x - far.x, k.y - far.y);
+    assert.ok(kn < kf);
   });
 });
 

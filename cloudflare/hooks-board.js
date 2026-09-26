@@ -196,18 +196,111 @@ function clampSpot(value, lo, hi) {
   return Math.min(hi, Math.max(lo, value));
 }
 
+/** Soft fold for free-text places — accents off, letters only. */
+export function normalizePlace(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Approximate borough / neighbourhood spots inside a poetic Berlin outline
+ * (percent of the group-room). Not GIS — “well, sort of.”
+ */
+const BERLIN_SPOTS = [
+  { keys: ['mitte', 'alex', 'alexanderplatz', 'hackescher'], x: 48, y: 46, spread: 5 },
+  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann'], x: 50, y: 58, spread: 4.5 },
+  { keys: ['friedrichshain', 'fhain', 'boxhagener', 'warschauer'], x: 60, y: 48, spread: 4.5 },
+  { keys: ['prenzlauer', 'prenzlberg', 'prenzl', 'helmholtz', 'mauerpark'], x: 54, y: 36, spread: 4.5 },
+  { keys: ['neukolln', 'neukoelln', 'weserstr', 'weser'], x: 56, y: 68, spread: 4.5 },
+  { keys: ['charlottenburg', 'charlottenbg', 'kurfurstendamm', 'ku damm', 'kudamm', 'savignyplatz'], x: 28, y: 48, spread: 4.5 },
+  { keys: ['wedding', 'leopoldplatz'], x: 40, y: 34, spread: 4 },
+  { keys: ['moabit'], x: 38, y: 44, spread: 3.5 },
+  { keys: ['schoneberg', 'schoeneberg', 'nollendorf'], x: 40, y: 60, spread: 4 },
+  { keys: ['tempelhof', 'tempelhofer'], x: 48, y: 70, spread: 4 },
+  { keys: ['steglitz'], x: 34, y: 72, spread: 3.5 },
+  { keys: ['zehlendorf'], x: 22, y: 78, spread: 3.5 },
+  { keys: ['wilmersdorf'], x: 30, y: 58, spread: 3.5 },
+  { keys: ['pankow'], x: 52, y: 18, spread: 4 },
+  { keys: ['reinickendorf', 'tegel'], x: 32, y: 22, spread: 4 },
+  { keys: ['spandau'], x: 12, y: 42, spread: 4 },
+  { keys: ['lichtenberg'], x: 72, y: 42, spread: 4 },
+  { keys: ['marzahn'], x: 82, y: 32, spread: 3.5 },
+  { keys: ['hellersdorf'], x: 90, y: 36, spread: 3.5 },
+  { keys: ['treptow', 'treptower'], x: 68, y: 62, spread: 3.5 },
+  { keys: ['kopenick', 'koepenick'], x: 82, y: 72, spread: 4 },
+  { keys: ['weissensee', 'weißensee'], x: 62, y: 28, spread: 3.5 },
+  { keys: ['friedenau'], x: 36, y: 66, spread: 3 },
+  { keys: ['tiergarten'], x: 42, y: 50, spread: 3.5 },
+  // Generic Berlin — centre of the outline, looser scatter
+  { keys: ['berlin', 'berlijn', 'berlino'], x: 50, y: 50, spread: 9, generic: true },
+];
+
+const ELSEWHERE = { x: 88, y: 88, spread: 7 };
+
+function matchBerlinSpot(folded) {
+  if (!folded) return null;
+  let generic = null;
+  for (const spot of BERLIN_SPOTS) {
+    for (const key of spot.keys) {
+      if (folded === key || folded.includes(key)) {
+        if (spot.generic) {
+          generic = spot;
+          break;
+        }
+        return spot;
+      }
+    }
+  }
+  return generic;
+}
+
+export function personHomePlace(person) {
+  if (!person || typeof person !== 'object') return '';
+  for (const stall of Array.isArray(person.stalls) ? person.stalls : []) {
+    const place = cleanLine(stall?.place, MAX_PLACE);
+    if (place) return place;
+  }
+  for (const offer of Array.isArray(person.offers) ? person.offers : []) {
+    const place = cleanLine(offer?.place, MAX_PLACE);
+    if (place) return place;
+  }
+  return '';
+}
+
+/**
+ * Map a free-text place to approximate % coords in the group room.
+ * Berlin / boroughs land inside the outline; everyone else soft-edges SE.
+ */
+export function spotFromPlace(place, key = '', index = 0) {
+  const folded = normalizePlace(place);
+  const base = matchBerlinSpot(folded) || ELSEWHERE;
+  const inBerlin = base !== ELSEWHERE;
+  const h = nameHash(`${key}|${folded}|${index}`);
+  const spin = ((h % 628) / 100) + index * GOLDEN;
+  const jitter = base.spread * (0.35 + ((h >>> 8) % 100) / 100);
+  const ring = Math.min(base.spread * 1.15, 0.8 + Math.sqrt(index % 11) * (inBerlin ? 1.35 : 1.6));
+  const r = jitter * (0.55 + ring / (base.spread + 0.01));
+  const x = clampSpot(base.x + Math.cos(spin) * r, 5, 95);
+  const y = clampSpot(base.y + Math.sin(spin) * r * 0.85, 8, 92);
+  return {
+    x: Math.round(x * 10) / 10,
+    y: Math.round(y * 10) / 10,
+    inBerlin,
+  };
+}
+
 function packCrowd(clusters) {
-  const n = Math.max(1, clusters.length);
   clusters.forEach((members, index) => {
-    const angle = index * GOLDEN;
-    const r = n === 1 ? 0 : 36 * Math.sqrt(index / n);
-    const cx = 50 + Math.cos(angle) * r * 1.12;
-    const cy = 52 + Math.sin(angle) * r * 0.72;
     members.forEach((person, j) => {
-      const spin = j * GOLDEN + (nameHash(person.key) % 9) / 50;
-      const local = members.length === 1 ? 0 : Math.min(16, 2.2 + Math.sqrt(j) * 2.4);
-      person.x = Math.round(clampSpot(cx + Math.cos(spin) * local, 6, 94) * 10) / 10;
-      person.y = Math.round(clampSpot(cy + Math.sin(spin) * local * 0.82, 10, 90) * 10) / 10;
+      const spot = spotFromPlace(personHomePlace(person), person.key, j);
+      person.x = spot.x;
+      person.y = spot.y;
+      person.inBerlin = spot.inBerlin;
       person.cluster = index;
     });
   });
@@ -585,6 +678,9 @@ export const testables = {
   marketFromHooks,
   groupFromHooks,
   personKey,
+  personHomePlace,
+  normalizePlace,
+  spotFromPlace,
   parseHookPin,
   parseHookWrite,
   validatePin,
