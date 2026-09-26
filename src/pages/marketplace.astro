@@ -16,6 +16,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         one and it opens. Email stays off the page.
       </p>
 
+      <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
+      <aside class="crowd-sign" id="crowd-sign" aria-live="polite">
+        <p class="crowd-sign-kicker">Already here</p>
+        <p class="crowd-sign-count">
+          <span id="crowd-sign-num">0</span>
+          <span class="crowd-sign-unit" id="crowd-sign-unit">riders standing</span>
+        </p>
+        <p class="crowd-sign-line" id="crowd-sign-line">
+          Be the first. Open a stall, show up for a ride, make coming back a habit.
+        </p>
+        <a class="btn btn-primary crowd-sign-cta" href="#pin-form">Stand with them</a>
+      </aside>
+
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
 
@@ -92,9 +105,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var openBox = document.getElementById('group-open');
     var roomBox = document.getElementById('group-room');
     var countBox = document.getElementById('group-count');
+    var signNum = document.getElementById('crowd-sign-num');
+    var signUnit = document.getElementById('crowd-sign-unit');
+    var signLine = document.getElementById('crowd-sign-line');
+    var signRoot = document.getElementById('crowd-sign');
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
+
+    function writeCrowdSign(n) {
+      var count = Math.max(0, Number(n) || 0);
+      if (signNum) signNum.textContent = String(count);
+      if (signUnit) {
+        signUnit.textContent = count === 1 ? 'rider standing' : 'riders standing';
+      }
+      if (signLine) {
+        signLine.textContent =
+          count === 0
+            ? 'Be the first. Open a stall, show up for a ride, make coming back a habit.'
+            : count === 1
+              ? 'One soul is already here. Stand with them — rides get easier when you come back.'
+              : count +
+                ' souls already here. Come for the rides. Make showing up a habit.';
+      }
+      if (signRoot) {
+        signRoot.classList.toggle('has-crowd', count > 0);
+        signRoot.setAttribute('data-count', String(count));
+      }
+    }
 
     function showError(text) {
       if (!errorBox) return;
@@ -367,6 +405,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     function renderGroup(payload) {
       if (!dotsBox) return;
       var people = peopleFrom(payload);
+      writeCrowdSign(people.length);
       if (countBox) {
         countBox.textContent = people.length
           ? people.length === 1
@@ -490,6 +529,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           render(data);
         })
         .catch(function () {
+          writeCrowdSign(0);
           showError('The board could not load just now.');
         });
     }
@@ -713,6 +753,92 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <style is:global>
   .hooks {
     max-width: 64rem;
+  }
+
+  .crowd-sign {
+    position: relative;
+    margin: 1.75rem 0 0;
+    padding: 1.65rem 1.5rem 1.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(212, 163, 90, 0.28);
+    border-radius: 1.15rem;
+    background:
+      radial-gradient(ellipse 70% 90% at 12% 20%, rgba(212, 163, 90, 0.16), transparent 55%),
+      radial-gradient(ellipse 55% 70% at 88% 80%, rgba(61, 107, 122, 0.18), transparent 58%),
+      linear-gradient(165deg, rgba(18, 26, 34, 0.92), rgba(10, 16, 22, 0.88));
+    isolation: isolate;
+  }
+
+  .crowd-sign::before {
+    content: '';
+    position: absolute;
+    inset: 0.55rem;
+    border: 1px solid rgba(215, 224, 232, 0.08);
+    border-radius: 0.85rem;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .crowd-sign-kicker {
+    margin: 0;
+    color: var(--amber);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .crowd-sign-count {
+    margin: 0.55rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.55rem 0.75rem;
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--paper);
+  }
+
+  #crowd-sign-num {
+    font-size: clamp(3.2rem, 10vw, 5.5rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 0.7em;
+    color: var(--amber-hot);
+    text-shadow: 0 10px 36px rgba(212, 163, 90, 0.28);
+    transition: transform 0.35s ease;
+  }
+
+  .crowd-sign.has-crowd #crowd-sign-num {
+    transform: scale(1.02);
+  }
+
+  .crowd-sign-unit {
+    font-size: clamp(1.15rem, 3vw, 1.55rem);
+    color: rgba(238, 243, 247, 0.88);
+  }
+
+  .crowd-sign-line {
+    margin: 0.85rem 0 0;
+    max-width: 34rem;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 1.02rem;
+  }
+
+  .crowd-sign-cta {
+    margin-top: 1.15rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #crowd-sign-num {
+      transition: none;
+    }
+
+    .crowd-sign.has-crowd #crowd-sign-num {
+      transform: none;
+    }
   }
 
   .form,
