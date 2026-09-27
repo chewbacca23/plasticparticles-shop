@@ -2,10 +2,11 @@
  * Riders marketplace. Room for a thousand people. Ride together, or trade
  * a tire, a stem, a saddle, a frame. Emails never appear on the page.
  *
- * GET  /api/hooks           public stalls + market + group dots (no emails)
+ * GET  /api/hooks           public stalls + market + group dots + call threads (no emails)
  * POST /api/hooks           pin { name, place, note, email?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
  * POST /api/hooks/write     offer { hookId, name, message, email?, company }
+ * POST /api/hooks/call      call upon { toKey, name, message, email?, place?, company }
  */
 
 import {
@@ -24,23 +25,35 @@ const MAX_NAME = 80;
 const MAX_PLACE = 80;
 const MAX_NOTE = 400;
 const MAX_MESSAGE = 2000;
+const MAX_CALL_TEXT = 500;
 export const MAX_HOOKS = 1000;
 export const MAX_OFFERS = 80;
+export const MAX_CALL_THREADS = 500;
+export const MAX_CALL_MESSAGES = 40;
+/** Map distance (% of room) for “nearby” without GPS. */
+export const NEAR_MAP_DIST = 14;
 const RATE_WINDOW_SEC = 60 * 10;
 const RATE_PIN = 3;
 const RATE_WRITE = 8;
+const RATE_CALL = 10;
 
 export function isHooksApiPath(pathname) {
   return (
     pathname === '/api/hooks' ||
     pathname === '/api/hooks/' ||
     pathname === '/api/hooks/write' ||
-    pathname === '/api/hooks/write/'
+    pathname === '/api/hooks/write/' ||
+    pathname === '/api/hooks/call' ||
+    pathname === '/api/hooks/call/'
   );
 }
 
 export function isHooksWritePath(pathname) {
   return pathname === '/api/hooks/write' || pathname === '/api/hooks/write/';
+}
+
+export function isHooksCallPath(pathname) {
+  return pathname === '/api/hooks/call' || pathname === '/api/hooks/call/';
 }
 
 export function newHookId(now = Date.now()) {
@@ -69,11 +82,24 @@ export function parseHookWrite(raw) {
   };
 }
 
+export function parseHookCall(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  return {
+    toKey: personKey(src.toKey || src.to || ''),
+    name: cleanLine(src.name, MAX_NAME),
+    email: cleanEmail(src.email),
+    place: cleanLine(src.place, MAX_PLACE),
+    message: cleanLine(src.message || src.text || src.note, MAX_CALL_TEXT),
+    company: cleanLine(src.company || src.fax_number_leave_blank, 80),
+  };
+}
+
 function isEmptyHoneypot(fields) {
   if (!fields.company) return false;
   const hasPin = !!(fields.name && fields.place && fields.note);
   const hasWrite = !!(fields.hookId && fields.name && fields.message);
-  return !hasPin && !hasWrite;
+  const hasCall = !!(fields.toKey && fields.name && fields.message);
+  return !hasPin && !hasWrite && !hasCall;
 }
 
 export function validatePin(fields) {
@@ -88,6 +114,53 @@ export function validateWrite(fields) {
   if (!fields.name) return 'Pick a name. Any name.';
   if (!fields.message) return 'Write your offer.';
   return '';
+}
+
+export function validateCall(fields) {
+  if (!fields.toKey) return 'Who are you calling upon?';
+  if (!fields.name) return 'Pick a name. Any name.';
+  if (!fields.message) return 'Say a little something.';
+  return '';
+}
+
+/** Stable pair id for a 1:1 call-upon thread. */
+export function callPairKey(a, b) {
+  const left = personKey(a);
+  const right = personKey(b);
+  if (!left || !right || left === right) return '';
+  return left < right ? `${left}|${right}` : `${right}|${left}`;
+}
+
+export function publicCallMessage(msg) {
+  if (!msg || typeof msg !== 'object') return null;
+  const id = cleanLine(msg.id, 40);
+  const fromName = cleanLine(msg.fromName || msg.name, MAX_NAME);
+  const fromKey = personKey(msg.fromKey || fromName);
+  const text = cleanLine(msg.text || msg.message || msg.note, MAX_CALL_TEXT);
+  if (!id || !fromName || !fromKey || !text) return null;
+  return {
+    id,
+    fromKey,
+    fromName,
+    text,
+    at: typeof msg.at === 'string' ? msg.at : '',
+  };
+}
+
+export function publicCallThread(thread) {
+  if (!thread || typeof thread !== 'object') return null;
+  const aKey = personKey(thread.aKey || thread.a);
+  const bKey = personKey(thread.bKey || thread.b);
+  const id = cleanLine(thread.id, 120) || callPairKey(aKey, bKey);
+  if (!id || !aKey || !bKey || aKey === bKey) return null;
+  const messages = (Array.isArray(thread.messages) ? thread.messages : [])
+    .map(publicCallMessage)
+    .filter(Boolean);
+  return { id, aKey, bKey, messages };
+}
+
+export function publicCallList(calls) {
+  return (Array.isArray(calls) ? calls : []).map(publicCallThread).filter(Boolean);
 }
 
 export function publicOffer(offer) {
@@ -125,11 +198,12 @@ export function publicHookList(hooks) {
     .filter(Boolean);
 }
 
-function boardPayload(hooks) {
+function boardPayload(hooks, calls = []) {
   return {
     hooks: publicHookList(hooks),
     market: marketFromHooks(hooks),
     group: groupFromHooks(hooks),
+    calls: publicCallList(calls),
   };
 }
 
@@ -435,6 +509,81 @@ export function personHomePlace(person) {
   return '';
 }
 
+/**
+ * Same place, offer-neighbour, shared crowd cluster, or close on the map.
+ * No live GPS — only what the board already knows.
+ */
+export function arePeopleNear(a, b, maxDist = NEAR_MAP_DIST) {
+  if (!a || !b || a.key === b.key) return false;
+  if ((a.neighborKeys || []).includes(b.key) || (b.neighborKeys || []).includes(a.key)) {
+    return true;
+  }
+  if (
+    typeof a.cluster === 'number' &&
+    typeof b.cluster === 'number' &&
+    a.cluster === b.cluster
+  ) {
+    return true;
+  }
+  const placeA = normalizePlace(personHomePlace(a));
+  const placeB = normalizePlace(personHomePlace(b));
+  if (placeA && placeB && placeA === placeB) return true;
+  const ax = Number(a.x);
+  const ay = Number(a.y);
+  const bx = Number(b.x);
+  const by = Number(b.y);
+  if ([ax, ay, bx, by].every((n) => Number.isFinite(n))) {
+    if (Math.hypot(ax - bx, ay - by) <= maxDist) return true;
+  }
+  return false;
+}
+
+/** Caller may be on the map, or only known by a place they typed. */
+export function canCallUpon(group, fromKey, toKey, fromPlace = '') {
+  const people = Array.isArray(group?.people) ? group.people : [];
+  const to = people.find((person) => person.key === toKey);
+  if (!to) return false;
+  const from = people.find((person) => person.key === fromKey);
+  if (from) return arePeopleNear(from, to);
+  const place = normalizePlace(fromPlace);
+  if (!place) return false;
+  const toPlace = normalizePlace(personHomePlace(to));
+  if (place && toPlace && place === toPlace) return true;
+  // Soft: same Berlin borough token or shared world place label.
+  if (place && toPlace) {
+    const aTokens = place.split(' ').filter(Boolean);
+    const bTokens = toPlace.split(' ').filter(Boolean);
+    if (aTokens.some((token) => token.length > 3 && bTokens.includes(token))) return true;
+  }
+  return false;
+}
+
+export function emailForPersonKey(hooks, calls, key) {
+  const want = personKey(key);
+  if (!want) return '';
+  for (const hook of Array.isArray(hooks) ? hooks : []) {
+    if (personKey(hook.name) === want) {
+      const mail = cleanEmail(hook.email);
+      if (mail) return mail;
+    }
+    for (const offer of Array.isArray(hook.offers) ? hook.offers : []) {
+      if (personKey(offer.name) === want) {
+        const mail = cleanEmail(offer.email);
+        if (mail) return mail;
+      }
+    }
+  }
+  for (const thread of Array.isArray(calls) ? calls : []) {
+    for (const msg of Array.isArray(thread.messages) ? thread.messages : []) {
+      if (personKey(msg.fromKey || msg.fromName) === want) {
+        const mail = cleanEmail(msg.email);
+        if (mail) return mail;
+      }
+    }
+  }
+  return '';
+}
+
 export function groupFromHooks(hooks) {
   const peopleMap = new Map();
 
@@ -517,26 +666,46 @@ export function groupFromHooks(hooks) {
   };
 }
 
-async function readHooks(env) {
+async function readBoard(env) {
   const kv = env?.STATS;
-  if (!kv || typeof kv.get !== 'function') return [];
+  if (!kv || typeof kv.get !== 'function') return { hooks: [], calls: [] };
   try {
     const raw = await kv.get(HOOKS_KEY);
     const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
+    if (Array.isArray(data)) return { hooks: data, calls: [] };
+    if (data && typeof data === 'object') {
+      return {
+        hooks: Array.isArray(data.hooks) ? data.hooks : [],
+        calls: Array.isArray(data.calls) ? data.calls : [],
+      };
+    }
+    return { hooks: [], calls: [] };
   } catch {
-    return [];
+    return { hooks: [], calls: [] };
   }
 }
 
-async function writeHooks(env, hooks) {
+async function readHooks(env) {
+  const board = await readBoard(env);
+  return board.hooks;
+}
+
+async function writeBoard(env, board) {
   const kv = env?.STATS;
   if (!kv || typeof kv.put !== 'function') {
     const err = new Error('The board is not wired yet.');
     err.code = 'E_STORE';
     throw err;
   }
-  await kv.put(HOOKS_KEY, JSON.stringify(hooks.slice(0, MAX_HOOKS)));
+  const hooks = (Array.isArray(board?.hooks) ? board.hooks : []).slice(0, MAX_HOOKS);
+  const calls = (Array.isArray(board?.calls) ? board.calls : []).slice(0, MAX_CALL_THREADS);
+  await kv.put(HOOKS_KEY, JSON.stringify({ hooks, calls }));
+}
+
+async function writeHooks(env, hooks) {
+  const board = await readBoard(env);
+  board.hooks = hooks;
+  await writeBoard(env, board);
 }
 
 function json(data, status = 200) {
@@ -687,6 +856,35 @@ async function deliverWrite(env, hook, fields) {
   });
 }
 
+async function deliverCall(env, { toEmail, fromName, fromEmail, message, toName }) {
+  const subject = `Soul Searchers · ${fromName} called upon you`;
+  const text = [
+    `${fromName} called upon you on the Soul Searchers marketplace.`,
+    toName ? `(For ${toName}.)` : '',
+    '',
+    message,
+    '',
+    'Answer on the board, or hit Reply if you want the inbox path.',
+    'Your email was never on the public page.',
+    'https://thenewsoulsearchers.de/marketplace',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  await sendMail(env, {
+    to: toEmail,
+    replyTo: fromEmail,
+    subject,
+    text,
+    html: [
+      '<div style="font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#122">',
+      `<p style="margin:0 0 1rem">${esc(fromName)} called upon you on the Soul Searchers marketplace.</p>`,
+      `<p style="white-space:pre-wrap;margin:0 0 1.25rem">${esc(message)}</p>`,
+      '<p style="color:#666;font-size:13px">Answer on the board, or hit Reply. Your email was never on the public page.</p>',
+      '</div>',
+    ].join(''),
+  });
+}
+
 export async function handleHooksRequest(request, env) {
   const url = new URL(request.url);
   if (!isHooksApiPath(url.pathname)) return null;
@@ -702,13 +900,13 @@ export async function handleHooksRequest(request, env) {
     });
   }
 
-  if (request.method === 'GET' && !isHooksWritePath(url.pathname)) {
-    const hooks = await readHooks(env);
+  if (request.method === 'GET' && !isHooksWritePath(url.pathname) && !isHooksCallPath(url.pathname)) {
+    const board = await readBoard(env);
     return json({
       ok: true,
       mailWired: mailReady(env),
       canModerate: await requestHasLooksAccess(request, env),
-      ...boardPayload(hooks),
+      ...boardPayload(board.hooks, board.calls),
     });
   }
 
@@ -718,32 +916,123 @@ export async function handleHooksRequest(request, env) {
 
   const body = await readJson(request);
 
-  if (!isHooksWritePath(url.pathname) && body.action === 'remove') {
+  if (
+    !isHooksWritePath(url.pathname) &&
+    !isHooksCallPath(url.pathname) &&
+    body.action === 'remove'
+  ) {
     if (!(await requestHasLooksAccess(request, env))) {
       return json({ error: 'private' }, 401);
     }
     const id = cleanLine(body.id, 40);
-    const hooks = (await readHooks(env)).filter((hook) => hook.id !== id);
-    await writeHooks(env, hooks);
-    return json({ ok: true, ...boardPayload(hooks) });
+    const board = await readBoard(env);
+    board.hooks = board.hooks.filter((hook) => hook.id !== id);
+    await writeBoard(env, board);
+    return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
+  }
+
+  if (isHooksCallPath(url.pathname)) {
+    const fields = parseHookCall(body);
+    if (isEmptyHoneypot(fields)) {
+      const board = await readBoard(env);
+      return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
+    }
+    const bad = validateCall(fields);
+    if (bad) return json({ error: bad }, 400);
+    if (!(await underRateLimit(env, clientKey(request, 'call'), RATE_CALL))) {
+      return json({ error: 'Easy. Try again in a few minutes.' }, 429);
+    }
+
+    const board = await readBoard(env);
+    const group = groupFromHooks(board.hooks);
+    const toPerson = group.people.find((person) => person.key === fields.toKey);
+    if (!toPerson) {
+      return json({ error: 'That soul is no longer on the map.' }, 404);
+    }
+
+    const fromKey = personKey(fields.name);
+    if (!fromKey || fromKey === fields.toKey) {
+      return json({ error: 'Call upon someone else, brother.' }, 400);
+    }
+
+    const pair = callPairKey(fromKey, fields.toKey);
+    let thread = board.calls.find((row) => row.id === pair);
+    const alreadyTalking = !!(thread && Array.isArray(thread.messages) && thread.messages.length);
+    if (!alreadyTalking && !canCallUpon(group, fromKey, fields.toKey, fields.place)) {
+      return json(
+        {
+          error:
+            'Call upon someone near you — same place, standing close, or someone you already wrote.',
+        },
+        400,
+      );
+    }
+
+    const message = {
+      id: newHookId(),
+      fromKey,
+      fromName: fields.name,
+      text: fields.message,
+      email: fields.email,
+      at: new Date().toISOString(),
+    };
+
+    if (!thread) {
+      thread = {
+        id: pair,
+        aKey: fromKey < fields.toKey ? fromKey : fields.toKey,
+        bKey: fromKey < fields.toKey ? fields.toKey : fromKey,
+        messages: [],
+      };
+      board.calls = [thread, ...board.calls].slice(0, MAX_CALL_THREADS);
+    }
+    thread.messages = [...(Array.isArray(thread.messages) ? thread.messages : []), message].slice(
+      -MAX_CALL_MESSAGES,
+    );
+    const threadIndex = board.calls.findIndex((row) => row.id === pair);
+    if (threadIndex >= 0) board.calls[threadIndex] = thread;
+
+    try {
+      await writeBoard(env, board);
+    } catch {
+      return json({ error: 'The board could not save that call.' }, 503);
+    }
+
+    const toEmail = emailForPersonKey(board.hooks, board.calls, fields.toKey);
+    if (toEmail && fields.email) {
+      try {
+        await deliverCall(env, {
+          toEmail,
+          fromName: fields.name,
+          fromEmail: fields.email,
+          message: fields.message,
+          toName: toPerson.name,
+        });
+      } catch {
+        // The call is on the board even if the inbox copy fails.
+      }
+    }
+
+    return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
   }
 
   if (isHooksWritePath(url.pathname)) {
     const fields = parseHookWrite(body);
     if (isEmptyHoneypot(fields)) {
-      return json({ ok: true, ...boardPayload(await readHooks(env)) });
+      const board = await readBoard(env);
+      return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
     }
     const bad = validateWrite(fields);
     if (bad) return json({ error: bad }, 400);
     if (!(await underRateLimit(env, clientKey(request, 'write'), RATE_WRITE))) {
       return json({ error: 'Easy. Try again in a few minutes.' }, 429);
     }
-    const hooks = await readHooks(env);
-    const index = hooks.findIndex((row) => row.id === fields.hookId);
+    const board = await readBoard(env);
+    const index = board.hooks.findIndex((row) => row.id === fields.hookId);
     if (index === -1) {
       return json({ error: 'That pin is no longer on the board.' }, 404);
     }
-    const hook = hooks[index];
+    const hook = board.hooks[index];
     const offer = {
       id: newHookId(),
       name: fields.name,
@@ -752,9 +1041,9 @@ export async function handleHooksRequest(request, env) {
       at: new Date().toISOString(),
     };
     hook.offers = [...(Array.isArray(hook.offers) ? hook.offers : []), offer].slice(-MAX_OFFERS);
-    hooks[index] = hook;
+    board.hooks[index] = hook;
     try {
-      await writeHooks(env, hooks);
+      await writeBoard(env, board);
     } catch {
       return json({ error: 'The board could not save that offer.' }, 503);
     }
@@ -765,12 +1054,13 @@ export async function handleHooksRequest(request, env) {
         // The offer is on the board even if the inbox copy fails.
       }
     }
-    return json({ ok: true, ...boardPayload(hooks) });
+    return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
   }
 
   const fields = parseHookPin(body);
   if (isEmptyHoneypot(fields)) {
-    return json({ ok: true, ...boardPayload(await readHooks(env)) });
+    const board = await readBoard(env);
+    return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
   }
   const bad = validatePin(fields);
   if (bad) return json({ error: bad }, 400);
@@ -787,9 +1077,10 @@ export async function handleHooksRequest(request, env) {
     offers: [],
     at: new Date().toISOString(),
   };
-  const hooks = [hook, ...(await readHooks(env))].slice(0, MAX_HOOKS);
+  const board = await readBoard(env);
+  board.hooks = [hook, ...board.hooks].slice(0, MAX_HOOKS);
   try {
-    await writeHooks(env, hooks);
+    await writeBoard(env, board);
   } catch {
     return json({ error: 'The board could not save that just now.' }, 503);
   }
@@ -798,16 +1089,21 @@ export async function handleHooksRequest(request, env) {
   } catch {
     // The pin is up even if the quiet copy to Henrik fails.
   }
-  return json({ ok: true, ...boardPayload(hooks) });
+  return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
 }
 
 export const testables = {
   HOOKS_KEY,
   MAX_HOOKS,
   MAX_OFFERS,
+  MAX_CALL_THREADS,
+  MAX_CALL_MESSAGES,
   publicHook,
   publicOffer,
   publicHookList,
+  publicCallThread,
+  publicCallList,
+  publicCallMessage,
   marketFromHooks,
   groupFromHooks,
   personKey,
@@ -818,6 +1114,12 @@ export const testables = {
   BERLIN_MAP_CENTER,
   parseHookPin,
   parseHookWrite,
+  parseHookCall,
   validatePin,
   validateWrite,
+  validateCall,
+  callPairKey,
+  arePeopleNear,
+  canCallUpon,
+  emailForPersonKey,
 };

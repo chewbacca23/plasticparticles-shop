@@ -13,7 +13,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="section-lead">
         Room for a thousand. Berlin is the centre of this little universe — when someone from Nice,
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
-        and it opens. Email stays off the page.
+        and it opens. Call upon someone near you with a short note. Email stays off the page.
       </p>
 
       <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
@@ -34,11 +34,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <button type="button" class="welcome-back-open" id="welcome-back-open" hidden>Open them</button>
       </p>
 
+      <p id="calls-for-you" class="calls-for-you" hidden>
+        <span id="calls-for-you-text"></span>
+        <button type="button" class="calls-for-you-open" id="calls-for-you-open" hidden>Open them</button>
+      </p>
+
       <aside id="cookie-note" class="cookie-note" hidden>
         <p class="cookie-note-text">
           Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
           your machine, so when you stand on the map we can welcome you back to the person you last
-          talked to. No ads. No trackers. Just the good kind of remembering.
+          talked to, and quietly show if someone called upon you. No ads. No trackers. Just the good
+          kind of remembering.
           <span class="cookie-wink" aria-hidden="true">;)</span>
         </p>
         <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
@@ -143,6 +149,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var welcomeBack = document.getElementById('welcome-back');
     var welcomeBackText = document.getElementById('welcome-back-text');
     var welcomeBackOpen = document.getElementById('welcome-back-open');
+    var callsForYou = document.getElementById('calls-for-you');
+    var callsForYouText = document.getElementById('calls-for-you-text');
+    var callsForYouOpen = document.getElementById('calls-for-you-open');
     var cookieNote = document.getElementById('cookie-note');
     var cookieNoteOk = document.getElementById('cookie-note-ok');
     var canModerate = false;
@@ -152,6 +161,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var COOKIE_NAME = 'soul_on_map';
     var COOKIE_NOTE_KEY = 'soul-marketplace-cookie-note';
     var didWelcome = false;
+    var NEAR_MAP_DIST = 14;
 
     function readMemory() {
       try {
@@ -234,14 +244,161 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           pinForm.elements.namedItem('email').value = mem.email;
         }
       }
-      document.querySelectorAll('.write-form').forEach(function (form) {
+      document.querySelectorAll('.write-form, .call-form').forEach(function (form) {
         if (mem.name && form.elements.namedItem('name')) {
           form.elements.namedItem('name').value = mem.name;
         }
         if (mem.email && form.elements.namedItem('email')) {
           form.elements.namedItem('email').value = mem.email;
         }
+        if (mem.place && form.elements.namedItem('place')) {
+          form.elements.namedItem('place').value = mem.place;
+        }
       });
+    }
+
+    function selfKey() {
+      var mem = readMemory();
+      return String(mem.name || '')
+        .trim()
+        .toLowerCase()
+        .slice(0, 80);
+    }
+
+    function personHomePlace(person) {
+      if (!person) return '';
+      var stalls = person.stalls || [];
+      for (var i = 0; i < stalls.length; i += 1) {
+        if (stalls[i].place) return String(stalls[i].place);
+      }
+      var offers = person.offers || [];
+      for (var j = 0; j < offers.length; j += 1) {
+        if (offers[j].place) return String(offers[j].place);
+      }
+      return '';
+    }
+
+    function normalizePlaceClient(value) {
+      return String(value || '')
+        .toLowerCase()
+        .replace(/ß/g, 'ss')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
+    function areNearClient(a, b) {
+      if (!a || !b || a.key === b.key) return false;
+      if ((a.neighborKeys || []).indexOf(b.key) !== -1) return true;
+      if ((b.neighborKeys || []).indexOf(a.key) !== -1) return true;
+      if (typeof a.cluster === 'number' && typeof b.cluster === 'number' && a.cluster === b.cluster) {
+        return true;
+      }
+      var placeA = normalizePlaceClient(personHomePlace(a));
+      var placeB = normalizePlaceClient(personHomePlace(b));
+      if (placeA && placeB && placeA === placeB) return true;
+      if (
+        Number.isFinite(Number(a.x)) &&
+        Number.isFinite(Number(a.y)) &&
+        Number.isFinite(Number(b.x)) &&
+        Number.isFinite(Number(b.y))
+      ) {
+        var dx = Number(a.x) - Number(b.x);
+        var dy = Number(a.y) - Number(b.y);
+        if (Math.sqrt(dx * dx + dy * dy) <= NEAR_MAP_DIST) return true;
+      }
+      return false;
+    }
+
+    function canCallClient(toPerson) {
+      if (!toPerson) return false;
+      var mem = readMemory();
+      var meKey = selfKey();
+      if (meKey && meKey === toPerson.key) return false;
+      var people = peopleFrom(lastPayload);
+      var me = meKey ? people.find(function (row) { return row.key === meKey; }) : null;
+      if (me) return areNearClient(me, toPerson);
+      var place = normalizePlaceClient(mem.place || '');
+      if (!place) return false;
+      var toPlace = normalizePlaceClient(personHomePlace(toPerson));
+      if (place && toPlace && place === toPlace) return true;
+      var aTokens = place.split(' ').filter(Boolean);
+      var bTokens = toPlace.split(' ').filter(Boolean);
+      return aTokens.some(function (token) {
+        return token.length > 3 && bTokens.indexOf(token) !== -1;
+      });
+    }
+
+    function callPairKey(a, b) {
+      var left = String(a || '').toLowerCase();
+      var right = String(b || '').toLowerCase();
+      if (!left || !right || left === right) return '';
+      return left < right ? left + '|' + right : right + '|' + left;
+    }
+
+    function threadForPair(aKey, bKey) {
+      var pair = callPairKey(aKey, bKey);
+      if (!pair || !lastPayload || !lastPayload.calls) return null;
+      for (var i = 0; i < lastPayload.calls.length; i += 1) {
+        if (lastPayload.calls[i].id === pair) return lastPayload.calls[i];
+      }
+      return null;
+    }
+
+    function callsWaitingForMe() {
+      var me = selfKey();
+      if (!me || !lastPayload || !Array.isArray(lastPayload.calls)) return [];
+      var mem = readMemory();
+      var seenAt = mem.callsSeenAt || '';
+      var waiting = [];
+      lastPayload.calls.forEach(function (thread) {
+        if (!thread || (thread.aKey !== me && thread.bKey !== me)) return;
+        var messages = thread.messages || [];
+        if (!messages.length) return;
+        var last = messages[messages.length - 1];
+        if (!last || last.fromKey === me) return;
+        if (seenAt && last.at && String(last.at) <= String(seenAt)) return;
+        var otherKey = thread.aKey === me ? thread.bKey : thread.aKey;
+        waiting.push({
+          otherKey: otherKey,
+          fromName: last.fromName,
+          text: last.text,
+          at: last.at,
+        });
+      });
+      waiting.sort(function (a, b) {
+        return String(b.at || '').localeCompare(String(a.at || ''));
+      });
+      return waiting;
+    }
+
+    function markCallsSeen() {
+      writeMemory({ callsSeenAt: new Date().toISOString() });
+    }
+
+    function showCallsForYou() {
+      if (!callsForYou || !callsForYouText) return;
+      var waiting = callsWaitingForMe();
+      if (!waiting.length) {
+        callsForYou.hidden = true;
+        if (callsForYouOpen) callsForYouOpen.hidden = true;
+        return;
+      }
+      var first = waiting[0];
+      if (waiting.length === 1) {
+        callsForYouText.textContent =
+          (first.fromName || 'A brother') +
+          ' called upon you' +
+          (first.text ? ': “' + String(first.text).slice(0, 80) + (first.text.length > 80 ? '…' : '') + '”' : '.');
+      } else {
+        callsForYouText.textContent =
+          waiting.length + ' souls called upon you. Open the latest when you are ready.';
+      }
+      callsForYou.hidden = false;
+      if (callsForYouOpen) {
+        callsForYouOpen.hidden = false;
+        callsForYouOpen.textContent = 'Open ' + (first.fromName || 'them');
+        callsForYouOpen.setAttribute('data-open-call', first.otherKey || '');
+      }
     }
 
     function personByKey(key) {
@@ -391,6 +548,46 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         '<button class="btn btn-primary" type="submit">Leave offer</button>' +
         '</form>'
       );
+    }
+
+    function callForm(toKey) {
+      return (
+        '<form class="call-form" hidden data-call="' +
+        esc(toKey) +
+        '">' +
+        '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
+        '<label><span>Your place — so we know you are near</span><input type="text" name="place" maxlength="80" placeholder="Berlin, Kreuzberg, Nice…" /></label>' +
+        '<label><span>Call upon them</span><textarea name="message" rows="2" required maxlength="500" placeholder="Brother — coffee before the climb?"></textarea></label>' +
+        '<label><span>Email — optional, stays off the page</span><input type="email" name="email" maxlength="200" /></label>' +
+        '<label class="hp" aria-hidden="true"><span>Fax</span><input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" /></label>' +
+        '<button class="btn btn-primary" type="submit">Send call upon</button>' +
+        '</form>'
+      );
+    }
+
+    function renderCallThread(person) {
+      var me = selfKey();
+      if (!me || !person) return '';
+      var thread = threadForPair(me, person.key);
+      if (!thread || !(thread.messages || []).length) return '';
+      var rows = (thread.messages || [])
+        .map(function (msg) {
+          var mine = msg.fromKey === me;
+          return (
+            '<li class="call-msg' +
+            (mine ? ' is-mine' : '') +
+            '">' +
+            '<p class="call-msg-from">' +
+            esc(mine ? 'You' : msg.fromName) +
+            '</p>' +
+            '<p class="call-msg-text">' +
+            esc(msg.text) +
+            '</p>' +
+            '</li>'
+          );
+        })
+        .join('');
+      return '<ol class="call-thread" aria-label="Call upon thread">' + rows + '</ol>';
     }
 
     function renderCard(card) {
@@ -569,6 +766,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         })
         .filter(Boolean)
         .join('');
+      var meKey = selfKey();
+      var isSelf = meKey && meKey === person.key;
+      var threadHtml = renderCallThread(person);
+      var hasThread = !!threadHtml;
+      var showCall = !isSelf;
+      var callBlock = showCall
+        ? '<div class="call-upon">' +
+          '<p class="call-upon-kicker">Call upon</p>' +
+          threadHtml +
+          '<button type="button" class="btn btn-ghost hook-call" data-call-toggle="' +
+          esc(person.key) +
+          '">' +
+          (hasThread ? 'Reply' : 'Call upon ' + esc(person.name)) +
+          '</button>' +
+          callForm(person.key) +
+          '</div>'
+        : '';
       openBox.hidden = false;
       openBox.innerHTML =
         '<div class="open-head">' +
@@ -580,6 +794,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         '<button type="button" class="open-close" data-close="1">Close</button>' +
         '</div>' +
         (stalls || offers ? stalls + offers : '<p class="hook-note">Nothing pinned yet.</p>') +
+        callBlock +
         (hookId
           ? '<button type="button" class="btn btn-ghost hook-write" data-write="' +
             esc(hookId) +
@@ -588,6 +803,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             writeForm(hookId)
           : '');
       floatOpen(person);
+      fillFormsFromMemory();
+      if (showCall && meKey) markCallsSeen();
     }
 
     function renderGroup(payload) {
@@ -732,6 +949,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           render(data);
           fillFormsFromMemory();
           showWelcomeBack();
+          showCallsForYou();
         })
         .catch(function () {
           writeCrowdSign(0);
@@ -893,6 +1111,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           if (opened) floatOpen(opened);
           return;
         }
+        var callToggle = event.target.closest('[data-call-toggle]');
+        if (callToggle && openBox) {
+          var callFormEl = openBox.querySelector(
+            '[data-call="' + callToggle.getAttribute('data-call-toggle') + '"]',
+          );
+          if (callFormEl) callFormEl.hidden = !callFormEl.hidden;
+          var openedCall = peopleFrom(lastPayload).find(function (row) {
+            return row.key === openKey;
+          });
+          if (openedCall) floatOpen(openedCall);
+          return;
+        }
         var remove = event.target.closest('[data-remove]');
         if (!remove) return;
         hideError();
@@ -908,6 +1138,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             if (body && body.ok) {
               openKey = '';
               render(body);
+              showCallsForYou();
               return;
             }
             showError((body && body.error) || 'Could not take that down.');
@@ -918,6 +1149,60 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
 
       group.addEventListener('submit', function (event) {
+        var callFormEl = event.target.closest('.call-form');
+        if (callFormEl) {
+          event.preventDefault();
+          hideError();
+          var callData = new FormData(callFormEl);
+          var callButton = callFormEl.querySelector('button[type="submit"]');
+          if (callButton) callButton.disabled = true;
+          fetch('/api/hooks/call', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              toKey: callFormEl.getAttribute('data-call'),
+              name: String(callData.get('name') || '').trim(),
+              place: String(callData.get('place') || '').trim(),
+              email: String(callData.get('email') || '').trim(),
+              message: String(callData.get('message') || '').trim(),
+              company: String(
+                callData.get('fax_number_leave_blank') || callData.get('company') || '',
+              ).trim(),
+            }),
+          })
+            .then(function (res) {
+              return res.json().then(function (body) {
+                return { res: res, body: body };
+              });
+            })
+            .then(function (out) {
+              if (out.res.ok && out.body.ok) {
+                var talkKey = callFormEl.getAttribute('data-call');
+                var talkPerson = personByKey(talkKey);
+                rememberSelf(
+                  String(callData.get('name') || '').trim(),
+                  String(callData.get('place') || '').trim(),
+                  String(callData.get('email') || '').trim(),
+                );
+                if (talkKey) rememberTalk(talkKey, talkPerson && talkPerson.name);
+                markCallsSeen();
+                callFormEl.hidden = true;
+                callFormEl.reset();
+                render(out.body);
+                fillFormsFromMemory();
+                showCallsForYou();
+                return;
+              }
+              showError((out.body && out.body.error) || 'Could not send that call.');
+            })
+            .catch(function () {
+              showError('Could not send that call.');
+            })
+            .finally(function () {
+              if (callButton) callButton.disabled = false;
+            });
+          return;
+        }
         var form = event.target.closest('.write-form');
         if (!form) return;
         event.preventDefault();
@@ -955,6 +1240,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               form.reset();
               render(out.body);
               fillFormsFromMemory();
+              showCallsForYou();
               return;
             }
             showError((out.body && out.body.error) || 'Could not leave that offer.');
@@ -994,6 +1280,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             document.getElementById('group');
           if (mark && mark.scrollIntoView) {
             mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } catch (err) {}
+      });
+    }
+
+    if (callsForYouOpen) {
+      callsForYouOpen.addEventListener('click', function () {
+        var key = callsForYouOpen.getAttribute('data-open-call');
+        if (!key) return;
+        var person = personByKey(key);
+        if (!person) return;
+        openKey = person.key;
+        rememberTalk(openKey, person.name);
+        markCallsSeen();
+        render(lastPayload);
+        showCallsForYou();
+        try {
+          var callMark =
+            (typeof CSS !== 'undefined' && CSS.escape
+              ? document.querySelector('.dot[data-open="' + CSS.escape(person.key) + '"]')
+              : null) ||
+            document.getElementById('group-open') ||
+            document.getElementById('group');
+          if (callMark && callMark.scrollIntoView) {
+            callMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         } catch (err) {}
       });
@@ -1124,6 +1435,38 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background: var(--amber-hot);
   }
 
+  .calls-for-you {
+    margin: 0.85rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(61, 107, 122, 0.35);
+    border-radius: 0.9rem;
+    background: rgba(61, 107, 122, 0.12);
+    color: rgba(215, 224, 232, 0.92);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .calls-for-you[hidden] {
+    display: none !important;
+  }
+
+  .calls-for-you-open {
+    margin-left: 0.55rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(212, 163, 90, 0.4);
+    border-radius: 999px;
+    background: rgba(212, 163, 90, 0.12);
+    color: var(--amber);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .calls-for-you-open:hover {
+    background: rgba(212, 163, 90, 0.22);
+  }
+
   .cookie-note {
     display: flex;
     flex-wrap: wrap;
@@ -1199,7 +1542,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .form,
-  .write-form {
+  .write-form,
+  .call-form {
     display: grid;
     gap: 1rem;
   }
@@ -1218,6 +1562,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .form[hidden],
   .write-form[hidden],
+  .call-form[hidden],
   .success[hidden],
   .error[hidden],
   .hint[hidden] {
@@ -1523,6 +1868,67 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin: 0.35rem 0 0;
     color: rgba(215, 224, 232, 0.7);
     font-size: 0.92rem;
+  }
+
+  .call-upon {
+    margin: 1rem 0 0.35rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.1);
+  }
+
+  .call-upon-kicker {
+    margin: 0 0 0.55rem;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .call-thread {
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+    max-height: 9rem;
+    overflow: auto;
+  }
+
+  .call-msg {
+    margin: 0;
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.65rem;
+    background: rgba(215, 224, 232, 0.06);
+  }
+
+  .call-msg.is-mine {
+    background: rgba(212, 163, 90, 0.12);
+  }
+
+  .call-msg-from {
+    margin: 0 0 0.2rem;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .call-msg-text {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.9);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+
+  .call-form {
+    margin-top: 0.75rem;
+  }
+
+  .hook-call {
+    margin-top: 0.15rem;
   }
 
   .near-name {
