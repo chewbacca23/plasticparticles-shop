@@ -29,6 +29,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <a class="btn btn-primary crowd-sign-cta" href="#pin-form">Stand with them</a>
       </aside>
 
+      <p id="welcome-back" class="welcome-back" hidden>
+        <span id="welcome-back-text"></span>
+        <button type="button" class="welcome-back-open" id="welcome-back-open" hidden>Open them</button>
+      </p>
+
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
 
@@ -120,9 +125,143 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var signUnit = document.getElementById('crowd-sign-unit');
     var signLine = document.getElementById('crowd-sign-line');
     var signRoot = document.getElementById('crowd-sign');
+    var welcomeBack = document.getElementById('welcome-back');
+    var welcomeBackText = document.getElementById('welcome-back-text');
+    var welcomeBackOpen = document.getElementById('welcome-back-open');
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
+    var MEMORY_KEY = 'soul-marketplace-memory';
+    var COOKIE_NAME = 'soul_on_map';
+    var didWelcome = false;
+
+    function readMemory() {
+      try {
+        var raw = localStorage.getItem(MEMORY_KEY);
+        if (!raw) return {};
+        var data = JSON.parse(raw);
+        return data && typeof data === 'object' ? data : {};
+      } catch (err) {
+        return {};
+      }
+    }
+
+    function writeMemory(patch) {
+      var next = Object.assign({}, readMemory(), patch || {}, { at: new Date().toISOString() });
+      try {
+        localStorage.setItem(MEMORY_KEY, JSON.stringify(next));
+      } catch (err) {}
+      try {
+        document.cookie = COOKIE_NAME + '=1; path=/; max-age=34560000; SameSite=Lax';
+      } catch (err2) {}
+      return next;
+    }
+
+    function hasOnMapCookie() {
+      try {
+        return document.cookie.split(';').some(function (part) {
+          return part.trim().indexOf(COOKIE_NAME + '=') === 0;
+        });
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function rememberSelf(name, place, email) {
+      var patch = {};
+      if (name) patch.name = String(name).trim().slice(0, 80);
+      if (place) patch.place = String(place).trim().slice(0, 80);
+      if (email) patch.email = String(email).trim().slice(0, 200);
+      return writeMemory(patch);
+    }
+
+    function rememberTalk(key, name) {
+      if (!key) return readMemory();
+      return writeMemory({
+        lastTalkKey: String(key),
+        lastTalkName: String(name || key).trim().slice(0, 80),
+      });
+    }
+
+    function fillFormsFromMemory() {
+      var mem = readMemory();
+      if (pinForm) {
+        if (mem.name && pinForm.elements.namedItem('name')) {
+          pinForm.elements.namedItem('name').value = mem.name;
+        }
+        if (mem.place && pinForm.elements.namedItem('place')) {
+          pinForm.elements.namedItem('place').value = mem.place;
+        }
+        if (mem.email && pinForm.elements.namedItem('email')) {
+          pinForm.elements.namedItem('email').value = mem.email;
+        }
+      }
+      document.querySelectorAll('.write-form').forEach(function (form) {
+        if (mem.name && form.elements.namedItem('name')) {
+          form.elements.namedItem('name').value = mem.name;
+        }
+        if (mem.email && form.elements.namedItem('email')) {
+          form.elements.namedItem('email').value = mem.email;
+        }
+      });
+    }
+
+    function personByKey(key) {
+      if (!key || !lastPayload) return null;
+      var people = peopleFrom(lastPayload);
+      for (var i = 0; i < people.length; i += 1) {
+        if (people[i].key === key) return people[i];
+      }
+      return null;
+    }
+
+    function personKeyForHook(hookId) {
+      if (!hookId || !lastPayload) return '';
+      var people = peopleFrom(lastPayload);
+      for (var i = 0; i < people.length; i += 1) {
+        var stalls = people[i].stalls || [];
+        for (var s = 0; s < stalls.length; s += 1) {
+          if (stalls[s].id === hookId) return people[i].key;
+        }
+      }
+      return '';
+    }
+
+    function showWelcomeBack() {
+      if (!welcomeBack || !welcomeBackText || didWelcome) return;
+      var mem = readMemory();
+      var known =
+        !!(mem.name || mem.place || mem.email || mem.lastTalkKey) || hasOnMapCookie();
+      if (!known) {
+        welcomeBack.hidden = true;
+        if (welcomeBackOpen) welcomeBackOpen.hidden = true;
+        return;
+      }
+      didWelcome = true;
+      var person = mem.lastTalkKey ? personByKey(mem.lastTalkKey) : null;
+      var who = (person && person.name) || mem.lastTalkName || '';
+      var hello = mem.name
+        ? 'Always a wonderful day, brother. Welcome back, ' + mem.name + '.'
+        : 'Always a wonderful day, brother. Welcome back.';
+      if (who) {
+        welcomeBackText.textContent =
+          hello + ' Your last conversation was with ' + who + ' — open them when you are ready.';
+      } else if (mem.place) {
+        welcomeBackText.textContent =
+          hello + ' Your place on the map still remembers ' + mem.place + '.';
+      } else {
+        welcomeBackText.textContent = hello + ' Good to see you on the map again.';
+      }
+      welcomeBack.hidden = false;
+      if (welcomeBackOpen) {
+        if (person) {
+          welcomeBackOpen.hidden = false;
+          welcomeBackOpen.textContent = 'Open ' + (person.name || 'them');
+        } else {
+          welcomeBackOpen.hidden = true;
+        }
+      }
+    }
 
     function writeCrowdSign(n) {
       var count = Math.max(0, Number(n) || 0);
@@ -533,6 +672,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     function openPerson(key) {
       openKey = openKey === key ? '' : key;
+      if (openKey) {
+        var opened = personByKey(openKey);
+        rememberTalk(openKey, opened && opened.name);
+      }
       render(lastPayload);
     }
 
@@ -549,6 +692,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               'Mail is not wired yet. Offers still show on the floor.';
           }
           render(data);
+          fillFormsFromMemory();
+          showWelcomeBack();
         })
         .catch(function () {
           writeCrowdSign(0);
@@ -581,9 +726,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           })
           .then(function (out) {
             if (out.res.ok && out.body.ok) {
+              rememberSelf(
+                String(data.get('name') || '').trim(),
+                String(data.get('place') || '').trim(),
+                String(data.get('email') || '').trim(),
+              );
               pinForm.hidden = true;
               if (pinSuccess) pinSuccess.hidden = false;
               render(out.body);
+              fillFormsFromMemory();
               return;
             }
             showError((out.body && out.body.error) || 'Could not pin that just now.');
@@ -655,9 +806,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           })
           .then(function (out) {
             if (out.res.ok && out.body.ok) {
+              var talkKey = personKeyForHook(form.getAttribute('data-for'));
+              var talkPerson = personByKey(talkKey);
+              rememberSelf(
+                String(data.get('name') || '').trim(),
+                '',
+                String(data.get('email') || '').trim(),
+              );
+              if (talkKey) rememberTalk(talkKey, talkPerson && talkPerson.name);
               form.hidden = true;
               form.reset();
               render(out.body);
+              fillFormsFromMemory();
               return;
             }
             showError((out.body && out.body.error) || 'Could not leave that offer.');
@@ -745,9 +905,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           })
           .then(function (out) {
             if (out.res.ok && out.body.ok) {
+              var talkKey = personKeyForHook(form.getAttribute('data-for'));
+              var talkPerson = personByKey(talkKey);
+              rememberSelf(
+                String(data.get('name') || '').trim(),
+                '',
+                String(data.get('email') || '').trim(),
+              );
+              if (talkKey) rememberTalk(talkKey, talkPerson && talkPerson.name);
               form.hidden = true;
               form.reset();
               render(out.body);
+              fillFormsFromMemory();
               return;
             }
             showError((out.body && out.body.error) || 'Could not leave that offer.');
@@ -768,7 +937,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
     });
 
+    if (welcomeBackOpen) {
+      welcomeBackOpen.addEventListener('click', function () {
+        var mem = readMemory();
+        if (!mem.lastTalkKey) return;
+        var person = personByKey(mem.lastTalkKey);
+        if (!person) return;
+        // Force open (do not toggle closed if already selected).
+        openKey = person.key;
+        rememberTalk(openKey, person.name);
+        render(lastPayload);
+        try {
+          var mark =
+            document.querySelector('.dot[data-open="' + person.key + '"]') ||
+            document.getElementById('open-stall');
+          if (mark && mark.scrollIntoView) {
+            mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } catch (err) {}
+      });
+    }
+
     load();
+    fillFormsFromMemory();
   })();
 </script>
 
@@ -851,6 +1042,38 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .crowd-sign-cta {
     margin-top: 1.15rem;
+  }
+
+  .welcome-back {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin: 1.1rem 0 0;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid rgba(212, 163, 90, 0.28);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.72);
+    color: rgba(238, 243, 247, 0.9);
+  }
+
+  .welcome-back[hidden] {
+    display: none !important;
+  }
+
+  .welcome-back-open {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    background: var(--amber);
+    color: #121820;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .welcome-back-open:hover {
+    background: var(--amber-hot);
   }
 
   @media (prefers-reduced-motion: reduce) {
