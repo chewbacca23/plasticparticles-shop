@@ -770,7 +770,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var isSelf = meKey && meKey === person.key;
       var threadHtml = renderCallThread(person);
       var hasThread = !!threadHtml;
-      var showCall = !isSelf;
+      // Near on the map, already talking, or a visitor still choosing a name/place.
+      var showCall = !isSelf && (hasThread || canCallClient(person) || !meKey);
       var callBlock = showCall
         ? '<div class="call-upon">' +
           '<p class="call-upon-kicker">Call upon</p>' +
