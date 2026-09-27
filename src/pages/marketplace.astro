@@ -949,8 +949,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         render(lastPayload);
         try {
           var mark =
-            document.querySelector('.dot[data-open="' + person.key + '"]') ||
-            document.getElementById('open-stall');
+            (typeof CSS !== 'undefined' && CSS.escape
+              ? document.querySelector('.dot[data-open="' + CSS.escape(person.key) + '"]')
+              : null) ||
+            document.getElementById('group-open') ||
+            document.getElementById('group');
           if (mark && mark.scrollIntoView) {
             mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
