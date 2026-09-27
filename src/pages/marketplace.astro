@@ -34,6 +34,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <button type="button" class="welcome-back-open" id="welcome-back-open" hidden>Open them</button>
       </p>
 
+      <aside id="cookie-note" class="cookie-note" hidden>
+        <p class="cookie-note-text">
+          Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
+          your machine, so when you stand on the map we can welcome you back to the person you last
+          talked to. No ads. No trackers. Just the good kind of remembering.
+          <span class="cookie-wink" aria-hidden="true">;)</span>
+        </p>
+        <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
+      </aside>
+
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
 
@@ -104,6 +114,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" />
         </label>
         <button class="btn btn-primary" type="submit">Put it on the floor</button>
+        <p class="cookie-pin-hint">
+          Putting yourself on the floor leaves that light cookie and local memory — so coming back
+          still finds you. More in the note up top, and on the
+          <a href="/impressum">imprint</a>.
+        </p>
       </form>
     </div>
   </section>
@@ -128,11 +143,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var welcomeBack = document.getElementById('welcome-back');
     var welcomeBackText = document.getElementById('welcome-back-text');
     var welcomeBackOpen = document.getElementById('welcome-back-open');
+    var cookieNote = document.getElementById('cookie-note');
+    var cookieNoteOk = document.getElementById('cookie-note-ok');
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
     var MEMORY_KEY = 'soul-marketplace-memory';
     var COOKIE_NAME = 'soul_on_map';
+    var COOKIE_NOTE_KEY = 'soul-marketplace-cookie-note';
     var didWelcome = false;
 
     function readMemory() {
@@ -165,6 +183,26 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       } catch (err) {
         return false;
       }
+    }
+
+    function cookieNoteSeen() {
+      try {
+        return localStorage.getItem(COOKIE_NOTE_KEY) === 'ok';
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function showCookieNote() {
+      if (!cookieNote) return;
+      cookieNote.hidden = cookieNoteSeen();
+    }
+
+    function dismissCookieNote() {
+      try {
+        localStorage.setItem(COOKIE_NOTE_KEY, 'ok');
+      } catch (err) {}
+      if (cookieNote) cookieNote.hidden = true;
     }
 
     function rememberSelf(name, place, email) {
@@ -961,6 +999,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
     }
 
+    if (cookieNoteOk) {
+      cookieNoteOk.addEventListener('click', function () {
+        dismissCookieNote();
+      });
+    }
+
+    showCookieNote();
     load();
     fillFormsFromMemory();
   })();
@@ -1077,6 +1122,70 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .welcome-back-open:hover {
     background: var(--amber-hot);
+  }
+
+  .cookie-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.85rem 1.1rem;
+    margin: 1rem 0 0;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid rgba(61, 107, 122, 0.35);
+    border-radius: 1rem;
+    background:
+      radial-gradient(ellipse 80% 120% at 0% 0%, rgba(61, 107, 122, 0.14), transparent 55%),
+      rgba(14, 22, 28, 0.78);
+    color: rgba(220, 230, 236, 0.88);
+  }
+
+  .cookie-note[hidden] {
+    display: none !important;
+  }
+
+  .cookie-note-text {
+    flex: 1 1 16rem;
+    margin: 0;
+    max-width: 42rem;
+    font-size: 0.98rem;
+    line-height: 1.45;
+  }
+
+  .cookie-note-text code {
+    font-size: 0.9em;
+    color: var(--amber);
+  }
+
+  .cookie-wink {
+    color: var(--amber);
+    font-weight: 600;
+  }
+
+  .cookie-note-ok {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    background: rgba(212, 163, 90, 0.18);
+    color: var(--amber-hot);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cookie-note-ok:hover {
+    background: rgba(212, 163, 90, 0.3);
+  }
+
+  .cookie-pin-hint {
+    margin: 0.85rem 0 0;
+    max-width: 34rem;
+    color: rgba(190, 204, 214, 0.72);
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .cookie-pin-hint a {
+    color: var(--amber-hot);
   }
 
   @media (prefers-reduced-motion: reduce) {
