@@ -318,7 +318,6 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
       <nav aria-label="Primary">
         <a href="/">Home</a>
         <a href="/stories">Rides</a>
-        <a href="/journal">Ride notes</a>
         <a href="/about">About</a>
       </nav>
     </div>
