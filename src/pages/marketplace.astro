@@ -1260,38 +1260,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     /**
-     * Centre→centre ray in floor %, shortened to each mark’s rim in screen space
-     * so chords stay centred and don’t poke past the bubbles.
+     * Centre of bubble A → centre of bubble B in the shared floor’s 0–100 space.
+     * Measures live .dot-mark boxes so host / crowd / pack / open-scale stay aligned.
      */
     function linkChord(a, b, floorRect) {
       var ca = markCenterPct(a, floorRect);
       var cb = markCenterPct(b, floorRect);
       if (!ca || !cb) return null;
-      var px1 = (ca.x / 100) * floorRect.width;
-      var py1 = (ca.y / 100) * floorRect.height;
-      var px2 = (cb.x / 100) * floorRect.width;
-      var py2 = (cb.y / 100) * floorRect.height;
-      var dx = px2 - px1;
-      var dy = py2 - py1;
-      var len = Math.hypot(dx, dy);
-      if (len < 0.5) {
-        return { x1: ca.x, y1: ca.y, x2: cb.x, y2: cb.y };
-      }
-      var maxShort = Math.max(0, len / 2 - 0.5);
-      var r1 = Math.min(ca.rPx, maxShort);
-      var r2 = Math.min(cb.rPx, maxShort);
-      var ux = dx / len;
-      var uy = dy / len;
-      px1 += ux * r1;
-      py1 += uy * r1;
-      px2 -= ux * r2;
-      py2 -= uy * r2;
-      return {
-        x1: (px1 / floorRect.width) * 100,
-        y1: (py1 / floorRect.height) * 100,
-        x2: (px2 / floorRect.width) * 100,
-        y2: (py2 / floorRect.height) * 100,
-      };
+      return { x1: ca.x, y1: ca.y, x2: cb.x, y2: cb.y };
     }
 
     function paintGroupLinks(people, byKey, selected, near) {
