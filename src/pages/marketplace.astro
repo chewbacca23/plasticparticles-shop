@@ -91,6 +91,28 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <header class="chat-dock-head">
             <p class="chat-dock-kicker">Call upon</p>
             <h2 class="chat-dock-name" id="chat-dock-name">Brother</h2>
+            <span class="chat-dock-ping" id="chat-dock-ping" hidden aria-hidden="true"></span>
+            <button
+              type="button"
+              class="chat-dock-mute"
+              id="chat-dock-mute"
+              aria-pressed="false"
+              aria-label="Mute reply sound"
+              title="Mute reply sound"
+            >
+              <svg class="chat-dock-mute-on" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M4 10v4h3l4 3V7L7 10H4zm11.5 2a3.5 3.5 0 0 0-1.8-3.05v6.1A3.5 3.5 0 0 0 15.5 12zm-1.8-7.45v1.7a6 6 0 0 1 0 11.5v1.7a7.7 7.7 0 0 0 0-14.9z"
+                />
+              </svg>
+              <svg class="chat-dock-mute-off" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" hidden>
+                <path
+                  fill="currentColor"
+                  d="M4 10v4h3l4 3V7L7 10H4zm11.5 2a3.5 3.5 0 0 0-1.8-3.05v3.2l1.8-.15zm2.7-6.2-.95.95A6 6 0 0 1 18.7 12a6 6 0 0 1-1.4 3.9l.95.95A7.7 7.7 0 0 0 20.5 12a7.7 7.7 0 0 0-2.3-5.45zM4.27 3 3 4.27 7.73 9H4v4h3l4 3v-4.73l5.27 5.27.73-.73L4.27 3zM13 7l-1.18 1.18L13 8.36V7z"
+                />
+              </svg>
+            </button>
             <button type="button" class="chat-dock-close" id="chat-dock-close" aria-label="End this chat">
               ×
             </button>
@@ -214,13 +236,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var chatDockEmpty = document.getElementById('chat-dock-empty');
     var chatDockForm = document.getElementById('chat-dock-form');
     var chatDockClose = document.getElementById('chat-dock-close');
+    var chatDockMute = document.getElementById('chat-dock-mute');
+    var chatDockPing = document.getElementById('chat-dock-ping');
     var chatDockSend = document.getElementById('chat-dock-send');
     var chatDockMsgLabel = document.getElementById('chat-dock-msg-label');
     var MEMORY_KEY = 'soul-marketplace-memory';
     var COOKIE_NAME = 'soul_on_map';
     var COOKIE_NOTE_KEY = 'soul-marketplace-cookie-note';
+    var NOTIFY_ASKED_KEY = 'soul-call-notify-asked';
     var didWelcome = false;
     var NEAR_MAP_DIST = 14;
+    var dockSeenMsgId = '';
+    var dockSeenMsgAt = '';
+    var dockSeenBootstrapped = false;
+    var dockMuteBing = false;
+    var dockAudioCtx = null;
+    var notifyPermissionAsked = false;
 
     function readMemory() {
       try {
@@ -676,10 +707,195 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }, DOCK_POLL_MS);
     }
 
+    function prefersReducedMotion() {
+      try {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function seedDockSeen(messages) {
+      var last = messages && messages.length ? messages[messages.length - 1] : null;
+      dockSeenMsgId = last ? String(last.id || '') : '';
+      dockSeenMsgAt = last ? String(last.at || '') : '';
+    }
+
+    function advanceDockSeen(messages) {
+      if (!messages || !messages.length) return;
+      var last = messages[messages.length - 1];
+      dockSeenMsgId = String(last.id || '');
+      dockSeenMsgAt = String(last.at || '');
+    }
+
+    function isNewerThanSeen(msg) {
+      if (!msg) return false;
+      var id = String(msg.id || '');
+      var at = String(msg.at || '');
+      if (!dockSeenMsgId && !dockSeenMsgAt) return true;
+      if (dockSeenMsgId && id && id === dockSeenMsgId) return false;
+      if (dockSeenMsgAt && at) {
+        if (at < dockSeenMsgAt) return false;
+        if (at === dockSeenMsgAt && dockSeenMsgId && id && id <= dockSeenMsgId) return false;
+      } else if (dockSeenMsgId && id && id <= dockSeenMsgId) {
+        return false;
+      }
+      return true;
+    }
+
+    function playSoftBing() {
+      if (dockMuteBing) return;
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!dockAudioCtx) dockAudioCtx = new Ctx();
+        var ctx = dockAudioCtx;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(function () {});
+        }
+        var now = ctx.currentTime;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.045, now + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+        gain.connect(ctx.destination);
+
+        var osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(660, now);
+        osc.frequency.exponentialRampToValueAtTime(528, now + 0.22);
+        osc.connect(gain);
+        osc.start(now);
+        osc.stop(now + 0.34);
+
+        var osc2 = ctx.createOscillator();
+        var gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.0001, now + 0.04);
+        gain2.gain.exponentialRampToValueAtTime(0.022, now + 0.07);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(990, now + 0.04);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.04);
+        osc2.stop(now + 0.4);
+      } catch (err) {}
+    }
+
+    function nudgeChatDock() {
+      if (!chatDock) return;
+      chatDock.classList.remove('is-nudging');
+      if (chatDockPing) {
+        chatDockPing.hidden = false;
+        chatDockPing.classList.remove('is-flash');
+      }
+      void chatDock.offsetWidth;
+      if (!prefersReducedMotion()) {
+        chatDock.classList.add('is-nudging');
+      }
+      if (chatDockPing) {
+        chatDockPing.classList.add('is-flash');
+      }
+      window.setTimeout(function () {
+        if (chatDock) chatDock.classList.remove('is-nudging');
+        if (chatDockPing) {
+          chatDockPing.classList.remove('is-flash');
+          chatDockPing.hidden = true;
+        }
+      }, prefersReducedMotion() ? 900 : 700);
+    }
+
+    function maybeAskNotifyPermission() {
+      if (notifyPermissionAsked) return;
+      if (typeof Notification === 'undefined') return;
+      if (Notification.permission !== 'default') return;
+      try {
+        if (localStorage.getItem(NOTIFY_ASKED_KEY) === '1') {
+          notifyPermissionAsked = true;
+          return;
+        }
+      } catch (err) {}
+      notifyPermissionAsked = true;
+      try {
+        localStorage.setItem(NOTIFY_ASKED_KEY, '1');
+      } catch (err2) {}
+      try {
+        Notification.requestPermission().catch(function () {});
+      } catch (err3) {}
+    }
+
+    function softBackgroundNotify(fromName, text) {
+      if (typeof document === 'undefined' || !document.hidden) return;
+      if (typeof Notification === 'undefined') return;
+      if (Notification.permission !== 'granted') return;
+      try {
+        var note = new Notification('Call upon — ' + String(fromName || 'someone'), {
+          body: String(text || 'A short reply landed.').slice(0, 120),
+          silent: true,
+          tag: 'soul-call-upon-' + String(dockKey || 'thread'),
+        });
+        window.setTimeout(function () {
+          try {
+            note.close();
+          } catch (err) {}
+        }, 4500);
+      } catch (err2) {}
+    }
+
+    function noticeOtherReply(msg) {
+      if (!msg) return;
+      playSoftBing();
+      nudgeChatDock();
+      softBackgroundNotify(msg.fromName, msg.text);
+    }
+
+    function detectOtherReplies(messages, me) {
+      if (!dockKey || !me || !messages || !messages.length) return;
+      if (!dockSeenBootstrapped) {
+        seedDockSeen(messages);
+        dockSeenBootstrapped = true;
+        return;
+      }
+      var fresh = [];
+      for (var i = 0; i < messages.length; i += 1) {
+        var msg = messages[i];
+        if (!msg || msg.fromKey === me) continue;
+        if (isNewerThanSeen(msg)) fresh.push(msg);
+      }
+      advanceDockSeen(messages);
+      if (!fresh.length) return;
+      noticeOtherReply(fresh[fresh.length - 1]);
+    }
+
+    function syncMuteButton() {
+      if (!chatDockMute) return;
+      chatDockMute.setAttribute('aria-pressed', dockMuteBing ? 'true' : 'false');
+      chatDockMute.setAttribute(
+        'aria-label',
+        dockMuteBing ? 'Unmute reply sound' : 'Mute reply sound',
+      );
+      chatDockMute.title = dockMuteBing ? 'Unmute reply sound' : 'Mute reply sound';
+      var onIcon = chatDockMute.querySelector('.chat-dock-mute-on');
+      var offIcon = chatDockMute.querySelector('.chat-dock-mute-off');
+      if (onIcon) onIcon.hidden = dockMuteBing;
+      if (offIcon) offIcon.hidden = !dockMuteBing;
+      if (chatDock) chatDock.classList.toggle('is-muted', dockMuteBing);
+    }
+
     function closeChatDock() {
       dockKey = '';
+      dockSeenMsgId = '';
+      dockSeenMsgAt = '';
+      dockSeenBootstrapped = false;
       stopDockPoll();
-      if (chatDock) chatDock.hidden = true;
+      if (chatDock) {
+        chatDock.hidden = true;
+        chatDock.classList.remove('is-nudging');
+      }
+      if (chatDockPing) {
+        chatDockPing.hidden = true;
+        chatDockPing.classList.remove('is-flash');
+      }
       if (chatDockForm) {
         chatDockForm.reset();
         fillFormsFromMemory();
@@ -701,6 +917,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var thread = me ? threadForPair(me, dockKey) : null;
       var messages = (thread && thread.messages) || [];
       var hasThread = messages.length > 0;
+      detectOtherReplies(messages, me);
       if (chatDockThread) {
         chatDockThread.innerHTML = messages
           .map(function (msg) {
@@ -748,6 +965,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         );
       }
       fillFormsFromMemory();
+      syncMuteButton();
     }
 
     function openChatDock(key, options) {
@@ -756,10 +974,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var person = personByKey(key);
       if (!person && !opts.allowMissing) return;
       dockKey = key;
+      dockSeenMsgId = '';
+      dockSeenMsgAt = '';
+      dockSeenBootstrapped = false;
       rememberTalk(key, (person && person.name) || key);
       if (meNeedsMark(key)) markCallsSeen();
+      var me = selfKey();
+      var thread = me ? threadForPair(me, key) : null;
+      seedDockSeen((thread && thread.messages) || []);
+      dockSeenBootstrapped = true;
       renderChatDock();
       startDockPoll();
+      maybeAskNotifyPermission();
       if (opts.focus !== false && chatDockForm) {
         try {
           var msg = chatDockForm.elements.namedItem('message');
@@ -1463,6 +1689,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if (chatDockClose) {
       chatDockClose.addEventListener('click', function () {
         closeChatDock();
+      });
+    }
+
+    if (chatDockMute) {
+      chatDockMute.addEventListener('click', function () {
+        dockMuteBing = !dockMuteBing;
+        syncMuteButton();
       });
     }
 
@@ -2233,7 +2466,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .chat-dock-head {
     position: relative;
-    padding-right: 2.2rem;
+    padding-right: 4.4rem;
   }
 
   .chat-dock-kicker {
@@ -2255,10 +2488,67 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     line-height: 1.15;
   }
 
+  .chat-dock-ping {
+    position: absolute;
+    top: 0.15rem;
+    right: 4.05rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: rgba(212, 163, 90, 0.95);
+    box-shadow: 0 0 0 0 rgba(212, 163, 90, 0.45);
+    pointer-events: none;
+  }
+
+  .chat-dock-ping[hidden] {
+    display: none !important;
+  }
+
+  .chat-dock-ping.is-flash {
+    animation: chat-dock-ping-flash 0.7s ease;
+  }
+
+  @keyframes chat-dock-ping-flash {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+      box-shadow: 0 0 0 0 rgba(212, 163, 90, 0.5);
+    }
+    35% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 0.45rem rgba(212, 163, 90, 0);
+    }
+    100% {
+      opacity: 0.15;
+      transform: scale(0.85);
+      box-shadow: 0 0 0 0 rgba(212, 163, 90, 0);
+    }
+  }
+
+  .chat-dock.is-nudging {
+    animation: chat-dock-nudge 0.55s ease;
+  }
+
+  @keyframes chat-dock-nudge {
+    0% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(-0.28rem);
+    }
+    55% {
+      transform: translateY(0.08rem);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  .chat-dock-mute,
   .chat-dock-close {
     position: absolute;
     top: -0.15rem;
-    right: -0.2rem;
     width: 2rem;
     height: 2rem;
     border: 0;
@@ -2269,11 +2559,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 1.35rem;
     line-height: 1;
     cursor: pointer;
+    display: inline-grid;
+    place-items: center;
   }
 
+  .chat-dock-mute {
+    right: 1.95rem;
+    font-size: 0;
+  }
+
+  .chat-dock-close {
+    right: -0.2rem;
+  }
+
+  .chat-dock-mute:hover,
   .chat-dock-close:hover {
     background: rgba(215, 224, 232, 0.14);
     color: var(--paper);
+  }
+
+  .chat-dock-mute[aria-pressed='true'] {
+    color: rgba(215, 224, 232, 0.45);
+  }
+
+  .chat-dock-mute svg[hidden] {
+    display: none !important;
   }
 
   .chat-dock-thread {
@@ -2379,6 +2689,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   @media (prefers-reduced-motion: reduce) {
     .chat-dock-card {
       animation: none;
+    }
+
+    .chat-dock.is-nudging {
+      animation: none;
+    }
+
+    .chat-dock-ping.is-flash {
+      animation: none;
+      opacity: 1;
     }
   }
 
