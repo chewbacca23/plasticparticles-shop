@@ -740,6 +740,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
       var placeField = chatDockForm && chatDockForm.querySelector('.chat-dock-field-place');
       if (placeField) placeField.hidden = hasThread;
+      var msgArea = chatDockForm && chatDockForm.elements.namedItem('message');
+      if (msgArea) {
+        msgArea.setAttribute(
+          'placeholder',
+          hasThread ? 'A short reply, brother…' : 'Brother — coffee before the climb?',
+        );
+      }
       fillFormsFromMemory();
     }
 
@@ -1468,9 +1475,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         sendCallUpon(
           dockKey,
           {
-            name: String(data.get('name') || '').trim(),
-            place: String(data.get('place') || '').trim(),
-            email: String(data.get('email') || '').trim(),
+            name:
+              String(data.get('name') || '').trim() ||
+              String(readMemory().name || '').trim(),
+            place:
+              String(data.get('place') || '').trim() ||
+              String(readMemory().place || '').trim(),
+            email:
+              String(data.get('email') || '').trim() ||
+              String(readMemory().email || '').trim(),
             message: String(data.get('message') || '').trim(),
             company: String(
               data.get('fax_number_leave_blank') || data.get('company') || '',
@@ -2334,7 +2347,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin-top: 0.15rem;
   }
 
-  .chat-dock.has-thread .chat-dock-field-email {
+  .chat-dock.has-thread .chat-dock-field-email,
+  .chat-dock.has-thread .chat-dock-field-name {
     display: none;
   }
 
