@@ -85,6 +85,54 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <p>If you left a mail, offers can also land in your inbox. Either way, they show here.</p>
       </div>
 
+      <!-- One calm Call upon dock — stays open while you wander the map. -->
+      <aside id="chat-dock" class="chat-dock" hidden aria-live="polite">
+        <div class="chat-dock-card">
+          <header class="chat-dock-head">
+            <p class="chat-dock-kicker">Call upon</p>
+            <h2 class="chat-dock-name" id="chat-dock-name">Brother</h2>
+            <button type="button" class="chat-dock-close" id="chat-dock-close" aria-label="End this chat">
+              ×
+            </button>
+          </header>
+          <ol class="chat-dock-thread" id="chat-dock-thread" aria-label="Call upon thread"></ol>
+          <p class="chat-dock-empty" id="chat-dock-empty" hidden>
+            A short note. Coffee before the climb, a spare tire, a place to meet.
+          </p>
+          <form class="chat-dock-form" id="chat-dock-form">
+            <label class="chat-dock-field chat-dock-field-name">
+              <span>A name — any name</span>
+              <input type="text" name="name" required maxlength="80" autocomplete="nickname" />
+            </label>
+            <label class="chat-dock-field chat-dock-field-place">
+              <span>Your place — so we know you are near</span>
+              <input type="text" name="place" maxlength="80" placeholder="Berlin, Kreuzberg, Nice…" />
+            </label>
+            <label class="chat-dock-field chat-dock-field-msg">
+              <span id="chat-dock-msg-label">Call upon them</span>
+              <textarea
+                name="message"
+                rows="2"
+                required
+                maxlength="500"
+                placeholder="Brother — coffee before the climb?"
+              ></textarea>
+            </label>
+            <label class="chat-dock-field chat-dock-field-email">
+              <span>Email — optional, stays off the page</span>
+              <input type="email" name="email" maxlength="200" autocomplete="email" />
+            </label>
+            <label class="hp" aria-hidden="true">
+              <span>Fax</span>
+              <input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" />
+            </label>
+            <button class="btn btn-primary chat-dock-send" type="submit" id="chat-dock-send">
+              Send call upon
+            </button>
+          </form>
+        </div>
+      </aside>
+
       <form id="pin-form" class="form" method="post" action="/api/hooks">
         <h2 class="form-title">Open a stall</h2>
         <label>
@@ -157,6 +205,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
+    var dockKey = '';
+    var dockPollTimer = null;
+    var DOCK_POLL_MS = 8000;
+    var chatDock = document.getElementById('chat-dock');
+    var chatDockName = document.getElementById('chat-dock-name');
+    var chatDockThread = document.getElementById('chat-dock-thread');
+    var chatDockEmpty = document.getElementById('chat-dock-empty');
+    var chatDockForm = document.getElementById('chat-dock-form');
+    var chatDockClose = document.getElementById('chat-dock-close');
+    var chatDockSend = document.getElementById('chat-dock-send');
+    var chatDockMsgLabel = document.getElementById('chat-dock-msg-label');
     var MEMORY_KEY = 'soul-marketplace-memory';
     var COOKIE_NAME = 'soul_on_map';
     var COOKIE_NOTE_KEY = 'soul-marketplace-cookie-note';
@@ -255,6 +314,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           form.elements.namedItem('place').value = mem.place;
         }
       });
+      if (chatDockForm) {
+        var nameEl = chatDockForm.elements.namedItem('name');
+        var emailEl = chatDockForm.elements.namedItem('email');
+        var placeEl = chatDockForm.elements.namedItem('place');
+        if (mem.name && nameEl && !String(nameEl.value || '').trim()) nameEl.value = mem.name;
+        if (mem.email && emailEl && !String(emailEl.value || '').trim()) emailEl.value = mem.email;
+        if (mem.place && placeEl && !String(placeEl.value || '').trim()) placeEl.value = mem.place;
+      }
     }
 
     function selfKey() {
@@ -590,6 +657,140 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       return '<ol class="call-thread" aria-label="Call upon thread">' + rows + '</ol>';
     }
 
+    function stopDockPoll() {
+      if (dockPollTimer) {
+        clearInterval(dockPollTimer);
+        dockPollTimer = null;
+      }
+    }
+
+    function startDockPoll() {
+      stopDockPoll();
+      if (!dockKey) return;
+      dockPollTimer = setInterval(function () {
+        if (!dockKey) {
+          stopDockPoll();
+          return;
+        }
+        loadQuiet();
+      }, DOCK_POLL_MS);
+    }
+
+    function closeChatDock() {
+      dockKey = '';
+      stopDockPoll();
+      if (chatDock) chatDock.hidden = true;
+      if (chatDockForm) {
+        chatDockForm.reset();
+        fillFormsFromMemory();
+      }
+    }
+
+    function renderChatDock() {
+      if (!chatDock || !dockKey) {
+        if (chatDock) chatDock.hidden = true;
+        return;
+      }
+      var person = personByKey(dockKey);
+      var me = selfKey();
+      var partnerName =
+        (person && person.name) ||
+        readMemory().lastTalkName ||
+        dockKey;
+      if (chatDockName) chatDockName.textContent = partnerName;
+      var thread = me ? threadForPair(me, dockKey) : null;
+      var messages = (thread && thread.messages) || [];
+      var hasThread = messages.length > 0;
+      if (chatDockThread) {
+        chatDockThread.innerHTML = messages
+          .map(function (msg) {
+            var mine = msg.fromKey === me;
+            return (
+              '<li class="call-msg' +
+              (mine ? ' is-mine' : '') +
+              '">' +
+              '<p class="call-msg-from">' +
+              esc(mine ? 'You' : msg.fromName) +
+              '</p>' +
+              '<p class="call-msg-text">' +
+              esc(msg.text) +
+              '</p>' +
+              '</li>'
+            );
+          })
+          .join('');
+        chatDockThread.hidden = !hasThread;
+        if (hasThread) {
+          try {
+            chatDockThread.scrollTop = chatDockThread.scrollHeight;
+          } catch (err) {}
+        }
+      }
+      if (chatDockEmpty) chatDockEmpty.hidden = hasThread;
+      if (chatDock) {
+        chatDock.hidden = false;
+        chatDock.classList.toggle('has-thread', hasThread);
+        chatDock.setAttribute('data-partner', dockKey);
+      }
+      if (chatDockMsgLabel) {
+        chatDockMsgLabel.textContent = hasThread ? 'Your reply' : 'Call upon them';
+      }
+      if (chatDockSend) {
+        chatDockSend.textContent = hasThread ? 'Send reply' : 'Send call upon';
+      }
+      var placeField = chatDockForm && chatDockForm.querySelector('.chat-dock-field-place');
+      if (placeField) placeField.hidden = hasThread;
+      fillFormsFromMemory();
+    }
+
+    function openChatDock(key, options) {
+      var opts = options || {};
+      if (!key) return;
+      var person = personByKey(key);
+      if (!person && !opts.allowMissing) return;
+      dockKey = key;
+      rememberTalk(key, (person && person.name) || key);
+      if (meNeedsMark(key)) markCallsSeen();
+      renderChatDock();
+      startDockPoll();
+      if (opts.focus !== false && chatDockForm) {
+        try {
+          var msg = chatDockForm.elements.namedItem('message');
+          if (msg && msg.focus) msg.focus();
+        } catch (err) {}
+      }
+      showCallsForYou();
+    }
+
+    function meNeedsMark(otherKey) {
+      var waiting = callsWaitingForMe();
+      return waiting.some(function (row) {
+        return row.otherKey === otherKey;
+      });
+    }
+
+    function loadQuiet() {
+      fetch('/api/hooks', { headers: { accept: 'application/json' } })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data || !data.ok) return;
+          canModerate = !!data.canModerate;
+          lastPayload = data;
+          renderGroup(lastPayload);
+          if (list) {
+            var cards = cardsFrom(lastPayload);
+            list.innerHTML = cards.length
+              ? cards.map(renderCard).join('')
+              : '<li class="empty">The market is empty. Open the first stall.</li>';
+          }
+          if (dockKey) renderChatDock();
+          showCallsForYou();
+        })
+        .catch(function () {});
+    }
+
     function renderCard(card) {
       var isStall = card.kind !== 'offer';
       var hookId = card.hookId || card.id;
@@ -775,13 +976,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var callBlock = showCall
         ? '<div class="call-upon">' +
           '<p class="call-upon-kicker">Call upon</p>' +
-          threadHtml +
-          '<button type="button" class="btn btn-ghost hook-call" data-call-toggle="' +
+          (hasThread
+            ? '<p class="call-upon-hint">A thread is open — keep talking in the little window.</p>'
+            : '<p class="call-upon-hint">A short note, brother. The chat stays open while you wander.</p>') +
+          '<button type="button" class="btn btn-ghost hook-call" data-open-dock="' +
           esc(person.key) +
           '">' +
-          (hasThread ? 'Reply' : 'Call upon ' + esc(person.name)) +
+          (hasThread ? 'Open chat with ' + esc(person.name) : 'Call upon ' + esc(person.name)) +
           '</button>' +
-          callForm(person.key) +
           '</div>'
         : '';
       openBox.hidden = false;
@@ -805,7 +1007,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           : '');
       floatOpen(person);
       fillFormsFromMemory();
-      if (showCall && meKey) markCallsSeen();
+      if (showCall && meKey && hasThread) markCallsSeen();
     }
 
     function renderGroup(payload) {
@@ -917,6 +1119,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
       lastPayload = payload || lastPayload;
       renderGroup(lastPayload);
+      if (dockKey) renderChatDock();
       if (!list) return;
       var cards = cardsFrom(lastPayload);
       if (!cards.length) {
@@ -931,8 +1134,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (openKey) {
         var opened = personByKey(openKey);
         rememberTalk(openKey, opened && opened.name);
+        var me = selfKey();
+        if (me && opened && threadForPair(me, openKey)) {
+          openChatDock(openKey, { focus: false });
+        }
       }
       render(lastPayload);
+      if (dockKey) renderChatDock();
     }
 
     function load() {
@@ -1112,16 +1320,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           if (opened) floatOpen(opened);
           return;
         }
-        var callToggle = event.target.closest('[data-call-toggle]');
-        if (callToggle && openBox) {
-          var callFormEl = openBox.querySelector(
-            '[data-call="' + callToggle.getAttribute('data-call-toggle') + '"]',
-          );
-          if (callFormEl) callFormEl.hidden = !callFormEl.hidden;
-          var openedCall = peopleFrom(lastPayload).find(function (row) {
-            return row.key === openKey;
-          });
-          if (openedCall) floatOpen(openedCall);
+        var openDockBtn = event.target.closest('[data-open-dock]');
+        if (openDockBtn) {
+          openChatDock(openDockBtn.getAttribute('data-open-dock'));
           return;
         }
         var remove = event.target.closest('[data-remove]');
@@ -1150,60 +1351,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
 
       group.addEventListener('submit', function (event) {
-        var callFormEl = event.target.closest('.call-form');
-        if (callFormEl) {
-          event.preventDefault();
-          hideError();
-          var callData = new FormData(callFormEl);
-          var callButton = callFormEl.querySelector('button[type="submit"]');
-          if (callButton) callButton.disabled = true;
-          fetch('/api/hooks/call', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              toKey: callFormEl.getAttribute('data-call'),
-              name: String(callData.get('name') || '').trim(),
-              place: String(callData.get('place') || '').trim(),
-              email: String(callData.get('email') || '').trim(),
-              message: String(callData.get('message') || '').trim(),
-              company: String(
-                callData.get('fax_number_leave_blank') || callData.get('company') || '',
-              ).trim(),
-            }),
-          })
-            .then(function (res) {
-              return res.json().then(function (body) {
-                return { res: res, body: body };
-              });
-            })
-            .then(function (out) {
-              if (out.res.ok && out.body.ok) {
-                var talkKey = callFormEl.getAttribute('data-call');
-                var talkPerson = personByKey(talkKey);
-                rememberSelf(
-                  String(callData.get('name') || '').trim(),
-                  String(callData.get('place') || '').trim(),
-                  String(callData.get('email') || '').trim(),
-                );
-                if (talkKey) rememberTalk(talkKey, talkPerson && talkPerson.name);
-                markCallsSeen();
-                callFormEl.hidden = true;
-                callFormEl.reset();
-                render(out.body);
-                fillFormsFromMemory();
-                showCallsForYou();
-                return;
-              }
-              showError((out.body && out.body.error) || 'Could not send that call.');
-            })
-            .catch(function () {
-              showError('Could not send that call.');
-            })
-            .finally(function () {
-              if (callButton) callButton.disabled = false;
-            });
-          return;
-        }
         var form = event.target.closest('.write-form');
         if (!form) return;
         event.preventDefault();
@@ -1255,8 +1402,94 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
     }
 
+    function sendCallUpon(toKey, fields, onDone) {
+      if (!toKey) {
+        if (onDone) onDone(false);
+        return;
+      }
+      hideError();
+      fetch('/api/hooks/call', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          toKey: toKey,
+          name: String(fields.name || '').trim(),
+          place: String(fields.place || '').trim(),
+          email: String(fields.email || '').trim(),
+          message: String(fields.message || '').trim(),
+          company: String(fields.company || '').trim(),
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            return { res: res, body: body };
+          });
+        })
+        .then(function (out) {
+          if (out.res.ok && out.body.ok) {
+            var talkPerson = personByKey(toKey);
+            rememberSelf(fields.name, fields.place, fields.email);
+            rememberTalk(toKey, talkPerson && talkPerson.name);
+            markCallsSeen();
+            dockKey = toKey;
+            render(out.body);
+            renderChatDock();
+            startDockPoll();
+            fillFormsFromMemory();
+            showCallsForYou();
+            if (chatDockForm) {
+              var msgEl = chatDockForm.elements.namedItem('message');
+              if (msgEl) msgEl.value = '';
+            }
+            if (onDone) onDone(true);
+            return;
+          }
+          showError((out.body && out.body.error) || 'Could not send that call.');
+          if (onDone) onDone(false);
+        })
+        .catch(function () {
+          showError('Could not send that call.');
+          if (onDone) onDone(false);
+        });
+    }
+
+    if (chatDockClose) {
+      chatDockClose.addEventListener('click', function () {
+        closeChatDock();
+      });
+    }
+
+    if (chatDockForm) {
+      chatDockForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (!dockKey) return;
+        var data = new FormData(chatDockForm);
+        if (chatDockSend) chatDockSend.disabled = true;
+        sendCallUpon(
+          dockKey,
+          {
+            name: String(data.get('name') || '').trim(),
+            place: String(data.get('place') || '').trim(),
+            email: String(data.get('email') || '').trim(),
+            message: String(data.get('message') || '').trim(),
+            company: String(
+              data.get('fax_number_leave_blank') || data.get('company') || '',
+            ).trim(),
+          },
+          function () {
+            if (chatDockSend) chatDockSend.disabled = false;
+          },
+        );
+      });
+    }
+
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && openKey) {
+      if (event.key !== 'Escape') return;
+      if (dockKey) {
+        closeChatDock();
+        return;
+      }
+      if (openKey) {
         openKey = '';
         render(lastPayload);
       }
@@ -1272,6 +1505,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         openKey = person.key;
         rememberTalk(openKey, person.name);
         render(lastPayload);
+        var me = selfKey();
+        if (me && threadForPair(me, person.key)) {
+          openChatDock(person.key);
+        } else {
+          openChatDock(person.key, { focus: true });
+        }
         try {
           var mark =
             (typeof CSS !== 'undefined' && CSS.escape
@@ -1296,6 +1535,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         rememberTalk(openKey, person.name);
         markCallsSeen();
         render(lastPayload);
+        openChatDock(person.key);
         showCallsForYou();
         try {
           var callMark =
@@ -1886,6 +2126,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     text-transform: uppercase;
   }
 
+  .call-upon-hint {
+    margin: 0 0 0.65rem;
+    color: rgba(215, 224, 232, 0.72);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
   .call-thread {
     list-style: none;
     margin: 0 0 0.75rem;
@@ -1930,6 +2177,195 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .hook-call {
     margin-top: 0.15rem;
+  }
+
+  .chat-dock {
+    position: fixed;
+    z-index: 40;
+    right: max(0.85rem, env(safe-area-inset-right));
+    bottom: max(0.85rem, env(safe-area-inset-bottom));
+    width: min(22.5rem, calc(100vw - 1.5rem));
+    pointer-events: none;
+  }
+
+  .chat-dock[hidden] {
+    display: none !important;
+  }
+
+  .chat-dock-card {
+    pointer-events: auto;
+    display: grid;
+    gap: 0.7rem;
+    padding: 0.95rem 1rem 1.05rem;
+    border: 1px solid rgba(212, 163, 90, 0.28);
+    border-radius: 1.05rem;
+    background:
+      radial-gradient(ellipse 70% 80% at 12% 0%, rgba(212, 163, 90, 0.14), transparent 55%),
+      radial-gradient(ellipse 60% 70% at 100% 100%, rgba(61, 107, 122, 0.16), transparent 58%),
+      rgba(12, 18, 24, 0.96);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+    animation: chat-dock-in 0.28s ease;
+  }
+
+  @keyframes chat-dock-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.65rem) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .chat-dock-head {
+    position: relative;
+    padding-right: 2.2rem;
+  }
+
+  .chat-dock-kicker {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .chat-dock-name {
+    margin: 0.2rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+    line-height: 1.15;
+  }
+
+  .chat-dock-close {
+    position: absolute;
+    top: -0.15rem;
+    right: -0.2rem;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(215, 224, 232, 0.08);
+    color: rgba(215, 224, 232, 0.78);
+    font: inherit;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .chat-dock-close:hover {
+    background: rgba(215, 224, 232, 0.14);
+    color: var(--paper);
+  }
+
+  .chat-dock-thread {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+    max-height: 11rem;
+    overflow: auto;
+  }
+
+  .chat-dock-thread[hidden] {
+    display: none !important;
+  }
+
+  .chat-dock-empty {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.68);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .chat-dock-empty[hidden] {
+    display: none !important;
+  }
+
+  .chat-dock-form {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .chat-dock-field {
+    display: grid;
+    gap: 0.28rem;
+  }
+
+  .chat-dock-field[hidden] {
+    display: none !important;
+  }
+
+  .chat-dock-field span {
+    color: rgba(215, 224, 232, 0.62);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .chat-dock-field input,
+  .chat-dock-field textarea {
+    width: 100%;
+    margin: 0;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.65rem;
+    background: rgba(8, 12, 16, 0.55);
+    color: var(--paper);
+    font: inherit;
+    font-size: 0.92rem;
+    resize: vertical;
+  }
+
+  .chat-dock-field input:focus,
+  .chat-dock-field textarea:focus {
+    outline: none;
+    border-color: rgba(212, 163, 90, 0.55);
+  }
+
+  .chat-dock-send {
+    justify-self: start;
+    margin-top: 0.15rem;
+  }
+
+  .chat-dock.has-thread .chat-dock-field-email {
+    display: none;
+  }
+
+  @media (max-width: 560px) {
+    .chat-dock {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      padding: 0;
+    }
+
+    .chat-dock-card {
+      border-radius: 1.05rem 1.05rem 0 0;
+      border-left: 0;
+      border-right: 0;
+      border-bottom: 0;
+      max-height: min(70vh, 28rem);
+      overflow: auto;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .chat-dock-thread {
+      max-height: 8.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chat-dock-card {
+      animation: none;
+    }
   }
 
   .near-name {
