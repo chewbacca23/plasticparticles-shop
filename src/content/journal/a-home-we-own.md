@@ -15,7 +15,6 @@ Riders know a camp that is not quite yours. So we built a base camp: this cyclin
 
 - **Rides**: pictures and kilometres
 - **Ride notes**: packing, trains, café stops, empty tarmac
-- **How we ride**: habits from the road
 - Room for more routes, more coasts, more of this planet from the saddle
 
 Point `thenewsoulsearchers.de` at the host. Come back after a ride and write. Not a theme rented by the month. Home for the bikes.

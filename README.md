@@ -1,6 +1,6 @@
 # The Soul Searchers
 
-Cycling blog for **thenewsoulsearchers.de**: now, rides, ride notes, how we ride, about, contact.
+Cycling blog for **thenewsoulsearchers.de**: rides, ride notes, about, contact.
 
 > A cycling blog. Tours, roads, and travel by bike.
 
