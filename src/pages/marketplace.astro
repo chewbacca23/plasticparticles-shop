@@ -1445,7 +1445,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           '<p class="wa-bridge-hint">They opted in. Opens their chat in WhatsApp — you still tap Send. Digits stay off this map.</p>' +
           '<a class="btn btn-ghost hook-wa" href="/api/hooks/whatsapp?person=' +
           encodeURIComponent(person.key) +
-          '" target="_blank" rel="noopener noreferrer">Open WhatsApp — then Send</a>' +
+          '" target="soul-whatsapp">Open WhatsApp — then Send</a>' +
           '</div>'
         : '';
       openBox.hidden = false;
@@ -2044,8 +2044,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       waComposeError.textContent = message;
     }
 
+    function focusWaComposeForm() {
+      var nameEl = waComposeForm && waComposeForm.elements.namedItem('name');
+      var phoneEl = waComposeForm && waComposeForm.elements.namedItem('phone');
+      if (nameEl) nameEl.focus();
+      else if (phoneEl) phoneEl.focus();
+    }
+
+    function waComposeIsOpen() {
+      return (
+        !!waCompose &&
+        !waCompose.hidden &&
+        waCompose.classList.contains('is-open') &&
+        !waCompose.classList.contains('is-closing')
+      );
+    }
+
     function openWaCompose() {
       if (!waCompose) return;
+      // Already open — just focus the form; don't restart as if closed.
+      if (waComposeIsOpen()) {
+        focusWaComposeForm();
+        return;
+      }
       if (waComposeCloseTimer) {
         window.clearTimeout(waComposeCloseTimer);
         waComposeCloseTimer = 0;
@@ -2057,10 +2078,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       waCompose.classList.add('is-open');
       document.documentElement.classList.add('wa-compose-open');
       showWaComposeError('');
-      var nameEl = waComposeForm && waComposeForm.elements.namedItem('name');
-      var phoneEl = waComposeForm && waComposeForm.elements.namedItem('phone');
-      if (nameEl) nameEl.focus();
-      else if (phoneEl) phoneEl.focus();
+      focusWaComposeForm();
+    }
+
+    /** Named tab so a second Open reuses WhatsApp instead of spawning another prompt. */
+    function openSoulWhatsApp(url) {
+      window.open(url, 'soul-whatsapp');
     }
 
     function closeWaCompose() {
@@ -2113,7 +2136,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           return;
         }
         showWaComposeError('');
-        window.open(url, '_blank', 'noopener,noreferrer');
+        openSoulWhatsApp(url);
       });
     }
 
