@@ -14,7 +14,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         Room for a thousand. Berlin is the centre of this little universe — when someone from Nice,
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
         and it opens. Call upon someone near you with a short note. Email and phone stay off the
-        page — phone only opens a free WhatsApp door if they opted in.
+        page — phone only opens a free WhatsApp door if they opted in. Or WhatsApp a buddy from your
+        phone contacts — name, number, voilà.
       </p>
 
       <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
@@ -28,6 +29,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           Be the first. Open a stall, show up for a ride, make coming back a habit.
         </p>
         <a class="btn btn-primary crowd-sign-cta" href="#pin-form">Stand with them</a>
+        <button type="button" class="btn btn-ghost crowd-sign-wa" id="wa-compose-open">
+          WhatsApp a buddy
+        </button>
       </aside>
 
       <p id="welcome-back" class="welcome-back" hidden>
@@ -51,6 +55,59 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </p>
         <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
       </aside>
+
+      <!-- Client-only WhatsApp window — paste a name + number from your phone, open wa.me. -->
+      <div id="wa-compose" class="wa-compose" hidden>
+        <button type="button" class="wa-compose-backdrop" id="wa-compose-backdrop" aria-label="Close WhatsApp"></button>
+        <div
+          class="wa-compose-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="wa-compose-title"
+        >
+          <header class="wa-compose-head">
+            <p class="wa-compose-kicker">WhatsApp</p>
+            <h2 class="wa-compose-title" id="wa-compose-title">Message a buddy</h2>
+            <button type="button" class="wa-compose-close" id="wa-compose-close" aria-label="Close">
+              ×
+            </button>
+          </header>
+          <p class="wa-compose-lead">
+            Name from your phone, paste the number, and voilà — WhatsApp opens. Nothing lands on our
+            server. Bob’s your uncle.
+          </p>
+          <form class="wa-compose-form" id="wa-compose-form">
+            <label class="wa-compose-field">
+              <span>Name — from your contacts</span>
+              <input
+                type="text"
+                name="name"
+                maxlength="80"
+                autocomplete="name"
+                placeholder="Alex, Hanna, the climbing buddy…"
+              />
+            </label>
+            <label class="wa-compose-field">
+              <span>Number — paste from your phone</span>
+              <input
+                type="tel"
+                name="phone"
+                required
+                maxlength="32"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="+49… best with country code"
+              />
+            </label>
+            <p class="wa-compose-hint">
+              Digits only for WhatsApp. Keep the country code — <code>+49…</code> works best. Free
+              WhatsApp for them; we just open the door.
+            </p>
+            <p class="wa-compose-error" id="wa-compose-error" hidden></p>
+            <button class="btn btn-primary wa-compose-send" type="submit">Open WhatsApp</button>
+          </form>
+        </div>
+      </div>
 
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
@@ -249,6 +306,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var callsForYouOpen = document.getElementById('calls-for-you-open');
     var cookieNote = document.getElementById('cookie-note');
     var cookieNoteOk = document.getElementById('cookie-note-ok');
+    var waCompose = document.getElementById('wa-compose');
+    var waComposeOpen = document.getElementById('wa-compose-open');
+    var waComposeClose = document.getElementById('wa-compose-close');
+    var waComposeBackdrop = document.getElementById('wa-compose-backdrop');
+    var waComposeForm = document.getElementById('wa-compose-form');
+    var waComposeError = document.getElementById('wa-compose-error');
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
@@ -1811,8 +1874,105 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
     }
 
+    function phoneDigitsForWa(raw) {
+      var value = String(raw || '')
+        .trim()
+        .slice(0, 32);
+      if (!value) return '';
+      var digits = value.replace(/[^\d+]/g, '');
+      var hasPlus = digits.charAt(0) === '+';
+      var only = (hasPlus ? digits.slice(1) : digits).replace(/\D/g, '');
+      if (only.length < 8 || only.length > 15) return '';
+      return only;
+    }
+
+    function waComposePrefill(name) {
+      var who = String(name || '')
+        .trim()
+        .slice(0, 80);
+      if (who) return 'Hey ' + who + ' — from the Soul Searchers map.';
+      return 'Hey from the Soul Searchers map.';
+    }
+
+    function waMeUrl(phone, name) {
+      var digits = phoneDigitsForWa(phone);
+      if (!digits) return '';
+      return (
+        'https://wa.me/' +
+        digits +
+        '?text=' +
+        encodeURIComponent(waComposePrefill(name))
+      );
+    }
+
+    function showWaComposeError(message) {
+      if (!waComposeError) return;
+      if (!message) {
+        waComposeError.hidden = true;
+        waComposeError.textContent = '';
+        return;
+      }
+      waComposeError.hidden = false;
+      waComposeError.textContent = message;
+    }
+
+    function openWaCompose() {
+      if (!waCompose) return;
+      waCompose.hidden = false;
+      document.documentElement.classList.add('wa-compose-open');
+      showWaComposeError('');
+      var nameEl = waComposeForm && waComposeForm.elements.namedItem('name');
+      var phoneEl = waComposeForm && waComposeForm.elements.namedItem('phone');
+      if (nameEl) nameEl.focus();
+      else if (phoneEl) phoneEl.focus();
+    }
+
+    function closeWaCompose() {
+      if (!waCompose) return;
+      waCompose.hidden = true;
+      document.documentElement.classList.remove('wa-compose-open');
+      showWaComposeError('');
+    }
+
+    if (waComposeOpen) {
+      waComposeOpen.addEventListener('click', function () {
+        openWaCompose();
+      });
+    }
+    if (waComposeClose) {
+      waComposeClose.addEventListener('click', function () {
+        closeWaCompose();
+      });
+    }
+    if (waComposeBackdrop) {
+      waComposeBackdrop.addEventListener('click', function () {
+        closeWaCompose();
+      });
+    }
+    if (waComposeForm) {
+      waComposeForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data = new FormData(waComposeForm);
+        var name = String(data.get('name') || '').trim();
+        var phone = String(data.get('phone') || '').trim();
+        var url = waMeUrl(phone, name);
+        if (!url) {
+          showWaComposeError('Need a real number — best with country code, like +49…');
+          var phoneEl = waComposeForm.elements.namedItem('phone');
+          if (phoneEl) phoneEl.focus();
+          return;
+        }
+        showWaComposeError('');
+        window.open(url, '_blank', 'noopener,noreferrer');
+      });
+    }
+
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Escape') return;
+      if (waCompose && !waCompose.hidden) {
+        closeWaCompose();
+        return;
+      }
       if (dockKey) {
         closeChatDock();
         return;
@@ -1983,6 +2143,185 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .crowd-sign-cta {
     margin-top: 1.15rem;
+  }
+
+  .crowd-sign-wa {
+    margin-top: 0.65rem;
+    margin-left: 0.55rem;
+  }
+
+  @media (max-width: 520px) {
+    .crowd-sign-wa {
+      margin-left: 0;
+      display: inline-flex;
+    }
+  }
+
+  .wa-compose {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: end center;
+    padding: max(0.85rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right))
+      max(0.85rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
+  }
+
+  .wa-compose[hidden] {
+    display: none !important;
+  }
+
+  .wa-compose-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: rgba(6, 10, 14, 0.62);
+    cursor: pointer;
+  }
+
+  .wa-compose-card {
+    position: relative;
+    z-index: 1;
+    width: min(24rem, 100%);
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.05rem 1.1rem 1.15rem;
+    border: 1px solid rgba(212, 163, 90, 0.28);
+    border-radius: 1.05rem;
+    background:
+      radial-gradient(ellipse 70% 80% at 12% 0%, rgba(212, 163, 90, 0.14), transparent 55%),
+      radial-gradient(ellipse 60% 70% at 100% 100%, rgba(61, 107, 122, 0.16), transparent 58%),
+      rgba(12, 18, 24, 0.97);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+    animation: wa-compose-in 0.28s ease;
+  }
+
+  @keyframes wa-compose-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.7rem) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .wa-compose-head {
+    position: relative;
+    padding-right: 2.4rem;
+  }
+
+  .wa-compose-kicker {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .wa-compose-title {
+    margin: 0.2rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+    line-height: 1.15;
+  }
+
+  .wa-compose-close {
+    position: absolute;
+    top: -0.15rem;
+    right: -0.2rem;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(215, 224, 232, 0.08);
+    color: rgba(215, 224, 232, 0.78);
+    font: inherit;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .wa-compose-close:hover {
+    background: rgba(215, 224, 232, 0.14);
+    color: var(--paper);
+  }
+
+  .wa-compose-lead {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.74);
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
+
+  .wa-compose-form {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .wa-compose-field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .wa-compose-field span {
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .wa-compose-field input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(215, 224, 232, 0.16);
+    border-radius: 0.7rem;
+    padding: 0.7rem 0.8rem;
+    background: rgba(8, 12, 16, 0.55);
+    color: var(--paper);
+    font: inherit;
+    font-size: 1rem;
+  }
+
+  .wa-compose-field input:focus {
+    outline: 2px solid rgba(212, 163, 90, 0.45);
+    outline-offset: 1px;
+  }
+
+  .wa-compose-hint {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.62);
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .wa-compose-hint code {
+    font-size: 0.84em;
+    color: rgba(212, 163, 90, 0.92);
+  }
+
+  .wa-compose-error {
+    margin: 0;
+    color: #f0b4a8;
+    font-size: 0.9rem;
+  }
+
+  .wa-compose-error[hidden] {
+    display: none !important;
+  }
+
+  .wa-compose-send {
+    margin-top: 0.15rem;
   }
 
   .welcome-back {
