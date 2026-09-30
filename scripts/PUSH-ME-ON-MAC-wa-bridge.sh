@@ -18,7 +18,8 @@ echo ""
 
 git fetch origin "$BRANCH"
 git checkout "$BRANCH"
-git pull origin "$BRANCH"
+# Match origin tip exactly — old local blog-merge commits make `git pull` diverge.
+git reset --hard "origin/$BRANCH"
 
 echo "Merging live editor Saves from blog main (so we do not wipe posts)..."
 git fetch "$BLOG" main
