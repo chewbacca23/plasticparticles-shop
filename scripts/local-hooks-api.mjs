@@ -29,6 +29,7 @@ const seed = {
         place: 'Berlin',
         note: 'Spare 28mm tires. Looking for a calm ride.',
         email: 'alex@example.com',
+        phone: '+49 170 1112233',
         offers: [],
         at: '2026-09-27T16:40:34.302Z',
       },

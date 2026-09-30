@@ -1,9 +1,10 @@
 /**
  * Riders marketplace. Room for a thousand people. Ride together, or trade
- * a tire, a stem, a saddle, a frame. Emails never appear on the page.
+ * a tire, a stem, a saddle, a frame. Emails and phones never appear on the page.
  *
- * GET  /api/hooks           public stalls + market + group dots + call threads (no emails)
- * POST /api/hooks           pin { name, place, note, email?, company }
+ * GET  /api/hooks           public stalls + market + group dots + call threads (no emails/phones)
+ * GET  /api/hooks/whatsapp  302 → wa.me for an opted-in person (phone stays server-side)
+ * POST /api/hooks           pin { name, place, note, email?, phone?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
  * POST /api/hooks/write     offer { hookId, name, message, email?, company }
  * POST /api/hooks/call      call upon { toKey, name, message, email?, place?, company }
@@ -26,6 +27,7 @@ const MAX_PLACE = 80;
 const MAX_NOTE = 400;
 const MAX_MESSAGE = 2000;
 const MAX_CALL_TEXT = 500;
+const MAX_PHONE = 32;
 export const MAX_HOOKS = 1000;
 export const MAX_OFFERS = 80;
 export const MAX_CALL_THREADS = 500;
@@ -36,6 +38,10 @@ const RATE_WINDOW_SEC = 60 * 10;
 const RATE_PIN = 3;
 const RATE_WRITE = 8;
 const RATE_CALL = 10;
+const RATE_WHATSAPP = 20;
+/** Prefill when someone opens the free WhatsApp bridge from the map. */
+export const WA_PREFILL =
+  'Hey from the Soul Searchers map — saw you standing there.';
 
 export function isHooksApiPath(pathname) {
   return (
@@ -44,7 +50,9 @@ export function isHooksApiPath(pathname) {
     pathname === '/api/hooks/write' ||
     pathname === '/api/hooks/write/' ||
     pathname === '/api/hooks/call' ||
-    pathname === '/api/hooks/call/'
+    pathname === '/api/hooks/call/' ||
+    pathname === '/api/hooks/whatsapp' ||
+    pathname === '/api/hooks/whatsapp/'
   );
 }
 
@@ -54,6 +62,40 @@ export function isHooksWritePath(pathname) {
 
 export function isHooksCallPath(pathname) {
   return pathname === '/api/hooks/call' || pathname === '/api/hooks/call/';
+}
+
+export function isHooksWhatsappPath(pathname) {
+  return pathname === '/api/hooks/whatsapp' || pathname === '/api/hooks/whatsapp/';
+}
+
+/**
+ * Opt-in WhatsApp numbers only. Best as +49… with country code.
+ * Stores digits (and leading +) privately — public payloads never see this.
+ */
+export function cleanPhone(raw) {
+  const value = String(raw || '').trim().slice(0, MAX_PHONE);
+  if (!value) return '';
+  const digits = value.replace(/[^\d+]/g, '');
+  const hasPlus = digits.startsWith('+');
+  const only = (hasPlus ? digits.slice(1) : digits).replace(/\D/g, '');
+  if (only.length < 8 || only.length > 15) return '';
+  return hasPlus ? `+${only}` : only;
+}
+
+/** Digits only for wa.me — keeps country code if the rider left +49… */
+export function phoneDigitsForWa(raw) {
+  const cleaned = cleanPhone(raw);
+  if (!cleaned) return '';
+  return cleaned.replace(/\D/g, '');
+}
+
+export function waMeUrl(phone, text = WA_PREFILL) {
+  const digits = phoneDigitsForWa(phone);
+  if (!digits) return '';
+  const base = `https://wa.me/${digits}`;
+  const note = cleanLine(text, 200);
+  if (!note) return base;
+  return `${base}?text=${encodeURIComponent(note)}`;
 }
 
 export function newHookId(now = Date.now()) {
@@ -67,6 +109,7 @@ export function parseHookPin(raw) {
     place: cleanLine(src.place, MAX_PLACE),
     note: cleanLine(src.note, MAX_NOTE),
     email: cleanEmail(src.email),
+    phone: cleanPhone(src.phone || src.whatsapp || src.mobile),
     company: cleanLine(src.company || src.fax_number_leave_blank, 80),
   };
 }
@@ -584,8 +627,26 @@ export function emailForPersonKey(hooks, calls, key) {
   return '';
 }
 
+/** Private phone lookup — never put the number on a public card. */
+export function phoneForPersonKey(hooks, key) {
+  const want = personKey(key);
+  if (!want) return '';
+  for (const hook of Array.isArray(hooks) ? hooks : []) {
+    if (personKey(hook.name) === want) {
+      const phone = cleanPhone(hook.phone);
+      if (phone) return phone;
+    }
+  }
+  return '';
+}
+
+export function personHasWhatsapp(hooks, key) {
+  return !!phoneForPersonKey(hooks, key);
+}
+
 export function groupFromHooks(hooks) {
   const peopleMap = new Map();
+  const rawHooks = Array.isArray(hooks) ? hooks : [];
 
   function ensure(name) {
     const key = personKey(name);
@@ -597,6 +658,7 @@ export function groupFromHooks(hooks) {
         stalls: [],
         offers: [],
         neighborKeys: [],
+        whatsapp: false,
       });
     }
     return peopleMap.get(key);
@@ -608,7 +670,7 @@ export function groupFromHooks(hooks) {
     if (!b.neighborKeys.includes(a.key)) b.neighborKeys.push(a.key);
   }
 
-  for (const hook of publicHookList(hooks)) {
+  for (const hook of publicHookList(rawHooks)) {
     const host = ensure(hook.name);
     if (!host) continue;
     host.stalls.push({
@@ -632,6 +694,10 @@ export function groupFromHooks(hooks) {
       });
       link(host, guest);
     }
+  }
+
+  for (const person of peopleMap.values()) {
+    person.whatsapp = personHasWhatsapp(rawHooks, person.key);
   }
 
   const people = [...peopleMap.values()];
@@ -819,6 +885,9 @@ async function notifyHenrikPin(env, hook) {
     `Place: ${hook.place}`,
     `Note: ${hook.note}`,
     hook.email ? `Email (hidden on the site): ${hook.email}` : 'No email left.',
+    hook.phone
+      ? `WhatsApp phone (hidden on the site, bridge only): ${hook.phone}`
+      : 'No WhatsApp phone left.',
     '',
     'https://thenewsoulsearchers.de/marketplace',
   ].join('\n');
@@ -900,7 +969,29 @@ export async function handleHooksRequest(request, env) {
     });
   }
 
-  if (request.method === 'GET' && !isHooksWritePath(url.pathname) && !isHooksCallPath(url.pathname)) {
+  if (request.method === 'GET' && isHooksWhatsappPath(url.pathname)) {
+    if (!(await underRateLimit(env, clientKey(request, 'wa'), RATE_WHATSAPP))) {
+      return json({ error: 'Easy. Try again in a few minutes.' }, 429);
+    }
+    const key = personKey(url.searchParams.get('person') || url.searchParams.get('key') || '');
+    if (!key) return json({ error: 'Who are you messaging?' }, 400);
+    const board = await readBoard(env);
+    const phone = phoneForPersonKey(board.hooks, key);
+    const target = waMeUrl(phone);
+    if (!target) {
+      return json({ error: 'They have not opened the WhatsApp door.' }, 404);
+    }
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: target,
+        'cache-control': 'no-store',
+        'referrer-policy': 'no-referrer',
+      },
+    });
+  }
+
+  if (request.method === 'GET' && !isHooksWritePath(url.pathname) && !isHooksCallPath(url.pathname) && !isHooksWhatsappPath(url.pathname)) {
     const board = await readBoard(env);
     return json({
       ok: true,
@@ -919,6 +1010,7 @@ export async function handleHooksRequest(request, env) {
   if (
     !isHooksWritePath(url.pathname) &&
     !isHooksCallPath(url.pathname) &&
+    !isHooksWhatsappPath(url.pathname) &&
     body.action === 'remove'
   ) {
     if (!(await requestHasLooksAccess(request, env))) {
@@ -929,6 +1021,10 @@ export async function handleHooksRequest(request, env) {
     board.hooks = board.hooks.filter((hook) => hook.id !== id);
     await writeBoard(env, board);
     return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
+  }
+
+  if (isHooksWhatsappPath(url.pathname)) {
+    return json({ error: 'Open the WhatsApp bridge with GET.' }, 405);
   }
 
   if (isHooksCallPath(url.pathname)) {
@@ -1074,6 +1170,7 @@ export async function handleHooksRequest(request, env) {
     place: fields.place,
     note: fields.note,
     email: fields.email,
+    phone: fields.phone,
     offers: [],
     at: new Date().toISOString(),
   };
@@ -1122,4 +1219,11 @@ export const testables = {
   arePeopleNear,
   canCallUpon,
   emailForPersonKey,
+  phoneForPersonKey,
+  personHasWhatsapp,
+  cleanPhone,
+  phoneDigitsForWa,
+  waMeUrl,
+  WA_PREFILL,
+  isHooksWhatsappPath,
 };
