@@ -44,6 +44,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <button type="button" class="calls-for-you-open" id="calls-for-you-open" hidden>Open them</button>
       </p>
 
+      <!-- Top calling toast — calm popup when a brother Call-upons you (on-site only). -->
+      <div id="call-toast" class="call-toast" hidden role="status" aria-live="polite">
+        <div class="call-toast-card">
+          <p class="call-toast-kicker">Call upon</p>
+          <p class="call-toast-title" id="call-toast-title">Someone is calling you</p>
+          <p class="call-toast-note" id="call-toast-note" hidden></p>
+          <div class="call-toast-actions">
+            <button type="button" class="btn btn-primary call-toast-open" id="call-toast-open">
+              Open the chat
+            </button>
+            <button type="button" class="call-toast-dismiss" id="call-toast-dismiss" aria-label="Dismiss call">
+              Not now
+            </button>
+          </div>
+        </div>
+      </div>
+
       <aside id="cookie-note" class="cookie-note" hidden>
         <p class="cookie-note-text">
           Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
@@ -312,6 +329,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var callsForYou = document.getElementById('calls-for-you');
     var callsForYouText = document.getElementById('calls-for-you-text');
     var callsForYouOpen = document.getElementById('calls-for-you-open');
+    var callToast = document.getElementById('call-toast');
+    var callToastTitle = document.getElementById('call-toast-title');
+    var callToastNote = document.getElementById('call-toast-note');
+    var callToastOpen = document.getElementById('call-toast-open');
+    var callToastDismiss = document.getElementById('call-toast-dismiss');
     var cookieNote = document.getElementById('cookie-note');
     var cookieNoteOk = document.getElementById('cookie-note-ok');
     var waCompose = document.getElementById('wa-compose');
@@ -349,6 +371,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var dockMuteBing = false;
     var dockAudioCtx = null;
     var notifyPermissionAsked = false;
+    var toastShownSig = '';
+    var toastDismissedSig = '';
+    var toastPendingKey = '';
 
     function readMemory() {
       try {
@@ -574,12 +599,107 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       writeMemory({ callsSeenAt: new Date().toISOString() });
     }
 
+    function callToastSignature(row) {
+      if (!row) return '';
+      return String(row.otherKey || '') + '|' + String(row.at || '') + '|' + String(row.text || '').slice(0, 40);
+    }
+
+    function hideCallToast() {
+      if (!callToast) return;
+      callToast.hidden = true;
+      callToast.classList.remove('is-in');
+      toastPendingKey = '';
+      if (callToastOpen) callToastOpen.removeAttribute('data-open-call');
+      if (callToastNote) {
+        callToastNote.hidden = true;
+        callToastNote.textContent = '';
+      }
+    }
+
+    function showCallToast(row, options) {
+      if (!callToast || !row || !row.otherKey) return;
+      var opts = options || {};
+      var sig = callToastSignature(row);
+      if (toastDismissedSig && toastDismissedSig === sig) return;
+      // Dock already open on this brother — bing/nudge owns the moment.
+      if (dockKey && dockKey === row.otherKey && !opts.force) {
+        hideCallToast();
+        return;
+      }
+      var name = String(row.fromName || 'A brother').trim() || 'A brother';
+      if (callToastTitle) {
+        callToastTitle.textContent = name + ' is calling you';
+      }
+      if (callToastNote) {
+        var snippet = String(row.text || '').trim();
+        if (snippet) {
+          callToastNote.hidden = false;
+          callToastNote.textContent =
+            '“' + snippet.slice(0, 90) + (snippet.length > 90 ? '…' : '') + '”';
+        } else {
+          callToastNote.hidden = true;
+          callToastNote.textContent = '';
+        }
+      }
+      if (callToastOpen) {
+        callToastOpen.setAttribute('data-open-call', row.otherKey);
+        callToastOpen.textContent = 'Open with ' + name;
+      }
+      toastPendingKey = row.otherKey;
+      var wasHidden = callToast.hidden;
+      callToast.hidden = false;
+      if (wasHidden || toastShownSig !== sig) {
+        callToast.classList.remove('is-in');
+        void callToast.offsetWidth;
+        if (!prefersReducedMotion()) callToast.classList.add('is-in');
+        if (toastShownSig !== sig) {
+          toastShownSig = sig;
+          if (opts.bing !== false) playSoftBing();
+        }
+      }
+    }
+
+    function syncCallToast(waiting) {
+      var rows = waiting || callsWaitingForMe();
+      if (!rows.length) {
+        hideCallToast();
+        return;
+      }
+      showCallToast(rows[0], { bing: toastShownSig !== callToastSignature(rows[0]) });
+    }
+
+    function openCallFromToast(key) {
+      if (!key) return;
+      var person = personByKey(key);
+      openKey = key;
+      rememberTalk(key, (person && person.name) || key);
+      markCallsSeen();
+      hideCallToast();
+      toastDismissedSig = '';
+      toastShownSig = '';
+      render(lastPayload);
+      openChatDock(key, { focus: true, allowMissing: !person });
+      showCallsForYou();
+      try {
+        var mark =
+          (typeof CSS !== 'undefined' && CSS.escape
+            ? document.querySelector('.dot[data-open="' + CSS.escape(key) + '"]')
+            : null) ||
+          document.getElementById('group-open') ||
+          document.getElementById('group');
+        if (mark && mark.scrollIntoView) {
+          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (err) {}
+    }
+
     function showCallsForYou() {
       if (!callsForYou || !callsForYouText) return;
       var waiting = callsWaitingForMe();
       if (!waiting.length) {
         callsForYou.hidden = true;
         if (callsForYouOpen) callsForYouOpen.hidden = true;
+        syncCallToast(waiting);
         return;
       }
       var first = waiting[0];
@@ -598,6 +718,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         callsForYouOpen.textContent = 'Open ' + (first.fromName || 'them');
         callsForYouOpen.setAttribute('data-open-call', first.otherKey || '');
       }
+      syncCallToast(waiting);
     }
 
     function personByKey(key) {
@@ -770,22 +891,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var thread = threadForPair(me, person.key);
       if (!thread || !(thread.messages || []).length) return '';
       var rows = (thread.messages || [])
-        .map(function (msg) {
-          var mine = msg.fromKey === me;
-          return (
-            '<li class="call-msg' +
-            (mine ? ' is-mine' : '') +
-            '">' +
-            '<p class="call-msg-from">' +
-            esc(mine ? 'You' : msg.fromName) +
-            '</p>' +
-            '<p class="call-msg-text">' +
-            esc(msg.text) +
-            '</p>' +
-            '</li>'
-          );
-        })
-        .join('');
+          .map(function (msg) {
+            var mine = msg.fromKey === me;
+            return (
+              '<li class="call-msg' +
+              (mine ? ' is-mine' : ' is-theirs') +
+              '">' +
+              '<p class="call-msg-from">' +
+              esc(mine ? 'You' : msg.fromName) +
+              '</p>' +
+              '<p class="call-msg-text">' +
+              esc(msg.text) +
+              '</p>' +
+              '</li>'
+            );
+          })
+          .join('');
       return '<ol class="call-thread" aria-label="Call upon thread">' + rows + '</ol>';
     }
 
@@ -797,13 +918,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     function startDockPoll() {
-      stopDockPoll();
-      if (!dockKey) return;
+      // Always poll so inbound Call upon toasts land even with the dock closed.
+      if (dockPollTimer) return;
       dockPollTimer = setInterval(function () {
-        if (!dockKey) {
-          stopDockPoll();
-          return;
-        }
         loadQuiet();
       }, DOCK_POLL_MS);
     }
@@ -988,7 +1105,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       dockSeenMsgId = '';
       dockSeenMsgAt = '';
       dockSeenBootstrapped = false;
-      stopDockPoll();
       if (chatDock) {
         chatDock.hidden = true;
         chatDock.classList.remove('is-nudging');
@@ -1001,6 +1117,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         chatDockForm.reset();
         fillFormsFromMemory();
       }
+      // Keep board poll alive for inbound call toasts.
+      startDockPoll();
+      showCallsForYou();
     }
 
     function renderChatDock() {
@@ -1025,7 +1144,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             var mine = msg.fromKey === me;
             return (
               '<li class="call-msg' +
-              (mine ? ' is-mine' : '') +
+              (mine ? ' is-mine' : ' is-theirs') +
               '">' +
               '<p class="call-msg-from">' +
               esc(mine ? 'You' : msg.fromName) +
@@ -2004,6 +2123,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         closeWaCompose();
         return;
       }
+      if (callToast && !callToast.hidden) {
+        var waitingEsc = callsWaitingForMe();
+        if (waitingEsc[0]) toastDismissedSig = callToastSignature(waitingEsc[0]);
+        hideCallToast();
+        return;
+      }
       if (dockKey) {
         closeChatDock();
         return;
@@ -2048,25 +2173,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       callsForYouOpen.addEventListener('click', function () {
         var key = callsForYouOpen.getAttribute('data-open-call');
         if (!key) return;
-        var person = personByKey(key);
-        if (!person) return;
-        openKey = person.key;
-        rememberTalk(openKey, person.name);
-        markCallsSeen();
-        render(lastPayload);
-        openChatDock(person.key);
-        showCallsForYou();
-        try {
-          var callMark =
-            (typeof CSS !== 'undefined' && CSS.escape
-              ? document.querySelector('.dot[data-open="' + CSS.escape(person.key) + '"]')
-              : null) ||
-            document.getElementById('group-open') ||
-            document.getElementById('group');
-          if (callMark && callMark.scrollIntoView) {
-            callMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        } catch (err) {}
+        openCallFromToast(key);
+      });
+    }
+
+    if (callToastOpen) {
+      callToastOpen.addEventListener('click', function () {
+        var key = callToastOpen.getAttribute('data-open-call') || toastPendingKey;
+        if (!key) return;
+        openCallFromToast(key);
+      });
+    }
+
+    if (callToastDismiss) {
+      callToastDismiss.addEventListener('click', function () {
+        var waitingDismiss = callsWaitingForMe();
+        if (waitingDismiss[0]) toastDismissedSig = callToastSignature(waitingDismiss[0]);
+        hideCallToast();
       });
     }
 
@@ -2079,6 +2202,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     showCookieNote();
     load();
     fillFormsFromMemory();
+    startDockPoll();
 
     // Re-measure mark centres when the floor box changes size (aspect / viewport).
     if (typeof ResizeObserver !== 'undefined' && (floorBox || roomBox)) {
@@ -2484,6 +2608,123 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .calls-for-you-open:hover {
     background: rgba(212, 163, 90, 0.22);
+  }
+
+  .call-toast {
+    position: fixed;
+    z-index: 60;
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: 50%;
+    width: min(26rem, calc(100vw - 1.5rem));
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .call-toast[hidden] {
+    display: none !important;
+  }
+
+  .call-toast-card {
+    pointer-events: auto;
+    padding: 0.95rem 1.05rem 1.05rem;
+    border: 1px solid rgba(212, 163, 90, 0.38);
+    border-radius: 1rem;
+    background:
+      linear-gradient(165deg, rgba(26, 36, 48, 0.96), rgba(12, 18, 24, 0.96)),
+      radial-gradient(ellipse 90% 80% at 10% 0%, rgba(61, 107, 122, 0.22), transparent 55%);
+    box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.35);
+    color: rgba(215, 224, 232, 0.94);
+  }
+
+  .call-toast.is-in .call-toast-card {
+    animation: call-toast-in 0.32s ease;
+  }
+
+  @keyframes call-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.65rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .call-toast-kicker {
+    margin: 0 0 0.35rem;
+    color: rgba(212, 163, 90, 0.82);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .call-toast-title {
+    margin: 0;
+    color: var(--paper);
+    font-size: 1.12rem;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .call-toast-note {
+    margin: 0.45rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .call-toast-note[hidden] {
+    display: none !important;
+  }
+
+  .call-toast-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 0.75rem;
+    margin-top: 0.85rem;
+  }
+
+  .call-toast-open {
+    margin: 0;
+  }
+
+  .call-toast-dismiss {
+    margin: 0;
+    padding: 0.4rem 0.55rem;
+    border: 0;
+    background: transparent;
+    color: rgba(215, 224, 232, 0.62);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .call-toast-dismiss:hover {
+    color: var(--amber-hot);
+  }
+
+  @media (max-width: 560px) {
+    .call-toast {
+      top: max(0.55rem, env(safe-area-inset-top));
+      width: calc(100vw - 1rem);
+    }
+
+    .call-toast-card {
+      padding: 0.9rem 0.95rem 1rem;
+    }
+
+    .call-toast-title {
+      font-size: 1.05rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .call-toast.is-in .call-toast-card {
+      animation: none;
+    }
   }
 
   .cookie-note {
@@ -2968,7 +3209,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     list-style: none;
     margin: 0 0 0.75rem;
     padding: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.55rem;
     max-height: 9rem;
     overflow: auto;
@@ -2976,13 +3218,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .call-msg {
     margin: 0;
-    padding: 0.55rem 0.65rem;
-    border-radius: 0.65rem;
-    background: rgba(215, 224, 232, 0.06);
+    padding: 0.55rem 0.7rem;
+    max-width: 92%;
+    border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+    border: 1px solid rgba(61, 107, 122, 0.35);
+    background: rgba(61, 107, 122, 0.2);
+    align-self: flex-start;
+  }
+
+  .call-msg.is-theirs {
+    border-color: rgba(61, 107, 122, 0.35);
+    background: rgba(61, 107, 122, 0.2);
   }
 
   .call-msg.is-mine {
-    background: rgba(212, 163, 90, 0.12);
+    align-self: flex-end;
+    border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+    border-color: rgba(212, 163, 90, 0.42);
+    background: rgba(212, 163, 90, 0.2);
   }
 
   .call-msg-from {
@@ -2994,12 +3247,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     text-transform: uppercase;
   }
 
+  .call-msg.is-theirs .call-msg-from {
+    color: rgba(150, 190, 200, 0.78);
+  }
+
+  .call-msg.is-mine .call-msg-from {
+    color: rgba(212, 163, 90, 0.88);
+    text-align: right;
+  }
+
   .call-msg-text {
     margin: 0;
-    color: rgba(215, 224, 232, 0.9);
+    color: rgba(215, 224, 232, 0.92);
     font-size: 0.92rem;
     line-height: 1.4;
     white-space: pre-wrap;
+  }
+
+  .call-msg.is-mine .call-msg-text {
+    color: rgba(245, 232, 210, 0.96);
   }
 
   .call-form {
@@ -3175,7 +3441,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.45rem;
     max-height: 11rem;
     overflow: auto;
