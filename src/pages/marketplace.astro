@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site.config';
 ---
 
 <BaseLayout
@@ -83,11 +84,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           aria-labelledby="wa-compose-title"
         >
           <header class="wa-compose-head">
-            <div class="wa-compose-brand" aria-hidden="true">
-              <span class="wa-compose-mark"></span>
+            <div class="wa-pair" aria-hidden="true">
+              <span class="wa-pair-crest">
+                <img src={site.logo} alt="" width="40" height="51" decoding="async" />
+              </span>
+              <span class="wa-pair-wa" title="WhatsApp">
+                <svg viewBox="0 0 24 24" width="22" height="22" focusable="false">
+                  <path
+                    fill="currentColor"
+                    d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.2 0 4.26.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.23 8.24-1.4 0-2.79-.37-4.01-1.06l-.29-.17-3.12.82.83-3.04-.19-.31a8.2 8.2 0 0 1-1.25-4.48c0-4.54 3.7-8.24 8.23-8.24zm4.52 10.52c-.2-.1-1.18-.58-1.36-.65-.18-.06-.32-.1-.45.1-.13.2-.5.65-.62.78-.11.13-.23.15-.43.05-.2-.1-.84-.31-1.6-.99-.59-.53-.99-1.18-1.1-1.38-.12-.2-.01-.3.09-.4.09-.09.2-.23.3-.35.1-.12.13-.2.2-.33.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.62-1.47-.16-.39-.33-.33-.45-.34h-.38c-.13 0-.34.05-.52.25-.18.2-.68.67-.68 1.62 0 .96.7 1.87.8 2 .1.13 1.37 2.1 3.32 2.94.46.2.83.32 1.11.41.47.15.89.13 1.23.08.37-.06 1.18-.48 1.34-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23z"
+                  ></path>
+                </svg>
+              </span>
             </div>
             <div class="wa-compose-head-copy">
-              <p class="wa-compose-kicker">WhatsApp</p>
+              <p class="wa-compose-kicker">Soul Searchers · opens WhatsApp</p>
               <h2 class="wa-compose-title" id="wa-compose-title">Message a buddy</h2>
             </div>
             <button type="button" class="wa-compose-close" id="wa-compose-close" aria-label="Close">
@@ -343,6 +354,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var waComposeForm = document.getElementById('wa-compose-form');
     var waComposeError = document.getElementById('wa-compose-error');
     var waComposeCloseTimer = 0;
+    /** Same crest as the compose header — keep map WA block in lockstep. */
+    var siteLogo = '/logo.png';
+    var waMarkSvg =
+      '<svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">' +
+      '<path fill="currentColor" d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.2 0 4.26.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.23 8.24-1.4 0-2.79-.37-4.01-1.06l-.29-.17-3.12.82.83-3.04-.19-.31a8.2 8.2 0 0 1-1.25-4.48c0-4.54 3.7-8.24 8.23-8.24zm4.52 10.52c-.2-.1-1.18-.58-1.36-.65-.18-.06-.32-.1-.45.1-.13.2-.5.65-.62.78-.11.13-.23.15-.43.05-.2-.1-.84-.31-1.6-.99-.59-.53-.99-1.18-1.1-1.38-.12-.2-.01-.3.09-.4.09-.09.2-.23.3-.35.1-.12.13-.2.2-.33.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.62-1.47-.16-.39-.33-.33-.45-.34h-.38c-.13 0-.34.05-.52.25-.18.2-.68.67-.68 1.62 0 .96.7 1.87.8 2 .1.13 1.37 2.1 3.32 2.94.46.2.83.32 1.11.41.47.15.89.13 1.23.08.37-.06 1.18-.48 1.34-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23z"/>' +
+      '</svg>';
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
@@ -1441,7 +1458,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         : '';
       var waBlock = person.whatsapp
         ? '<div class="wa-bridge">' +
-          '<p class="wa-bridge-kicker">WhatsApp</p>' +
+          '<div class="wa-bridge-head">' +
+          '<div class="wa-pair wa-pair--compact" aria-hidden="true">' +
+          '<span class="wa-pair-crest"><img src="' +
+          esc(siteLogo) +
+          '" alt="" width="40" height="51" decoding="async" /></span>' +
+          '<span class="wa-pair-wa">' +
+          waMarkSvg +
+          '</span>' +
+          '</div>' +
+          '<p class="wa-bridge-kicker">Soul Searchers · opens WhatsApp</p>' +
+          '</div>' +
           '<p class="wa-bridge-hint">They opted in. Opens their chat in WhatsApp — you still tap Send. Digits stay off this map.</p>' +
           '<a class="btn btn-ghost hook-wa" href="/api/hooks/whatsapp?person=' +
           encodeURIComponent(person.key) +
@@ -2406,42 +2433,102 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     position: relative;
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0.85rem;
     padding-right: 2.35rem;
   }
 
-  .wa-compose-brand {
+  .wa-pair {
     flex: 0 0 auto;
-    width: 2.35rem;
-    height: 2.35rem;
-    border-radius: 0.7rem;
-    display: grid;
-    place-items: center;
-    background:
-      linear-gradient(145deg, rgba(212, 163, 90, 0.22), rgba(37, 99, 84, 0.28));
-    border: 1px solid rgba(212, 163, 90, 0.28);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    animation: wa-pair-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .wa-compose-mark {
-    width: 0.85rem;
-    height: 0.85rem;
-    border-radius: 0.28rem;
-    background: linear-gradient(145deg, rgba(212, 163, 90, 0.95), rgba(61, 140, 118, 0.9));
-    box-shadow: 0 0 0 3px rgba(212, 163, 90, 0.12);
+  .wa-pair--compact {
+    animation: none;
+  }
+
+  .wa-pair-crest,
+  .wa-pair-wa {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+
+  .wa-pair-crest {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 0.78rem;
+    background:
+      linear-gradient(155deg, rgba(212, 163, 90, 0.28), rgba(37, 99, 84, 0.18));
+    border: 1px solid rgba(212, 163, 90, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.12);
+    overflow: hidden;
+  }
+
+  .wa-pair-crest img {
+    width: 1.7rem;
+    height: auto;
+    max-height: 2.05rem;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+  }
+
+  .wa-pair-wa {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 0.78rem;
+    color: #dff7e8;
+    background:
+      linear-gradient(155deg, rgba(37, 211, 102, 0.42), rgba(18, 140, 80, 0.55));
+    border: 1px solid rgba(37, 211, 102, 0.38);
+    box-shadow:
+      inset 0 1px 0 rgba(220, 255, 230, 0.16),
+      0 0 0 3px rgba(37, 211, 102, 0.08);
+  }
+
+  .wa-pair-wa svg {
+    display: block;
+  }
+
+  .wa-pair--compact .wa-pair-crest,
+  .wa-pair--compact .wa-pair-wa {
+    width: 2.05rem;
+    height: 2.05rem;
+    border-radius: 0.65rem;
+  }
+
+  .wa-pair--compact .wa-pair-crest img {
+    width: 1.35rem;
+  }
+
+  @keyframes wa-pair-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.35rem) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   .wa-compose-head-copy {
     min-width: 0;
     flex: 1;
+    padding-top: 0.12rem;
   }
 
   .wa-compose-kicker {
     margin: 0;
     color: rgba(212, 163, 90, 0.78);
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .wa-compose-title {
@@ -2559,8 +2646,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     .wa-compose-backdrop,
     .wa-compose-card,
     .wa-compose-close,
-    .wa-compose-field input {
+    .wa-compose-field input,
+    .wa-pair {
       transition: none !important;
+      animation: none !important;
     }
 
     .wa-compose.is-open .wa-compose-card,
@@ -3194,13 +3283,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border-top: 1px solid rgba(215, 224, 232, 0.1);
   }
 
+  .wa-bridge-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 0 0.45rem;
+  }
+
   .wa-bridge-kicker {
-    margin: 0 0 0.4rem;
+    margin: 0;
     color: rgba(212, 163, 90, 0.78);
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .wa-bridge-hint {
