@@ -15,7 +15,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
         and it opens. Call upon someone near you with a short note. Email and phone stay off the
         page — phone only opens a free WhatsApp door if they opted in. Or WhatsApp a buddy from your
-        phone contacts — name, number, voilà.
+        contacts: we open the app, you tap Send.
       </p>
 
       <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
@@ -49,14 +49,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
           your machine, so when you stand on the map we can welcome you back to the person you last
           talked to, and quietly show if someone called upon you. Optional email and WhatsApp phone
-          stay private — never on the public map — phone only for the WhatsApp bridge if you leave
-          one. No ads. No trackers. Just the good kind of remembering.
+          stay private — never on the public map. Phone only opens WhatsApp for people who opted in;
+          the visitor still taps Send. No ads. No trackers. Just the good kind of remembering.
           <span class="cookie-wink" aria-hidden="true">;)</span>
         </p>
         <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
       </aside>
 
-      <!-- Client-only WhatsApp window — paste a name + number from your phone, open wa.me. -->
+      <!-- Client-only WhatsApp window — paste a name + number, open wa.me; they still tap Send. -->
       <div id="wa-compose" class="wa-compose" hidden>
         <button type="button" class="wa-compose-backdrop" id="wa-compose-backdrop" aria-label="Close WhatsApp"></button>
         <div
@@ -66,19 +66,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           aria-labelledby="wa-compose-title"
         >
           <header class="wa-compose-head">
-            <p class="wa-compose-kicker">WhatsApp</p>
-            <h2 class="wa-compose-title" id="wa-compose-title">Message a buddy</h2>
+            <div class="wa-compose-brand" aria-hidden="true">
+              <span class="wa-compose-mark"></span>
+            </div>
+            <div class="wa-compose-head-copy">
+              <p class="wa-compose-kicker">WhatsApp</p>
+              <h2 class="wa-compose-title" id="wa-compose-title">Message a buddy</h2>
+            </div>
             <button type="button" class="wa-compose-close" id="wa-compose-close" aria-label="Close">
               ×
             </button>
           </header>
           <p class="wa-compose-lead">
-            Name from your phone, paste the number, and voilà — WhatsApp opens. Nothing lands on our
-            server. Bob’s your uncle.
+            Paste a name and number from your phone. We open WhatsApp — you tap Send. Nothing is
+            stored on our server.
           </p>
           <form class="wa-compose-form" id="wa-compose-form">
             <label class="wa-compose-field">
-              <span>Name — from your contacts</span>
+              <span>Name</span>
               <input
                 type="text"
                 name="name"
@@ -88,7 +93,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               />
             </label>
             <label class="wa-compose-field">
-              <span>Number — paste from your phone</span>
+              <span>Number · include country code</span>
               <input
                 type="tel"
                 name="phone"
@@ -96,15 +101,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 maxlength="32"
                 inputmode="tel"
                 autocomplete="tel"
-                placeholder="+49… best with country code"
+                placeholder="+49 170 …"
               />
             </label>
             <p class="wa-compose-hint">
-              Digits only for WhatsApp. Keep the country code — <code>+49…</code> works best. Free
-              WhatsApp for them; we just open the door.
+              Keep the country code — <code>+49…</code> for Germany. Opens WhatsApp on your phone or
+              in the browser; the draft waits until you hit Send.
             </p>
             <p class="wa-compose-error" id="wa-compose-error" hidden></p>
-            <button class="btn btn-primary wa-compose-send" type="submit">Open WhatsApp</button>
+            <button class="btn btn-primary wa-compose-send" type="submit">
+              Open WhatsApp — then Send
+            </button>
           </form>
         </div>
       </div>
@@ -146,7 +153,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2>It’s on the floor</h2>
         <p>
           If you left a mail, offers can also land in your inbox. If you left a phone, brothers can
-          Message you on WhatsApp — the number stays off the map. Either way, the stall shows here.
+          open WhatsApp to you — the number stays off the map, and they still tap Send. Either way,
+          the stall shows here.
         </p>
       </div>
 
@@ -251,20 +259,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <input type="email" name="email" autocomplete="email" maxlength="200" />
         </label>
         <label>
-          <span>WhatsApp — optional, stays off the page</span>
+          <span>WhatsApp — optional, never shown on the map</span>
           <input
             type="tel"
             name="phone"
             autocomplete="tel"
             maxlength="32"
             inputmode="tel"
-            placeholder="+49… best with country code"
+            placeholder="+49 170 …"
           />
         </label>
         <p class="phone-bridge-hint">
-          Leave a number only if you want a calm Message on WhatsApp button on your dot. We never
-          show the digits on the map — just open WhatsApp for them. Free for you. Best as
-          <code>+49…</code> so the bridge keeps the country code.
+          Opt in only if you want a Message on WhatsApp button on your dot. Digits stay private —
+          we open WhatsApp for visitors; they still hit Send. Best as <code>+49…</code> with country
+          code.
         </p>
         <label class="hp" aria-hidden="true">
           <span>Company</span>
@@ -312,6 +320,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var waComposeBackdrop = document.getElementById('wa-compose-backdrop');
     var waComposeForm = document.getElementById('wa-compose-form');
     var waComposeError = document.getElementById('wa-compose-error');
+    var waComposeCloseTimer = 0;
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
@@ -1314,10 +1323,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var waBlock = person.whatsapp
         ? '<div class="wa-bridge">' +
           '<p class="wa-bridge-kicker">WhatsApp</p>' +
-          '<p class="wa-bridge-hint">They left the door open. Free WhatsApp — we just walk you there.</p>' +
+          '<p class="wa-bridge-hint">They opted in. Opens their chat in WhatsApp — you still tap Send. Digits stay off this map.</p>' +
           '<a class="btn btn-ghost hook-wa" href="/api/hooks/whatsapp?person=' +
           encodeURIComponent(person.key) +
-          '" target="_blank" rel="noopener noreferrer">Message on WhatsApp</a>' +
+          '" target="_blank" rel="noopener noreferrer">Open WhatsApp — then Send</a>' +
           '</div>'
         : '';
       openBox.hidden = false;
@@ -1918,7 +1927,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     function openWaCompose() {
       if (!waCompose) return;
+      if (waComposeCloseTimer) {
+        window.clearTimeout(waComposeCloseTimer);
+        waComposeCloseTimer = 0;
+      }
+      waCompose.classList.remove('is-closing');
       waCompose.hidden = false;
+      // Force a paint so the open animation can restart after a fast reopen.
+      void waCompose.offsetWidth;
+      waCompose.classList.add('is-open');
       document.documentElement.classList.add('wa-compose-open');
       showWaComposeError('');
       var nameEl = waComposeForm && waComposeForm.elements.namedItem('name');
@@ -1928,10 +1945,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     function closeWaCompose() {
-      if (!waCompose) return;
-      waCompose.hidden = true;
-      document.documentElement.classList.remove('wa-compose-open');
+      if (!waCompose || waCompose.hidden) return;
       showWaComposeError('');
+      document.documentElement.classList.remove('wa-compose-open');
+      if (prefersReducedMotion()) {
+        waCompose.classList.remove('is-open', 'is-closing');
+        waCompose.hidden = true;
+        return;
+      }
+      waCompose.classList.add('is-closing');
+      waCompose.classList.remove('is-open');
+      if (waComposeCloseTimer) window.clearTimeout(waComposeCloseTimer);
+      waComposeCloseTimer = window.setTimeout(function () {
+        waComposeCloseTimer = 0;
+        waCompose.classList.remove('is-closing');
+        waCompose.hidden = true;
+      }, 220);
     }
 
     if (waComposeOpen) {
@@ -1957,7 +1986,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         var phone = String(data.get('phone') || '').trim();
         var url = waMeUrl(phone, name);
         if (!url) {
-          showWaComposeError('Need a real number — best with country code, like +49…');
+          showWaComposeError(
+            'Need a real number with country code — like +49… — then Open WhatsApp and tap Send.',
+          );
           var phoneEl = waComposeForm.elements.namedItem('phone');
           if (phoneEl) phoneEl.focus();
           return;
@@ -2177,66 +2208,109 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: 0;
     margin: 0;
     padding: 0;
-    background: rgba(6, 10, 14, 0.62);
+    background: rgba(6, 10, 14, 0.58);
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+  }
+
+  .wa-compose.is-open .wa-compose-backdrop {
+    opacity: 1;
+  }
+
+  .wa-compose.is-closing .wa-compose-backdrop {
+    opacity: 0;
   }
 
   .wa-compose-card {
     position: relative;
     z-index: 1;
-    width: min(24rem, 100%);
+    width: min(24.5rem, 100%);
     display: grid;
-    gap: 0.75rem;
-    padding: 1.05rem 1.1rem 1.15rem;
-    border: 1px solid rgba(212, 163, 90, 0.28);
-    border-radius: 1.05rem;
+    gap: 0.9rem;
+    padding: 1.2rem 1.2rem 1.3rem;
+    border: 1px solid rgba(212, 163, 90, 0.26);
+    border-radius: 1.15rem;
     background:
-      radial-gradient(ellipse 70% 80% at 12% 0%, rgba(212, 163, 90, 0.14), transparent 55%),
-      radial-gradient(ellipse 60% 70% at 100% 100%, rgba(61, 107, 122, 0.16), transparent 58%),
-      rgba(12, 18, 24, 0.97);
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
-    animation: wa-compose-in 0.28s ease;
+      radial-gradient(ellipse 72% 70% at 8% 0%, rgba(212, 163, 90, 0.16), transparent 52%),
+      radial-gradient(ellipse 55% 60% at 100% 100%, rgba(37, 99, 84, 0.14), transparent 58%),
+      rgba(11, 17, 22, 0.98);
+    box-shadow:
+      0 22px 56px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(215, 224, 232, 0.05);
+    opacity: 0;
+    transform: translateY(0.85rem) scale(0.985);
+    transition:
+      opacity 0.24s ease,
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  @keyframes wa-compose-in {
-    from {
-      opacity: 0;
-      transform: translateY(0.7rem) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+  .wa-compose.is-open .wa-compose-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .wa-compose.is-closing .wa-compose-card {
+    opacity: 0;
+    transform: translateY(0.55rem) scale(0.99);
   }
 
   .wa-compose-head {
     position: relative;
-    padding-right: 2.4rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-right: 2.35rem;
+  }
+
+  .wa-compose-brand {
+    flex: 0 0 auto;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.7rem;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(145deg, rgba(212, 163, 90, 0.22), rgba(37, 99, 84, 0.28));
+    border: 1px solid rgba(212, 163, 90, 0.28);
+  }
+
+  .wa-compose-mark {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 0.28rem;
+    background: linear-gradient(145deg, rgba(212, 163, 90, 0.95), rgba(61, 140, 118, 0.9));
+    box-shadow: 0 0 0 3px rgba(212, 163, 90, 0.12);
+  }
+
+  .wa-compose-head-copy {
+    min-width: 0;
+    flex: 1;
   }
 
   .wa-compose-kicker {
     margin: 0;
-    color: rgba(215, 224, 232, 0.55);
+    color: rgba(212, 163, 90, 0.78);
     font-size: 0.66rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
   .wa-compose-title {
-    margin: 0.2rem 0 0;
+    margin: 0.18rem 0 0;
     font-family: var(--font-display);
-    font-size: 1.35rem;
+    font-size: 1.42rem;
     font-weight: 500;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     color: var(--paper);
-    line-height: 1.15;
+    line-height: 1.12;
   }
 
   .wa-compose-close {
     position: absolute;
-    top: -0.15rem;
-    right: -0.2rem;
+    top: -0.1rem;
+    right: -0.15rem;
     width: 2rem;
     height: 2rem;
     border: 0;
@@ -2249,6 +2323,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     cursor: pointer;
     display: inline-grid;
     place-items: center;
+    transition: background 0.18s ease, color 0.18s ease;
   }
 
   .wa-compose-close:hover {
@@ -2258,56 +2333,63 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .wa-compose-lead {
     margin: 0;
-    color: rgba(215, 224, 232, 0.74);
-    font-size: 0.94rem;
-    line-height: 1.45;
+    color: rgba(215, 224, 232, 0.76);
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 
   .wa-compose-form {
     display: grid;
-    gap: 0.65rem;
+    gap: 0.75rem;
   }
 
   .wa-compose-field {
     display: grid;
-    gap: 0.3rem;
+    gap: 0.35rem;
   }
 
   .wa-compose-field span {
-    color: rgba(215, 224, 232, 0.55);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    color: rgba(215, 224, 232, 0.58);
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
   }
 
   .wa-compose-field input {
     width: 100%;
     box-sizing: border-box;
-    border: 1px solid rgba(215, 224, 232, 0.16);
-    border-radius: 0.7rem;
-    padding: 0.7rem 0.8rem;
-    background: rgba(8, 12, 16, 0.55);
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.75rem;
+    padding: 0.78rem 0.88rem;
+    background: rgba(8, 12, 16, 0.58);
     color: var(--paper);
     font: inherit;
-    font-size: 1rem;
+    font-size: 1.02rem;
+    transition: border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .wa-compose-field input::placeholder {
+    color: rgba(215, 224, 232, 0.38);
   }
 
   .wa-compose-field input:focus {
-    outline: 2px solid rgba(212, 163, 90, 0.45);
+    outline: 2px solid rgba(212, 163, 90, 0.42);
     outline-offset: 1px;
+    border-color: rgba(212, 163, 90, 0.35);
+    background: rgba(8, 12, 16, 0.72);
   }
 
   .wa-compose-hint {
-    margin: 0;
-    color: rgba(215, 224, 232, 0.62);
+    margin: 0.05rem 0 0;
+    color: rgba(215, 224, 232, 0.64);
     font-size: 0.86rem;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
   .wa-compose-hint code {
     font-size: 0.84em;
-    color: rgba(212, 163, 90, 0.92);
+    color: rgba(212, 163, 90, 0.95);
   }
 
   .wa-compose-error {
@@ -2321,7 +2403,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .wa-compose-send {
-    margin-top: 0.15rem;
+    margin-top: 0.2rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wa-compose-backdrop,
+    .wa-compose-card,
+    .wa-compose-close,
+    .wa-compose-field input {
+      transition: none !important;
+    }
+
+    .wa-compose.is-open .wa-compose-card,
+    .wa-compose.is-closing .wa-compose-card {
+      transform: none;
+    }
   }
 
   .welcome-back {
@@ -2828,42 +2926,42 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .wa-bridge {
     margin: 1rem 0 0.35rem;
-    padding-top: 0.85rem;
+    padding: 0.95rem 0 0;
     border-top: 1px solid rgba(215, 224, 232, 0.1);
   }
 
   .wa-bridge-kicker {
-    margin: 0 0 0.55rem;
-    color: rgba(215, 224, 232, 0.55);
-    font-size: 0.68rem;
+    margin: 0 0 0.4rem;
+    color: rgba(212, 163, 90, 0.78);
+    font-size: 0.66rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
   .wa-bridge-hint {
-    margin: 0 0 0.65rem;
-    color: rgba(215, 224, 232, 0.72);
-    font-size: 0.9rem;
-    line-height: 1.4;
+    margin: 0 0 0.75rem;
+    color: rgba(215, 224, 232, 0.74);
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
 
   .hook-wa {
     display: inline-flex;
-    margin-top: 0.15rem;
+    margin-top: 0.1rem;
     text-decoration: none;
   }
 
   .phone-bridge-hint {
-    margin: -0.35rem 0 0.85rem;
-    color: rgba(215, 224, 232, 0.62);
+    margin: -0.25rem 0 0.85rem;
+    color: rgba(215, 224, 232, 0.64);
     font-size: 0.86rem;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
   .phone-bridge-hint code {
     font-size: 0.84em;
-    color: rgba(212, 163, 90, 0.92);
+    color: rgba(212, 163, 90, 0.95);
   }
 
   .call-thread {
