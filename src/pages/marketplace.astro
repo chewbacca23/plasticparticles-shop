@@ -2470,6 +2470,8 @@ import { site } from '../site.config';
   .wa-pair-crest img {
     width: 1.7rem;
     height: auto;
+    max-height: 2.05rem;
+    object-fit: contain;
     display: block;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
   }
@@ -2522,10 +2524,11 @@ import { site } from '../site.config';
   .wa-compose-kicker {
     margin: 0;
     color: rgba(212, 163, 90, 0.78);
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .wa-compose-title {
@@ -3290,10 +3293,11 @@ import { site } from '../site.config';
   .wa-bridge-kicker {
     margin: 0;
     color: rgba(212, 163, 90, 0.78);
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .wa-bridge-hint {
