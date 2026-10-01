@@ -18,8 +18,10 @@ import {
   arePeopleNear,
   canCallUpon,
   cleanPhone,
+  cleanTelegramUsername,
   phoneDigitsForWa,
   waMeUrl,
+  telegramMeUrl,
   WA_PREFILL,
 } from './hooks-board.js';
 
@@ -48,6 +50,7 @@ describe('hooks paths', () => {
     assert.equal(isHooksApiPath('/api/hooks/write'), true);
     assert.equal(isHooksApiPath('/api/hooks/call'), true);
     assert.equal(isHooksApiPath('/api/hooks/whatsapp'), true);
+    assert.equal(isHooksApiPath('/api/hooks/telegram'), true);
     assert.equal(isHooksApiPath('/hooks'), false);
     assert.equal(isHooksApiPath('/api/contact'), false);
   });
@@ -110,6 +113,46 @@ describe('hooks privacy', () => {
     assert.doesNotMatch(JSON.stringify(group), /\+49/);
   });
 
+  it('never puts a Telegram handle on a public card, only a telegram flag on the person', () => {
+    const card = publicHook({
+      id: 'h1',
+      name: 'Joerg',
+      place: 'Berlin',
+      note: 'Coffee after the park.',
+      telegram: 'soulsearcher_joerg',
+      email: 'hidden@example.com',
+      at: '2026-09-24T00:00:00.000Z',
+    });
+    assert.equal(card.telegram, undefined);
+    assert.doesNotMatch(JSON.stringify(card), /soulsearcher_joerg/);
+
+    const group = groupFromHooks([
+      {
+        id: 'h1',
+        name: 'Joerg',
+        place: 'Berlin',
+        note: 'Coffee.',
+        telegram: '@soulsearcher_joerg',
+        offers: [],
+        at: '2026-09-24T00:00:00.000Z',
+      },
+      {
+        id: 'h2',
+        name: 'Quiet',
+        place: 'Berlin',
+        note: 'No Telegram.',
+        offers: [],
+        at: '2026-09-24T01:00:00.000Z',
+      },
+    ]);
+    const joerg = group.people.find((person) => person.name === 'Joerg');
+    const quiet = group.people.find((person) => person.name === 'Quiet');
+    assert.equal(joerg.telegram, true);
+    assert.equal(quiet.telegram, false);
+    assert.doesNotMatch(JSON.stringify(group), /soulsearcher_joerg/);
+    assert.doesNotMatch(JSON.stringify(group), /@/);
+  });
+
   it('normalizes phones for wa.me and prefers country-code style', () => {
     assert.equal(cleanPhone('+49 170-123 4567'), '+491701234567');
     assert.equal(phoneDigitsForWa('+49 170-123 4567'), '491701234567');
@@ -119,6 +162,16 @@ describe('hooks privacy', () => {
     assert.match(url, /^https:\/\/wa\.me\/491701234567\?text=/);
     assert.match(decodeURIComponent(url), /Hey from the Soul Searchers map/);
     assert.equal(WA_PREFILL.includes('map'), true);
+  });
+
+  it('normalizes Telegram usernames and builds t.me links', () => {
+    assert.equal(cleanTelegramUsername('@Soul_Rider99'), 'Soul_Rider99');
+    assert.equal(cleanTelegramUsername('Soul_Rider99'), 'Soul_Rider99');
+    assert.equal(cleanTelegramUsername('ab'), '');
+    assert.equal(cleanTelegramUsername('1badstart'), '');
+    assert.equal(cleanTelegramUsername('has space'), '');
+    assert.equal(telegramMeUrl('@Soul_Rider99'), 'https://t.me/Soul_Rider99');
+    assert.equal(telegramMeUrl('nope'), '');
   });
 
   it('lays every stall and offer on the same market floor', () => {
@@ -285,12 +338,15 @@ describe('hooks pin', () => {
       place: 'Kreuzberg',
       note: 'Panini and a ride.',
       email: 'alex@example.com',
+      telegram: '@alex_rides',
       phone: '+49 170 555 1212',
     });
     assert.equal(validatePin(fields), '');
+    assert.equal(fields.telegram, 'alex_rides');
     assert.equal(fields.phone, '+491705551212');
     assert.equal(validatePin({ ...fields, email: '' }), '');
     assert.equal(validatePin({ ...fields, phone: '' }), '');
+    assert.equal(validatePin({ ...fields, telegram: '' }), '');
     assert.equal(validatePin({ ...fields, name: '' }), 'Pick a name. Any name.');
   });
 
@@ -305,6 +361,7 @@ describe('hooks pin', () => {
           place: 'Daily Bread',
           note: 'Tires and a calm shop.',
           email: 'goetz@example.com',
+          telegram: '@goetz_rides',
           phone: '+49 170 9998877',
         }),
       }),
@@ -318,8 +375,11 @@ describe('hooks pin', () => {
     assert.equal(body.market[0].name, 'Goetz');
     assert.equal(body.hooks[0].email, undefined);
     assert.equal(body.hooks[0].phone, undefined);
+    assert.equal(body.hooks[0].telegram, undefined);
+    assert.equal(body.group.people[0].telegram, true);
     assert.equal(body.group.people[0].whatsapp, true);
     assert.doesNotMatch(JSON.stringify(body), /1709998877/);
+    assert.doesNotMatch(JSON.stringify(body), /goetz_rides/);
     assert.doesNotMatch(JSON.stringify(body), /goetz@example.com/);
 
     const listed = await handleHooksRequest(
@@ -331,6 +391,8 @@ describe('hooks pin', () => {
     assert.equal(data.hooks[0].place, 'Daily Bread');
     assert.doesNotMatch(JSON.stringify(data), /goetz@example.com/);
     assert.doesNotMatch(JSON.stringify(data), /1709998877/);
+    assert.doesNotMatch(JSON.stringify(data), /goetz_rides/);
+    assert.equal(data.group.people[0].telegram, true);
     assert.equal(data.group.people[0].whatsapp, true);
   });
 
@@ -364,6 +426,74 @@ describe('hooks pin', () => {
     const body = await human.json();
     assert.equal(body.hooks[0].name, 'Alex');
     assert.equal(body.market[0].kind, 'stall');
+  });
+});
+
+describe('hooks telegram bridge', () => {
+  it('302s to t.me for an opted-in username and never leaks the handle', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify({
+        hooks: [
+          {
+            id: 'h1',
+            name: 'Hanna',
+            place: 'Berlin',
+            note: 'Sunday climb.',
+            telegram: '@hanna_climbs',
+            offers: [],
+            at: '2026-09-24T00:00:00.000Z',
+          },
+        ],
+        calls: [],
+      }),
+    });
+    const res = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/telegram?person=hanna'),
+      { STATS: kv },
+    );
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('location'), 'https://t.me/hanna_climbs');
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].telegram, true);
+    assert.doesNotMatch(JSON.stringify(data), /hanna_climbs/);
+    assert.doesNotMatch(JSON.stringify(data), /t\.me/);
+  });
+
+  it('404s when nobody left a Telegram username', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify({
+        hooks: [
+          {
+            id: 'h1',
+            name: 'Alex',
+            place: 'Berlin',
+            note: 'Spare tires.',
+            telegram: '',
+            offers: [],
+            at: '2026-09-24T00:00:00.000Z',
+          },
+        ],
+        calls: [],
+      }),
+    });
+    const miss = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/telegram?person=alex'),
+      { STATS: kv },
+    );
+    assert.equal(miss.status, 404);
+    assert.match((await miss.json()).error, /Telegram/i);
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].telegram, false);
   });
 });
 
