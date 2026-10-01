@@ -384,7 +384,24 @@ const BERLIN_SPOTS = [
   { keys: ['weissensee', 'weißensee'], x: 56, y: 30, spread: 3.2 },
   { keys: ['friedenau'], x: 36, y: 66, spread: 2.8 },
   { keys: ['tiergarten'], x: 38, y: 48, spread: 3.2 },
+  // Generic city name only — no dead centre; spotFromPlace picks an outskirts Bezirk.
   { keys: ['berlin', 'berlijn', 'berlino'], x: 48, y: 48, spread: 8, generic: true },
+];
+
+/**
+ * Outer districts for plain “Berlin” (no Bezirk named). Stable pick by person key hash.
+ * Centroids match the named BERLIN_SPOTS entries above.
+ */
+export const BERLIN_OUTSKIRTS = [
+  { label: 'spandau', x: 16, y: 45, spread: 3.8 },
+  { label: 'zehlendorf', x: 18, y: 78, spread: 3.2 },
+  { label: 'kopenick', x: 80, y: 76, spread: 3.8 },
+  { label: 'pankow', x: 52, y: 22, spread: 3.5 },
+  { label: 'marzahn', x: 72, y: 38, spread: 3.2 },
+  { label: 'reinickendorf', x: 32, y: 26, spread: 3.5 },
+  { label: 'hellersdorf', x: 78, y: 44, spread: 3.2 },
+  { label: 'treptow', x: 66, y: 62, spread: 3.2 },
+  { label: 'steglitz', x: 28, y: 68, spread: 3.2 },
 ];
 
 /** Berlin stays the centre of the lil universe (map % before zoom). */
@@ -484,17 +501,27 @@ function worldRadiusFromKm(km) {
  * Map a free-text place into Berlin-centred world units (Berlin city ≈ ±1).
  * Final room % comes from layoutUniverse — Berlin stays the centre.
  */
+/** Stable outskirts Bezirk for a generic “Berlin” pin (hash of person key). */
+export function outskirtsSpotForKey(key = '') {
+  const h = nameHash(String(key || 'berlin'));
+  return BERLIN_OUTSKIRTS[h % BERLIN_OUTSKIRTS.length];
+}
+
 export function spotFromPlace(place, key = '', index = 0) {
   const folded = normalizePlace(place);
   const berlin = matchBerlinSpot(folded);
   if (berlin) {
-    const local = jitterAround(berlin.x, berlin.y, berlin.spread, key, index);
-    return {
+    // Plain “Berlin” → outer ring district; named boroughs keep their own centroid.
+    const base = berlin.generic ? outskirtsSpotForKey(key) : berlin;
+    const local = jitterAround(base.x, base.y, base.spread, key, index);
+    const spot = {
       wx: (local.x - BERLIN_MAP_CENTER.x) / BERLIN_MAP_HALF,
       wy: (local.y - BERLIN_MAP_CENTER.y) / BERLIN_MAP_HALF,
       inBerlin: true,
       placeLabel: folded || 'berlin',
     };
+    if (berlin.generic) spot.outskirts = base.label;
+    return spot;
   }
 
   const world = matchWorldPlace(folded);
@@ -1294,8 +1321,10 @@ export const testables = {
   personHomePlace,
   normalizePlace,
   spotFromPlace,
+  outskirtsSpotForKey,
   layoutUniverse,
   BERLIN_MAP_CENTER,
+  BERLIN_OUTSKIRTS,
   parseHookPin,
   parseHookWrite,
   parseHookCall,

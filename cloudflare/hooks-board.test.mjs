@@ -10,6 +10,9 @@ import {
   groupFromHooks,
   normalizePlace,
   spotFromPlace,
+  outskirtsSpotForKey,
+  BERLIN_MAP_CENTER,
+  BERLIN_OUTSKIRTS,
   parseHookPin,
   validatePin,
   validateWrite,
@@ -328,6 +331,59 @@ describe('hooks privacy', () => {
     const kf = Math.hypot(k.x - far.x, k.y - far.y);
     assert.ok(kn < kf);
     assert.ok(far.y > k.y);
+  });
+
+  it('generic Berlin lands on the outskirts, not dead centre', () => {
+    const half = 42;
+    const dead = { x: 48, y: 48 };
+    const keys = ['henrik', 'rider-a', 'alice', 'bob', 'charlie', 'dora', 'eve', 'frank', 'gina'];
+    const labels = new Set();
+
+    for (const key of keys) {
+      const spot = spotFromPlace('Berlin', key, 0);
+      assert.equal(spot.inBerlin, true);
+      assert.ok(spot.outskirts, `expected outskirts label for ${key}`);
+      labels.add(spot.outskirts);
+
+      const outer = outskirtsSpotForKey(key);
+      assert.equal(spot.outskirts, outer.label);
+      assert.ok(BERLIN_OUTSKIRTS.some((s) => s.label === spot.outskirts));
+
+      const x = BERLIN_MAP_CENTER.x + spot.wx * half;
+      const y = BERLIN_MAP_CENTER.y + spot.wy * half;
+      const fromDead = Math.hypot(x - dead.x, y - dead.y);
+      const fromCenter = Math.hypot(x - BERLIN_MAP_CENTER.x, y - BERLIN_MAP_CENTER.y);
+      // Old generic dump was ~48,48 with spread 8; outskirts sit on the outer ring.
+      assert.ok(
+        fromDead > 14,
+        `Berlin/${key} too near dead centre (${fromDead.toFixed(1)})`,
+      );
+      assert.ok(
+        fromCenter > 12,
+        `Berlin/${key} too near map centre (${fromCenter.toFixed(1)})`,
+      );
+      assert.ok(Math.hypot(spot.wx, spot.wy) > 0.28);
+    }
+
+    // Stable for the same person key; berlijn / berlino same path.
+    const a = spotFromPlace('Berlin', 'henrik', 0);
+    const b = spotFromPlace('Berlin', 'henrik', 0);
+    const c = spotFromPlace('Berlijn', 'henrik', 0);
+    assert.equal(a.outskirts, b.outskirts);
+    assert.equal(a.outskirts, c.outskirts);
+    assert.equal(a.wx, b.wx);
+    assert.equal(a.wy, b.wy);
+
+    // Named boroughs still pin to their own centroid (Kreuzberg stays central-south).
+    const kreuz = spotFromPlace('Kreuzberg', 'henrik', 0);
+    assert.equal(kreuz.inBerlin, true);
+    assert.equal(kreuz.outskirts, undefined);
+    const kx = BERLIN_MAP_CENTER.x + kreuz.wx * half;
+    const ky = BERLIN_MAP_CENTER.y + kreuz.wy * half;
+    assert.ok(Math.hypot(kx - 49, ky - 56) < 6);
+
+    // Hash spreads across more than one outer district when keys differ.
+    assert.ok(labels.size >= 3, `expected several outskirts, got ${[...labels]}`);
   });
 });
 
