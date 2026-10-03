@@ -16,4 +16,9 @@ note: >-
 
   It wasn't much of a ride, but it was wonderful, because as long as you ride, it always is. Cheers, mates! 🚲
 draft: false
+photos:
+  - /stories/img_6612.jpeg
+  - /stories/img_6610.jpeg
+  - /stories/img_6609.jpeg
+  - /stories/img_6609.jpg
 ---
