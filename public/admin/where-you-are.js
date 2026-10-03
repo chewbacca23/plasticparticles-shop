@@ -31,8 +31,42 @@
     var text = String(hash || '');
     var match = text.match(/\/collections\/([^/]+)/);
     if (match) return match[1].replace(/[?#].*$/, '');
+    match = text.match(/\/edit\/([^/?#]+)/);
+    if (match) return match[1];
     if (text.indexOf('/media') !== -1) return 'media';
     return '';
+  }
+
+  function editorOpen() {
+    if (window.ssEditor && typeof window.ssEditor.open === 'function') return window.ssEditor.open();
+    var hash = window.location.hash || '';
+    return hash.indexOf('/entries/') !== -1 || hash.indexOf('/new') !== -1 || /\/edit\/[^/]+\/[^/?#]+/.test(hash);
+  }
+
+  function paintActions() {
+    var actions = document.getElementById('cms-where-actions');
+    var save = document.getElementById('cms-where-save');
+    var del = document.getElementById('cms-where-delete');
+    if (!actions || !save) return;
+
+    if (!editorOpen()) {
+      actions.hidden = true;
+      return;
+    }
+
+    actions.hidden = false;
+    var saving = window.ssEditor && window.ssEditor.saving && window.ssEditor.saving();
+    var label = window.ssEditor && window.ssEditor.label ? window.ssEditor.label() : 'Save';
+    save.textContent = saving ? 'Saving…' : label;
+    save.disabled = !!saving;
+
+    var can = window.ssDelete && window.ssDelete.can && window.ssDelete.can();
+    if (del) {
+      del.hidden = !can;
+      var deleting = window.ssDelete && window.ssDelete.busy && window.ssDelete.busy();
+      del.textContent = deleting ? 'Deleting…' : 'Delete this';
+      del.disabled = !!deleting;
+    }
   }
 
   function paint() {
@@ -52,6 +86,25 @@
     el.hidden = false;
     titleEl.textContent = TITLES[here] || String(here).replace(/-/g, ' ').toUpperCase();
     if (hintEl) hintEl.textContent = HINTS[here] || 'You are editing this section.';
+    paintActions();
+  }
+
+  var saveBtn = document.getElementById('cms-where-save');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (window.ssEditor && typeof window.ssEditor.save === 'function') window.ssEditor.save();
+    });
+  }
+
+  var deleteBtn = document.getElementById('cms-where-delete');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (window.ssDelete && typeof window.ssDelete.run === 'function') window.ssDelete.run();
+    });
   }
 
   window.addEventListener('hashchange', paint);

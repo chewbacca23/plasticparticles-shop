@@ -24,19 +24,20 @@
   }
 
   function collectionName() {
-    var match = hash().match(/\/collections\/([^/?#]+)/);
+    var text = hash();
+    var match = text.match(/\/collections\/([^/?#]+)/) || text.match(/\/edit\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : '';
   }
 
   function slugName() {
-    var match = hash().match(/\/entries\/([^/?#]+)/);
+    var text = hash();
+    var match = text.match(/\/entries\/([^/?#]+)/) || text.match(/\/edit\/[^/]+\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : '';
   }
 
   function canDelete() {
     var name = collectionName();
     if (!FOLDERS[name]) return false;
-    if (hash().indexOf('/entries/') === -1) return false;
     if (hash().indexOf('/new') !== -1) return false;
     return !!slugName();
   }
@@ -229,23 +230,32 @@
     if (!button) {
       button = document.createElement('button');
       button.type = 'button';
+      button.className = 'cms-pill-delete';
       button.setAttribute(MARK, '1');
       button.setAttribute('aria-label', 'Delete this post');
-      button.setAttribute(
-        'style',
-        'position:fixed;right:1.1rem;bottom:3.15rem;z-index:2147483000;width:9.25rem;min-height:0;padding:0.32rem 0.7rem;border:1px solid rgba(240,194,122,0.7);border-radius:999px;background:#1a1010;color:#f0c27a;font:700 0.72rem/1.15 Inter,system-ui,sans-serif;text-align:center;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.28);',
-      );
       button.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
         deleteThis();
       });
-      document.body.appendChild(button);
+      var stack = document.getElementById('cms-pill-stack');
+      var save = stack && stack.querySelector('[data-ss-save-ride]');
+      if (stack && save && save.nextSibling) stack.insertBefore(button, save.nextSibling);
+      else if (stack) stack.insertBefore(button, stack.firstChild);
+      else document.body.appendChild(button);
     }
     button.disabled = deleting;
     button.textContent = deleting ? 'Deleting…' : 'Delete this';
     button.style.opacity = deleting ? '0.7' : '1';
   }
+
+  window.ssDelete = {
+    can: canDelete,
+    run: deleteThis,
+    busy: function () {
+      return deleting;
+    },
+  };
 
   window.addEventListener('hashchange', updateButton);
   window.setInterval(updateButton, 700);
