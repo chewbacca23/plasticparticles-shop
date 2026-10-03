@@ -34,7 +34,10 @@
       }
 
       .cms-top {
-        position: relative;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         z-index: 20000;
         border-bottom: 1px solid rgba(215, 224, 232, 0.08);
         background: rgba(10, 14, 20, 0.72);
@@ -104,33 +107,64 @@
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      /* Bottom-right stack: Save, Mail, Looks (same size). */
-      .cms-mail,
-      .cms-looks {
+      /* Bottom-right column: Save, Delete, Looks, Mail. One stack, no overlap. */
+      #cms-pill-stack {
         position: fixed;
         right: 1.1rem;
-        left: auto;
-        bottom: 1.1rem;
+        bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
         z-index: 2147483000;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
         width: 9.25rem;
-        min-height: 0;
-        margin: 0;
-        padding: 0.32rem 0.7rem;
+        pointer-events: none;
+      }
+
+      #cms-pill-stack > * {
+        position: static !important;
+        inset: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        pointer-events: auto;
+      }
+
+      .cms-mail,
+      .cms-looks,
+      .cms-pill-save,
+      .cms-pill-delete {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        gap: 0.35rem;
+        box-sizing: border-box;
+        min-height: 0;
+        padding: 0.32rem 0.7rem;
+        border-radius: 999px;
         text-align: center;
         font: 700 0.72rem/1.15 Inter, system-ui, sans-serif;
-        pointer-events: auto;
+        cursor: pointer;
         box-shadow: 0 8px 22px rgba(212, 163, 90, 0.2);
       }
 
-      .cms-mail[data-ss-above-save],
-      .cms-looks[data-ss-above-mail] {
-        bottom: 3.15rem;
+      .cms-pill-save {
+        border: 0;
+        background: #f0c27a;
+        color: #0c1218;
       }
 
-      .cms-looks[data-ss-above-mail][data-ss-above-save] {
-        bottom: 5.2rem;
+      .cms-pill-save:disabled,
+      .cms-pill-delete:disabled,
+      .cms-where-save:disabled,
+      .cms-where-delete:disabled {
+        opacity: 0.7;
+        cursor: wait;
+      }
+
+      .cms-pill-delete {
+        border: 1px solid rgba(240, 194, 122, 0.7);
+        background: #1a1010;
+        color: #f0c27a;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
       }
 
       .cms-looks-num {
@@ -278,6 +312,111 @@
         text-transform: uppercase;
       }
 
+      .cms-collections {
+        display: none;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin: 0.65rem 0 0;
+      }
+
+      .cms-top.cms-in .cms-collections {
+        display: flex;
+      }
+
+      .cms-collections a {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.28rem 0.65rem;
+        border: 1px solid rgba(215, 224, 232, 0.16);
+        border-radius: 999px;
+        color: var(--paper);
+        text-decoration: none;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .cms-collections a:hover,
+      .cms-collections a[data-ss-here] {
+        border-color: rgba(255, 59, 59, 0.55);
+        color: #ff3b3b;
+      }
+
+      .cms-where {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        margin-top: 0.45rem;
+        padding: 0.4rem 0.75rem 0.45rem;
+        border: 1px solid rgba(212, 163, 90, 0.35);
+        border-radius: 0.75rem;
+        background:
+          linear-gradient(135deg, rgba(212, 163, 90, 0.16), rgba(18, 26, 34, 0.55));
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+      }
+
+      .cms-where-actions {
+        display: flex;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+
+      .cms-where-actions[hidden] {
+        display: none;
+      }
+
+      .cms-where-save,
+      .cms-where-delete {
+        border-radius: 999px;
+        padding: 0.4rem 0.85rem;
+        font: 700 0.78rem/1.15 Inter, system-ui, sans-serif;
+        cursor: pointer;
+      }
+
+      .cms-where-save {
+        border: 0;
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
+        color: var(--ink);
+        box-shadow: 0 8px 22px rgba(212, 163, 90, 0.22);
+      }
+
+      .cms-where-delete {
+        border: 1px solid rgba(240, 194, 122, 0.7);
+        background: #1a1010;
+        color: #f0c27a;
+      }
+
+      .cms-where[hidden] {
+        display: none;
+      }
+
+      .cms-where-kicker {
+        margin: 0;
+        color: var(--amber-hot);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .cms-where-title {
+        margin: 0.05rem 0 0;
+        font-family: var(--font-display);
+        font-size: clamp(1.05rem, 2.1vw, 1.35rem);
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--paper);
+      }
+
+      .cms-where-hint {
+        display: none;
+      }
+
       .banner {
         display: inline-block;
         max-width: 100%;
@@ -333,7 +472,8 @@
       /* Decap’s default login is a light-gray dump with a dinner-plate crest. */
       section[class*='AuthenticationPage'] {
         background: transparent !important;
-        min-height: calc(100vh - 8rem);
+        min-height: calc(100vh - var(--cms-top-h) - 2rem);
+        height: auto !important;
         padding: 2.5rem 1rem 4rem !important;
       }
 
@@ -389,7 +529,27 @@
         (preview off in config.yml) and park the editor below the brand bar.
       */
       :root {
-        --cms-top-h: 7.5rem;
+        --cms-top-h: 6.5rem;
+      }
+
+      body {
+        padding-top: var(--cms-top-h);
+      }
+
+      /* Collections live in our top bar. Decap’s own pane is position:fixed
+         with no top, so it sits on the floor under the brand. Hide it. */
+      body:has(.cms-top.cms-in) [class*='SidebarContainer'] {
+        display: none !important;
+      }
+
+      body:has(.cms-top.cms-in) [class*='CollectionMain'] {
+        padding-left: 0 !important;
+      }
+
+      [class*='AppHeader'] {
+        position: sticky !important;
+        top: var(--cms-top-h) !important;
+        z-index: 40 !important;
       }
 
       [class*='EditorContainer'] {
@@ -413,8 +573,8 @@
         overflow-y: auto !important;
         pointer-events: auto !important;
         background: #0c1218 !important;
-        /* Room for gold Looks / Mail / Save stack at the bottom-right */
-        padding-bottom: 5.5rem !important;
+        /* Room for gold Looks / Mail / Delete / Save stack at the bottom-right */
+        padding-bottom: 8.5rem !important;
       }
 
       [class*='PreviewPaneContainer'] {
@@ -470,11 +630,28 @@
             <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
           </span>
         </div>
-        <button type="button" class="cms-mail" id="cms-mail">Mail and imprint</button>
-        <a class="cms-looks" href="/looks">
-          Looks
-          <span class="cms-looks-num" data-looks="today">—</span>
-        </a>
+        <nav id="cms-collections" class="cms-collections" aria-label="Collections">
+          <a href="#/collections/week">This week</a>
+          <a href="#/collections/stores">Stores</a>
+          <a href="#/collections/stories">Rides</a>
+          <a href="#/collections/journal">Ride notes</a>
+          <a href="#/collections/friends">Friends</a>
+          <a href="#/collections/shop">Shop</a>
+          <a href="#/collections/shots">Shots</a>
+          <a href="#/collections/settings">Site</a>
+          <a href="#/media">Media</a>
+        </nav>
+        <div id="cms-where" class="cms-where" hidden>
+          <div>
+            <p class="cms-where-kicker">You are here</p>
+            <p class="cms-where-title" id="cms-where-title"></p>
+            <p class="cms-where-hint" id="cms-where-hint"></p>
+          </div>
+          <div class="cms-where-actions" id="cms-where-actions" hidden>
+            <button type="button" class="cms-where-delete" id="cms-where-delete" hidden>Delete this</button>
+            <button type="button" class="cms-where-save" id="cms-where-save">Save</button>
+          </div>
+        </div>
         <div id="local-banner" class="banner hidden">
           <details>
             <summary>Local editing</summary>
@@ -494,7 +671,8 @@
             <strong>Rides</strong>, <strong>＋ Ride</strong> asks for a name, then opens the file.
             First photo sits at the top. Photos in the story sit in the text. Ride notes
             have the same photo fields. The gold
-            <strong>Save this ride</strong> button writes the file. Click a ride so it turns green,
+            <strong>Save</strong> in the You are here bar writes the file. Open a post and
+            <strong>Delete this</strong> sits beside it. Click a ride so it turns green,
             then <strong>− Ride</strong>. The <strong>Date</strong> on a ride puts it first on the
             site. Newest first.
           </details>
@@ -506,7 +684,9 @@
             <p style="margin: 0.55rem 0 0">
               Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). First
               click the gold <strong>Login with GitHub</strong> in this bar. Then use the
-              gold <strong>Save this ride</strong> button at the bottom-right. That writes to GitHub.
+              gold <strong>Save</strong> in the You are here bar (and again at the top of the
+              bottom-right stack). That writes to GitHub.
+              <strong>Delete this</strong> sits beside Save in that same bar.
               The top <strong>Publish</strong> menu stays open so you can pick
               <strong>Publish now</strong> if you want. The editor is the form only (no preview
               sitting on top of the fields). After save, open the ride or note page itself and
@@ -539,22 +719,32 @@
               username, then paste the latest photo’s Share link.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Where you are:</strong> click <em>Rides</em>, <em>Shots</em>,
-              <em>Ride notes</em>, <em>Friends</em>, or <em>Site</em>. That name turns red.
+              <strong>Where you are:</strong> the big gold bar under the brand says
+              <em>THIS WEEK</em>, <em>STORES AROUND THE WORLD</em>, <em>RIDES</em>, and so on.
+              Sidebar names also turn red. Click the section you want so you never get lost.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Rides:</strong> <strong>＋ Ride</strong> asks for a name, then opens the file.
-              First photo sits at the top. Photos in the story sit in the text. Click a ride so it
-              turns green, then
+              Write the story, then scroll past <strong>Draft</strong> — there is
+              <strong>UPLOAD PHOTOS</strong> right underneath. Cover first, then more shots in the
+              story. Click a ride so it turns green, then
               <strong>− Ride</strong>.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Ride notes:</strong> open <em>Ride notes</em>, then a note.
-              <strong>First photo</strong> at the top. <strong>Photos in the note</strong> in the
-              text. Click <strong>Upload</strong>, pick a <strong>JPEG from your Mac</strong> (that is
-              how it gets onto the site), then gold <strong>Save this note</strong>. Not HEIC.
+              <strong>Ride notes:</strong> open <em>Ride notes</em>, then a note. Same idea —
+              after <strong>Draft</strong> comes <strong>UPLOAD PHOTOS</strong>. Click
+              <strong>Upload</strong>, pick a <strong>JPEG from your Mac</strong>, then gold
+              <strong>Save this note</strong>. Not HEIC.
               Big phone photos are fine; GitHub shrinks them after save. If Upload ever bounces you
               out of the note, hard-refresh and try again.
+            </p>
+            <p style="margin: 0.55rem 0 0">
+              <strong>Stores &amp; This week:</strong> after <strong>Draft</strong> comes
+              <strong>UPLOAD PHOTOS</strong>. Add a row → Upload JPEG → gold
+              <strong>Save</strong>. Upload alone only parks the file in Media — without Save on
+              the store or week note, the thumbs never attach. On the site the thumbs sit on the
+              <strong>right</strong> of the text. To take a post off the site, open it and tap
+              <strong>Delete this</strong> above Save.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Friends:</strong> open <em>Friends</em>, then <strong>New Friend</strong>.
@@ -576,6 +766,13 @@
           </details>
         </div>
       </div>
+    </div>
+    <div id="cms-pill-stack">
+      <button type="button" class="cms-mail" id="cms-mail">Mail and imprint</button>
+      <a class="cms-looks" href="/looks">
+        Looks
+        <span class="cms-looks-num" data-looks="today">—</span>
+      </a>
     </div>
     <div id="cms-mail-panel" class="cms-mail-panel" hidden>
       <div class="cms-mail-card">
@@ -668,11 +865,13 @@
     <script src="/admin/editor-layout.js"></script>
     <script src="/admin/preview-fallback.js"></script>
     <script src="/admin/delete-ride.js"></script>
+    <script src="/admin/delete-entry.js"></script>
     <script src="/admin/publish-click.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
     <script src="/admin/login-gold.js"></script>
     <script src="/admin/mail-gold.js"></script>
     <script src="/admin/ride-preview.js"></script>
     <script src="/admin/here-red.js"></script>
+    <script src="/admin/where-you-are.js"></script>
   </body>
 </html>

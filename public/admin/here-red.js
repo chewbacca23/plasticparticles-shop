@@ -11,6 +11,8 @@
     journal: 'ride notes',
     friends: 'friends',
     shop: 'shop',
+    stores: 'stores',
+    week: 'this week',
     settings: 'site',
     media: 'media',
   };
@@ -74,7 +76,7 @@
     var hash = window.location.hash || '';
     var here = hereCollection(hash);
     var links = document.querySelectorAll(
-      '#nc-root a[href], [class*="SidebarNav"] a[href], [class*="AppHeader"] a[href]',
+      '#nc-root a[href], [class*="SidebarNav"] a[href], [class*="AppHeader"] a[href], #cms-collections a[href]',
     );
     var i;
     for (i = 0; i < links.length; i++) {
