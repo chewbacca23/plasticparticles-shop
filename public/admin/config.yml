@@ -187,7 +187,7 @@ collections:
       - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
 
   - name: stores
-    label: Stores
+    label: Stores around the world
     label_singular: Store
     description: Bike shops around the world. Shows on Stores.
     folder: src/content/stores
@@ -224,7 +224,7 @@ collections:
       - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
 
   - name: week
-    label: This week
+    label: THIS WEEK
     label_singular: Week note
     description: Short dated notes about what happened this day or week. Shows on This week. Add 3–10 photos (up to 15).
     folder: src/content/week
