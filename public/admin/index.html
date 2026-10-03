@@ -278,6 +278,47 @@
         text-transform: uppercase;
       }
 
+      .cms-where {
+        margin-top: 0.85rem;
+        padding: 0.85rem 1.05rem 0.95rem;
+        border: 1px solid rgba(212, 163, 90, 0.35);
+        border-radius: 1rem;
+        background:
+          linear-gradient(135deg, rgba(212, 163, 90, 0.16), rgba(18, 26, 34, 0.55));
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      }
+
+      .cms-where[hidden] {
+        display: none;
+      }
+
+      .cms-where-kicker {
+        margin: 0;
+        color: var(--amber-hot);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .cms-where-title {
+        margin: 0.2rem 0 0;
+        font-family: var(--font-display);
+        font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--paper);
+      }
+
+      .cms-where-hint {
+        margin: 0.4rem 0 0;
+        color: rgba(215, 224, 232, 0.78);
+        font-size: 0.92rem;
+        line-height: 1.4;
+      }
+
       .banner {
         display: inline-block;
         max-width: 100%;
@@ -389,7 +430,7 @@
         (preview off in config.yml) and park the editor below the brand bar.
       */
       :root {
-        --cms-top-h: 7.5rem;
+        --cms-top-h: 11.5rem;
       }
 
       [class*='EditorContainer'] {
@@ -470,6 +511,11 @@
             <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
           </span>
         </div>
+        <div id="cms-where" class="cms-where" hidden>
+          <p class="cms-where-kicker">You are here</p>
+          <p class="cms-where-title" id="cms-where-title"></p>
+          <p class="cms-where-hint" id="cms-where-hint"></p>
+        </div>
         <button type="button" class="cms-mail" id="cms-mail">Mail and imprint</button>
         <a class="cms-looks" href="/looks">
           Looks
@@ -539,8 +585,9 @@
               username, then paste the latest photo’s Share link.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Where you are:</strong> click <em>Rides</em>, <em>Shots</em>,
-              <em>Ride notes</em>, <em>Friends</em>, or <em>Site</em>. That name turns red.
+              <strong>Where you are:</strong> the big gold bar under the brand says
+              <em>THIS WEEK</em>, <em>STORES AROUND THE WORLD</em>, <em>RIDES</em>, and so on.
+              Sidebar names also turn red. Click the section you want so you never get lost.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Rides:</strong> <strong>＋ Ride</strong> asks for a name, then opens the file.
@@ -674,5 +721,6 @@
     <script src="/admin/mail-gold.js"></script>
     <script src="/admin/ride-preview.js"></script>
     <script src="/admin/here-red.js"></script>
+    <script src="/admin/where-you-are.js"></script>
   </body>
 </html>

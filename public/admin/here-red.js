@@ -11,6 +11,8 @@
     journal: 'ride notes',
     friends: 'friends',
     shop: 'shop',
+    stores: 'stores',
+    week: 'this week',
     settings: 'site',
     media: 'media',
   };
