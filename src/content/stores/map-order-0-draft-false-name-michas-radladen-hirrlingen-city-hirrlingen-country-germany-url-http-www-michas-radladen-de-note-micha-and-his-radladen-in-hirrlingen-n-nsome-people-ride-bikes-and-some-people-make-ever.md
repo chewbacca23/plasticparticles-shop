@@ -67,6 +67,11 @@ note: >-
 url: http://www.michas-radladen.de/
 photos:
   - /stories/unknown-2.jpeg
+  - /stories/img_4235.jpg
+  - /stories/img_4256.jpg
+  - /stories/img_4254.jpg
+  - /stories/img_4252.jpg
+  - /stories/img_4253.jpg
 order: 0
 draft: false
 ---
