@@ -218,6 +218,28 @@ describe('hooks privacy', () => {
     // Nice still south of Berlin riders after the zoom.
     assert.ok(far.y > k.y);
   });
+
+  it('keeps Bar Italia and a near-spelling on the city, not the south edge', () => {
+    const cafe = spotFromPlace('akex, bar italia', 'henrik', 0);
+    assert.equal(cafe.inBerlin, true);
+    const typo = spotFromPlace('akex', 'henrik', 0);
+    assert.equal(typo.inBerlin, true);
+
+    const group = groupFromHooks([
+      {
+        id: 'h-cafe',
+        name: 'henrik',
+        place: 'akex, bar italia',
+        note: 'coffee on me',
+        offers: [],
+        at: '2026-10-01T12:01:37.511Z',
+      },
+    ]);
+    assert.ok(group.universe.zoom >= 0.85);
+    const person = group.people[0];
+    assert.ok(person.y < 75);
+    assert.ok(person.y > 20);
+  });
 });
 
 describe('hooks pin', () => {

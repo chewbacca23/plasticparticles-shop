@@ -287,7 +287,7 @@ export function normalizePlace(value) {
  */
 const BERLIN_SPOTS = [
   { keys: ['mitte', 'alex', 'alexanderplatz', 'hackescher'], x: 42, y: 43, spread: 4.5 },
-  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann'], x: 49, y: 56, spread: 4 },
+  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann', 'bar italia', 'baritalia'], x: 49, y: 56, spread: 4 },
   { keys: ['friedrichshain', 'fhain', 'boxhagener', 'warschauer'], x: 54, y: 46, spread: 4 },
   { keys: ['prenzlauer', 'prenzlberg', 'prenzl', 'helmholtz', 'mauerpark'], x: 50, y: 34, spread: 4 },
   { keys: ['neukolln', 'neukoelln', 'weserstr', 'weser'], x: 54, y: 68, spread: 4 },
@@ -362,9 +362,42 @@ const WORLD_PLACES = [
   { keys: ['sydney'], lat: -33.87, lon: 151.21 },
 ];
 
+/** One-letter slip on a borough name still lands in the city, not the south edge. */
+function almostPlaceKey(token, key) {
+  if (!token || !key || key.includes(' ')) return false;
+  if (token === key) return true;
+  if (token.length < 4 || key.length < 4) return false;
+  if (Math.abs(token.length - key.length) > 1) return false;
+  let misses = 0;
+  if (token.length === key.length) {
+    for (let i = 0; i < token.length; i += 1) {
+      if (token[i] !== key[i]) misses += 1;
+      if (misses > 1) return false;
+    }
+    return true;
+  }
+  const longer = token.length > key.length ? token : key;
+  const shorter = token.length > key.length ? key : token;
+  let i = 0;
+  let j = 0;
+  while (i < longer.length && j < shorter.length) {
+    if (longer[i] === shorter[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    i += 1;
+    misses += 1;
+    if (misses > 1) return false;
+  }
+  return true;
+}
+
 function matchBerlinSpot(folded) {
   if (!folded) return null;
   let generic = null;
+  let fuzzy = null;
+  const tokens = folded.split(' ').filter(Boolean);
   for (const spot of BERLIN_SPOTS) {
     for (const key of spot.keys) {
       if (folded === key || folded.includes(key)) {
@@ -374,9 +407,17 @@ function matchBerlinSpot(folded) {
         }
         return spot;
       }
+      if (!fuzzy && !spot.generic) {
+        for (const token of tokens) {
+          if (almostPlaceKey(token, key)) {
+            fuzzy = spot;
+            break;
+          }
+        }
+      }
     }
   }
-  return generic;
+  return fuzzy || generic;
 }
 
 function matchWorldPlace(folded) {
@@ -436,9 +477,9 @@ export function spotFromPlace(place, key = '', index = 0) {
     east = eastKm / km;
     south = -northKm / km;
   } else {
-    // Unknown town still joins the universe on an outer ring — Berlin stays centre.
+    // Unknown town still joins — close ring so one typo does not sink the map.
     const angle = ((h % 6283) / 1000) + index * 0.37;
-    radius = 1.55 + ((h >>> 5) % 90) / 100;
+    radius = 1.08 + ((h >>> 5) % 40) / 200;
     east = Math.sin(angle);
     south = Math.cos(angle);
   }

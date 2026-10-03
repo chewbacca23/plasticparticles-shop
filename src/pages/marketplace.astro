@@ -16,19 +16,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         and it opens. Call upon someone near you with a short note. Email stays off the page.
       </p>
 
-      <!-- Live crowd sign: real count from the board so hesitant riders see they are not alone. -->
-      <aside class="crowd-sign" id="crowd-sign" aria-live="polite">
-        <p class="crowd-sign-kicker">Already here</p>
-        <p class="crowd-sign-count">
-          <span id="crowd-sign-num">0</span>
-          <span class="crowd-sign-unit" id="crowd-sign-unit">riders standing</span>
-        </p>
-        <p class="crowd-sign-line" id="crowd-sign-line">
-          Be the first. Open a stall, show up for a ride, make coming back a habit.
-        </p>
-        <a class="btn btn-primary crowd-sign-cta" href="#pin-form">Stand with them</a>
-      </aside>
-
       <p id="welcome-back" class="welcome-back" hidden>
         <span id="welcome-back-text"></span>
         <button type="button" class="welcome-back-open" id="welcome-back-open" hidden>Open them</button>
@@ -38,17 +25,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <span id="calls-for-you-text"></span>
         <button type="button" class="calls-for-you-open" id="calls-for-you-open" hidden>Open them</button>
       </p>
-
-      <aside id="cookie-note" class="cookie-note" hidden>
-        <p class="cookie-note-text">
-          Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
-          your machine, so when you stand on the map we can welcome you back to the person you last
-          talked to, and quietly show if someone called upon you. No ads. No trackers. Just the good
-          kind of remembering.
-          <span class="cookie-wink" aria-hidden="true">;)</span>
-        </p>
-        <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
-      </aside>
 
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
@@ -74,6 +50,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <aside class="group-open" id="group-open" hidden></aside>
         </div>
       </section>
+
+      <aside class="crowd-sign" id="crowd-sign" aria-live="polite">
+        <p class="crowd-sign-kicker">Already here</p>
+        <p class="crowd-sign-count">
+          <span id="crowd-sign-num">0</span>
+          <span class="crowd-sign-unit" id="crowd-sign-unit">riders standing</span>
+        </p>
+        <p class="crowd-sign-line" id="crowd-sign-line">
+          Be the first. Open a stall, show up for a ride, make coming back a habit.
+        </p>
+        <a class="btn btn-primary crowd-sign-cta" href="#pin-form">Stand with them</a>
+      </aside>
+
+      <aside id="cookie-note" class="cookie-note" hidden>
+        <p class="cookie-note-text">
+          Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
+          your machine, so when you stand on the map we can welcome you back to the person you last
+          talked to, and quietly show if someone called upon you. No ads. No trackers. Just the good
+          kind of remembering.
+          <span class="cookie-wink" aria-hidden="true">;)</span>
+        </p>
+        <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
+      </aside>
 
       <p class="floor-kicker">The floor</p>
       <ol id="hook-list" class="market">
@@ -1148,9 +1147,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
       render(lastPayload);
       if (dockKey) renderChatDock();
+      if (openKey && roomBox) {
+        try {
+          roomBox.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        } catch (err) {}
+      }
     }
 
-    function load() {
+    function load(attempt) {
+      var n = attempt || 0;
       fetch('/api/hooks', { headers: { accept: 'application/json' } })
         .then(function (res) {
           return res.json();
@@ -1168,8 +1173,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           showCallsForYou();
         })
         .catch(function () {
+          if (n < 2) {
+            setTimeout(function () {
+              load(n + 1);
+            }, 400 * (n + 1));
+            return;
+          }
           writeCrowdSign(0);
-          showError('The board could not load just now.');
+          showError('The board could not load just now. Give it a second and refresh if the site was quiet.');
         });
     }
 
@@ -1583,8 +1594,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .crowd-sign {
     position: relative;
-    margin: 1.75rem 0 0;
-    padding: 1.65rem 1.5rem 1.75rem;
+    margin: 1.1rem 0 0;
+    padding: 0.85rem 1.05rem 0.95rem;
     overflow: hidden;
     border: 1px solid rgba(212, 163, 90, 0.28);
     border-radius: 1.15rem;
@@ -1615,11 +1626,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .crowd-sign-count {
-    margin: 0.55rem 0 0;
+    margin: 0.2rem 0 0;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.55rem 0.75rem;
+    gap: 0.4rem 0.65rem;
     font-family: var(--font-display);
     font-weight: 500;
     line-height: 0.95;
@@ -1628,7 +1639,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   #crowd-sign-num {
-    font-size: clamp(3.2rem, 10vw, 5.5rem);
+    font-size: clamp(1.7rem, 4vw, 2.3rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     min-width: 0.7em;
@@ -1647,14 +1658,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .crowd-sign-line {
-    margin: 0.85rem 0 0;
+    margin: 0.45rem 0 0;
     max-width: 34rem;
     color: rgba(215, 224, 232, 0.78);
-    font-size: 1.02rem;
+    font-size: 0.95rem;
   }
 
   .crowd-sign-cta {
-    margin-top: 1.15rem;
+    margin-top: 0.7rem;
   }
 
   .welcome-back {
@@ -1725,9 +1736,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    gap: 0.85rem 1.1rem;
-    margin: 1rem 0 0;
-    padding: 0.95rem 1.1rem;
+    gap: 0.65rem 0.9rem;
+    margin: 0.75rem 0 0;
+    padding: 0.65rem 0.85rem;
     border: 1px solid rgba(61, 107, 122, 0.35);
     border-radius: 1rem;
     background:
@@ -1880,12 +1891,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin: 2.4rem 0 0;
   }
 
+  .group {
+    scroll-margin-top: 5.5rem;
+  }
+
   .group-room {
     position: relative;
     /* Match Berlin’s real east–west stretch so the outline isn’t kid-stretched. */
     aspect-ratio: 121.42 / 100;
-    width: 100%;
+    width: min(100%, calc(min(64vh, 34rem) * 121.42 / 100));
+    max-height: min(64vh, 34rem);
     min-height: 0;
+    margin-inline: auto;
     overflow: hidden;
     border: 1px solid rgba(215, 224, 232, 0.12);
     border-radius: 1.25rem;
@@ -2196,7 +2213,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     position: fixed;
     z-index: 40;
     right: max(0.85rem, env(safe-area-inset-right));
-    bottom: max(0.85rem, env(safe-area-inset-bottom));
+    bottom: max(1.45rem, env(safe-area-inset-bottom));
     width: min(22.5rem, calc(100vw - 1.5rem));
     pointer-events: none;
   }
@@ -2356,7 +2373,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     .chat-dock {
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: max(0.55rem, env(safe-area-inset-bottom));
       width: 100%;
       padding: 0;
     }
@@ -2410,8 +2427,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   @media (min-width: 720px) {
     .group-room {
-      /* aspect-ratio owns the height; keep a comfortable floor on wide screens */
-      min-height: 28rem;
+      min-height: min(28rem, 64vh);
     }
   }
 
