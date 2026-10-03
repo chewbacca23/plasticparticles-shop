@@ -5,9 +5,14 @@
 (function () {
   function measure() {
     var row = document.querySelector('.cms-top-row');
+    var nav = document.getElementById('cms-collections');
     var where = document.getElementById('cms-where');
+    var top = document.querySelector('.cms-top');
     var h = 16;
     if (row) h += Math.ceil(row.getBoundingClientRect().height);
+    if (nav && top && top.classList.contains('cms-in')) {
+      h += Math.ceil(nav.getBoundingClientRect().height) + 8;
+    }
     if (where && !where.hidden) h += Math.ceil(where.getBoundingClientRect().height) + 8;
     if (h < 48) h = 72;
     document.documentElement.style.setProperty('--cms-top-h', h + 'px');

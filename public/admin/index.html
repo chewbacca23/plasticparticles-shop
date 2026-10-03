@@ -34,8 +34,10 @@
       }
 
       .cms-top {
-        position: sticky;
+        position: fixed;
         top: 0;
+        left: 0;
+        right: 0;
         z-index: 20000;
         border-bottom: 1px solid rgba(215, 224, 232, 0.08);
         background: rgba(10, 14, 20, 0.72);
@@ -279,6 +281,36 @@
         text-transform: uppercase;
       }
 
+      .cms-collections {
+        display: none;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin: 0.65rem 0 0;
+      }
+
+      .cms-top.cms-in .cms-collections {
+        display: flex;
+      }
+
+      .cms-collections a {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.28rem 0.65rem;
+        border: 1px solid rgba(215, 224, 232, 0.16);
+        border-radius: 999px;
+        color: var(--paper);
+        text-decoration: none;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .cms-collections a:hover,
+      .cms-collections a[data-ss-here] {
+        border-color: rgba(255, 59, 59, 0.55);
+        color: #ff3b3b;
+      }
+
       .cms-where {
         margin-top: 0.45rem;
         padding: 0.4rem 0.75rem 0.45rem;
@@ -372,7 +404,8 @@
       /* Decap’s default login is a light-gray dump with a dinner-plate crest. */
       section[class*='AuthenticationPage'] {
         background: transparent !important;
-        min-height: calc(100vh - 8rem);
+        min-height: calc(100vh - var(--cms-top-h) - 2rem);
+        height: auto !important;
         padding: 2.5rem 1rem 4rem !important;
       }
 
@@ -431,21 +464,24 @@
         --cms-top-h: 6.5rem;
       }
 
-      /* Collections + Decap chrome sit up under the brand bar, not under it. */
+      body {
+        padding-top: var(--cms-top-h);
+      }
+
+      /* Collections live in our top bar. Decap’s own pane is position:fixed
+         with no top, so it sits on the floor under the brand. Hide it. */
+      body:has(.cms-top.cms-in) [class*='SidebarContainer'] {
+        display: none !important;
+      }
+
+      body:has(.cms-top.cms-in) [class*='CollectionMain'] {
+        padding-left: 0 !important;
+      }
+
       [class*='AppHeader'] {
         position: sticky !important;
         top: var(--cms-top-h) !important;
         z-index: 40 !important;
-      }
-
-      [class*='SidebarContainer'] {
-        max-height: calc(100vh - var(--cms-top-h) - 3.6rem) !important;
-        overflow: auto !important;
-      }
-
-      [class*='CollectionContainer'],
-      [class*='AppMainContainer'] {
-        min-height: calc(100vh - var(--cms-top-h)) !important;
       }
 
       [class*='EditorContainer'] {
@@ -526,6 +562,17 @@
             <a class="cms-login" id="cms-login" href="#/">Login with GitHub</a>
           </span>
         </div>
+        <nav id="cms-collections" class="cms-collections" aria-label="Collections">
+          <a href="#/collections/week">This week</a>
+          <a href="#/collections/stores">Stores</a>
+          <a href="#/collections/stories">Rides</a>
+          <a href="#/collections/journal">Ride notes</a>
+          <a href="#/collections/friends">Friends</a>
+          <a href="#/collections/shop">Shop</a>
+          <a href="#/collections/shots">Shots</a>
+          <a href="#/collections/settings">Site</a>
+          <a href="#/media">Media</a>
+        </nav>
         <div id="cms-where" class="cms-where" hidden>
           <p class="cms-where-kicker">You are here</p>
           <p class="cms-where-title" id="cms-where-title"></p>
