@@ -186,6 +186,55 @@ collections:
       - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
 
+  - name: stores
+    label: Stores
+    label_singular: Store
+    description: Bike shops around the world. Shows on Stores.
+    folder: src/content/stores
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: stores
+    summary: "{{name}} — {{city}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Name, name: name, widget: string, hint: "Shop name." }
+      - { label: City, name: city, widget: string, hint: "Like Berlin." }
+      - { label: Country, name: country, widget: string, hint: "Like Germany." }
+      - { label: Short note, name: note, widget: text, required: false, hint: "Why this shop fits Soul Searchers. A few lines." }
+      - { label: Website, name: url, widget: string, required: false, hint: "Optional. Full link, like https://…" }
+      - label: Photo
+        name: photo
+        widget: image
+        required: false
+        choose_url: false
+        hint: "Optional. JPEG from the Mac. Without one, a map pin mark shows."
+      - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows first." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
+
+  - name: week
+    label: This week
+    label_singular: Week note
+    description: Short dated notes about what happened this day or week. Shows on This week.
+    folder: src/content/week
+    create: true
+    delete: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: week
+    summary: "{{title}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Title, name: title, widget: string, hint: "One line. Like Berlin outskirts before the rain." }
+      - { label: Date, name: pubDate, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest date shows first." }
+      - { label: What happened, name: note, widget: text, required: false, hint: "A short note. Not a long journal post." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
+
   - name: settings
     label: Site
     files:

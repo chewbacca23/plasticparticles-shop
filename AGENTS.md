@@ -19,8 +19,10 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 
 - Rides (six photo tiles): `src/content/stories/*.md` and `public/stories/`
 - Ride notes: `src/content/journal/*.md`
+- Stores around the world: `src/content/stores/*.md` → `/stores`
+- This week / what happened: `src/content/week/*.md` → `/week` (short dated notes; not the old Now photo grid)
 - Config / Impressum fields: `src/site.config.ts`
-- Routes: `/`, `/stories` (Rides), `/marketplace` (Marketplace), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin` (`/now` shot feed and `/journal` stay reachable; off primary nav. `/path` redirects to About)
+- Routes: `/`, `/stories` (Rides), `/week` (This week), `/stores` (Stores), `/marketplace` (Marketplace), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin` (`/now` shot feed and `/journal` stay reachable; off primary nav. `/path` redirects to About)
 - Kit: `/kit` (public)
 - Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / WhatsApp phone (opt-in bridges only; handles and digits never on the public map; Telegram first)
 

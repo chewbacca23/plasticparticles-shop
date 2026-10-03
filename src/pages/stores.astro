@@ -1,0 +1,177 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { mediaExists } from '../lib/media';
+
+const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((a, b) => {
+  if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+  return a.data.name.localeCompare(b.data.name);
+});
+---
+
+<BaseLayout
+  title="Stores around the world"
+  description="Bike shops and cycling stores we trust around the world — Berlin, Cologne, Manchester, and wherever the tour lands next."
+>
+  <section class="section">
+    <div class="site-shell stores">
+      <p class="eyebrow reveal">Stores</p>
+      <h1 class="section-title reveal reveal-delay-1">Stores around the world</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Bike shops that feel like Soul Searchers stops: honest advice, a spare tube when you need
+        it, and people who ask where you rode before they ask what broke.
+      </p>
+
+      {
+        stores.length === 0 ? (
+          <p class="empty">
+            Stores will show here when you add them in the editor under <strong>Stores</strong>.
+          </p>
+        ) : (
+          <ul class="store-list">
+            {stores.map((store, index) => {
+              const { name, city, country, note, url, photo } = store.data;
+              const NameTag = url ? 'a' : 'span';
+              const nameProps = url
+                ? { href: url, target: '_blank', rel: 'noopener noreferrer' }
+                : {};
+              const delayClass =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              return (
+                <li class:list={['store', delayClass]}>
+                  {photo && mediaExists(photo) ? (
+                    <img
+                      class="store-photo"
+                      src={photo}
+                      alt=""
+                      width="120"
+                      height="120"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span class="store-pin" aria-hidden="true">
+                      <span class="store-pin-dot" />
+                    </span>
+                  )}
+                  <div class="store-copy">
+                    <NameTag class="store-name" {...nameProps}>
+                      {name}
+                    </NameTag>
+                    <p class="store-place">
+                      {city}, {country}
+                    </p>
+                    {note ? <p class="store-note">{note}</p> : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .stores {
+    max-width: 42rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .store-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .store {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1.1rem 1.25rem;
+    align-items: start;
+    padding: 1.45rem 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .store:last-child {
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .store-photo {
+    width: 4.5rem;
+    height: 4.5rem;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+  }
+
+  .store-pin {
+    display: grid;
+    place-items: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    background:
+      radial-gradient(circle at 30% 28%, rgba(240, 194, 122, 0.22), transparent 62%),
+      linear-gradient(160deg, rgba(30, 58, 69, 0.55), rgba(12, 18, 24, 0.2));
+  }
+
+  .store-pin-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--amber-hot);
+    box-shadow: 0 0 0 4px rgba(212, 163, 90, 0.18);
+  }
+
+  .store-name {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--paper);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  a.store-name:hover {
+    color: var(--amber-hot);
+  }
+
+  .store-place {
+    margin: 0.3rem 0 0;
+    color: var(--amber);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .store-note {
+    margin: 0.45rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    font-size: 1rem;
+    max-width: 34rem;
+  }
+
+  @media (max-width: 520px) {
+    .store {
+      grid-template-columns: 3.5rem 1fr;
+      gap: 0.85rem 1rem;
+    }
+
+    .store-photo,
+    .store-pin {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+
+    .store-name {
+      font-size: 1.2rem;
+    }
+  }
+</style>

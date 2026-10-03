@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { newestFirst } from '../lib/newest';
+
+const entries = newestFirst(
+  await getCollection('week', ({ data }) => !data.draft),
+  (entry) => entry.data.pubDate,
+);
+
+const dateFmt = new Intl.DateTimeFormat('en', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+---
+
+<BaseLayout
+  title="This week"
+  description="What happened this day or week on The Soul Searchers — short dated notes from the road, not a photo grid."
+>
+  <section class="section">
+    <div class="site-shell week">
+      <p class="eyebrow reveal">This week</p>
+      <h1 class="section-title reveal reveal-delay-1">What happened</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Short dated notes from the saddle. A loop, a train, a café stop. One purpose: what happened
+        this day or week.
+      </p>
+
+      {
+        entries.length === 0 ? (
+          <p class="empty">
+            Week notes will show here when you add them in the editor under <strong>This week</strong>.
+          </p>
+        ) : (
+          <ol class="week-list">
+            {entries.map((entry, index) => {
+              const delayClass =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              return (
+                <li class:list={['week-entry', delayClass]}>
+                  <time class="week-date" datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
+                    {dateFmt.format(entry.data.pubDate)}
+                  </time>
+                  <h2 class="week-title">{entry.data.title}</h2>
+                  {entry.data.note ? <p class="week-note">{entry.data.note}</p> : null}
+                </li>
+              );
+            })}
+          </ol>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .week {
+    max-width: 40rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .week-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid rgba(212, 163, 90, 0.35);
+  }
+
+  .week-entry {
+    position: relative;
+    padding: 0 0 2rem 1.5rem;
+  }
+
+  .week-entry:last-child {
+    padding-bottom: 0;
+  }
+
+  .week-entry::before {
+    content: '';
+    position: absolute;
+    left: -0.28rem;
+    top: 0.35rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--amber-hot);
+    box-shadow: 0 0 0 3px rgba(212, 163, 90, 0.16);
+  }
+
+  .week-date {
+    display: block;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .week-title {
+    margin: 0.4rem 0 0;
+    font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+  }
+
+  .week-note {
+    margin: 0.55rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    max-width: 34rem;
+  }
+</style>
