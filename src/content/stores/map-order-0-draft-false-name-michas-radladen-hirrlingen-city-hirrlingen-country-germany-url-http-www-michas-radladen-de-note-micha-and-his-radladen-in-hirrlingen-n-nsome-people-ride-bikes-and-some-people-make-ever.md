@@ -65,7 +65,8 @@ note: >-
 
   Would you like me to put this in a file, or adjust the tone, for example to make it funnier, more personal or shorter for a post or a card? If you tell me a few more details, like a funny story from the tour or what the shop looks like inside, I can weave those in so it feels even more like him.
 url: http://www.michas-radladen.de/
-photo: /stories/unknown-2.jpeg
+photos:
+  - /stories/unknown-2.jpeg
 order: 0
 draft: false
 ---
