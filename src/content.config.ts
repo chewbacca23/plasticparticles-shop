@@ -101,8 +101,8 @@ const shop = defineCollection({
     })),
 });
 
-const STORE_PHOTO_MAX = 6;
-const WEEK_PHOTO_MAX = 15;
+const STORE_PHOTO_MAX = 24;
+const WEEK_PHOTO_MAX = 40;
 
 const stores = defineCollection({
   loader: glob({ base: './src/content/stores', pattern: '**/*.{md,mdx}' }),

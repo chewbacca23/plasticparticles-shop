@@ -21,8 +21,8 @@
     journal: 'Longer notes from the road.',
     friends: 'People and shops who helped.',
     shop: 'Products people email Henrik about.',
-    stores: 'Bike shops around the planet. Add several photos per shop.',
-    week: 'What happened this day or week. About 3–15 photos is fine.',
+    stores: 'Bike shops around the planet. Up to 24 photos per shop.',
+    week: 'What happened this day or week. Up to 40 photos is fine.',
     settings: 'Mail, imprint, Instagram, home hero.',
     media: 'All uploaded pictures.',
   };
