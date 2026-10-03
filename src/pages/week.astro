@@ -58,14 +58,24 @@ const dateFmt = new Intl.DateTimeFormat('en', {
                     <ul class={galleryClass} aria-label={`${entry.data.title} photos`}>
                       {gallery.map((src, photoIndex) => (
                         <li class:list={[{ 'is-lead': photoIndex === 0 }]}>
-                          <img
-                            src={src}
-                            alt=""
-                            width={photoIndex === 0 ? 640 : 320}
-                            height={photoIndex === 0 ? 480 : 240}
-                            loading={index === 0 && photoIndex === 0 ? 'eager' : 'lazy'}
-                            decoding="async"
-                          />
+                          <button
+                            type="button"
+                            class="week-thumb"
+                            data-week-open
+                            data-week-set={entry.id}
+                            data-src={src}
+                            data-title={entry.data.title}
+                            aria-label={`Open photo ${photoIndex + 1} of ${gallery.length} from ${entry.data.title}`}
+                          >
+                            <img
+                              src={src}
+                              alt=""
+                              width={photoIndex === 0 ? 640 : 320}
+                              height={photoIndex === 0 ? 480 : 240}
+                              loading={index === 0 && photoIndex === 0 ? 'eager' : 'lazy'}
+                              decoding="async"
+                            />
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -76,9 +86,94 @@ const dateFmt = new Intl.DateTimeFormat('en', {
           </ol>
         )
       }
+
+      <dialog class="week-dialog" data-week-dialog aria-label="This week photo">
+        <div class="week-stage">
+          <img data-week-image alt="" />
+          <button type="button" class="week-nav week-prev" data-week-prev aria-label="Previous photo">
+            ‹
+          </button>
+          <button type="button" class="week-nav week-next" data-week-next aria-label="Next photo">
+            ›
+          </button>
+          <button type="button" class="week-close" data-week-close aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div class="week-meta">
+          <p class="week-caption" data-week-caption></p>
+          <p class="week-count" data-week-count></p>
+        </div>
+      </dialog>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  const root = document.querySelector('.week');
+  const dialog = document.querySelector('[data-week-dialog]');
+  const image = document.querySelector('[data-week-image]');
+  const caption = document.querySelector('[data-week-caption]');
+  const count = document.querySelector('[data-week-count]');
+  const thumbs = root ? [...root.querySelectorAll('[data-week-open]')] : [];
+  if (root && dialog && image && thumbs.length) {
+    let set = thumbs;
+
+    function show(thumb) {
+      const group = thumb.getAttribute('data-week-set') || '';
+      set = thumbs.filter((item) => item.getAttribute('data-week-set') === group);
+      const index = Math.max(0, set.indexOf(thumb));
+      const current = set[index] || thumb;
+      const src = current.getAttribute('data-src') || '';
+      const title = current.getAttribute('data-title') || '';
+      image.src = src;
+      image.alt = title;
+      if (caption) caption.textContent = title;
+      if (count) count.textContent = index + 1 + ' / ' + set.length;
+      const hideNav = set.length < 2;
+      const prevBtn = dialog.querySelector('[data-week-prev]');
+      const nextBtn = dialog.querySelector('[data-week-next]');
+      if (prevBtn) prevBtn.hidden = hideNav;
+      if (nextBtn) nextBtn.hidden = hideNav;
+      if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+    }
+
+    function step(delta) {
+      if (!set.length) return;
+      const src = image.getAttribute('src');
+      const index = Math.max(0, set.findIndex((item) => item.getAttribute('data-src') === src));
+      show(set[(index + delta + set.length) % set.length]);
+    }
+
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => show(thumb));
+    });
+
+    const prev = dialog.querySelector('[data-week-prev]');
+    const next = dialog.querySelector('[data-week-next]');
+    if (prev) {
+      prev.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(-1);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(1);
+      });
+    }
+    const close = dialog.querySelector('[data-week-close]');
+    if (close) close.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') step(-1);
+      if (event.key === 'ArrowRight') step(1);
+    });
+  }
+</script>
 
 <style>
   .week {
@@ -152,12 +247,32 @@ const dateFmt = new Intl.DateTimeFormat('en', {
     list-style: none;
   }
 
+  .week-gallery li {
+    overflow: hidden;
+    border-radius: 0.28rem;
+  }
+
   .week-gallery .is-lead {
     grid-column: 1 / -1;
   }
 
   .week-gallery--many {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .week-thumb {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .week-thumb:focus-visible {
+    outline: 2px solid var(--amber-hot);
+    outline-offset: 2px;
   }
 
   .week-gallery img {
@@ -168,6 +283,12 @@ const dateFmt = new Intl.DateTimeFormat('en', {
     background: rgba(238, 243, 247, 0.04);
     opacity: 0;
     animation: week-fade 0.7s ease forwards;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .week-thumb:hover img,
+  .week-thumb:focus-visible img {
+    transform: scale(1.03);
   }
 
   .week-gallery .is-lead img {
@@ -218,6 +339,94 @@ const dateFmt = new Intl.DateTimeFormat('en', {
     .week-gallery img {
       animation: none;
       opacity: 1;
+      transition: none;
     }
+  }
+
+  .week-dialog {
+    width: min(100% - 1.25rem, 68rem);
+    max-width: 68rem;
+    padding: 0;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1rem;
+    background: #0c1218;
+    color: var(--paper);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .week-dialog::backdrop {
+    background: rgba(6, 10, 14, 0.82);
+  }
+
+  .week-stage {
+    position: relative;
+    background: #080c11;
+  }
+
+  .week-stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(84vh, 52rem);
+    object-fit: contain;
+    background: #080c11;
+  }
+
+  .week-nav,
+  .week-close {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    background: rgba(12, 18, 24, 0.72);
+    color: var(--paper);
+    cursor: pointer;
+  }
+
+  .week-nav {
+    top: 50%;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    transform: translateY(-50%);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .week-prev {
+    left: 0.7rem;
+  }
+
+  .week-next {
+    right: 0.7rem;
+  }
+
+  .week-close {
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  .week-nav:hover,
+  .week-close:hover {
+    background: rgba(212, 163, 90, 0.28);
+  }
+
+  .week-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+    padding: 0.75rem 1rem 0.9rem;
+  }
+
+  .week-caption,
+  .week-count {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.92rem;
   }
 </style>
