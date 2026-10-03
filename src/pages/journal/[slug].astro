@@ -52,7 +52,7 @@ const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
 
 <style>
   .article-shell {
-    max-width: 44rem;
+    max-width: 52rem;
   }
 
   .article-header {
@@ -90,16 +90,38 @@ const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
     display: block;
   }
 
+  .prose {
+    max-width: 42rem;
+  }
+
   .prose :global(figure) {
-    margin: 1.8rem 0;
+    float: right;
+    clear: right;
+    width: min(38%, 12rem);
+    margin: 0.15rem 0 1rem 1.15rem;
     overflow: hidden;
-    border-radius: 0.9rem;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+    border-radius: 0.7rem;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
   }
 
   .prose :global(figure img) {
     margin: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
     box-shadow: none;
+  }
+
+  .prose :global(p) {
+    margin: 0 0 1rem;
+  }
+
+  .prose::after {
+    content: '';
+    display: table;
+    clear: both;
   }
 
   .back {
@@ -110,5 +132,17 @@ const formatted = post.data.pubDate.toLocaleDateString('en-GB', {
     color: var(--amber-hot);
     text-decoration: none;
     font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .prose :global(figure) {
+      float: none;
+      width: min(100%, 16rem);
+      margin: 0.85rem auto 1.15rem;
+    }
+
+    .prose :global(figure img) {
+      aspect-ratio: 4 / 3;
+    }
   }
 </style>
