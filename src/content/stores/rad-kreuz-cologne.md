@@ -1,8 +1,10 @@
 ---
 name: rad kreuz
-city: Cologne
+city: Berlin
 country: Germany
-note: First shop that ever sold me cycling shoes. Kuppi laughed, then became a brother on and off the bike. Still the place we point friends when the Rhine ride needs a spare tube.
+note: First shop that ever sold me cycling shoes. Kuppi laughed, then became a
+  brother on and off the bike. Still the place we point friends when the Rhine
+  ride needs a spare tube.
 url: https://www.rad-kreuz.de/
 photos:
   - /stories/img_6003.jpeg
