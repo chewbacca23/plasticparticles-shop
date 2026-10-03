@@ -295,20 +295,33 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
     .brand img { width:2rem; height:auto; }
     nav { display:flex; flex-wrap:wrap; gap:.85rem 1.1rem; font-size:.92rem; }
     main { padding: 2.5rem 0 4rem; }
-    article { max-width: 48rem; }
+    article { max-width: 52rem; }
     .eyebrow { margin:0 0 .4rem; letter-spacing:.08em; text-transform:uppercase; font-size:.78rem; color:rgba(215,224,232,.55); }
     h1 { margin:0 0 .75rem; font-family: Fraunces, Georgia, serif; font-size: clamp(2rem, 4.5vw, 3.1rem); color:var(--paper); }
     .dek { margin:0 0 1.75rem; color:rgba(215,224,232,.75); font-size:1.1rem; }
     .hero { margin:0 0 2rem; }
     figure { margin:0; overflow:hidden; border-radius:.9rem; box-shadow:0 18px 40px rgba(0,0,0,.25); }
     figure img { width:100%; height:auto; display:block; }
-    .prose { max-width: 38rem; }
+    .prose { max-width: 42rem; }
     .prose h2 { margin:2.2rem 0 .8rem; font-size:1.55rem; }
     .prose p { margin:0 0 1rem; }
-    .prose figure { margin:1.8rem 0; }
+    .prose figure {
+      float: right;
+      clear: right;
+      width: min(38%, 12rem);
+      margin: .15rem 0 1rem 1.15rem;
+      border-radius: .7rem;
+      box-shadow: 0 14px 32px rgba(0,0,0,.28);
+    }
+    .prose figure img { aspect-ratio: 4 / 5; object-fit: cover; }
+    .prose::after { content: ''; display: table; clear: both; }
     .prose ol, .prose ul { padding-left:1.2rem; }
     .back { margin-top:2.75rem; }
     .back a { color:var(--amber-hot); text-decoration:none; font-weight:600; }
+    @media (max-width: 640px) {
+      .prose figure { float: none; width: min(100%, 16rem); margin: .85rem auto 1.15rem; }
+      .prose figure img { aspect-ratio: 4 / 3; }
+    }
   </style>
 </head>
 <body>

@@ -41,21 +41,6 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
                 index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
               return (
                 <li class:list={['store', delayClass]}>
-                  {cover ? (
-                    <img
-                      class="store-photo"
-                      src={cover}
-                      alt=""
-                      width="120"
-                      height="120"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  ) : (
-                    <span class="store-pin" aria-hidden="true">
-                      <span class="store-pin-dot" />
-                    </span>
-                  )}
                   <div class="store-copy">
                     <NameTag class="store-name" {...nameProps}>
                       {name}
@@ -65,23 +50,39 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
                     </p>
                     {note ? <p class="store-note">{note}</p> : null}
                   </div>
-                  {gallery.length > 1 ? (
-                    <ul class="store-gallery" aria-label={`${name} photos`}>
-                      {gallery.map((src, photoIndex) => (
-                        <li>
-                          <img
-                            src={src}
-                            alt=""
-                            width="320"
-                            height="240"
-                            loading="lazy"
-                            decoding="async"
-                            class:list={[{ 'is-cover': photoIndex === 0 }]}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
+                  <div class="store-shots">
+                    {cover ? (
+                      <img
+                        class="store-photo"
+                        src={cover}
+                        alt=""
+                        width="120"
+                        height="120"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span class="store-pin" aria-hidden="true">
+                        <span class="store-pin-dot" />
+                      </span>
+                    )}
+                    {gallery.length > 1 ? (
+                      <ul class="store-gallery" aria-label={`${name} photos`}>
+                        {gallery.slice(1).map((src) => (
+                          <li>
+                            <img
+                              src={src}
+                              alt=""
+                              width="160"
+                              height="120"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
                 </li>
               );
             })}
@@ -94,7 +95,7 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
 
 <style>
   .stores {
-    max-width: 46rem;
+    max-width: 52rem;
   }
 
   .empty {
@@ -110,8 +111,8 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
 
   .store {
     display: grid;
-    grid-template-columns: 4.5rem 1fr;
-    gap: 1.1rem 1.25rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.1rem 1.35rem;
     align-items: start;
     padding: 1.45rem 0;
     border-top: 1px solid rgba(215, 224, 232, 0.12);
@@ -121,9 +122,17 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
     border-bottom: 1px solid rgba(215, 224, 232, 0.12);
   }
 
+  .store-shots {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.45rem;
+    width: min(11rem, 34vw);
+  }
+
   .store-photo {
-    width: 4.5rem;
-    height: 4.5rem;
+    width: 100%;
+    aspect-ratio: 1;
     object-fit: cover;
     background: rgba(238, 243, 247, 0.04);
   }
@@ -131,8 +140,8 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
   .store-pin {
     display: grid;
     place-items: center;
-    width: 4.5rem;
-    height: 4.5rem;
+    width: 100%;
+    aspect-ratio: 1;
     border: 1px solid rgba(212, 163, 90, 0.35);
     background:
       radial-gradient(circle at 30% 28%, rgba(240, 194, 122, 0.22), transparent 62%),
@@ -174,32 +183,28 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
     margin: 0.45rem 0 0;
     color: rgba(215, 224, 232, 0.75);
     font-size: 1rem;
-    max-width: 34rem;
+    max-width: 36rem;
+    white-space: pre-line;
   }
 
   .store-gallery {
-    grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-    gap: 0.45rem;
-    margin: 0.15rem 0 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    margin: 0;
     padding: 0;
     list-style: none;
+    width: 100%;
   }
 
   .store-gallery img {
     display: block;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1;
     object-fit: cover;
     background: rgba(238, 243, 247, 0.04);
     opacity: 0.92;
     transition: opacity 0.35s ease, transform 0.45s ease;
-  }
-
-  .store-gallery img.is-cover {
-    outline: 1px solid rgba(212, 163, 90, 0.35);
-    outline-offset: -1px;
   }
 
   .store-gallery img:hover {
@@ -207,25 +212,33 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
     transform: scale(1.015);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 640px) {
     .store {
-      grid-template-columns: 3.5rem 1fr;
-      gap: 0.85rem 1rem;
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .store-shots {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: stretch;
     }
 
     .store-photo,
     .store-pin {
-      width: 3.5rem;
-      height: 3.5rem;
+      width: 5.5rem;
+      flex: 0 0 5.5rem;
+    }
+
+    .store-gallery {
+      flex: 1 1 auto;
+      width: auto;
+      grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
     }
 
     .store-name {
       font-size: 1.2rem;
-    }
-
-    .store-gallery {
-      grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
-      gap: 0.35rem;
     }
   }
 </style>

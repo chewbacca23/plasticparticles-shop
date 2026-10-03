@@ -42,27 +42,27 @@ const dateFmt = new Intl.DateTimeFormat('en', {
               const delayClass =
                 index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
               const galleryClass =
-                gallery.length >= 7
+                gallery.length >= 5
                   ? 'week-gallery week-gallery--many'
-                  : gallery.length >= 3
-                    ? 'week-gallery week-gallery--lead'
-                    : 'week-gallery';
+                  : 'week-gallery';
               return (
                 <li class:list={['week-entry', delayClass]}>
-                  <time class="week-date" datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
-                    {dateFmt.format(entry.data.pubDate)}
-                  </time>
-                  <h2 class="week-title">{entry.data.title}</h2>
-                  {entry.data.note ? <p class="week-note">{entry.data.note}</p> : null}
+                  <div class="week-main">
+                    <time class="week-date" datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
+                      {dateFmt.format(entry.data.pubDate)}
+                    </time>
+                    <h2 class="week-title">{entry.data.title}</h2>
+                    {entry.data.note ? <p class="week-note">{entry.data.note}</p> : null}
+                  </div>
                   {gallery.length > 0 ? (
                     <ul class={galleryClass} aria-label={`${entry.data.title} photos`}>
                       {gallery.map((src, photoIndex) => (
-                        <li class:list={[{ 'is-lead': photoIndex === 0 && gallery.length >= 3 }]}>
+                        <li class:list={[{ 'is-lead': photoIndex === 0 }]}>
                           <img
                             src={src}
                             alt=""
-                            width={photoIndex === 0 && gallery.length >= 3 ? 1200 : 640}
-                            height={photoIndex === 0 && gallery.length >= 3 ? 800 : 480}
+                            width={photoIndex === 0 ? 640 : 320}
+                            height={photoIndex === 0 ? 480 : 240}
                             loading={index === 0 && photoIndex === 0 ? 'eager' : 'lazy'}
                             decoding="async"
                           />
@@ -82,7 +82,7 @@ const dateFmt = new Intl.DateTimeFormat('en', {
 
 <style>
   .week {
-    max-width: 48rem;
+    max-width: 56rem;
   }
 
   .empty {
@@ -99,6 +99,10 @@ const dateFmt = new Intl.DateTimeFormat('en', {
 
   .week-entry {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(11rem, 0.85fr);
+    gap: 1.1rem 1.4rem;
+    align-items: start;
     padding: 0 0 2.4rem 1.5rem;
   }
 
@@ -135,43 +139,39 @@ const dateFmt = new Intl.DateTimeFormat('en', {
   .week-note {
     margin: 0.55rem 0 0;
     color: rgba(215, 224, 232, 0.75);
-    max-width: 34rem;
+    max-width: 36rem;
+    white-space: pre-line;
   }
 
   .week-gallery {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
-    margin: 1.1rem 0 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .week-gallery--lead .is-lead {
+  .week-gallery .is-lead {
     grid-column: 1 / -1;
   }
 
   .week-gallery--many {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .week-gallery--many .is-lead {
-    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
   }
 
   .week-gallery img {
     display: block;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1;
     object-fit: cover;
     background: rgba(238, 243, 247, 0.04);
     opacity: 0;
     animation: week-fade 0.7s ease forwards;
   }
 
-  .week-gallery--lead .is-lead img,
-  .week-gallery--many .is-lead img {
-    aspect-ratio: 16 / 10;
+  .week-gallery .is-lead img {
+    aspect-ratio: 4 / 3;
   }
 
   .week-gallery li:nth-child(2) img {
@@ -201,15 +201,16 @@ const dateFmt = new Intl.DateTimeFormat('en', {
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 720px) {
+    .week-entry {
+      grid-template-columns: 1fr;
+      padding-left: 1.15rem;
+    }
+
     .week-gallery,
     .week-gallery--many {
       grid-template-columns: 1fr 1fr;
       gap: 0.4rem;
-    }
-
-    .week-entry {
-      padding-left: 1.15rem;
     }
   }
 
