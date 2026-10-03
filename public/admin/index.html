@@ -136,6 +136,14 @@
         bottom: 5.2rem;
       }
 
+      body[data-ss-has-delete] .cms-mail[data-ss-above-save] {
+        bottom: 5.2rem;
+      }
+
+      body[data-ss-has-delete] .cms-looks[data-ss-above-mail][data-ss-above-save] {
+        bottom: 7.25rem;
+      }
+
       .cms-looks-num {
         font-variant-numeric: tabular-nums;
       }
@@ -505,8 +513,8 @@
         overflow-y: auto !important;
         pointer-events: auto !important;
         background: #0c1218 !important;
-        /* Room for gold Looks / Mail / Save stack at the bottom-right */
-        padding-bottom: 5.5rem !important;
+        /* Room for gold Looks / Mail / Delete / Save stack at the bottom-right */
+        padding-bottom: 8.5rem !important;
       }
 
       [class*='PreviewPaneContainer'] {
@@ -602,7 +610,8 @@
             <strong>Rides</strong>, <strong>＋ Ride</strong> asks for a name, then opens the file.
             First photo sits at the top. Photos in the story sit in the text. Ride notes
             have the same photo fields. The gold
-            <strong>Save this ride</strong> button writes the file. Click a ride so it turns green,
+            <strong>Save</strong> button writes the file. Open a post and
+            <strong>Delete this</strong> sits above Save. Click a ride so it turns green,
             then <strong>− Ride</strong>. The <strong>Date</strong> on a ride puts it first on the
             site. Newest first.
           </details>
@@ -614,7 +623,8 @@
             <p style="margin: 0.55rem 0 0">
               Use this page on <code>https://thenewsoulsearchers.de/admin/</code> (not www). First
               click the gold <strong>Login with GitHub</strong> in this bar. Then use the
-              gold <strong>Save this ride</strong> button at the bottom-right. That writes to GitHub.
+              gold <strong>Save</strong> button at the bottom-right. That writes to GitHub.
+              Open a post and <strong>Delete this</strong> sits just above Save.
               The top <strong>Publish</strong> menu stays open so you can pick
               <strong>Publish now</strong> if you want. The editor is the form only (no preview
               sitting on top of the fields). After save, open the ride or note page itself and
@@ -671,7 +681,8 @@
               <strong>UPLOAD PHOTOS</strong>. Add a row → Upload JPEG → gold
               <strong>Save</strong>. Upload alone only parks the file in Media — without Save on
               the store or week note, the thumbs never attach. On the site the thumbs sit on the
-              <strong>right</strong> of the text.
+              <strong>right</strong> of the text. To take a post off the site, open it and tap
+              <strong>Delete this</strong> above Save.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Friends:</strong> open <em>Friends</em>, then <strong>New Friend</strong>.
@@ -785,6 +796,7 @@
     <script src="/admin/editor-layout.js"></script>
     <script src="/admin/preview-fallback.js"></script>
     <script src="/admin/delete-ride.js"></script>
+    <script src="/admin/delete-entry.js"></script>
     <script src="/admin/publish-click.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js"></script>
     <script src="/admin/login-gold.js"></script>

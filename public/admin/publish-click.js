@@ -16,6 +16,8 @@
 
   function saveLabel() {
     var hash = window.location.hash || '';
+    if (hash.indexOf('/collections/week') !== -1) return 'Save this week note';
+    if (hash.indexOf('/collections/stores') !== -1) return 'Save this store';
     if (hash.indexOf('/collections/shots') !== -1) return 'Save this shot';
     if (hash.indexOf('/collections/journal') !== -1) return 'Save this note';
     if (hash.indexOf('/collections/friends') !== -1) return 'Save this friend';
