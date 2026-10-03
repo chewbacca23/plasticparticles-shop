@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { existingMedia } from '../lib/media';
 import { newestFirst } from '../lib/newest';
 
 const entries = newestFirst(
@@ -18,15 +19,15 @@ const dateFmt = new Intl.DateTimeFormat('en', {
 
 <BaseLayout
   title="This week"
-  description="What happened this day or week on The Soul Searchers — short dated notes from the road, not a photo grid."
+  description="What happened this day or week on The Soul Searchers — short dated notes and a calm photo gallery from the road."
 >
   <section class="section">
     <div class="site-shell week">
       <p class="eyebrow reveal">This week</p>
       <h1 class="section-title reveal reveal-delay-1">What happened</h1>
       <p class="section-lead reveal reveal-delay-2">
-        Short dated notes from the saddle. A loop, a train, a café stop. One purpose: what happened
-        this day or week.
+        Short dated notes from the saddle. A loop, a train, a café stop. A few photos that hold the
+        week — not a dense feed.
       </p>
 
       {
@@ -37,8 +38,15 @@ const dateFmt = new Intl.DateTimeFormat('en', {
         ) : (
           <ol class="week-list">
             {entries.map((entry, index) => {
+              const gallery = existingMedia(entry.data.photos);
               const delayClass =
                 index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              const galleryClass =
+                gallery.length >= 7
+                  ? 'week-gallery week-gallery--many'
+                  : gallery.length >= 3
+                    ? 'week-gallery week-gallery--lead'
+                    : 'week-gallery';
               return (
                 <li class:list={['week-entry', delayClass]}>
                   <time class="week-date" datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
@@ -46,6 +54,22 @@ const dateFmt = new Intl.DateTimeFormat('en', {
                   </time>
                   <h2 class="week-title">{entry.data.title}</h2>
                   {entry.data.note ? <p class="week-note">{entry.data.note}</p> : null}
+                  {gallery.length > 0 ? (
+                    <ul class={galleryClass} aria-label={`${entry.data.title} photos`}>
+                      {gallery.map((src, photoIndex) => (
+                        <li class:list={[{ 'is-lead': photoIndex === 0 && gallery.length >= 3 }]}>
+                          <img
+                            src={src}
+                            alt=""
+                            width={photoIndex === 0 && gallery.length >= 3 ? 1200 : 640}
+                            height={photoIndex === 0 && gallery.length >= 3 ? 800 : 480}
+                            loading={index === 0 && photoIndex === 0 ? 'eager' : 'lazy'}
+                            decoding="async"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </li>
               );
             })}
@@ -58,7 +82,7 @@ const dateFmt = new Intl.DateTimeFormat('en', {
 
 <style>
   .week {
-    max-width: 40rem;
+    max-width: 48rem;
   }
 
   .empty {
@@ -75,7 +99,7 @@ const dateFmt = new Intl.DateTimeFormat('en', {
 
   .week-entry {
     position: relative;
-    padding: 0 0 2rem 1.5rem;
+    padding: 0 0 2.4rem 1.5rem;
   }
 
   .week-entry:last-child {
@@ -112,5 +136,87 @@ const dateFmt = new Intl.DateTimeFormat('en', {
     margin: 0.55rem 0 0;
     color: rgba(215, 224, 232, 0.75);
     max-width: 34rem;
+  }
+
+  .week-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .week-gallery--lead .is-lead {
+    grid-column: 1 / -1;
+  }
+
+  .week-gallery--many {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .week-gallery--many .is-lead {
+    grid-column: 1 / -1;
+  }
+
+  .week-gallery img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+    opacity: 0;
+    animation: week-fade 0.7s ease forwards;
+  }
+
+  .week-gallery--lead .is-lead img,
+  .week-gallery--many .is-lead img {
+    aspect-ratio: 16 / 10;
+  }
+
+  .week-gallery li:nth-child(2) img {
+    animation-delay: 0.08s;
+  }
+
+  .week-gallery li:nth-child(3) img {
+    animation-delay: 0.14s;
+  }
+
+  .week-gallery li:nth-child(4) img {
+    animation-delay: 0.2s;
+  }
+
+  .week-gallery li:nth-child(n + 5) img {
+    animation-delay: 0.26s;
+  }
+
+  @keyframes week-fade {
+    from {
+      opacity: 0;
+      transform: translateY(0.45rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .week-gallery,
+    .week-gallery--many {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    }
+
+    .week-entry {
+      padding-left: 1.15rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .week-gallery img {
+      animation: none;
+      opacity: 1;
+    }
   }
 </style>
