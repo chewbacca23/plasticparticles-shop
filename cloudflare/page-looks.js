@@ -697,7 +697,7 @@ export function looksDashboardPage(summary) {
 export function looksPageRows(pages) {
   const list = Array.isArray(pages) ? pages : [];
   if (!list.length) {
-    return '<li class="empty">Open Home, Now, or a ride, then refresh this page.</li>';
+    return '<li class="empty">Open Home or a ride, then refresh this page.</li>';
   }
   return list
     .map((row) => {

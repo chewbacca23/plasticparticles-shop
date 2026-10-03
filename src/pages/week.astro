@@ -1,0 +1,223 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { existingMedia } from '../lib/media';
+import { newestFirst } from '../lib/newest';
+
+const entries = newestFirst(
+  await getCollection('week', ({ data }) => !data.draft),
+  (entry) => entry.data.pubDate,
+);
+
+const dateFmt = new Intl.DateTimeFormat('en', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+---
+
+<BaseLayout
+  title="This week"
+  description="What happened this day or week on The Soul Searchers — short dated notes and a calm photo gallery from the road."
+>
+  <section class="section">
+    <div class="site-shell week">
+      <p class="eyebrow reveal">This week</p>
+      <h1 class="section-title reveal reveal-delay-1">What happened</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Short dated notes from the saddle. A loop, a train, a café stop. A few photos that hold the
+        week — not a dense feed.
+      </p>
+
+      {
+        entries.length === 0 ? (
+          <p class="empty">
+            Week notes will show here when you add them in the editor under <strong>This week</strong>.
+          </p>
+        ) : (
+          <ol class="week-list">
+            {entries.map((entry, index) => {
+              const gallery = existingMedia(entry.data.photos);
+              const delayClass =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              const galleryClass =
+                gallery.length >= 5
+                  ? 'week-gallery week-gallery--many'
+                  : 'week-gallery';
+              return (
+                <li class:list={['week-entry', delayClass]}>
+                  <div class="week-main">
+                    <time class="week-date" datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
+                      {dateFmt.format(entry.data.pubDate)}
+                    </time>
+                    <h2 class="week-title">{entry.data.title}</h2>
+                    {entry.data.note ? <p class="week-note">{entry.data.note}</p> : null}
+                  </div>
+                  {gallery.length > 0 ? (
+                    <ul class={galleryClass} aria-label={`${entry.data.title} photos`}>
+                      {gallery.map((src, photoIndex) => (
+                        <li class:list={[{ 'is-lead': photoIndex === 0 }]}>
+                          <img
+                            src={src}
+                            alt=""
+                            width={photoIndex === 0 ? 640 : 320}
+                            height={photoIndex === 0 ? 480 : 240}
+                            loading={index === 0 && photoIndex === 0 ? 'eager' : 'lazy'}
+                            decoding="async"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .week {
+    max-width: 56rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .week-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid rgba(212, 163, 90, 0.35);
+  }
+
+  .week-entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(11rem, 0.85fr);
+    gap: 1.1rem 1.4rem;
+    align-items: start;
+    padding: 0 0 2.4rem 1.5rem;
+  }
+
+  .week-entry:last-child {
+    padding-bottom: 0;
+  }
+
+  .week-entry::before {
+    content: '';
+    position: absolute;
+    left: -0.28rem;
+    top: 0.35rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--amber-hot);
+    box-shadow: 0 0 0 3px rgba(212, 163, 90, 0.16);
+  }
+
+  .week-date {
+    display: block;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .week-title {
+    margin: 0.4rem 0 0;
+    font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+  }
+
+  .week-note {
+    margin: 0.55rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    max-width: 36rem;
+    white-space: pre-line;
+  }
+
+  .week-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .week-gallery .is-lead {
+    grid-column: 1 / -1;
+  }
+
+  .week-gallery--many {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .week-gallery img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+    opacity: 0;
+    animation: week-fade 0.7s ease forwards;
+  }
+
+  .week-gallery .is-lead img {
+    aspect-ratio: 4 / 3;
+  }
+
+  .week-gallery li:nth-child(2) img {
+    animation-delay: 0.08s;
+  }
+
+  .week-gallery li:nth-child(3) img {
+    animation-delay: 0.14s;
+  }
+
+  .week-gallery li:nth-child(4) img {
+    animation-delay: 0.2s;
+  }
+
+  .week-gallery li:nth-child(n + 5) img {
+    animation-delay: 0.26s;
+  }
+
+  @keyframes week-fade {
+    from {
+      opacity: 0;
+      transform: translateY(0.45rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .week-entry {
+      grid-template-columns: 1fr;
+      padding-left: 1.15rem;
+    }
+
+    .week-gallery,
+    .week-gallery--many {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .week-gallery img {
+      animation: none;
+      opacity: 1;
+    }
+  }
+</style>

@@ -1,0 +1,244 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { existingMedia } from '../lib/media';
+
+const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((a, b) => {
+  if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+  return a.data.name.localeCompare(b.data.name);
+});
+---
+
+<BaseLayout
+  title="Stores around the world"
+  description="Bike shops and cycling stores we trust around the world — Berlin, Cologne, Manchester, and wherever the tour lands next."
+>
+  <section class="section">
+    <div class="site-shell stores">
+      <p class="eyebrow reveal">Stores</p>
+      <h1 class="section-title reveal reveal-delay-1">Stores around the world</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Bike shops that feel like Soul Searchers stops: honest advice, a spare tube when you need
+        it, and people who ask where you rode before they ask what broke.
+      </p>
+
+      {
+        stores.length === 0 ? (
+          <p class="empty">
+            Stores will show here when you add them in the editor under <strong>Stores</strong>.
+          </p>
+        ) : (
+          <ul class="store-list">
+            {stores.map((store, index) => {
+              const { name, city, country, note, url, photos } = store.data;
+              const gallery = existingMedia(photos);
+              const cover = gallery[0];
+              const NameTag = url ? 'a' : 'span';
+              const nameProps = url
+                ? { href: url, target: '_blank', rel: 'noopener noreferrer' }
+                : {};
+              const delayClass =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              return (
+                <li class:list={['store', delayClass]}>
+                  <div class="store-copy">
+                    <NameTag class="store-name" {...nameProps}>
+                      {name}
+                    </NameTag>
+                    <p class="store-place">
+                      {city}, {country}
+                    </p>
+                    {note ? <p class="store-note">{note}</p> : null}
+                  </div>
+                  <div class="store-shots">
+                    {cover ? (
+                      <img
+                        class="store-photo"
+                        src={cover}
+                        alt=""
+                        width="120"
+                        height="120"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span class="store-pin" aria-hidden="true">
+                        <span class="store-pin-dot" />
+                      </span>
+                    )}
+                    {gallery.length > 1 ? (
+                      <ul class="store-gallery" aria-label={`${name} photos`}>
+                        {gallery.slice(1).map((src) => (
+                          <li>
+                            <img
+                              src={src}
+                              alt=""
+                              width="160"
+                              height="120"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .stores {
+    max-width: 52rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .store-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .store {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.1rem 1.35rem;
+    align-items: start;
+    padding: 1.45rem 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .store:last-child {
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .store-shots {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.45rem;
+    width: min(11rem, 34vw);
+  }
+
+  .store-photo {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+  }
+
+  .store-pin {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    background:
+      radial-gradient(circle at 30% 28%, rgba(240, 194, 122, 0.22), transparent 62%),
+      linear-gradient(160deg, rgba(30, 58, 69, 0.55), rgba(12, 18, 24, 0.2));
+  }
+
+  .store-pin-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--amber-hot);
+    box-shadow: 0 0 0 4px rgba(212, 163, 90, 0.18);
+  }
+
+  .store-name {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--paper);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  a.store-name:hover {
+    color: var(--amber-hot);
+  }
+
+  .store-place {
+    margin: 0.3rem 0 0;
+    color: var(--amber);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .store-note {
+    margin: 0.45rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    font-size: 1rem;
+    max-width: 36rem;
+    white-space: pre-line;
+  }
+
+  .store-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    width: 100%;
+  }
+
+  .store-gallery img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+    opacity: 0.92;
+    transition: opacity 0.35s ease, transform 0.45s ease;
+  }
+
+  .store-gallery img:hover {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+
+  @media (max-width: 640px) {
+    .store {
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .store-shots {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+
+    .store-photo,
+    .store-pin {
+      width: 5.5rem;
+      flex: 0 0 5.5rem;
+    }
+
+    .store-gallery {
+      flex: 1 1 auto;
+      width: auto;
+      grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+    }
+
+    .store-name {
+      font-size: 1.2rem;
+    }
+  }
+</style>

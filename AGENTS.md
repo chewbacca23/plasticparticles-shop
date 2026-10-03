@@ -19,10 +19,19 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 
 - Rides (six photo tiles): `src/content/stories/*.md` and `public/stories/`
 - Ride notes: `src/content/journal/*.md`
+- Stores around the world: `src/content/stores/*.md` → `/stores` — `photos` list, **2–6** shots (first = cover); Decap **Stores → Photos**
+- This week / what happened: `src/content/week/*.md` → `/week` — short dated notes plus calm gallery (**3–10** photos typical, schema/UI hard-cap **15**); Decap **This week → Photos**; not the old Now dense grid
 - Config / Impressum fields: `src/site.config.ts`
-- Routes: `/`, `/stories` (Rides), `/journal` (Ride notes), `/marketplace` (Marketplace), `/path` (How we ride), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin`
+- Routes: `/`, `/stories` (Rides), `/week` (This week), `/stores` (Stores), `/marketplace` (Marketplace), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin` (`/now` shot feed and `/journal` stay reachable; off primary nav. `/path` redirects to About)
 - Kit: `/kit` (public)
-- Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email
+- Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / WhatsApp phone (opt-in bridges only; handles and digits never on the public map; Telegram first)
+
+### Photos
+
+- Size budget: `npm run photos:check` / `npm run photos:fix` (`scripts/optimise-photos.py`, under ~1 MB CMS / ~350 KB web)
+- Enhance (colour + crispness): `npm run photos:enhance -- path/to/pic.jpg` → writes `*_enhanced.jpg`; `--in-place` overwrites. Dry-run: `npm run photos:enhance:check -- path`. Needs `pip3 install pillow`. Mac one-shot (HEIC via `sips`): `sh scripts/enhance-photo.sh ~/Desktop/IMG.HEIC`. Run `photos:fix` after if anything is still heavy.
+- **Stores:** up to 6 images per shop (`photos:` in frontmatter or admin list). First image is the list cover.
+- **This week:** 3–15 images per note (`photos:`; aim 3–10). First image leads the gallery on `/week`.
 
 ### Live domain
 

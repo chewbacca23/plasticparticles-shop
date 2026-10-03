@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site.config';
 ---
 
 <BaseLayout
@@ -13,7 +14,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="section-lead">
         Room for a thousand. Berlin is the centre of this little universe — when someone from Nice,
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
-        and it opens. Call upon someone near you with a short note. Email stays off the page.
+        and it opens. Call upon someone near you with a short note. Email, phone, and Telegram stay
+        off the page — Telegram only opens a free door if they opted in. Or Telegram a buddy from
+        your contacts: we open the app, you tap Send. WhatsApp is still there, quieter, if you need
+        it.
       </p>
 
       <p id="welcome-back" class="welcome-back" hidden>
@@ -25,6 +29,163 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <span id="calls-for-you-text"></span>
         <button type="button" class="calls-for-you-open" id="calls-for-you-open" hidden>Open them</button>
       </p>
+
+      <!-- Top calling toast — calm popup when a brother Call-upons you (on-site only). -->
+      <div id="call-toast" class="call-toast" hidden role="status" aria-live="polite">
+        <div class="call-toast-card">
+          <p class="call-toast-kicker">Call upon</p>
+          <p class="call-toast-title" id="call-toast-title">Someone is calling you</p>
+          <p class="call-toast-note" id="call-toast-note" hidden></p>
+          <div class="call-toast-actions">
+            <button type="button" class="btn btn-primary call-toast-open" id="call-toast-open">
+              Open the chat
+            </button>
+            <button type="button" class="call-toast-dismiss" id="call-toast-dismiss" aria-label="Dismiss call">
+              Not now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client-only Telegram window — paste a name + @handle, open t.me; they still tap Send. -->
+      <div id="tg-compose" class="tg-compose" hidden>
+        <button type="button" class="tg-compose-backdrop" id="tg-compose-backdrop" aria-label="Close Telegram"></button>
+        <div
+          class="tg-compose-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tg-compose-title"
+        >
+          <header class="tg-compose-head">
+            <div class="tg-pair" aria-hidden="true">
+              <span class="tg-pair-crest">
+                <img src={site.logo} alt="" width="40" height="51" decoding="async" />
+              </span>
+              <span class="tg-pair-tg" title="Telegram">
+                <svg viewBox="0 0 24 24" width="22" height="22" focusable="false">
+                  <path
+                    fill="currentColor"
+                    d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.695.064-1.226-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
+                  ></path>
+                </svg>
+              </span>
+            </div>
+            <div class="tg-compose-head-copy">
+              <p class="tg-compose-kicker">Soul Searchers · opens Telegram</p>
+              <h2 class="tg-compose-title" id="tg-compose-title">Message a buddy</h2>
+            </div>
+            <button type="button" class="tg-compose-close" id="tg-compose-close" aria-label="Close">
+              ×
+            </button>
+          </header>
+          <p class="tg-compose-lead">
+            Paste a name and their Telegram username. We open Telegram — you tap Send. Nothing is
+            stored on our server.
+          </p>
+          <form class="tg-compose-form" id="tg-compose-form">
+            <label class="tg-compose-field">
+              <span>Name</span>
+              <input
+                type="text"
+                name="name"
+                maxlength="80"
+                autocomplete="name"
+                placeholder="Alex, Hanna, the climbing buddy…"
+              />
+            </label>
+            <label class="tg-compose-field">
+              <span>Telegram username</span>
+              <input
+                type="text"
+                name="telegram"
+                required
+                maxlength="33"
+                autocomplete="username"
+                placeholder="@handle"
+                spellcheck="false"
+              />
+            </label>
+            <p class="tg-compose-hint">
+              With or without the <code>@</code>. Opens Telegram on your phone or in the browser —
+              the chat waits until you hit Send.
+            </p>
+            <p class="tg-compose-error" id="tg-compose-error" hidden></p>
+            <button class="btn btn-primary tg-compose-send" type="submit">
+              Open Telegram — then Send
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Client-only WhatsApp window — paste a name + number, open wa.me; they still tap Send. -->
+      <div id="wa-compose" class="wa-compose" hidden>
+        <button type="button" class="wa-compose-backdrop" id="wa-compose-backdrop" aria-label="Close WhatsApp"></button>
+        <div
+          class="wa-compose-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="wa-compose-title"
+        >
+          <header class="wa-compose-head">
+            <div class="wa-pair" aria-hidden="true">
+              <span class="wa-pair-crest">
+                <img src={site.logo} alt="" width="40" height="51" decoding="async" />
+              </span>
+              <span class="wa-pair-wa" title="WhatsApp">
+                <svg viewBox="0 0 24 24" width="22" height="22" focusable="false">
+                  <path
+                    fill="currentColor"
+                    d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.2 0 4.26.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.23 8.24-1.4 0-2.79-.37-4.01-1.06l-.29-.17-3.12.82.83-3.04-.19-.31a8.2 8.2 0 0 1-1.25-4.48c0-4.54 3.7-8.24 8.23-8.24zm4.52 10.52c-.2-.1-1.18-.58-1.36-.65-.18-.06-.32-.1-.45.1-.13.2-.5.65-.62.78-.11.13-.23.15-.43.05-.2-.1-.84-.31-1.6-.99-.59-.53-.99-1.18-1.1-1.38-.12-.2-.01-.3.09-.4.09-.09.2-.23.3-.35.1-.12.13-.2.2-.33.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.62-1.47-.16-.39-.33-.33-.45-.34h-.38c-.13 0-.34.05-.52.25-.18.2-.68.67-.68 1.62 0 .96.7 1.87.8 2 .1.13 1.37 2.1 3.32 2.94.46.2.83.32 1.11.41.47.15.89.13 1.23.08.37-.06 1.18-.48 1.34-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23z"
+                  ></path>
+                </svg>
+              </span>
+            </div>
+            <div class="wa-compose-head-copy">
+              <p class="wa-compose-kicker">Soul Searchers · opens WhatsApp</p>
+              <h2 class="wa-compose-title" id="wa-compose-title">Message a buddy</h2>
+            </div>
+            <button type="button" class="wa-compose-close" id="wa-compose-close" aria-label="Close">
+              ×
+            </button>
+          </header>
+          <p class="wa-compose-lead">
+            Paste a name and number from your phone. We open WhatsApp — you tap Send. Nothing is
+            stored on our server.
+          </p>
+          <form class="wa-compose-form" id="wa-compose-form">
+            <label class="wa-compose-field">
+              <span>Name</span>
+              <input
+                type="text"
+                name="name"
+                maxlength="80"
+                autocomplete="name"
+                placeholder="Alex, Hanna, the climbing buddy…"
+              />
+            </label>
+            <label class="wa-compose-field">
+              <span>Number · include country code</span>
+              <input
+                type="tel"
+                name="phone"
+                required
+                maxlength="32"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="+49 170 …"
+              />
+            </label>
+            <p class="wa-compose-hint">
+              Keep the country code — <code>+49…</code> for Germany. Opens WhatsApp on your phone or
+              in the browser; the draft waits until you hit Send.
+            </p>
+            <p class="wa-compose-error" id="wa-compose-error" hidden></p>
+            <button class="btn btn-primary wa-compose-send" type="submit">
+              Open WhatsApp — then Send
+            </button>
+          </form>
+        </div>
+      </div>
 
       <p id="board-error" class="error" hidden></p>
       <p id="board-hint" class="hint" hidden></p>
@@ -43,9 +204,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <path class="berlin-fill" d="M3.64 74.32 L4.05 76.57 L5.18 77.16 L5.77 75.95 L6.67 77.12 L7.25 76.18 L6.70 77.37 L9.82 80.66 L12.08 80.39 L10.25 82.13 L10.89 83.34 L12.71 80.60 L17.79 81.00 L15.42 80.80 L15.69 78.99 L22.12 75.46 L30.38 73.89 L31.03 78.40 L35.17 78.45 L39.00 75.26 L41.59 80.04 L46.90 76.52 L46.85 77.65 L51.75 81.52 L51.48 83.01 L54.36 82.97 L54.55 85.96 L60.04 86.44 L61.17 83.64 L59.69 77.01 L67.29 73.91 L70.04 80.92 L76.19 79.29 L78.51 80.54 L79.99 79.61 L79.50 82.86 L84.36 83.09 L89.20 81.51 L91.43 87.14 L95.28 84.98 L96.07 86.41 L97.68 86.06 L98.44 88.98 L97.07 90.66 L96.60 94.61 L99.04 96.83 L102.52 89.13 L104.37 88.25 L106.08 88.93 L107.40 86.59 L107.20 84.94 L105.17 83.88 L110.09 79.87 L112.68 79.79 L114.02 77.74 L112.46 75.23 L114.40 72.33 L114.20 70.74 L111.27 69.44 L114.68 70.61 L115.97 68.23 L116.95 68.19 L116.64 69.56 L117.78 69.28 L116.79 69.08 L116.98 66.92 L112.34 65.63 L110.11 62.25 L107.62 60.77 L108.18 64.53 L107.12 64.39 L106.63 61.90 L98.63 57.84 L94.74 59.25 L94.30 61.27 L94.03 60.15 L92.37 60.10 L92.96 57.28 L95.48 53.86 L94.51 53.53 L95.95 48.88 L100.36 44.69 L100.09 43.60 L94.80 43.50 L94.65 41.30 L96.20 41.42 L96.78 40.14 L88.13 38.04 L87.31 32.10 L85.11 31.54 L81.47 27.43 L74.85 26.24 L72.99 22.19 L74.47 16.87 L76.50 15.80 L77.38 11.49 L71.91 8.77 L70.99 7.48 L71.51 4.32 L69.16 5.07 L69.99 3.00 L65.13 6.58 L68.98 8.29 L68.38 9.59 L66.64 10.64 L63.44 10.31 L62.32 13.47 L60.64 14.16 L58.60 11.93 L55.59 10.79 L52.50 16.14 L49.33 17.64 L39.99 16.47 L41.29 15.68 L41.14 12.14 L39.62 9.13 L41.26 8.05 L36.62 7.12 L36.80 12.58 L33.13 12.71 L33.48 16.56 L26.07 16.15 L22.86 22.22 L25.78 26.17 L25.53 27.54 L23.50 27.71 L16.57 24.38 L10.53 27.58 L11.13 29.73 L14.04 28.68 L14.70 31.50 L13.35 37.22 L10.79 36.32 L8.57 47.16 L12.94 46.43 L17.29 49.34 L10.43 57.54 L8.62 58.24 L7.20 65.68 L9.55 69.00 L4.91 73.66 Z" />
             <path class="berlin-stroke" d="M3.64 74.32 L4.05 76.57 L5.18 77.16 L5.77 75.95 L6.67 77.12 L7.25 76.18 L6.70 77.37 L9.82 80.66 L12.08 80.39 L10.25 82.13 L10.89 83.34 L12.71 80.60 L17.79 81.00 L15.42 80.80 L15.69 78.99 L22.12 75.46 L30.38 73.89 L31.03 78.40 L35.17 78.45 L39.00 75.26 L41.59 80.04 L46.90 76.52 L46.85 77.65 L51.75 81.52 L51.48 83.01 L54.36 82.97 L54.55 85.96 L60.04 86.44 L61.17 83.64 L59.69 77.01 L67.29 73.91 L70.04 80.92 L76.19 79.29 L78.51 80.54 L79.99 79.61 L79.50 82.86 L84.36 83.09 L89.20 81.51 L91.43 87.14 L95.28 84.98 L96.07 86.41 L97.68 86.06 L98.44 88.98 L97.07 90.66 L96.60 94.61 L99.04 96.83 L102.52 89.13 L104.37 88.25 L106.08 88.93 L107.40 86.59 L107.20 84.94 L105.17 83.88 L110.09 79.87 L112.68 79.79 L114.02 77.74 L112.46 75.23 L114.40 72.33 L114.20 70.74 L111.27 69.44 L114.68 70.61 L115.97 68.23 L116.95 68.19 L116.64 69.56 L117.78 69.28 L116.79 69.08 L116.98 66.92 L112.34 65.63 L110.11 62.25 L107.62 60.77 L108.18 64.53 L107.12 64.39 L106.63 61.90 L98.63 57.84 L94.74 59.25 L94.30 61.27 L94.03 60.15 L92.37 60.10 L92.96 57.28 L95.48 53.86 L94.51 53.53 L95.95 48.88 L100.36 44.69 L100.09 43.60 L94.80 43.50 L94.65 41.30 L96.20 41.42 L96.78 40.14 L88.13 38.04 L87.31 32.10 L85.11 31.54 L81.47 27.43 L74.85 26.24 L72.99 22.19 L74.47 16.87 L76.50 15.80 L77.38 11.49 L71.91 8.77 L70.99 7.48 L71.51 4.32 L69.16 5.07 L69.99 3.00 L65.13 6.58 L68.98 8.29 L68.38 9.59 L66.64 10.64 L63.44 10.31 L62.32 13.47 L60.64 14.16 L58.60 11.93 L55.59 10.79 L52.50 16.14 L49.33 17.64 L39.99 16.47 L41.29 15.68 L41.14 12.14 L39.62 9.13 L41.26 8.05 L36.62 7.12 L36.80 12.58 L33.13 12.71 L33.48 16.56 L26.07 16.15 L22.86 22.22 L25.78 26.17 L25.53 27.54 L23.50 27.71 L16.57 24.38 L10.53 27.58 L11.13 29.73 L14.04 28.68 L14.70 31.50 L13.35 37.22 L10.79 36.32 L8.57 47.16 L12.94 46.43 L17.29 49.34 L10.43 57.54 L8.62 58.24 L7.20 65.68 L9.55 69.00 L4.91 73.66 Z" />
           </svg>
-          <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-          <div class="group-dots" id="group-dots">
-            <p class="group-empty">No one standing here yet.</p>
+          <!-- Links + dots share one floor so SVG % and CSS % use the same box. -->
+          <div class="group-floor" id="group-floor">
+            <svg class="group-links" id="group-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="group-dots" id="group-dots">
+              <p class="group-empty">No one standing here yet.</p>
+            </div>
           </div>
           <aside class="group-open" id="group-open" hidden></aside>
         </div>
@@ -61,14 +225,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           Be the first. Open a stall, show up for a ride, make coming back a habit.
         </p>
         <a class="btn btn-primary crowd-sign-cta" href="#pin-form">Stand with them</a>
+        <button type="button" class="btn btn-primary crowd-sign-tg" id="tg-compose-open">
+          Telegram a buddy
+        </button>
+        <button type="button" class="crowd-sign-wa-quiet" id="wa-compose-open">
+          WhatsApp instead
+        </button>
       </aside>
 
       <aside id="cookie-note" class="cookie-note" hidden>
         <p class="cookie-note-text">
           Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
           your machine, so when you stand on the map we can welcome you back to the person you last
-          talked to, and quietly show if someone called upon you. No ads. No trackers. Just the good
-          kind of remembering.
+          talked to, and quietly show if someone called upon you. Optional email, Telegram username,
+          and WhatsApp phone stay private — never on the public map. Messengers only open for people
+          who opted in; the visitor still taps Send. No ads. No trackers. Just the good kind of
+          remembering.
           <span class="cookie-wink" aria-hidden="true">;)</span>
         </p>
         <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
@@ -81,7 +253,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       <div id="pin-success" class="success" hidden>
         <h2>It’s on the floor</h2>
-        <p>If you left a mail, offers can also land in your inbox. Either way, they show here.</p>
+        <p>
+          If you left a mail, offers can also land in your inbox. If you left a Telegram username or
+          a phone, brothers can open that messenger to you — the handle and digits stay off the map,
+          and they still tap Send. Either way, the stall shows here.
+        </p>
       </div>
 
       <!-- One calm Call upon dock — stays open while you wander the map. -->
@@ -90,6 +266,28 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <header class="chat-dock-head">
             <p class="chat-dock-kicker">Call upon</p>
             <h2 class="chat-dock-name" id="chat-dock-name">Brother</h2>
+            <span class="chat-dock-ping" id="chat-dock-ping" hidden aria-hidden="true"></span>
+            <button
+              type="button"
+              class="chat-dock-mute"
+              id="chat-dock-mute"
+              aria-pressed="false"
+              aria-label="Mute reply sound"
+              title="Mute reply sound"
+            >
+              <svg class="chat-dock-mute-on" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M4 10v4h3l4 3V7L7 10H4zm11.5 2a3.5 3.5 0 0 0-1.8-3.05v6.1A3.5 3.5 0 0 0 15.5 12zm-1.8-7.45v1.7a6 6 0 0 1 0 11.5v1.7a7.7 7.7 0 0 0 0-14.9z"
+                />
+              </svg>
+              <svg class="chat-dock-mute-off" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" hidden>
+                <path
+                  fill="currentColor"
+                  d="M4 10v4h3l4 3V7L7 10H4zm11.5 2a3.5 3.5 0 0 0-1.8-3.05v3.2l1.8-.15zm2.7-6.2-.95.95A6 6 0 0 1 18.7 12a6 6 0 0 1-1.4 3.9l.95.95A7.7 7.7 0 0 0 20.5 12a7.7 7.7 0 0 0-2.3-5.45zM4.27 3 3 4.27 7.73 9H4v4h3l4 3v-4.73l5.27 5.27.73-.73L4.27 3zM13 7l-1.18 1.18L13 8.36V7z"
+                />
+              </svg>
+            </button>
             <button type="button" class="chat-dock-close" id="chat-dock-close" aria-label="End this chat">
               ×
             </button>
@@ -105,7 +303,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </label>
             <label class="chat-dock-field chat-dock-field-place">
               <span>Your place — so we know you are near</span>
-              <input type="text" name="place" maxlength="80" placeholder="Berlin, Kreuzberg, Nice…" />
+              <input type="text" name="place" maxlength="80" placeholder="Berlin outskirts, Kreuzberg, Nice…" />
             </label>
             <label class="chat-dock-field chat-dock-field-msg">
               <span id="chat-dock-msg-label">Call upon them</span>
@@ -145,7 +343,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             name="place"
             required
             maxlength="80"
-            placeholder="Berlin, Nice, a train, a climb"
+            placeholder="Berlin outskirts, Kreuzberg, Nice…"
           />
         </label>
         <label>
@@ -162,6 +360,36 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <span>Email — optional, stays off the page</span>
           <input type="email" name="email" autocomplete="email" maxlength="200" />
         </label>
+        <label>
+          <span>Telegram — optional, never shown on the map</span>
+          <input
+            type="text"
+            name="telegram"
+            autocomplete="username"
+            maxlength="33"
+            placeholder="@handle"
+            spellcheck="false"
+          />
+        </label>
+        <p class="phone-bridge-hint">
+          Opt in only if you want an Open Telegram button on your dot. The username stays private —
+          we open Telegram for visitors; they still hit Send. With or without the <code>@</code>.
+        </p>
+        <label>
+          <span>WhatsApp — optional, quieter, never on the map</span>
+          <input
+            type="tel"
+            name="phone"
+            autocomplete="tel"
+            maxlength="32"
+            inputmode="tel"
+            placeholder="+49 170 …"
+          />
+        </label>
+        <p class="phone-bridge-hint phone-bridge-hint--quiet">
+          Still works if someone prefers WhatsApp. Digits stay private. Best as <code>+49…</code>
+          with country code.
+        </p>
         <label class="hp" aria-hidden="true">
           <span>Company</span>
           <input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" />
@@ -186,6 +414,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var hintBox = document.getElementById('board-hint');
     var dotsBox = document.getElementById('group-dots');
     var linksBox = document.getElementById('group-links');
+    var floorBox = document.getElementById('group-floor');
     var openBox = document.getElementById('group-open');
     var roomBox = document.getElementById('group-room');
     var countBox = document.getElementById('group-count');
@@ -199,8 +428,37 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var callsForYou = document.getElementById('calls-for-you');
     var callsForYouText = document.getElementById('calls-for-you-text');
     var callsForYouOpen = document.getElementById('calls-for-you-open');
+    var callToast = document.getElementById('call-toast');
+    var callToastTitle = document.getElementById('call-toast-title');
+    var callToastNote = document.getElementById('call-toast-note');
+    var callToastOpen = document.getElementById('call-toast-open');
+    var callToastDismiss = document.getElementById('call-toast-dismiss');
     var cookieNote = document.getElementById('cookie-note');
     var cookieNoteOk = document.getElementById('cookie-note-ok');
+    var tgCompose = document.getElementById('tg-compose');
+    var tgComposeOpen = document.getElementById('tg-compose-open');
+    var tgComposeClose = document.getElementById('tg-compose-close');
+    var tgComposeBackdrop = document.getElementById('tg-compose-backdrop');
+    var tgComposeForm = document.getElementById('tg-compose-form');
+    var tgComposeError = document.getElementById('tg-compose-error');
+    var tgComposeCloseTimer = 0;
+    var waCompose = document.getElementById('wa-compose');
+    var waComposeOpen = document.getElementById('wa-compose-open');
+    var waComposeClose = document.getElementById('wa-compose-close');
+    var waComposeBackdrop = document.getElementById('wa-compose-backdrop');
+    var waComposeForm = document.getElementById('wa-compose-form');
+    var waComposeError = document.getElementById('wa-compose-error');
+    var waComposeCloseTimer = 0;
+    /** Same crest as the compose header — keep map messenger blocks in lockstep. */
+    var siteLogo = '/logo.png';
+    var tgMarkSvg =
+      '<svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">' +
+      '<path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.695.064-1.226-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>' +
+      '</svg>';
+    var waMarkSvg =
+      '<svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">' +
+      '<path fill="currentColor" d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.2 0 4.26.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.23 8.24-1.4 0-2.79-.37-4.01-1.06l-.29-.17-3.12.82.83-3.04-.19-.31a8.2 8.2 0 0 1-1.25-4.48c0-4.54 3.7-8.24 8.23-8.24zm4.52 10.52c-.2-.1-1.18-.58-1.36-.65-.18-.06-.32-.1-.45.1-.13.2-.5.65-.62.78-.11.13-.23.15-.43.05-.2-.1-.84-.31-1.6-.99-.59-.53-.99-1.18-1.1-1.38-.12-.2-.01-.3.09-.4.09-.09.2-.23.3-.35.1-.12.13-.2.2-.33.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.62-1.47-.16-.39-.33-.33-.45-.34h-.38c-.13 0-.34.05-.52.25-.18.2-.68.67-.68 1.62 0 .96.7 1.87.8 2 .1.13 1.37 2.1 3.32 2.94.46.2.83.32 1.11.41.47.15.89.13 1.23.08.37-.06 1.18-.48 1.34-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23z"/>' +
+      '</svg>';
     var canModerate = false;
     var lastPayload = null;
     var openKey = '';
@@ -213,13 +471,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     var chatDockEmpty = document.getElementById('chat-dock-empty');
     var chatDockForm = document.getElementById('chat-dock-form');
     var chatDockClose = document.getElementById('chat-dock-close');
+    var chatDockMute = document.getElementById('chat-dock-mute');
+    var chatDockPing = document.getElementById('chat-dock-ping');
     var chatDockSend = document.getElementById('chat-dock-send');
     var chatDockMsgLabel = document.getElementById('chat-dock-msg-label');
     var MEMORY_KEY = 'soul-marketplace-memory';
     var COOKIE_NAME = 'soul_on_map';
     var COOKIE_NOTE_KEY = 'soul-marketplace-cookie-note';
+    var NOTIFY_ASKED_KEY = 'soul-call-notify-asked';
     var didWelcome = false;
     var NEAR_MAP_DIST = 14;
+    var dockSeenMsgId = '';
+    var dockSeenMsgAt = '';
+    var dockSeenBootstrapped = false;
+    var dockMuteBing = false;
+    var dockAudioCtx = null;
+    var notifyPermissionAsked = false;
+    var toastShownSig = '';
+    var toastDismissedSig = '';
+    var toastPendingKey = '';
 
     function readMemory() {
       try {
@@ -273,11 +543,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (cookieNote) cookieNote.hidden = true;
     }
 
-    function rememberSelf(name, place, email) {
+    function rememberSelf(name, place, email, phone) {
       var patch = {};
       if (name) patch.name = String(name).trim().slice(0, 80);
       if (place) patch.place = String(place).trim().slice(0, 80);
       if (email) patch.email = String(email).trim().slice(0, 200);
+      if (phone) patch.phone = String(phone).trim().slice(0, 32);
       return writeMemory(patch);
     }
 
@@ -300,6 +571,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         }
         if (mem.email && pinForm.elements.namedItem('email')) {
           pinForm.elements.namedItem('email').value = mem.email;
+        }
+        if (mem.phone && pinForm.elements.namedItem('phone')) {
+          pinForm.elements.namedItem('phone').value = mem.phone;
         }
       }
       document.querySelectorAll('.write-form, .call-form').forEach(function (form) {
@@ -441,12 +715,107 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       writeMemory({ callsSeenAt: new Date().toISOString() });
     }
 
+    function callToastSignature(row) {
+      if (!row) return '';
+      return String(row.otherKey || '') + '|' + String(row.at || '') + '|' + String(row.text || '').slice(0, 40);
+    }
+
+    function hideCallToast() {
+      if (!callToast) return;
+      callToast.hidden = true;
+      callToast.classList.remove('is-in');
+      toastPendingKey = '';
+      if (callToastOpen) callToastOpen.removeAttribute('data-open-call');
+      if (callToastNote) {
+        callToastNote.hidden = true;
+        callToastNote.textContent = '';
+      }
+    }
+
+    function showCallToast(row, options) {
+      if (!callToast || !row || !row.otherKey) return;
+      var opts = options || {};
+      var sig = callToastSignature(row);
+      if (toastDismissedSig && toastDismissedSig === sig) return;
+      // Dock already open on this brother — bing/nudge owns the moment.
+      if (dockKey && dockKey === row.otherKey && !opts.force) {
+        hideCallToast();
+        return;
+      }
+      var name = String(row.fromName || 'A brother').trim() || 'A brother';
+      if (callToastTitle) {
+        callToastTitle.textContent = name + ' is calling you';
+      }
+      if (callToastNote) {
+        var snippet = String(row.text || '').trim();
+        if (snippet) {
+          callToastNote.hidden = false;
+          callToastNote.textContent =
+            '“' + snippet.slice(0, 90) + (snippet.length > 90 ? '…' : '') + '”';
+        } else {
+          callToastNote.hidden = true;
+          callToastNote.textContent = '';
+        }
+      }
+      if (callToastOpen) {
+        callToastOpen.setAttribute('data-open-call', row.otherKey);
+        callToastOpen.textContent = 'Open with ' + name;
+      }
+      toastPendingKey = row.otherKey;
+      var wasHidden = callToast.hidden;
+      callToast.hidden = false;
+      if (wasHidden || toastShownSig !== sig) {
+        callToast.classList.remove('is-in');
+        void callToast.offsetWidth;
+        if (!prefersReducedMotion()) callToast.classList.add('is-in');
+        if (toastShownSig !== sig) {
+          toastShownSig = sig;
+          if (opts.bing !== false) playSoftBing();
+        }
+      }
+    }
+
+    function syncCallToast(waiting) {
+      var rows = waiting || callsWaitingForMe();
+      if (!rows.length) {
+        hideCallToast();
+        return;
+      }
+      showCallToast(rows[0], { bing: toastShownSig !== callToastSignature(rows[0]) });
+    }
+
+    function openCallFromToast(key) {
+      if (!key) return;
+      var person = personByKey(key);
+      openKey = key;
+      rememberTalk(key, (person && person.name) || key);
+      markCallsSeen();
+      hideCallToast();
+      toastDismissedSig = '';
+      toastShownSig = '';
+      render(lastPayload);
+      openChatDock(key, { focus: true, allowMissing: !person });
+      showCallsForYou();
+      try {
+        var mark =
+          (typeof CSS !== 'undefined' && CSS.escape
+            ? document.querySelector('.dot[data-open="' + CSS.escape(key) + '"]')
+            : null) ||
+          document.getElementById('group-open') ||
+          document.getElementById('group');
+        if (mark && mark.scrollIntoView) {
+          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (err) {}
+    }
+
     function showCallsForYou() {
       if (!callsForYou || !callsForYouText) return;
       var waiting = callsWaitingForMe();
       if (!waiting.length) {
         callsForYou.hidden = true;
         if (callsForYouOpen) callsForYouOpen.hidden = true;
+        syncCallToast(waiting);
         return;
       }
       var first = waiting[0];
@@ -465,6 +834,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         callsForYouOpen.textContent = 'Open ' + (first.fromName || 'them');
         callsForYouOpen.setAttribute('data-open-call', first.otherKey || '');
       }
+      syncCallToast(waiting);
     }
 
     function personByKey(key) {
@@ -492,7 +862,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (!welcomeBack || !welcomeBackText || didWelcome) return;
       var mem = readMemory();
       var known =
-        !!(mem.name || mem.place || mem.email || mem.lastTalkKey) || hasOnMapCookie();
+        !!(mem.name || mem.place || mem.email || mem.phone || mem.lastTalkKey) || hasOnMapCookie();
       if (!known) {
         welcomeBack.hidden = true;
         if (welcomeBackOpen) welcomeBackOpen.hidden = true;
@@ -622,7 +992,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         esc(toKey) +
         '">' +
         '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
-        '<label><span>Your place — so we know you are near</span><input type="text" name="place" maxlength="80" placeholder="Berlin, Kreuzberg, Nice…" /></label>' +
+        '<label><span>Your place — so we know you are near</span><input type="text" name="place" maxlength="80" placeholder="Berlin outskirts, Kreuzberg, Nice…" /></label>' +
         '<label><span>Call upon them</span><textarea name="message" rows="2" required maxlength="500" placeholder="Brother — coffee before the climb?"></textarea></label>' +
         '<label><span>Email — optional, stays off the page</span><input type="email" name="email" maxlength="200" /></label>' +
         '<label class="hp" aria-hidden="true"><span>Fax</span><input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" /></label>' +
@@ -637,22 +1007,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var thread = threadForPair(me, person.key);
       if (!thread || !(thread.messages || []).length) return '';
       var rows = (thread.messages || [])
-        .map(function (msg) {
-          var mine = msg.fromKey === me;
-          return (
-            '<li class="call-msg' +
-            (mine ? ' is-mine' : '') +
-            '">' +
-            '<p class="call-msg-from">' +
-            esc(mine ? 'You' : msg.fromName) +
-            '</p>' +
-            '<p class="call-msg-text">' +
-            esc(msg.text) +
-            '</p>' +
-            '</li>'
-          );
-        })
-        .join('');
+          .map(function (msg) {
+            var mine = msg.fromKey === me;
+            return (
+              '<li class="call-msg' +
+              (mine ? ' is-mine' : ' is-theirs') +
+              '">' +
+              '<p class="call-msg-from">' +
+              esc(mine ? 'You' : msg.fromName) +
+              '</p>' +
+              '<p class="call-msg-text">' +
+              esc(msg.text) +
+              '</p>' +
+              '</li>'
+            );
+          })
+          .join('');
       return '<ol class="call-thread" aria-label="Call upon thread">' + rows + '</ol>';
     }
 
@@ -664,25 +1034,208 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     function startDockPoll() {
-      stopDockPoll();
-      if (!dockKey) return;
+      // Always poll so inbound Call upon toasts land even with the dock closed.
+      if (dockPollTimer) return;
       dockPollTimer = setInterval(function () {
-        if (!dockKey) {
-          stopDockPoll();
-          return;
-        }
         loadQuiet();
       }, DOCK_POLL_MS);
     }
 
+    function prefersReducedMotion() {
+      try {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function seedDockSeen(messages) {
+      var last = messages && messages.length ? messages[messages.length - 1] : null;
+      dockSeenMsgId = last ? String(last.id || '') : '';
+      dockSeenMsgAt = last ? String(last.at || '') : '';
+    }
+
+    function advanceDockSeen(messages) {
+      if (!messages || !messages.length) return;
+      var last = messages[messages.length - 1];
+      dockSeenMsgId = String(last.id || '');
+      dockSeenMsgAt = String(last.at || '');
+    }
+
+    function isNewerThanSeen(msg) {
+      if (!msg) return false;
+      var id = String(msg.id || '');
+      var at = String(msg.at || '');
+      if (!dockSeenMsgId && !dockSeenMsgAt) return true;
+      if (dockSeenMsgId && id && id === dockSeenMsgId) return false;
+      if (dockSeenMsgAt && at) {
+        if (at < dockSeenMsgAt) return false;
+        if (at === dockSeenMsgAt && dockSeenMsgId && id && id <= dockSeenMsgId) return false;
+      } else if (dockSeenMsgId && id && id <= dockSeenMsgId) {
+        return false;
+      }
+      return true;
+    }
+
+    function playSoftBing() {
+      if (dockMuteBing) return;
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!dockAudioCtx) dockAudioCtx = new Ctx();
+        var ctx = dockAudioCtx;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(function () {});
+        }
+        var now = ctx.currentTime;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.045, now + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+        gain.connect(ctx.destination);
+
+        var osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(660, now);
+        osc.frequency.exponentialRampToValueAtTime(528, now + 0.22);
+        osc.connect(gain);
+        osc.start(now);
+        osc.stop(now + 0.34);
+
+        var osc2 = ctx.createOscillator();
+        var gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.0001, now + 0.04);
+        gain2.gain.exponentialRampToValueAtTime(0.022, now + 0.07);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(990, now + 0.04);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.04);
+        osc2.stop(now + 0.4);
+      } catch (err) {}
+    }
+
+    function nudgeChatDock() {
+      if (!chatDock) return;
+      chatDock.classList.remove('is-nudging');
+      if (chatDockPing) {
+        chatDockPing.hidden = false;
+        chatDockPing.classList.remove('is-flash');
+      }
+      void chatDock.offsetWidth;
+      if (!prefersReducedMotion()) {
+        chatDock.classList.add('is-nudging');
+      }
+      if (chatDockPing) {
+        chatDockPing.classList.add('is-flash');
+      }
+      window.setTimeout(function () {
+        if (chatDock) chatDock.classList.remove('is-nudging');
+        if (chatDockPing) {
+          chatDockPing.classList.remove('is-flash');
+          chatDockPing.hidden = true;
+        }
+      }, prefersReducedMotion() ? 900 : 700);
+    }
+
+    function maybeAskNotifyPermission() {
+      if (notifyPermissionAsked) return;
+      if (typeof Notification === 'undefined') return;
+      if (Notification.permission !== 'default') return;
+      try {
+        if (localStorage.getItem(NOTIFY_ASKED_KEY) === '1') {
+          notifyPermissionAsked = true;
+          return;
+        }
+      } catch (err) {}
+      notifyPermissionAsked = true;
+      try {
+        localStorage.setItem(NOTIFY_ASKED_KEY, '1');
+      } catch (err2) {}
+      try {
+        Notification.requestPermission().catch(function () {});
+      } catch (err3) {}
+    }
+
+    function softBackgroundNotify(fromName, text) {
+      if (typeof document === 'undefined' || !document.hidden) return;
+      if (typeof Notification === 'undefined') return;
+      if (Notification.permission !== 'granted') return;
+      try {
+        var note = new Notification('Call upon — ' + String(fromName || 'someone'), {
+          body: String(text || 'A short reply landed.').slice(0, 120),
+          silent: true,
+          tag: 'soul-call-upon-' + String(dockKey || 'thread'),
+        });
+        window.setTimeout(function () {
+          try {
+            note.close();
+          } catch (err) {}
+        }, 4500);
+      } catch (err2) {}
+    }
+
+    function noticeOtherReply(msg) {
+      if (!msg) return;
+      playSoftBing();
+      nudgeChatDock();
+      softBackgroundNotify(msg.fromName, msg.text);
+    }
+
+    function detectOtherReplies(messages, me) {
+      if (!dockKey || !me || !messages || !messages.length) return;
+      if (!dockSeenBootstrapped) {
+        seedDockSeen(messages);
+        dockSeenBootstrapped = true;
+        return;
+      }
+      var fresh = [];
+      for (var i = 0; i < messages.length; i += 1) {
+        var msg = messages[i];
+        if (!msg || msg.fromKey === me) continue;
+        if (isNewerThanSeen(msg)) fresh.push(msg);
+      }
+      advanceDockSeen(messages);
+      if (!fresh.length) return;
+      noticeOtherReply(fresh[fresh.length - 1]);
+    }
+
+    function syncMuteButton() {
+      if (!chatDockMute) return;
+      chatDockMute.setAttribute('aria-pressed', dockMuteBing ? 'true' : 'false');
+      chatDockMute.setAttribute(
+        'aria-label',
+        dockMuteBing ? 'Unmute reply sound' : 'Mute reply sound',
+      );
+      chatDockMute.title = dockMuteBing ? 'Unmute reply sound' : 'Mute reply sound';
+      var onIcon = chatDockMute.querySelector('.chat-dock-mute-on');
+      var offIcon = chatDockMute.querySelector('.chat-dock-mute-off');
+      if (onIcon) onIcon.hidden = dockMuteBing;
+      if (offIcon) offIcon.hidden = !dockMuteBing;
+      if (chatDock) chatDock.classList.toggle('is-muted', dockMuteBing);
+    }
+
     function closeChatDock() {
       dockKey = '';
-      stopDockPoll();
-      if (chatDock) chatDock.hidden = true;
+      dockSeenMsgId = '';
+      dockSeenMsgAt = '';
+      dockSeenBootstrapped = false;
+      if (chatDock) {
+        chatDock.hidden = true;
+        chatDock.classList.remove('is-nudging');
+      }
+      if (chatDockPing) {
+        chatDockPing.hidden = true;
+        chatDockPing.classList.remove('is-flash');
+      }
       if (chatDockForm) {
         chatDockForm.reset();
         fillFormsFromMemory();
       }
+      // Keep board poll alive for inbound call toasts.
+      startDockPoll();
+      showCallsForYou();
     }
 
     function renderChatDock() {
@@ -700,13 +1253,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var thread = me ? threadForPair(me, dockKey) : null;
       var messages = (thread && thread.messages) || [];
       var hasThread = messages.length > 0;
+      detectOtherReplies(messages, me);
       if (chatDockThread) {
         chatDockThread.innerHTML = messages
           .map(function (msg) {
             var mine = msg.fromKey === me;
             return (
               '<li class="call-msg' +
-              (mine ? ' is-mine' : '') +
+              (mine ? ' is-mine' : ' is-theirs') +
               '">' +
               '<p class="call-msg-from">' +
               esc(mine ? 'You' : msg.fromName) +
@@ -747,6 +1301,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         );
       }
       fillFormsFromMemory();
+      syncMuteButton();
     }
 
     function openChatDock(key, options) {
@@ -755,10 +1310,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       var person = personByKey(key);
       if (!person && !opts.allowMissing) return;
       dockKey = key;
+      dockSeenMsgId = '';
+      dockSeenMsgAt = '';
+      dockSeenBootstrapped = false;
       rememberTalk(key, (person && person.name) || key);
       if (meNeedsMark(key)) markCallsSeen();
+      var me = selfKey();
+      var thread = me ? threadForPair(me, key) : null;
+      seedDockSeen((thread && thread.messages) || []);
+      dockSeenBootstrapped = true;
       renderChatDock();
       startDockPoll();
+      maybeAskNotifyPermission();
       if (opts.focus !== false && chatDockForm) {
         try {
           var msg = chatDockForm.elements.namedItem('message');
@@ -992,6 +1555,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           '</button>' +
           '</div>'
         : '';
+      var tgBlock = person.telegram
+        ? '<div class="tg-bridge">' +
+          '<div class="tg-bridge-head">' +
+          '<div class="tg-pair tg-pair--compact" aria-hidden="true">' +
+          '<span class="tg-pair-crest"><img src="' +
+          esc(siteLogo) +
+          '" alt="" width="40" height="51" decoding="async" /></span>' +
+          '<span class="tg-pair-tg">' +
+          tgMarkSvg +
+          '</span>' +
+          '</div>' +
+          '<p class="tg-bridge-kicker">Soul Searchers · opens Telegram</p>' +
+          '</div>' +
+          '<p class="tg-bridge-hint">They opted in. Opens their chat in Telegram — you still tap Send. Username stays off this map.</p>' +
+          '<a class="btn btn-primary hook-tg" href="/api/hooks/telegram?person=' +
+          encodeURIComponent(person.key) +
+          '" target="soul-telegram">Open Telegram — then Send</a>' +
+          '</div>'
+        : '';
+      var waBlock = person.whatsapp
+        ? '<div class="wa-bridge">' +
+          '<div class="wa-bridge-head">' +
+          '<div class="wa-pair wa-pair--compact" aria-hidden="true">' +
+          '<span class="wa-pair-crest"><img src="' +
+          esc(siteLogo) +
+          '" alt="" width="40" height="51" decoding="async" /></span>' +
+          '<span class="wa-pair-wa">' +
+          waMarkSvg +
+          '</span>' +
+          '</div>' +
+          '<p class="wa-bridge-kicker">Soul Searchers · opens WhatsApp</p>' +
+          '</div>' +
+          '<p class="wa-bridge-hint">They also left WhatsApp. Opens their chat — you still tap Send. Digits stay off this map.</p>' +
+          '<a class="btn btn-ghost hook-wa" href="/api/hooks/whatsapp?person=' +
+          encodeURIComponent(person.key) +
+          '" target="soul-whatsapp">Open WhatsApp — then Send</a>' +
+          '</div>'
+        : '';
       openBox.hidden = false;
       openBox.innerHTML =
         '<div class="open-head">' +
@@ -1003,6 +1604,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         '<button type="button" class="open-close" data-close="1">Close</button>' +
         '</div>' +
         (stalls || offers ? stalls + offers : '<p class="hook-note">Nothing pinned yet.</p>') +
+        tgBlock +
+        waBlock +
         callBlock +
         (hookId
           ? '<button type="button" class="btn btn-ghost hook-write" data-write="' +
@@ -1014,6 +1617,74 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       floatOpen(person);
       fillFormsFromMemory();
       if (showCall && meKey && hasThread) markCallsSeen();
+    }
+
+    /** Visual mark centre in the shared floor’s 0–100 space (matches SVG viewBox). */
+    function markCenterPct(dotEl, floorRect) {
+      if (!dotEl || !floorRect || floorRect.width < 1 || floorRect.height < 1) return null;
+      var mark = dotEl.querySelector('.dot-mark') || dotEl;
+      var box = mark.getBoundingClientRect();
+      return {
+        x: (((box.left + box.right) / 2 - floorRect.left) / floorRect.width) * 100,
+        y: (((box.top + box.bottom) / 2 - floorRect.top) / floorRect.height) * 100,
+        rPx: Math.min(box.width, box.height) / 2,
+      };
+    }
+
+    /**
+     * Centre of bubble A → centre of bubble B in the shared floor’s 0–100 space.
+     * Measures live .dot-mark boxes so host / crowd / pack / open-scale stay aligned.
+     */
+    function linkChord(a, b, floorRect) {
+      var ca = markCenterPct(a, floorRect);
+      var cb = markCenterPct(b, floorRect);
+      if (!ca || !cb) return null;
+      return { x1: ca.x, y1: ca.y, x2: cb.x, y2: cb.y };
+    }
+
+    function paintGroupLinks(people, byKey, selected, near) {
+      if (!linksBox) return;
+      var floorRect = (floorBox || roomBox || linksBox).getBoundingClientRect();
+      var lines = [];
+      var seen = {};
+      var drawAll = people.length < 80;
+      people.forEach(function (person) {
+        if (!drawAll && (!selected || (person.key !== selected.key && !near[person.key]))) return;
+        (person.neighborKeys || []).forEach(function (key) {
+          var edge = person.key < key ? person.key + '|' + key : key + '|' + person.key;
+          if (seen[edge]) return;
+          seen[edge] = true;
+          var other = byKey[key];
+          if (!other) return;
+          var hot = selected && (person.key === selected.key || other.key === selected.key);
+          if (!drawAll && !hot) return;
+          var aEl = dotsBox.querySelector('.dot[data-open="' + CSS.escape(person.key) + '"]');
+          var bEl = dotsBox.querySelector('.dot[data-open="' + CSS.escape(other.key) + '"]');
+          var chord = linkChord(aEl, bEl, floorRect);
+          if (!chord) {
+            chord = {
+              x1: Number(person.x) || 0,
+              y1: Number(person.y) || 0,
+              x2: Number(other.x) || 0,
+              y2: Number(other.y) || 0,
+            };
+          }
+          lines.push(
+            '<line x1="' +
+              chord.x1 +
+              '" y1="' +
+              chord.y1 +
+              '" x2="' +
+              chord.x2 +
+              '" y2="' +
+              chord.y2 +
+              '" class="' +
+              (hot ? 'is-hot' : '') +
+              '" />',
+          );
+        });
+      });
+      linksBox.innerHTML = lines.join('');
     }
 
     function renderGroup(payload) {
@@ -1059,35 +1730,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           near[key] = true;
         });
       }
-      var lines = [];
-      var seen = {};
-      var drawAll = people.length < 80;
-      people.forEach(function (person) {
-        if (!drawAll && (!selected || (person.key !== selected.key && !near[person.key]))) return;
-        (person.neighborKeys || []).forEach(function (key) {
-          var edge = person.key < key ? person.key + '|' + key : key + '|' + person.key;
-          if (seen[edge]) return;
-          seen[edge] = true;
-          var other = byKey[key];
-          if (!other) return;
-          var hot = selected && (person.key === selected.key || other.key === selected.key);
-          if (!drawAll && !hot) return;
-          lines.push(
-            '<line x1="' +
-              person.x +
-              '" y1="' +
-              person.y +
-              '" x2="' +
-              other.x +
-              '" y2="' +
-              other.y +
-              '" class="' +
-              (hot ? 'is-hot' : '') +
-              '" />',
-          );
-        });
-      });
-      if (linksBox) linksBox.innerHTML = lines.join('');
+      // Paint dots first so link endpoints can measure real mark centres.
       dotsBox.innerHTML = people
         .map(function (person) {
           var host = person.stalls && person.stalls.length;
@@ -1115,6 +1758,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           );
         })
         .join('');
+      paintGroupLinks(people, byKey, selected, near);
       renderOpen(selected || null);
     }
 
@@ -1199,6 +1843,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             place: String(data.get('place') || '').trim(),
             note: String(data.get('note') || '').trim(),
             email: String(data.get('email') || '').trim(),
+            phone: String(data.get('phone') || '').trim(),
             company: String(data.get('fax_number_leave_blank') || data.get('company') || '').trim(),
           }),
         })
@@ -1213,6 +1858,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 String(data.get('name') || '').trim(),
                 String(data.get('place') || '').trim(),
                 String(data.get('email') || '').trim(),
+                String(data.get('phone') || '').trim(),
               );
               pinForm.hidden = true;
               if (pinSuccess) pinSuccess.hidden = false;
@@ -1477,6 +2123,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
     }
 
+    if (chatDockMute) {
+      chatDockMute.addEventListener('click', function () {
+        dockMuteBing = !dockMuteBing;
+        syncMuteButton();
+      });
+    }
+
     if (chatDockForm) {
       chatDockForm.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -1507,8 +2160,283 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
     }
 
+    function phoneDigitsForWa(raw) {
+      var value = String(raw || '')
+        .trim()
+        .slice(0, 32);
+      if (!value) return '';
+      var digits = value.replace(/[^\d+]/g, '');
+      var hasPlus = digits.charAt(0) === '+';
+      var only = (hasPlus ? digits.slice(1) : digits).replace(/\D/g, '');
+      if (only.length < 8 || only.length > 15) return '';
+      return only;
+    }
+
+    function cleanTelegramHandle(raw) {
+      var value = String(raw || '')
+        .trim()
+        .slice(0, 33);
+      if (!value) return '';
+      if (value.charAt(0) === '@') value = value.slice(1);
+      value = value.trim();
+      if (!/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(value)) return '';
+      return value;
+    }
+
+    function telegramMeUrl(username) {
+      var handle = cleanTelegramHandle(username);
+      if (!handle) return '';
+      return 'https://t.me/' + handle;
+    }
+
+    function waComposePrefill(name) {
+      var who = String(name || '')
+        .trim()
+        .slice(0, 80);
+      if (who) return 'Hey ' + who + ' — from the Soul Searchers map.';
+      return 'Hey from the Soul Searchers map.';
+    }
+
+    function waMeUrl(phone, name) {
+      var digits = phoneDigitsForWa(phone);
+      if (!digits) return '';
+      return (
+        'https://wa.me/' +
+        digits +
+        '?text=' +
+        encodeURIComponent(waComposePrefill(name))
+      );
+    }
+
+    function showTgComposeError(message) {
+      if (!tgComposeError) return;
+      if (!message) {
+        tgComposeError.hidden = true;
+        tgComposeError.textContent = '';
+        return;
+      }
+      tgComposeError.hidden = false;
+      tgComposeError.textContent = message;
+    }
+
+    function showWaComposeError(message) {
+      if (!waComposeError) return;
+      if (!message) {
+        waComposeError.hidden = true;
+        waComposeError.textContent = '';
+        return;
+      }
+      waComposeError.hidden = false;
+      waComposeError.textContent = message;
+    }
+
+    function focusTgComposeForm() {
+      var nameEl = tgComposeForm && tgComposeForm.elements.namedItem('name');
+      var tgEl = tgComposeForm && tgComposeForm.elements.namedItem('telegram');
+      if (nameEl) nameEl.focus();
+      else if (tgEl) tgEl.focus();
+    }
+
+    function focusWaComposeForm() {
+      var nameEl = waComposeForm && waComposeForm.elements.namedItem('name');
+      var phoneEl = waComposeForm && waComposeForm.elements.namedItem('phone');
+      if (nameEl) nameEl.focus();
+      else if (phoneEl) phoneEl.focus();
+    }
+
+    function tgComposeIsOpen() {
+      return (
+        !!tgCompose &&
+        !tgCompose.hidden &&
+        tgCompose.classList.contains('is-open') &&
+        !tgCompose.classList.contains('is-closing')
+      );
+    }
+
+    function waComposeIsOpen() {
+      return (
+        !!waCompose &&
+        !waCompose.hidden &&
+        waCompose.classList.contains('is-open') &&
+        !waCompose.classList.contains('is-closing')
+      );
+    }
+
+    function openTgCompose() {
+      if (!tgCompose) return;
+      if (waComposeIsOpen()) closeWaCompose();
+      if (tgComposeIsOpen()) {
+        focusTgComposeForm();
+        return;
+      }
+      if (tgComposeCloseTimer) {
+        window.clearTimeout(tgComposeCloseTimer);
+        tgComposeCloseTimer = 0;
+      }
+      tgCompose.classList.remove('is-closing');
+      tgCompose.hidden = false;
+      void tgCompose.offsetWidth;
+      tgCompose.classList.add('is-open');
+      document.documentElement.classList.add('tg-compose-open');
+      showTgComposeError('');
+      focusTgComposeForm();
+    }
+
+    function openWaCompose() {
+      if (!waCompose) return;
+      if (tgComposeIsOpen()) closeTgCompose();
+      // Already open — just focus the form; don't restart as if closed.
+      if (waComposeIsOpen()) {
+        focusWaComposeForm();
+        return;
+      }
+      if (waComposeCloseTimer) {
+        window.clearTimeout(waComposeCloseTimer);
+        waComposeCloseTimer = 0;
+      }
+      waCompose.classList.remove('is-closing');
+      waCompose.hidden = false;
+      // Force a paint so the open animation can restart after a fast reopen.
+      void waCompose.offsetWidth;
+      waCompose.classList.add('is-open');
+      document.documentElement.classList.add('wa-compose-open');
+      showWaComposeError('');
+      focusWaComposeForm();
+    }
+
+    /** Named tab so a second Open reuses Telegram instead of spawning another prompt. */
+    function openSoulTelegram(url) {
+      window.open(url, 'soul-telegram');
+    }
+
+    /** Named tab so a second Open reuses WhatsApp instead of spawning another prompt. */
+    function openSoulWhatsApp(url) {
+      window.open(url, 'soul-whatsapp');
+    }
+
+    function closeTgCompose() {
+      if (!tgCompose || tgCompose.hidden) return;
+      showTgComposeError('');
+      document.documentElement.classList.remove('tg-compose-open');
+      if (prefersReducedMotion()) {
+        tgCompose.classList.remove('is-open', 'is-closing');
+        tgCompose.hidden = true;
+        return;
+      }
+      tgCompose.classList.add('is-closing');
+      tgCompose.classList.remove('is-open');
+      if (tgComposeCloseTimer) window.clearTimeout(tgComposeCloseTimer);
+      tgComposeCloseTimer = window.setTimeout(function () {
+        tgComposeCloseTimer = 0;
+        tgCompose.classList.remove('is-closing');
+        tgCompose.hidden = true;
+      }, 220);
+    }
+
+    function closeWaCompose() {
+      if (!waCompose || waCompose.hidden) return;
+      showWaComposeError('');
+      document.documentElement.classList.remove('wa-compose-open');
+      if (prefersReducedMotion()) {
+        waCompose.classList.remove('is-open', 'is-closing');
+        waCompose.hidden = true;
+        return;
+      }
+      waCompose.classList.add('is-closing');
+      waCompose.classList.remove('is-open');
+      if (waComposeCloseTimer) window.clearTimeout(waComposeCloseTimer);
+      waComposeCloseTimer = window.setTimeout(function () {
+        waComposeCloseTimer = 0;
+        waCompose.classList.remove('is-closing');
+        waCompose.hidden = true;
+      }, 220);
+    }
+
+    if (tgComposeOpen) {
+      tgComposeOpen.addEventListener('click', function () {
+        openTgCompose();
+      });
+    }
+    if (tgComposeClose) {
+      tgComposeClose.addEventListener('click', function () {
+        closeTgCompose();
+      });
+    }
+    if (tgComposeBackdrop) {
+      tgComposeBackdrop.addEventListener('click', function () {
+        closeTgCompose();
+      });
+    }
+    if (tgComposeForm) {
+      tgComposeForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data = new FormData(tgComposeForm);
+        var handle = String(data.get('telegram') || '').trim();
+        var url = telegramMeUrl(handle);
+        if (!url) {
+          showTgComposeError(
+            'Need a real Telegram username — like @handle — then Open Telegram and tap Send.',
+          );
+          var tgEl = tgComposeForm.elements.namedItem('telegram');
+          if (tgEl) tgEl.focus();
+          return;
+        }
+        showTgComposeError('');
+        openSoulTelegram(url);
+      });
+    }
+
+    if (waComposeOpen) {
+      waComposeOpen.addEventListener('click', function () {
+        openWaCompose();
+      });
+    }
+    if (waComposeClose) {
+      waComposeClose.addEventListener('click', function () {
+        closeWaCompose();
+      });
+    }
+    if (waComposeBackdrop) {
+      waComposeBackdrop.addEventListener('click', function () {
+        closeWaCompose();
+      });
+    }
+    if (waComposeForm) {
+      waComposeForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data = new FormData(waComposeForm);
+        var name = String(data.get('name') || '').trim();
+        var phone = String(data.get('phone') || '').trim();
+        var url = waMeUrl(phone, name);
+        if (!url) {
+          showWaComposeError(
+            'Need a real number with country code — like +49… — then Open WhatsApp and tap Send.',
+          );
+          var phoneEl = waComposeForm.elements.namedItem('phone');
+          if (phoneEl) phoneEl.focus();
+          return;
+        }
+        showWaComposeError('');
+        openSoulWhatsApp(url);
+      });
+    }
+
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Escape') return;
+      if (tgCompose && !tgCompose.hidden) {
+        closeTgCompose();
+        return;
+      }
+      if (waCompose && !waCompose.hidden) {
+        closeWaCompose();
+        return;
+      }
+      if (callToast && !callToast.hidden) {
+        var waitingEsc = callsWaitingForMe();
+        if (waitingEsc[0]) toastDismissedSig = callToastSignature(waitingEsc[0]);
+        hideCallToast();
+        return;
+      }
       if (dockKey) {
         closeChatDock();
         return;
@@ -1553,25 +2481,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       callsForYouOpen.addEventListener('click', function () {
         var key = callsForYouOpen.getAttribute('data-open-call');
         if (!key) return;
-        var person = personByKey(key);
-        if (!person) return;
-        openKey = person.key;
-        rememberTalk(openKey, person.name);
-        markCallsSeen();
-        render(lastPayload);
-        openChatDock(person.key);
-        showCallsForYou();
-        try {
-          var callMark =
-            (typeof CSS !== 'undefined' && CSS.escape
-              ? document.querySelector('.dot[data-open="' + CSS.escape(person.key) + '"]')
-              : null) ||
-            document.getElementById('group-open') ||
-            document.getElementById('group');
-          if (callMark && callMark.scrollIntoView) {
-            callMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        } catch (err) {}
+        openCallFromToast(key);
+      });
+    }
+
+    if (callToastOpen) {
+      callToastOpen.addEventListener('click', function () {
+        var key = callToastOpen.getAttribute('data-open-call') || toastPendingKey;
+        if (!key) return;
+        openCallFromToast(key);
+      });
+    }
+
+    if (callToastDismiss) {
+      callToastDismiss.addEventListener('click', function () {
+        var waitingDismiss = callsWaitingForMe();
+        if (waitingDismiss[0]) toastDismissedSig = callToastSignature(waitingDismiss[0]);
+        hideCallToast();
       });
     }
 
@@ -1584,6 +2510,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     showCookieNote();
     load();
     fillFormsFromMemory();
+    startDockPoll();
+
+    // Re-measure mark centres when the floor box changes size (aspect / viewport).
+    if (typeof ResizeObserver !== 'undefined' && (floorBox || roomBox)) {
+      var relinkTimer = 0;
+      var relinkObs = new ResizeObserver(function () {
+        if (!lastPayload) return;
+        window.clearTimeout(relinkTimer);
+        relinkTimer = window.setTimeout(function () {
+          renderGroup(lastPayload);
+        }, 40);
+      });
+      relinkObs.observe(floorBox || roomBox);
+    }
   })();
 </script>
 
@@ -1668,6 +2608,627 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin-top: 0.7rem;
   }
 
+  .crowd-sign-tg {
+    margin-top: 0.65rem;
+    margin-left: 0.55rem;
+  }
+
+  .crowd-sign-wa-quiet {
+    display: inline-block;
+    margin-top: 0.75rem;
+    margin-left: 0.85rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(215, 224, 232, 0.55);
+    font: inherit;
+    font-size: 0.88rem;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    cursor: pointer;
+  }
+
+  .crowd-sign-wa-quiet:hover {
+    color: rgba(212, 163, 90, 0.88);
+  }
+
+  @media (max-width: 520px) {
+    .crowd-sign-tg {
+      margin-left: 0;
+      display: inline-flex;
+    }
+
+    .crowd-sign-wa-quiet {
+      display: block;
+      margin-left: 0;
+    }
+  }
+
+  .tg-compose {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: end center;
+    padding: max(0.85rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right))
+      max(0.85rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
+  }
+
+  .tg-compose[hidden] {
+    display: none !important;
+  }
+
+  .tg-compose-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: rgba(6, 10, 14, 0.58);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+  }
+
+  .tg-compose.is-open .tg-compose-backdrop {
+    opacity: 1;
+  }
+
+  .tg-compose.is-closing .tg-compose-backdrop {
+    opacity: 0;
+  }
+
+  .tg-compose-card {
+    position: relative;
+    z-index: 1;
+    width: min(24.5rem, 100%);
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.2rem 1.2rem 1.3rem;
+    border: 1px solid rgba(212, 163, 90, 0.26);
+    border-radius: 1.15rem;
+    background:
+      radial-gradient(ellipse 72% 70% at 8% 0%, rgba(212, 163, 90, 0.16), transparent 52%),
+      radial-gradient(ellipse 55% 60% at 100% 100%, rgba(42, 150, 190, 0.16), transparent 58%),
+      rgba(11, 17, 22, 0.98);
+    box-shadow:
+      0 22px 56px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(215, 224, 232, 0.05);
+    opacity: 0;
+    transform: translateY(0.85rem) scale(0.985);
+    transition:
+      opacity 0.24s ease,
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tg-compose.is-open .tg-compose-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .tg-compose.is-closing .tg-compose-card {
+    opacity: 0;
+    transform: translateY(0.55rem) scale(0.99);
+  }
+
+  .tg-compose-head {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding-right: 2.35rem;
+  }
+
+  .tg-pair {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    animation: tg-pair-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .tg-pair--compact {
+    animation: none;
+  }
+
+  .tg-pair-crest,
+  .tg-pair-tg {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+
+  .tg-pair-crest {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 0.78rem;
+    background:
+      linear-gradient(155deg, rgba(212, 163, 90, 0.28), rgba(37, 99, 84, 0.18));
+    border: 1px solid rgba(212, 163, 90, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.12);
+    overflow: hidden;
+  }
+
+  .tg-pair-crest img {
+    width: 1.7rem;
+    height: auto;
+    max-height: 2.05rem;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+  }
+
+  .tg-pair-tg {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 0.78rem;
+    color: #e8f6fc;
+    background:
+      linear-gradient(155deg, rgba(42, 171, 238, 0.45), rgba(24, 120, 170, 0.58));
+    border: 1px solid rgba(42, 171, 238, 0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(220, 245, 255, 0.16),
+      0 0 0 3px rgba(42, 171, 238, 0.08);
+  }
+
+  .tg-pair-tg svg {
+    display: block;
+  }
+
+  .tg-pair--compact .tg-pair-crest,
+  .tg-pair--compact .tg-pair-tg {
+    width: 2.05rem;
+    height: 2.05rem;
+    border-radius: 0.65rem;
+  }
+
+  .tg-pair--compact .tg-pair-crest img {
+    width: 1.35rem;
+  }
+
+  @keyframes tg-pair-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.35rem) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .tg-compose-head-copy {
+    min-width: 0;
+    flex: 1;
+    padding-top: 0.12rem;
+  }
+
+  .tg-compose-kicker {
+    margin: 0;
+    color: rgba(212, 163, 90, 0.78);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .tg-compose-title {
+    margin: 0.18rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.42rem;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    color: var(--paper);
+  }
+
+  .tg-compose-close {
+    position: absolute;
+    top: -0.15rem;
+    right: -0.15rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(215, 224, 232, 0.08);
+    color: rgba(215, 224, 232, 0.72);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+
+  .tg-compose-close:hover {
+    background: rgba(212, 163, 90, 0.18);
+    color: var(--paper);
+  }
+
+  .tg-compose-lead {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .tg-compose-form {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .tg-compose-field {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .tg-compose-field span {
+    color: rgba(212, 163, 90, 0.82);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tg-compose-field input {
+    width: 100%;
+    padding: 0.72rem 0.85rem;
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.7rem;
+    background: rgba(6, 12, 16, 0.72);
+    color: var(--paper);
+    font: inherit;
+    font-size: 1rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .tg-compose-field input::placeholder {
+    color: rgba(215, 224, 232, 0.38);
+  }
+
+  .tg-compose-field input:focus {
+    outline: none;
+    border-color: rgba(42, 171, 238, 0.45);
+    box-shadow: 0 0 0 3px rgba(42, 171, 238, 0.12);
+  }
+
+  .tg-compose-hint {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.62);
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
+  .tg-compose-hint code {
+    color: rgba(212, 163, 90, 0.9);
+    font-size: 0.84em;
+  }
+
+  .tg-compose-error {
+    margin: 0;
+    color: #f0a8a0;
+    font-size: 0.9rem;
+  }
+
+  .tg-compose-error[hidden] {
+    display: none !important;
+  }
+
+  .tg-compose-send {
+    justify-self: start;
+    margin-top: 0.15rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tg-compose-backdrop,
+    .tg-compose-card,
+    .tg-compose-close,
+    .tg-compose-field input,
+    .tg-pair {
+      transition: none !important;
+      animation: none !important;
+    }
+
+    .tg-compose.is-open .tg-compose-card,
+    .tg-compose.is-closing .tg-compose-card {
+      transform: none;
+    }
+  }
+
+  .wa-compose {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: end center;
+    padding: max(0.85rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right))
+      max(0.85rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
+  }
+
+  .wa-compose[hidden] {
+    display: none !important;
+  }
+
+  .wa-compose-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: rgba(6, 10, 14, 0.58);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+  }
+
+  .wa-compose.is-open .wa-compose-backdrop {
+    opacity: 1;
+  }
+
+  .wa-compose.is-closing .wa-compose-backdrop {
+    opacity: 0;
+  }
+
+  .wa-compose-card {
+    position: relative;
+    z-index: 1;
+    width: min(24.5rem, 100%);
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.2rem 1.2rem 1.3rem;
+    border: 1px solid rgba(212, 163, 90, 0.26);
+    border-radius: 1.15rem;
+    background:
+      radial-gradient(ellipse 72% 70% at 8% 0%, rgba(212, 163, 90, 0.16), transparent 52%),
+      radial-gradient(ellipse 55% 60% at 100% 100%, rgba(37, 99, 84, 0.14), transparent 58%),
+      rgba(11, 17, 22, 0.98);
+    box-shadow:
+      0 22px 56px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(215, 224, 232, 0.05);
+    opacity: 0;
+    transform: translateY(0.85rem) scale(0.985);
+    transition:
+      opacity 0.24s ease,
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .wa-compose.is-open .wa-compose-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .wa-compose.is-closing .wa-compose-card {
+    opacity: 0;
+    transform: translateY(0.55rem) scale(0.99);
+  }
+
+  .wa-compose-head {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding-right: 2.35rem;
+  }
+
+  .wa-pair {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    animation: wa-pair-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .wa-pair--compact {
+    animation: none;
+  }
+
+  .wa-pair-crest,
+  .wa-pair-wa {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+
+  .wa-pair-crest {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 0.78rem;
+    background:
+      linear-gradient(155deg, rgba(212, 163, 90, 0.28), rgba(37, 99, 84, 0.18));
+    border: 1px solid rgba(212, 163, 90, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.12);
+    overflow: hidden;
+  }
+
+  .wa-pair-crest img {
+    width: 1.7rem;
+    height: auto;
+    max-height: 2.05rem;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+  }
+
+  .wa-pair-wa {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 0.78rem;
+    color: #dff7e8;
+    background:
+      linear-gradient(155deg, rgba(37, 211, 102, 0.42), rgba(18, 140, 80, 0.55));
+    border: 1px solid rgba(37, 211, 102, 0.38);
+    box-shadow:
+      inset 0 1px 0 rgba(220, 255, 230, 0.16),
+      0 0 0 3px rgba(37, 211, 102, 0.08);
+  }
+
+  .wa-pair-wa svg {
+    display: block;
+  }
+
+  .wa-pair--compact .wa-pair-crest,
+  .wa-pair--compact .wa-pair-wa {
+    width: 2.05rem;
+    height: 2.05rem;
+    border-radius: 0.65rem;
+  }
+
+  .wa-pair--compact .wa-pair-crest img {
+    width: 1.35rem;
+  }
+
+  @keyframes wa-pair-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.35rem) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .wa-compose-head-copy {
+    min-width: 0;
+    flex: 1;
+    padding-top: 0.12rem;
+  }
+
+  .wa-compose-kicker {
+    margin: 0;
+    color: rgba(212, 163, 90, 0.78);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .wa-compose-title {
+    margin: 0.18rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.42rem;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    color: var(--paper);
+    line-height: 1.12;
+  }
+
+  .wa-compose-close {
+    position: absolute;
+    top: -0.1rem;
+    right: -0.15rem;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(215, 224, 232, 0.08);
+    color: rgba(215, 224, 232, 0.78);
+    font: inherit;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-grid;
+    place-items: center;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+
+  .wa-compose-close:hover {
+    background: rgba(215, 224, 232, 0.14);
+    color: var(--paper);
+  }
+
+  .wa-compose-lead {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.76);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .wa-compose-form {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .wa-compose-field {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .wa-compose-field span {
+    color: rgba(215, 224, 232, 0.58);
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .wa-compose-field input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.75rem;
+    padding: 0.78rem 0.88rem;
+    background: rgba(8, 12, 16, 0.58);
+    color: var(--paper);
+    font: inherit;
+    font-size: 1.02rem;
+    transition: border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .wa-compose-field input::placeholder {
+    color: rgba(215, 224, 232, 0.38);
+  }
+
+  .wa-compose-field input:focus {
+    outline: 2px solid rgba(212, 163, 90, 0.42);
+    outline-offset: 1px;
+    border-color: rgba(212, 163, 90, 0.35);
+    background: rgba(8, 12, 16, 0.72);
+  }
+
+  .wa-compose-hint {
+    margin: 0.05rem 0 0;
+    color: rgba(215, 224, 232, 0.64);
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .wa-compose-hint code {
+    font-size: 0.84em;
+    color: rgba(212, 163, 90, 0.95);
+  }
+
+  .wa-compose-error {
+    margin: 0;
+    color: #f0b4a8;
+    font-size: 0.9rem;
+  }
+
+  .wa-compose-error[hidden] {
+    display: none !important;
+  }
+
+  .wa-compose-send {
+    margin-top: 0.2rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wa-compose-backdrop,
+    .wa-compose-card,
+    .wa-compose-close,
+    .wa-compose-field input,
+    .wa-pair {
+      transition: none !important;
+      animation: none !important;
+    }
+
+    .wa-compose.is-open .wa-compose-card,
+    .wa-compose.is-closing .wa-compose-card {
+      transform: none;
+    }
+  }
+
   .welcome-back {
     display: flex;
     flex-wrap: wrap;
@@ -1730,6 +3291,123 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .calls-for-you-open:hover {
     background: rgba(212, 163, 90, 0.22);
+  }
+
+  .call-toast {
+    position: fixed;
+    z-index: 60;
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: 50%;
+    width: min(26rem, calc(100vw - 1.5rem));
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .call-toast[hidden] {
+    display: none !important;
+  }
+
+  .call-toast-card {
+    pointer-events: auto;
+    padding: 0.95rem 1.05rem 1.05rem;
+    border: 1px solid rgba(212, 163, 90, 0.38);
+    border-radius: 1rem;
+    background:
+      linear-gradient(165deg, rgba(26, 36, 48, 0.96), rgba(12, 18, 24, 0.96)),
+      radial-gradient(ellipse 90% 80% at 10% 0%, rgba(61, 107, 122, 0.22), transparent 55%);
+    box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.35);
+    color: rgba(215, 224, 232, 0.94);
+  }
+
+  .call-toast.is-in .call-toast-card {
+    animation: call-toast-in 0.32s ease;
+  }
+
+  @keyframes call-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.65rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .call-toast-kicker {
+    margin: 0 0 0.35rem;
+    color: rgba(212, 163, 90, 0.82);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .call-toast-title {
+    margin: 0;
+    color: var(--paper);
+    font-size: 1.12rem;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .call-toast-note {
+    margin: 0.45rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .call-toast-note[hidden] {
+    display: none !important;
+  }
+
+  .call-toast-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 0.75rem;
+    margin-top: 0.85rem;
+  }
+
+  .call-toast-open {
+    margin: 0;
+  }
+
+  .call-toast-dismiss {
+    margin: 0;
+    padding: 0.4rem 0.55rem;
+    border: 0;
+    background: transparent;
+    color: rgba(215, 224, 232, 0.62);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .call-toast-dismiss:hover {
+    color: var(--amber-hot);
+  }
+
+  @media (max-width: 560px) {
+    .call-toast {
+      top: max(0.55rem, env(safe-area-inset-top));
+      width: calc(100vw - 1rem);
+    }
+
+    .call-toast-card {
+      padding: 0.9rem 0.95rem 1rem;
+    }
+
+    .call-toast-title {
+      font-size: 1.05rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .call-toast.is-in .call-toast-card {
+      animation: none;
+    }
   }
 
   .cookie-note {
@@ -1940,17 +3618,26 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     stroke-linecap: round;
   }
 
+  .group-floor {
+    position: absolute;
+    inset: 0;
+  }
+
   .group-links {
     position: absolute;
     inset: 0;
+    z-index: 1;
+    display: block;
     width: 100%;
     height: 100%;
     pointer-events: none;
+    overflow: visible;
   }
 
   .group-links line {
     stroke: rgba(215, 224, 232, 0.16);
     stroke-width: 0.35;
+    stroke-linecap: round;
   }
 
   .group-links line.is-hot {
@@ -1961,6 +3648,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .group-dots {
     position: absolute;
     inset: 0;
+    z-index: 2;
   }
 
   .group-empty {
@@ -1984,19 +3672,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .dot-mark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
     display: block;
     width: 0.7rem;
     height: 0.7rem;
-    margin: 0.95rem auto 0;
+    margin: 0;
     border-radius: 50%;
-    background: rgba(215, 224, 232, 0.82);
+    background: rgb(215, 224, 232);
     box-shadow: 0 0 0 4px rgba(215, 224, 232, 0.08);
+    transform: translate(-50%, -50%);
   }
 
   .dot.is-host .dot-mark {
     width: 0.86rem;
     height: 0.86rem;
-    margin-top: 0.87rem;
     background: var(--amber);
     box-shadow: 0 0 0 5px rgba(212, 163, 90, 0.14);
   }
@@ -2006,7 +3697,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .dot.is-open .dot-mark {
-    transform: scale(1.28);
+    transform: translate(-50%, -50%) scale(1.28);
     box-shadow: 0 0 0 7px rgba(212, 163, 90, 0.32);
   }
 
@@ -2163,11 +3854,101 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     line-height: 1.4;
   }
 
+  .wa-bridge {
+    margin: 1rem 0 0.35rem;
+    padding: 0.95rem 0 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.1);
+  }
+
+  .tg-bridge {
+    margin: 1rem 0 0.35rem;
+    padding: 0.95rem 0 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.1);
+  }
+
+  .tg-bridge-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 0 0.45rem;
+  }
+
+  .tg-bridge-kicker {
+    margin: 0;
+    color: rgba(212, 163, 90, 0.78);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .tg-bridge-hint {
+    margin: 0 0 0.75rem;
+    color: rgba(215, 224, 232, 0.74);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .hook-tg {
+    display: inline-flex;
+    margin-top: 0.1rem;
+    text-decoration: none;
+  }
+
+  .wa-bridge-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 0 0.45rem;
+  }
+
+  .wa-bridge-kicker {
+    margin: 0;
+    color: rgba(212, 163, 90, 0.78);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .wa-bridge-hint {
+    margin: 0 0 0.75rem;
+    color: rgba(215, 224, 232, 0.74);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .hook-wa {
+    display: inline-flex;
+    margin-top: 0.1rem;
+    text-decoration: none;
+  }
+
+  .phone-bridge-hint {
+    margin: -0.25rem 0 0.85rem;
+    color: rgba(215, 224, 232, 0.64);
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
+  .phone-bridge-hint--quiet {
+    color: rgba(215, 224, 232, 0.48);
+    font-size: 0.82rem;
+  }
+
+  .phone-bridge-hint code {
+    font-size: 0.84em;
+    color: rgba(212, 163, 90, 0.95);
+  }
+
   .call-thread {
     list-style: none;
     margin: 0 0 0.75rem;
     padding: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.55rem;
     max-height: 9rem;
     overflow: auto;
@@ -2175,13 +3956,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .call-msg {
     margin: 0;
-    padding: 0.55rem 0.65rem;
-    border-radius: 0.65rem;
-    background: rgba(215, 224, 232, 0.06);
+    padding: 0.55rem 0.7rem;
+    max-width: 92%;
+    border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+    border: 1px solid rgba(61, 107, 122, 0.35);
+    background: rgba(61, 107, 122, 0.2);
+    align-self: flex-start;
+  }
+
+  .call-msg.is-theirs {
+    border-color: rgba(61, 107, 122, 0.35);
+    background: rgba(61, 107, 122, 0.2);
   }
 
   .call-msg.is-mine {
-    background: rgba(212, 163, 90, 0.12);
+    align-self: flex-end;
+    border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+    border-color: rgba(212, 163, 90, 0.42);
+    background: rgba(212, 163, 90, 0.2);
   }
 
   .call-msg-from {
@@ -2193,12 +3985,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     text-transform: uppercase;
   }
 
+  .call-msg.is-theirs .call-msg-from {
+    color: rgba(150, 190, 200, 0.78);
+  }
+
+  .call-msg.is-mine .call-msg-from {
+    color: rgba(212, 163, 90, 0.88);
+    text-align: right;
+  }
+
   .call-msg-text {
     margin: 0;
-    color: rgba(215, 224, 232, 0.9);
+    color: rgba(215, 224, 232, 0.92);
     font-size: 0.92rem;
     line-height: 1.4;
     white-space: pre-wrap;
+  }
+
+  .call-msg.is-mine .call-msg-text {
+    color: rgba(245, 232, 210, 0.96);
   }
 
   .call-form {
@@ -2250,7 +4055,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .chat-dock-head {
     position: relative;
-    padding-right: 2.2rem;
+    padding-right: 4.4rem;
   }
 
   .chat-dock-kicker {
@@ -2272,10 +4077,67 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     line-height: 1.15;
   }
 
+  .chat-dock-ping {
+    position: absolute;
+    top: 0.15rem;
+    right: 4.05rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: rgba(212, 163, 90, 0.95);
+    box-shadow: 0 0 0 0 rgba(212, 163, 90, 0.45);
+    pointer-events: none;
+  }
+
+  .chat-dock-ping[hidden] {
+    display: none !important;
+  }
+
+  .chat-dock-ping.is-flash {
+    animation: chat-dock-ping-flash 0.7s ease;
+  }
+
+  @keyframes chat-dock-ping-flash {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+      box-shadow: 0 0 0 0 rgba(212, 163, 90, 0.5);
+    }
+    35% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 0.45rem rgba(212, 163, 90, 0);
+    }
+    100% {
+      opacity: 0.15;
+      transform: scale(0.85);
+      box-shadow: 0 0 0 0 rgba(212, 163, 90, 0);
+    }
+  }
+
+  .chat-dock.is-nudging {
+    animation: chat-dock-nudge 0.55s ease;
+  }
+
+  @keyframes chat-dock-nudge {
+    0% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(-0.28rem);
+    }
+    55% {
+      transform: translateY(0.08rem);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  .chat-dock-mute,
   .chat-dock-close {
     position: absolute;
     top: -0.15rem;
-    right: -0.2rem;
     width: 2rem;
     height: 2rem;
     border: 0;
@@ -2286,18 +4148,39 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 1.35rem;
     line-height: 1;
     cursor: pointer;
+    display: inline-grid;
+    place-items: center;
   }
 
+  .chat-dock-mute {
+    right: 1.95rem;
+    font-size: 0;
+  }
+
+  .chat-dock-close {
+    right: -0.2rem;
+  }
+
+  .chat-dock-mute:hover,
   .chat-dock-close:hover {
     background: rgba(215, 224, 232, 0.14);
     color: var(--paper);
+  }
+
+  .chat-dock-mute[aria-pressed='true'] {
+    color: rgba(215, 224, 232, 0.45);
+  }
+
+  .chat-dock-mute svg[hidden] {
+    display: none !important;
   }
 
   .chat-dock-thread {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.45rem;
     max-height: 11rem;
     overflow: auto;
@@ -2397,6 +4280,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     .chat-dock-card {
       animation: none;
     }
+
+    .chat-dock.is-nudging {
+      animation: none;
+    }
+
+    .chat-dock-ping.is-flash {
+      animation: none;
+      opacity: 1;
+    }
   }
 
   .near-name {
@@ -2439,14 +4331,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .group-dots.is-crowd .dot-mark {
     width: 0.48rem;
     height: 0.48rem;
-    margin-top: 0.61rem;
     box-shadow: 0 0 0 3px rgba(215, 224, 232, 0.08);
   }
 
   .group-dots.is-crowd .dot.is-host .dot-mark {
     width: 0.58rem;
     height: 0.58rem;
-    margin-top: 0.56rem;
   }
 
   .group-dots.is-pack .dot {
@@ -2457,14 +4347,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .group-dots.is-pack .dot-mark {
     width: 0.34rem;
     height: 0.34rem;
-    margin-top: 0.4rem;
     box-shadow: 0 0 0 2px rgba(215, 224, 232, 0.07);
   }
 
   .group-dots.is-pack .dot.is-host .dot-mark {
     width: 0.42rem;
     height: 0.42rem;
-    margin-top: 0.36rem;
   }
 
   .market {
