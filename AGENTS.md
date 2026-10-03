@@ -24,6 +24,11 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 - Kit: `/kit` (public)
 - Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / WhatsApp phone (opt-in bridges only; handles and digits never on the public map; Telegram first)
 
+### Photos
+
+- Size budget: `npm run photos:check` / `npm run photos:fix` (`scripts/optimise-photos.py`, under ~1 MB CMS / ~350 KB web)
+- Enhance (colour + crispness): `npm run photos:enhance -- path/to/pic.jpg` → writes `*_enhanced.jpg`; `--in-place` overwrites. Dry-run: `npm run photos:enhance:check -- path`. Needs `pip3 install pillow`. Mac one-shot (HEIC via `sips`): `sh scripts/enhance-photo.sh ~/Desktop/IMG.HEIC`. Run `photos:fix` after if anything is still heavy.
+
 ### Live domain
 
 `thenewsoulsearchers.de` is the Cloudflare Worker **`thenewsoulsearchersblog`** (Git repo `chewbacca23/thenewsoulsearchersblog`). See `CLOUDFLARE.md`.
