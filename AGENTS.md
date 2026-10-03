@@ -24,7 +24,7 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 - Config / Impressum fields: `src/site.config.ts`
 - Routes: `/`, `/stories` (Rides), `/week` (This week), `/stores` (Stores), `/marketplace` (Marketplace), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin` (`/now` shot feed and `/journal` stay reachable; off primary nav. `/path` redirects to About)
 - Kit: `/kit` (public)
-- Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / WhatsApp phone (opt-in bridges only; handles and digits never on the public map; Telegram first)
+- Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / Signal phone (opt-in bridges only; handles and digits never on the public map; Telegram first, Signal second)
 
 ### Photos
 

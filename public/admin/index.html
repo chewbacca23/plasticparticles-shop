@@ -34,7 +34,8 @@
       }
 
       .cms-top {
-        position: relative;
+        position: sticky;
+        top: 0;
         z-index: 20000;
         border-bottom: 1px solid rgba(215, 224, 232, 0.08);
         background: rgba(10, 14, 20, 0.72);
@@ -279,13 +280,13 @@
       }
 
       .cms-where {
-        margin-top: 0.85rem;
-        padding: 0.85rem 1.05rem 0.95rem;
+        margin-top: 0.45rem;
+        padding: 0.4rem 0.75rem 0.45rem;
         border: 1px solid rgba(212, 163, 90, 0.35);
-        border-radius: 1rem;
+        border-radius: 0.75rem;
         background:
           linear-gradient(135deg, rgba(212, 163, 90, 0.16), rgba(18, 26, 34, 0.55));
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
       }
 
       .cms-where[hidden] {
@@ -302,21 +303,18 @@
       }
 
       .cms-where-title {
-        margin: 0.2rem 0 0;
+        margin: 0.05rem 0 0;
         font-family: var(--font-display);
-        font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+        font-size: clamp(1.05rem, 2.1vw, 1.35rem);
         font-weight: 600;
-        line-height: 1.1;
+        line-height: 1.15;
         letter-spacing: 0.04em;
         text-transform: uppercase;
         color: var(--paper);
       }
 
       .cms-where-hint {
-        margin: 0.4rem 0 0;
-        color: rgba(215, 224, 232, 0.78);
-        font-size: 0.92rem;
-        line-height: 1.4;
+        display: none;
       }
 
       .banner {
@@ -430,7 +428,24 @@
         (preview off in config.yml) and park the editor below the brand bar.
       */
       :root {
-        --cms-top-h: 11.5rem;
+        --cms-top-h: 6.5rem;
+      }
+
+      /* Collections + Decap chrome sit up under the brand bar, not under it. */
+      [class*='AppHeader'] {
+        position: sticky !important;
+        top: var(--cms-top-h) !important;
+        z-index: 40 !important;
+      }
+
+      [class*='SidebarContainer'] {
+        max-height: calc(100vh - var(--cms-top-h) - 3.6rem) !important;
+        overflow: auto !important;
+      }
+
+      [class*='CollectionContainer'],
+      [class*='AppMainContainer'] {
+        min-height: calc(100vh - var(--cms-top-h)) !important;
       }
 
       [class*='EditorContainer'] {

@@ -16,8 +16,8 @@ import { site } from '../site.config';
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
         and it opens. Call upon someone near you with a short note. Email, phone, and Telegram stay
         off the page — Telegram only opens a free door if they opted in. Or Telegram a buddy from
-        your contacts: we open the app, you tap Send. WhatsApp is still there, quieter, if you need
-        it.
+        your contacts: we open the app, you tap Send. Signal is the other door, quieter, if you
+        need it.
       </p>
 
       <p id="welcome-back" class="welcome-back" hidden>
@@ -117,9 +117,9 @@ import { site } from '../site.config';
         </div>
       </div>
 
-      <!-- Client-only WhatsApp window — paste a name + number, open wa.me; they still tap Send. -->
+      <!-- Client-only Signal window — paste a name + number, open signal.me; they still tap Send. -->
       <div id="wa-compose" class="wa-compose" hidden>
-        <button type="button" class="wa-compose-backdrop" id="wa-compose-backdrop" aria-label="Close WhatsApp"></button>
+        <button type="button" class="wa-compose-backdrop" id="wa-compose-backdrop" aria-label="Close Signal"></button>
         <div
           class="wa-compose-card"
           role="dialog"
@@ -131,7 +131,7 @@ import { site } from '../site.config';
               <span class="wa-pair-crest">
                 <img src={site.logo} alt="" width="40" height="51" decoding="async" />
               </span>
-              <span class="wa-pair-wa" title="WhatsApp">
+              <span class="wa-pair-wa" title="Signal">
                 <svg viewBox="0 0 24 24" width="22" height="22" focusable="false">
                   <path
                     fill="currentColor"
@@ -141,7 +141,7 @@ import { site } from '../site.config';
               </span>
             </div>
             <div class="wa-compose-head-copy">
-              <p class="wa-compose-kicker">Soul Searchers · opens WhatsApp</p>
+              <p class="wa-compose-kicker">Soul Searchers · opens Signal</p>
               <h2 class="wa-compose-title" id="wa-compose-title">Message a buddy</h2>
             </div>
             <button type="button" class="wa-compose-close" id="wa-compose-close" aria-label="Close">
@@ -149,7 +149,7 @@ import { site } from '../site.config';
             </button>
           </header>
           <p class="wa-compose-lead">
-            Paste a name and number from your phone. We open WhatsApp — you tap Send. Nothing is
+            Paste a name and number from your phone. We open Signal — you tap Send. Nothing is
             stored on our server.
           </p>
           <form class="wa-compose-form" id="wa-compose-form">
@@ -176,12 +176,12 @@ import { site } from '../site.config';
               />
             </label>
             <p class="wa-compose-hint">
-              Keep the country code — <code>+49…</code> for Germany. Opens WhatsApp on your phone or
-              in the browser; the draft waits until you hit Send.
+              Keep the country code — <code>+49…</code> for Germany. Opens Signal on your phone or
+              in the browser; you still tap Send.
             </p>
             <p class="wa-compose-error" id="wa-compose-error" hidden></p>
             <button class="btn btn-primary wa-compose-send" type="submit">
-              Open WhatsApp — then Send
+              Open Signal — then Send
             </button>
           </form>
         </div>
@@ -229,7 +229,7 @@ import { site } from '../site.config';
           Telegram a buddy
         </button>
         <button type="button" class="crowd-sign-wa-quiet" id="wa-compose-open">
-          WhatsApp instead
+          Signal a buddy
         </button>
       </aside>
 
@@ -238,7 +238,7 @@ import { site } from '../site.config';
           Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
           your machine, so when you stand on the map we can welcome you back to the person you last
           talked to, and quietly show if someone called upon you. Optional email, Telegram username,
-          and WhatsApp phone stay private — never on the public map. Messengers only open for people
+          and Signal phone stay private — never on the public map. Messengers only open for people
           who opted in; the visitor still taps Send. No ads. No trackers. Just the good kind of
           remembering.
           <span class="cookie-wink" aria-hidden="true">;)</span>
@@ -376,7 +376,7 @@ import { site } from '../site.config';
           we open Telegram for visitors; they still hit Send. With or without the <code>@</code>.
         </p>
         <label>
-          <span>WhatsApp — optional, quieter, never on the map</span>
+          <span>Signal — optional, quieter, never on the map</span>
           <input
             type="tel"
             name="phone"
@@ -387,8 +387,8 @@ import { site } from '../site.config';
           />
         </label>
         <p class="phone-bridge-hint phone-bridge-hint--quiet">
-          Still works if someone prefers WhatsApp. Digits stay private. Best as <code>+49…</code>
-          with country code.
+          Opt in if you want an Open Signal button on your dot. Digits stay private. Best as
+          <code>+49…</code> with country code.
         </p>
         <label class="hp" aria-hidden="true">
           <span>Company</span>
@@ -1574,7 +1574,7 @@ import { site } from '../site.config';
           '" target="soul-telegram">Open Telegram — then Send</a>' +
           '</div>'
         : '';
-      var waBlock = person.whatsapp
+      var waBlock = person.signal || person.whatsapp
         ? '<div class="wa-bridge">' +
           '<div class="wa-bridge-head">' +
           '<div class="wa-pair wa-pair--compact" aria-hidden="true">' +
@@ -1585,12 +1585,12 @@ import { site } from '../site.config';
           waMarkSvg +
           '</span>' +
           '</div>' +
-          '<p class="wa-bridge-kicker">Soul Searchers · opens WhatsApp</p>' +
+          '<p class="wa-bridge-kicker">Soul Searchers · opens Signal</p>' +
           '</div>' +
-          '<p class="wa-bridge-hint">They also left WhatsApp. Opens their chat — you still tap Send. Digits stay off this map.</p>' +
-          '<a class="btn btn-ghost hook-wa" href="/api/hooks/whatsapp?person=' +
+          '<p class="wa-bridge-hint">They also left Signal. Opens their chat — you still tap Send. Digits stay off this map.</p>' +
+          '<a class="btn btn-ghost hook-wa" href="/api/hooks/signal?person=' +
           encodeURIComponent(person.key) +
-          '" target="soul-whatsapp">Open WhatsApp — then Send</a>' +
+          '" target="soul-signal">Open Signal — then Send</a>' +
           '</div>'
         : '';
       openBox.hidden = false;
@@ -2197,15 +2197,10 @@ import { site } from '../site.config';
       return 'Hey from the Soul Searchers map.';
     }
 
-    function waMeUrl(phone, name) {
+    function waMeUrl(phone) {
       var digits = phoneDigitsForWa(phone);
       if (!digits) return '';
-      return (
-        'https://wa.me/' +
-        digits +
-        '?text=' +
-        encodeURIComponent(waComposePrefill(name))
-      );
+      return 'https://signal.me/#p/+' + digits;
     }
 
     function showTgComposeError(message) {
@@ -2309,9 +2304,9 @@ import { site } from '../site.config';
       window.open(url, 'soul-telegram');
     }
 
-    /** Named tab so a second Open reuses WhatsApp instead of spawning another prompt. */
+    /** Named tab so a second Open reuses Signal instead of spawning another prompt. */
     function openSoulWhatsApp(url) {
-      window.open(url, 'soul-whatsapp');
+      window.open(url, 'soul-signal');
     }
 
     function closeTgCompose() {
@@ -2410,7 +2405,7 @@ import { site } from '../site.config';
         var url = waMeUrl(phone, name);
         if (!url) {
           showWaComposeError(
-            'Need a real number with country code — like +49… — then Open WhatsApp and tap Send.',
+            'Need a real number with country code — like +49… — then Open Signal and tap Send.',
           );
           var phoneEl = waComposeForm.elements.namedItem('phone');
           if (phoneEl) phoneEl.focus();

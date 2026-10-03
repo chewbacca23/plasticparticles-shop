@@ -4,9 +4,11 @@
  */
 (function () {
   function measure() {
-    var top = document.querySelector('.cms-top');
-    if (!top) return;
-    var h = Math.ceil(top.getBoundingClientRect().height);
+    var row = document.querySelector('.cms-top-row');
+    var where = document.getElementById('cms-where');
+    var h = 16;
+    if (row) h += Math.ceil(row.getBoundingClientRect().height);
+    if (where && !where.hidden) h += Math.ceil(where.getBoundingClientRect().height) + 8;
     if (h < 48) h = 72;
     document.documentElement.style.setProperty('--cms-top-h', h + 'px');
   }

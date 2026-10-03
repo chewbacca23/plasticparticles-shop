@@ -5,7 +5,8 @@
  *
  * GET  /api/hooks           public stalls + market + group dots + call threads (no emails/phones/handles)
  * GET  /api/hooks/telegram  302 → t.me for an opted-in person (username stays server-side)
- * GET  /api/hooks/whatsapp  302 → wa.me for an opted-in person (phone stays server-side)
+ * GET  /api/hooks/signal    302 → signal.me for an opted-in person (phone stays server-side)
+ * GET  /api/hooks/whatsapp  302 → same Signal door (old bookmarks)
  * POST /api/hooks           pin { name, place, note, email?, telegram?, phone?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
  * POST /api/hooks/write     offer { hookId, name, message, email?, company }
@@ -42,8 +43,9 @@ const RATE_PIN = 3;
 const RATE_WRITE = 8;
 const RATE_CALL = 10;
 const RATE_WHATSAPP = 20;
+const RATE_SIGNAL = 20;
 const RATE_TELEGRAM = 20;
-/** Prefill when someone opens the free WhatsApp bridge from the map. */
+/** Prefill kept for old WhatsApp bookmarks — the live door is Signal. */
 export const WA_PREFILL =
   'Hey from the Soul Searchers map — saw you standing there.';
 
@@ -57,6 +59,8 @@ export function isHooksApiPath(pathname) {
     pathname === '/api/hooks/call/' ||
     pathname === '/api/hooks/whatsapp' ||
     pathname === '/api/hooks/whatsapp/' ||
+    pathname === '/api/hooks/signal' ||
+    pathname === '/api/hooks/signal/' ||
     pathname === '/api/hooks/telegram' ||
     pathname === '/api/hooks/telegram/'
   );
@@ -72,6 +76,10 @@ export function isHooksCallPath(pathname) {
 
 export function isHooksWhatsappPath(pathname) {
   return pathname === '/api/hooks/whatsapp' || pathname === '/api/hooks/whatsapp/';
+}
+
+export function isHooksSignalPath(pathname) {
+  return pathname === '/api/hooks/signal' || pathname === '/api/hooks/signal/';
 }
 
 export function isHooksTelegramPath(pathname) {
@@ -114,12 +122,20 @@ export function phoneDigitsForWa(raw) {
 }
 
 export function waMeUrl(phone, text = WA_PREFILL) {
-  const digits = phoneDigitsForWa(phone);
-  if (!digits) return '';
-  const base = `https://wa.me/${digits}`;
-  const note = cleanLine(text, 200);
-  if (!note) return base;
-  return `${base}?text=${encodeURIComponent(note)}`;
+  return signalMeUrl(phone);
+}
+
+export function phoneE164(raw) {
+  const cleaned = cleanPhone(raw);
+  if (!cleaned) return '';
+  return cleaned.startsWith('+') ? cleaned : `+${cleaned.replace(/\D/g, '')}`;
+}
+
+/** Opt-in Signal chat — same private phone, never shown on the map. */
+export function signalMeUrl(phone) {
+  const e164 = phoneE164(phone);
+  if (!e164) return '';
+  return `https://signal.me/#p/${e164}`;
 }
 
 export function telegramMeUrl(username) {
@@ -140,7 +156,7 @@ export function parseHookPin(raw) {
     note: cleanLine(src.note, MAX_NOTE),
     email: cleanEmail(src.email),
     telegram: cleanTelegramUsername(src.telegram || src.telegramUsername || src.tg),
-    phone: cleanPhone(src.phone || src.whatsapp || src.mobile),
+    phone: cleanPhone(src.phone || src.signal || src.whatsapp || src.mobile),
     company: cleanLine(src.company || src.fax_number_leave_blank, 80),
   };
 }
@@ -771,6 +787,7 @@ export function groupFromHooks(hooks) {
         offers: [],
         neighborKeys: [],
         telegram: false,
+        signal: false,
         whatsapp: false,
       });
     }
@@ -811,7 +828,8 @@ export function groupFromHooks(hooks) {
 
   for (const person of peopleMap.values()) {
     person.telegram = personHasTelegram(rawHooks, person.key);
-    person.whatsapp = personHasWhatsapp(rawHooks, person.key);
+    person.signal = personHasWhatsapp(rawHooks, person.key);
+    person.whatsapp = person.signal;
   }
 
   const people = [...peopleMap.values()];
@@ -1108,17 +1126,20 @@ export async function handleHooksRequest(request, env) {
     });
   }
 
-  if (request.method === 'GET' && isHooksWhatsappPath(url.pathname)) {
-    if (!(await underRateLimit(env, clientKey(request, 'wa'), RATE_WHATSAPP))) {
+  if (
+    request.method === 'GET' &&
+    (isHooksSignalPath(url.pathname) || isHooksWhatsappPath(url.pathname))
+  ) {
+    if (!(await underRateLimit(env, clientKey(request, 'sg'), RATE_SIGNAL))) {
       return json({ error: 'Easy. Try again in a few minutes.' }, 429);
     }
     const key = personKey(url.searchParams.get('person') || url.searchParams.get('key') || '');
     if (!key) return json({ error: 'Who are you messaging?' }, 400);
     const board = await readBoard(env);
     const phone = phoneForPersonKey(board.hooks, key);
-    const target = waMeUrl(phone);
+    const target = signalMeUrl(phone);
     if (!target) {
-      return json({ error: 'They have not opened the WhatsApp door.' }, 404);
+      return json({ error: 'They have not opened the Signal door.' }, 404);
     }
     return new Response(null, {
       status: 302,
@@ -1135,6 +1156,7 @@ export async function handleHooksRequest(request, env) {
     !isHooksWritePath(url.pathname) &&
     !isHooksCallPath(url.pathname) &&
     !isHooksWhatsappPath(url.pathname) &&
+    !isHooksSignalPath(url.pathname) &&
     !isHooksTelegramPath(url.pathname)
   ) {
     const board = await readBoard(env);
@@ -1156,6 +1178,7 @@ export async function handleHooksRequest(request, env) {
     !isHooksWritePath(url.pathname) &&
     !isHooksCallPath(url.pathname) &&
     !isHooksWhatsappPath(url.pathname) &&
+    !isHooksSignalPath(url.pathname) &&
     !isHooksTelegramPath(url.pathname) &&
     body.action === 'remove'
   ) {
@@ -1173,8 +1196,8 @@ export async function handleHooksRequest(request, env) {
     return json({ error: 'Open the Telegram bridge with GET.' }, 405);
   }
 
-  if (isHooksWhatsappPath(url.pathname)) {
-    return json({ error: 'Open the WhatsApp bridge with GET.' }, 405);
+  if (isHooksWhatsappPath(url.pathname) || isHooksSignalPath(url.pathname)) {
+    return json({ error: 'Open the Signal bridge with GET.' }, 405);
   }
 
   if (isHooksCallPath(url.pathname)) {
@@ -1380,8 +1403,10 @@ export const testables = {
   cleanTelegramUsername,
   phoneDigitsForWa,
   waMeUrl,
+  signalMeUrl,
   telegramMeUrl,
   WA_PREFILL,
   isHooksWhatsappPath,
+  isHooksSignalPath,
   isHooksTelegramPath,
 };

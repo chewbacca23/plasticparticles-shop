@@ -24,6 +24,7 @@ import {
   cleanTelegramUsername,
   phoneDigitsForWa,
   waMeUrl,
+  signalMeUrl,
   telegramMeUrl,
   WA_PREFILL,
 } from './hooks-board.js';
@@ -53,6 +54,7 @@ describe('hooks paths', () => {
     assert.equal(isHooksApiPath('/api/hooks/write'), true);
     assert.equal(isHooksApiPath('/api/hooks/call'), true);
     assert.equal(isHooksApiPath('/api/hooks/whatsapp'), true);
+    assert.equal(isHooksApiPath('/api/hooks/signal'), true);
     assert.equal(isHooksApiPath('/api/hooks/telegram'), true);
     assert.equal(isHooksApiPath('/hooks'), false);
     assert.equal(isHooksApiPath('/api/contact'), false);
@@ -110,6 +112,8 @@ describe('hooks privacy', () => {
     ]);
     const joerg = group.people.find((person) => person.name === 'Joerg');
     const quiet = group.people.find((person) => person.name === 'Quiet');
+    assert.equal(joerg.signal, true);
+    assert.equal(quiet.signal, false);
     assert.equal(joerg.whatsapp, true);
     assert.equal(quiet.whatsapp, false);
     assert.doesNotMatch(JSON.stringify(group), /1701234567/);
@@ -156,14 +160,13 @@ describe('hooks privacy', () => {
     assert.doesNotMatch(JSON.stringify(group), /@/);
   });
 
-  it('normalizes phones for wa.me and prefers country-code style', () => {
+  it('normalizes phones for Signal and prefers country-code style', () => {
     assert.equal(cleanPhone('+49 170-123 4567'), '+491701234567');
     assert.equal(phoneDigitsForWa('+49 170-123 4567'), '491701234567');
     assert.equal(cleanPhone('0170 1234567'), '01701234567');
     assert.equal(cleanPhone('short'), '');
-    const url = waMeUrl('+49 170 1234567');
-    assert.match(url, /^https:\/\/wa\.me\/491701234567\?text=/);
-    assert.match(decodeURIComponent(url), /Hey from the Soul Searchers map/);
+    assert.equal(signalMeUrl('+49 170 1234567'), 'https://signal.me/#p/+491701234567');
+    assert.equal(waMeUrl('+49 170 1234567'), 'https://signal.me/#p/+491701234567');
     assert.equal(WA_PREFILL.includes('map'), true);
   });
 
@@ -455,6 +458,7 @@ describe('hooks pin', () => {
     assert.equal(body.hooks[0].phone, undefined);
     assert.equal(body.hooks[0].telegram, undefined);
     assert.equal(body.group.people[0].telegram, true);
+    assert.equal(body.group.people[0].signal, true);
     assert.equal(body.group.people[0].whatsapp, true);
     assert.doesNotMatch(JSON.stringify(body), /1709998877/);
     assert.doesNotMatch(JSON.stringify(body), /goetz_rides/);
@@ -471,6 +475,7 @@ describe('hooks pin', () => {
     assert.doesNotMatch(JSON.stringify(data), /1709998877/);
     assert.doesNotMatch(JSON.stringify(data), /goetz_rides/);
     assert.equal(data.group.people[0].telegram, true);
+    assert.equal(data.group.people[0].signal, true);
     assert.equal(data.group.people[0].whatsapp, true);
   });
 
@@ -575,8 +580,8 @@ describe('hooks telegram bridge', () => {
   });
 });
 
-describe('hooks whatsapp bridge', () => {
-  it('302s to wa.me with digits and a Soul Searchers prefill', async () => {
+describe('hooks signal bridge', () => {
+  it('302s to signal.me for an opted-in phone and never leaks digits', async () => {
     const kv = memoryKv({
       'hooks-v1': JSON.stringify({
         hooks: [
@@ -594,13 +599,26 @@ describe('hooks whatsapp bridge', () => {
       }),
     });
     const res = await handleHooksRequest(
-      new Request('https://thenewsoulsearchers.de/api/hooks/whatsapp?person=hanna'),
+      new Request('https://thenewsoulsearchers.de/api/hooks/signal?person=hanna'),
       { STATS: kv },
     );
     assert.equal(res.status, 302);
-    const location = res.headers.get('location') || '';
-    assert.match(location, /^https:\/\/wa\.me\/491701234567\?text=/);
-    assert.match(decodeURIComponent(location), /Soul Searchers map/);
+    assert.equal(res.headers.get('location'), 'https://signal.me/#p/+491701234567');
+
+    const oldDoor = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/whatsapp?person=hanna'),
+      { STATS: kv },
+    );
+    assert.equal(oldDoor.status, 302);
+    assert.equal(oldDoor.headers.get('location'), 'https://signal.me/#p/+491701234567');
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].signal, true);
+    assert.doesNotMatch(JSON.stringify(data), /1701234567|signal\.me|wa\.me/);
   });
 
   it('404s when nobody left a phone, and never leaks digits in list JSON', async () => {
@@ -621,19 +639,19 @@ describe('hooks whatsapp bridge', () => {
       }),
     });
     const miss = await handleHooksRequest(
-      new Request('https://thenewsoulsearchers.de/api/hooks/whatsapp?person=alex'),
+      new Request('https://thenewsoulsearchers.de/api/hooks/signal?person=alex'),
       { STATS: kv },
     );
     assert.equal(miss.status, 404);
-    assert.match((await miss.json()).error, /WhatsApp/i);
+    assert.match((await miss.json()).error, /Signal/i);
 
     const listed = await handleHooksRequest(
       new Request('https://thenewsoulsearchers.de/api/hooks'),
       { STATS: kv },
     );
     const data = await listed.json();
-    assert.equal(data.group.people[0].whatsapp, false);
-    assert.doesNotMatch(JSON.stringify(data), /wa\.me/);
+    assert.equal(data.group.people[0].signal, false);
+    assert.doesNotMatch(JSON.stringify(data), /wa\.me|signal\.me/);
   });
 });
 
