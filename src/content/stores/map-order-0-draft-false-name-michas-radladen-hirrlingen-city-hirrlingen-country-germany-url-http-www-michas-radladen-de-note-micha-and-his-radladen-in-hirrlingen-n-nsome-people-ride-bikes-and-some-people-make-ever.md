@@ -76,5 +76,15 @@ photos:
   - /stories/img_4230.jpg
   - /stories/img_4254.jpg
   - /stories/img_4256.jpg
+  - /stories/img-4296-mutnoer1-1.jpg
+  - /stories/img-4247-mutnog6y-2.jpg
+  - /stories/img-4226-mutnohqq-3.jpg
+  - /stories/img-4236-mutnoj3f-4.jpg
+  - /stories/img-4241-mutnolm8-5.jpg
+  - /stories/img-4273-mutnonu7-6.jpg
+  - /stories/img-4233-mutnopnc-7.jpg
+  - /stories/img-4278-mutnoqzg-8.jpg
+  - /stories/img-4246-mutnotr5-9.jpg
+  - /stories/img-4269-mutnovcd-10.jpg
 order: 0
 ---
