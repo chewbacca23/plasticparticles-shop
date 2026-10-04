@@ -71,7 +71,6 @@ photos:
   - /stories/img_4235.jpg
   - /stories/img_4256.jpg
   - /stories/img_4254.jpg
-  - /stories/img_4252.jpg
   - /stories/img_4253.jpg
   - /stories/img_4252.jpg
   - /stories/img_4230.jpg
