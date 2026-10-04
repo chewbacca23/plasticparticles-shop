@@ -218,7 +218,7 @@ collections:
         min: 0
         max: 24
         summary: "{{fields.image}}"
-        hint: "Right under Draft. Up to 24 shots. Add a row per photo → Upload JPEG from the Mac (not HEIC) → gold Save. First photo is the cover thumb on the right. Upload alone is not enough — Save puts them on the store."
+        hint: "Right under Draft. Up to 24 shots. Add photos in the You are here bar — shift-click every JPEG (not HEIC), then gold Save. First photo is the cover thumb on the right."
         field:
           label: Image
           name: image
@@ -253,7 +253,7 @@ collections:
         min: 0
         max: 40
         summary: "{{fields.image}}"
-        hint: "Right under Draft. Up to 40 shots. Add a row → Upload JPEG from the Mac → gold Save. Upload alone only parks the file in Media — Save attaches it to this note."
+        hint: "Right under Draft. Up to 40 shots. Add photos in the You are here bar — shift-click every JPEG (not HEIC), then gold Save."
         field:
           label: Image
           name: image

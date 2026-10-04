@@ -155,7 +155,8 @@
       .cms-pill-save:disabled,
       .cms-pill-delete:disabled,
       .cms-where-save:disabled,
-      .cms-where-delete:disabled {
+      .cms-where-delete:disabled,
+      .cms-where-add:disabled {
         opacity: 0.7;
         cursor: wait;
       }
@@ -369,11 +370,19 @@
       }
 
       .cms-where-save,
-      .cms-where-delete {
+      .cms-where-delete,
+      .cms-where-add {
         border-radius: 999px;
         padding: 0.4rem 0.85rem;
         font: 700 0.78rem/1.15 Inter, system-ui, sans-serif;
         cursor: pointer;
+      }
+
+      .cms-where-add {
+        border: 0;
+        background: linear-gradient(135deg, var(--amber-hot), var(--amber));
+        color: var(--ink);
+        box-shadow: 0 8px 22px rgba(212, 163, 90, 0.22);
       }
 
       .cms-where-save {
@@ -648,6 +657,7 @@
             <p class="cms-where-hint" id="cms-where-hint"></p>
           </div>
           <div class="cms-where-actions" id="cms-where-actions" hidden>
+            <button type="button" class="cms-where-add" id="cms-where-add" hidden>Add photos</button>
             <button type="button" class="cms-where-delete" id="cms-where-delete" hidden>Delete this</button>
             <button type="button" class="cms-where-save" id="cms-where-save">Save</button>
           </div>
@@ -739,12 +749,12 @@
               out of the note, hard-refresh and try again.
             </p>
             <p style="margin: 0.55rem 0 0">
-              <strong>Stores &amp; This week:</strong> after <strong>Draft</strong> comes
-              <strong>UPLOAD PHOTOS</strong>. Add a row → Upload JPEG → gold
-              <strong>Save</strong>. Upload alone only parks the file in Media — without Save on
-              the store or week note, the thumbs never attach. On the site the thumbs sit on the
+              <strong>Stores &amp; This week:</strong> open the shop or note, then
+              <strong>Add photos</strong> in the You are here bar. Shift-click every JPEG in the
+              Mac window. They land together. Then gold <strong>Save</strong>. A store holds 24,
+              a week note 40. Not HEIC. On the site the thumbs sit on the
               <strong>right</strong> of the text. To take a post off the site, open it and tap
-              <strong>Delete this</strong> above Save.
+              <strong>Delete this</strong> beside Save.
             </p>
             <p style="margin: 0.55rem 0 0">
               <strong>Friends:</strong> open <em>Friends</em>, then <strong>New Friend</strong>.
@@ -872,6 +882,7 @@
     <script src="/admin/mail-gold.js"></script>
     <script src="/admin/ride-preview.js"></script>
     <script src="/admin/here-red.js"></script>
+    <script src="/admin/add-photos.js"></script>
     <script src="/admin/where-you-are.js"></script>
   </body>
 </html>

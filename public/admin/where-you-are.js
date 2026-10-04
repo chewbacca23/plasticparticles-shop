@@ -67,6 +67,16 @@
       del.textContent = deleting ? 'Deleting…' : 'Delete this';
       del.disabled = !!deleting;
     }
+
+    var add = document.getElementById('cms-where-add');
+    if (add) {
+      var batch = window.ssAddPhotos && window.ssAddPhotos.can && window.ssAddPhotos.can();
+      add.hidden = !batch;
+      var adding = window.ssAddPhotos && window.ssAddPhotos.busy && window.ssAddPhotos.busy();
+      var progress = window.ssAddPhotos && window.ssAddPhotos.label && window.ssAddPhotos.label();
+      add.textContent = adding && progress ? progress : 'Add photos';
+      add.disabled = !!adding;
+    }
   }
 
   function paint() {
