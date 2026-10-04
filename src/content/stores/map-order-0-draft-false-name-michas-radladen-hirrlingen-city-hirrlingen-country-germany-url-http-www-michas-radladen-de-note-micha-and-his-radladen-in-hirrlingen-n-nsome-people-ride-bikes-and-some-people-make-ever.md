@@ -61,23 +61,26 @@ note: >-
 
 
   Micha, if you read this: thank you for Italy, thank you for looking after all of us, and thank you for being exactly who you are. Congratulations on your shop. It is a perfect fit for you, and you deserve every success with it. See you on the road. 🚴
-
-
-  Would you like me to put this in a file, or adjust the tone, for example to make it funnier, more personal or shorter for a post or a card? If you tell me a few more details, like a funny story from the tour or what the shop looks like inside, I can weave those in so it feels even more like him.
 url: http://www.michas-radladen.de/
 draft: false
 photos:
   - /stories/unknown-2.jpeg
   - /stories/img_4235.jpg
   - /stories/img_4256.jpg
-  - /stories/img_4254.jpg
-  - /stories/img_4252.jpg
   - /stories/img_4253.jpg
-  - /stories/img_4235.jpg
   - /stories/img_4252.jpg
   - /stories/img_4230.jpg
-  - /stories/img_4253.jpg
   - /stories/img_4254.jpg
   - /stories/img_4256.jpg
+  - /stories/img-4296-mutnoer1-1.jpg
+  - /stories/img-4247-mutnog6y-2.jpg
+  - /stories/img-4226-mutnohqq-3.jpg
+  - /stories/img-4236-mutnoj3f-4.jpg
+  - /stories/img-4241-mutnolm8-5.jpg
+  - /stories/img-4273-mutnonu7-6.jpg
+  - /stories/img-4233-mutnopnc-7.jpg
+  - /stories/img-4278-mutnoqzg-8.jpg
+  - /stories/img-4246-mutnotr5-9.jpg
+  - /stories/img-4269-mutnovcd-10.jpg
 order: 0
 ---
