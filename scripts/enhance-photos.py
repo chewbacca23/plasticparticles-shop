@@ -42,6 +42,9 @@ RASTER_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 # HEIC needs pillow-heif or a Mac pre-convert (see enhance-photo.sh).
 HEIC_SUFFIXES = {".heic", ".heif"}
 
+# Stamped into the JPEG comment so a later run does not polish twice.
+MARKER = b"ss-polish-1"
+
 # Mild morning-greeting energy — not Instagram sludge.
 SATURATION = 1.08
 CONTRAST = 1.06
@@ -165,7 +168,12 @@ def encode_under_budget(
                 label = "PNG"
             else:
                 stripped.save(
-                    buffer, "JPEG", quality=quality, optimize=True, progressive=True
+                    buffer,
+                    "JPEG",
+                    quality=quality,
+                    optimize=True,
+                    progressive=True,
+                    comment=MARKER,
                 )
                 label = f"JPEG q{quality}"
             candidate = buffer.getvalue()
@@ -195,12 +203,26 @@ def output_path(src: Path, *, in_place: bool, keep_png: bool) -> Path:
     return src.with_name(f"{stem}_enhanced{suffix}")
 
 
+def already_polished(path: Path) -> bool:
+    try:
+        with Image.open(path) as image:
+            comment = image.info.get("comment") or b""
+            if isinstance(comment, str):
+                comment = comment.encode()
+            return MARKER in comment
+    except Exception:
+        return False
+
+
 def enhance_one(path: Path, *, in_place: bool, dry_run: bool) -> tuple[bool, str]:
     suffix = path.suffix.lower()
     if suffix in HEIC_SUFFIXES and dry_run:
         return True, "HEIC (would convert via pillow-heif or enhance-photo.sh)"
     if suffix not in RASTER_SUFFIXES | HEIC_SUFFIXES:
         return False, f"unsupported type {suffix}"
+
+    if already_polished(path):
+        return True, f"already polished {path.name}"
 
     try:
         image = load_image(path)
