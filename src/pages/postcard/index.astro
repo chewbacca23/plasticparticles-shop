@@ -1,0 +1,273 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostcardMarks from '../../components/PostcardMarks.astro';
+import { existingMedia, galleryMedia } from '../../lib/media';
+import { newestFirst } from '../../lib/newest';
+import { site } from '../../site.config';
+
+const stories = await getCollection('stories', ({ data }) => !data.draft);
+const weeks = await getCollection('week', ({ data }) => !data.draft);
+
+const cuts = [
+  'polygon(4% 9%, 12% 2%, 22% 8%, 33% 1%, 44% 8%, 55% 1%, 66% 8%, 77% 2%, 88% 8%, 97% 3%, 99% 14%, 93% 22%, 99% 32%, 93% 41%, 84% 47%, 76% 54%, 86% 61%, 99% 68%, 94% 78%, 99% 89%, 92% 97%, 80% 91%, 68% 99%, 56% 92%, 44% 99%, 32% 92%, 20% 99%, 8% 93%, 2% 82%, 8% 72%, 1% 60%, 8% 50%, 1% 38%, 7% 26%, 2% 16%)',
+  'polygon(8% 4%, 20% 1%, 32% 7%, 44% 1%, 56% 7%, 68% 1%, 80% 7%, 93% 2%, 98% 12%, 93% 22%, 99% 34%, 94% 46%, 99% 58%, 94% 70%, 99% 82%, 95% 94%, 84% 98%, 72% 92%, 60% 99%, 48% 93%, 36% 99%, 24% 93%, 12% 99%, 3% 90%, 1% 78%, 7% 70%, 1% 60%, 14% 54%, 22% 47%, 12% 40%, 1% 32%, 6% 22%, 1% 12%)',
+  'polygon(6% 14%, 2% 8%, 10% 2%, 18% 10%, 24% 3%, 34% 11%, 42% 2%, 52% 10%, 60% 3%, 70% 11%, 78% 2%, 88% 9%, 97% 3%, 99% 16%, 94% 26%, 99% 38%, 94% 50%, 99% 62%, 94% 74%, 99% 86%, 94% 96%, 82% 91%, 70% 99%, 58% 92%, 46% 99%, 34% 92%, 22% 99%, 10% 93%, 2% 84%, 7% 74%, 1% 62%, 7% 50%, 1% 36%, 8% 24%)',
+];
+const washes = ['wash-a', 'wash-b', 'wash-c'];
+const treats = ['scribble', 'spray', 'dunk', 'rothko', 'spray', 'dunk'] as const;
+
+const cards = newestFirst(
+  [
+    ...stories.map((story) => ({
+      id: story.id,
+      date: story.data.pubDate,
+      title: story.data.headline,
+      cover: galleryMedia(story.data.cover, story.data.gallery)[0] || '',
+    })),
+    ...weeks.map((entry) => ({
+      id: entry.id,
+      date: entry.data.pubDate,
+      title: entry.data.title,
+      cover: existingMedia(entry.data.photos)[0] || '',
+    })),
+  ],
+  (card) => card.date,
+);
+---
+
+<BaseLayout
+  title="Postcards"
+  description="A postcard from each Soul Searchers ride. The crest is on every picture. Send one to someone who was not there."
+>
+  <svg class="paint-defs" aria-hidden="true">
+    <filter id="watercolour" color-interpolation-filters="sRGB" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.015" numOctaves="2" seed="4" result="bleed" />
+      <feDisplacementMap in="SourceGraphic" in2="bleed" scale="6" xChannelSelector="R" yChannelSelector="G" result="warped" />
+      <feGaussianBlur in="warped" stdDeviation="1.35" result="soft" />
+      <feComponentTransfer in="soft" result="paint">
+        <feFuncR type="discrete" tableValues="0.08 0.46 0.9" />
+        <feFuncG type="discrete" tableValues="0.06 0.42 0.88" />
+        <feFuncB type="discrete" tableValues="0.1 0.48 0.92" />
+      </feComponentTransfer>
+    </filter>
+    <filter id="papergrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" stitchTiles="stitch" />
+    </filter>
+  </svg>
+  <section class="section">
+    <div class="site-shell">
+      <p class="eyebrow">Postcards</p>
+      <h1 class="section-title">From the ride</h1>
+      <p class="section-lead">
+        One postcard for each ride. A few words, up to twenty pictures, and the crest on every one.
+        Send it to someone who was not there.
+        <a href="/contact">Sign up for free</a>. No sign-up, no postcard. It is still free of charge.
+      </p>
+
+      {
+        cards.length === 0 ? (
+          <p>No postcard to send just yet.</p>
+        ) : (
+          <div class="grid">
+            {cards.map((card, index) => (
+              <a class="tile" href={`/postcard/${card.id}`}>
+                <span class:list={['frame', washes[index % washes.length]]}>
+                  {card.cover ? (
+                    <span class:list={['window', `treat-${treats[index % treats.length]}`]} style={`clip-path: ${cuts[index % cuts.length]}`}>
+                      <img
+                        class="shot"
+                        src={card.cover}
+                        alt=""
+                        width="800"
+                        height="1000"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                        sizes="(max-width: 640px) 92vw, 400px"
+                      />
+                      <span class="bloom" aria-hidden="true"></span>
+                      <span class="grain" aria-hidden="true"></span>
+                      <PostcardMarks variant={index} treat={treats[index % treats.length]} />
+                    </span>
+                    <span class="keep" aria-hidden="true"></span>
+                  ) : (
+                    <span class="awaiting">
+                      <img src={site.logo} alt="" width="56" height="71" loading="lazy" />
+                      <span>Crest only</span>
+                    </span>
+                  )}
+                </span>
+                <h2>{card.title}</h2>
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grid {
+    display: grid;
+    gap: 1.75rem 1.25rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 700px) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .grid {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+
+  .tile {
+    display: grid;
+    gap: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .paint-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .frame {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    padding: 0.55rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  }
+
+  .window {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .keep {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    -webkit-touch-callout: none;
+  }
+
+  .wash-a {
+    background: linear-gradient(150deg, #f2c14e 0%, #ff6b3d 46%, #ff4f8b 100%);
+  }
+
+  .wash-b {
+    background: linear-gradient(200deg, #12a8a0 0%, #f2c14e 58%, #ff6b3d 100%);
+  }
+
+  .wash-c {
+    background: linear-gradient(125deg, #ff4f8b 0%, #ff6b3d 42%, #f6efe2 78%, #12a8a0 100%);
+  }
+
+  .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .shot {
+    transform: scale(1.06);
+    filter: url(#watercolour) saturate(1.45) contrast(1.22) brightness(1.04);
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .treat-rothko .shot {
+    opacity: 0.36;
+    filter: url(#watercolour) saturate(0.5) contrast(0.82) brightness(0.62);
+  }
+
+  .treat-rothko .bloom {
+    opacity: 0.12;
+  }
+
+  .tile:hover .shot {
+    transform: scale(1.1);
+  }
+
+  .bloom,
+  .grain {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .bloom {
+    mix-blend-mode: soft-light;
+    background:
+      radial-gradient(ellipse at 14% 16%, rgba(242, 210, 26, 0.9), transparent 40%),
+      radial-gradient(ellipse at 82% 18%, rgba(226, 59, 47, 0.7), transparent 36%),
+      radial-gradient(ellipse at 72% 86%, rgba(26, 63, 191, 0.62), transparent 42%),
+      radial-gradient(ellipse at 22% 80%, rgba(242, 210, 26, 0.5), transparent 38%);
+  }
+
+  .grain {
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+    background: #f3ecdf;
+    filter: url(#papergrain);
+  }
+
+  .awaiting {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    background: #f6efe2;
+  }
+
+  .awaiting img {
+    width: 3.5rem;
+    height: auto;
+    transition: none;
+  }
+
+  .awaiting span {
+    color: #8a5a12;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('contextmenu', function (event) {
+    var node = event.target;
+    if (node && node.closest && node.closest('.frame')) event.preventDefault();
+  });
+  document.addEventListener('dragstart', function (event) {
+    var node = event.target;
+    if (node && node.closest && node.closest('.frame')) event.preventDefault();
+  });
+</script>
