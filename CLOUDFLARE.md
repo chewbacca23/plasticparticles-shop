@@ -68,12 +68,17 @@ Locally:
 ```sh
 npm run photos:check   # report anything too big
 npm run photos:fix     # resize them in place
+npm run photos:enhance -- path/to/pic.jpg   # mild colour + sharpen → *_enhanced.jpg
+npm run photos:enhance:check -- path        # dry-run enhance
 ```
+
+Needs Pillow once: `pip3 install pillow`. Default enhance writes a sibling `*_enhanced.jpg`; add `--in-place` to overwrite. Enhance first, then `photos:fix` if the file is still heavy.
 
 Before uploading, on a Mac:
 
 ```sh
 sh scripts/shrink-photo.sh ~/Desktop/IMG_1234.HEIC
+sh scripts/enhance-photo.sh ~/Desktop/IMG_1234.HEIC   # HEIC → enhance → *_enhanced.jpg
 ```
 
 Two things to know about iPhone photos: they carry your **GPS location** in EXIF, and they store the image sideways with an orientation flag. The resizer rotates the pixels before stripping metadata — do it the other way round and the photo appears rotated 90° in every browser.

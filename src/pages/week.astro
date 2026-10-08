@@ -1,0 +1,445 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { existingMedia } from '../lib/media';
+import { newestFirst } from '../lib/newest';
+
+const entries = newestFirst(
+  await getCollection('week', ({ data }) => !data.draft),
+  (entry) => entry.data.pubDate,
+);
+
+const dateFmt = new Intl.DateTimeFormat('en', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+---
+
+<BaseLayout
+  title="This week"
+  description="What happened this day or week on The Soul Searchers — short dated notes and a calm photo gallery from the road."
+>
+  <section class="section">
+    <div class="site-shell week">
+      <p class="eyebrow reveal">This week</p>
+      <h1 class="section-title reveal reveal-delay-1">What happened</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Short dated notes from the saddle. A loop, a train, a café stop. A few photos that hold the
+        week — not a dense feed.
+      </p>
+
+      {
+        entries.length === 0 ? (
+          <p class="empty">
+            Week notes will show here when you add them in the editor under <strong>This week</strong>.
+          </p>
+        ) : (
+          <ol class="week-list">
+            {entries.map((entry, index) => {
+              const gallery = existingMedia(entry.data.photos);
+              const delayClass =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              const galleryClass =
+                gallery.length >= 5
+                  ? 'week-gallery week-gallery--many'
+                  : 'week-gallery';
+              return (
+                <li class:list={['week-entry', delayClass]}>
+                  <div class="week-main">
+                    <time class="week-date" datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
+                      {dateFmt.format(entry.data.pubDate)}
+                    </time>
+                    <h2 class="week-title">{entry.data.title}</h2>
+                    {entry.data.note ? <p class="week-note">{entry.data.note}</p> : null}
+                    <p class="week-send">
+                      <a href={`/postcard/${entry.id}`}>Send this ride</a>
+                    </p>
+                  </div>
+                  {gallery.length > 0 ? (
+                    <ul class={galleryClass} aria-label={`${entry.data.title} photos`}>
+                      {gallery.map((src, photoIndex) => (
+                        <li class:list={[{ 'is-lead': photoIndex === 0 }]}>
+                          <button
+                            type="button"
+                            class="week-thumb"
+                            data-week-open
+                            data-week-set={entry.id}
+                            data-src={src}
+                            data-title={entry.data.title}
+                            aria-label={`Open photo ${photoIndex + 1} of ${gallery.length} from ${entry.data.title}`}
+                          >
+                            <img
+                              src={src}
+                              alt=""
+                              width={photoIndex === 0 ? 640 : 320}
+                              height={photoIndex === 0 ? 480 : 240}
+                              loading={index === 0 && photoIndex === 0 ? 'eager' : 'lazy'}
+                              decoding="async"
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        )
+      }
+
+      <dialog class="week-dialog" data-week-dialog aria-label="This week photo">
+        <div class="week-stage">
+          <img data-week-image alt="" />
+          <button type="button" class="week-nav week-prev" data-week-prev aria-label="Previous photo">
+            ‹
+          </button>
+          <button type="button" class="week-nav week-next" data-week-next aria-label="Next photo">
+            ›
+          </button>
+          <button type="button" class="week-close" data-week-close aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div class="week-meta">
+          <p class="week-caption" data-week-caption></p>
+          <p class="week-count" data-week-count></p>
+        </div>
+      </dialog>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const root = document.querySelector('.week');
+  const dialog = document.querySelector('[data-week-dialog]');
+  const image = document.querySelector('[data-week-image]');
+  const caption = document.querySelector('[data-week-caption]');
+  const count = document.querySelector('[data-week-count]');
+  const thumbs = root ? [...root.querySelectorAll('[data-week-open]')] : [];
+  if (root && dialog && image && thumbs.length) {
+    let set = thumbs;
+
+    function show(thumb) {
+      const group = thumb.getAttribute('data-week-set') || '';
+      set = thumbs.filter((item) => item.getAttribute('data-week-set') === group);
+      const index = Math.max(0, set.indexOf(thumb));
+      const current = set[index] || thumb;
+      const src = current.getAttribute('data-src') || '';
+      const title = current.getAttribute('data-title') || '';
+      image.src = src;
+      image.alt = title;
+      if (caption) caption.textContent = title;
+      if (count) count.textContent = index + 1 + ' / ' + set.length;
+      const hideNav = set.length < 2;
+      const prevBtn = dialog.querySelector('[data-week-prev]');
+      const nextBtn = dialog.querySelector('[data-week-next]');
+      if (prevBtn) prevBtn.hidden = hideNav;
+      if (nextBtn) nextBtn.hidden = hideNav;
+      if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+    }
+
+    function step(delta) {
+      if (!set.length) return;
+      const src = image.getAttribute('src');
+      const index = Math.max(0, set.findIndex((item) => item.getAttribute('data-src') === src));
+      show(set[(index + delta + set.length) % set.length]);
+    }
+
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => show(thumb));
+    });
+
+    const prev = dialog.querySelector('[data-week-prev]');
+    const next = dialog.querySelector('[data-week-next]');
+    if (prev) {
+      prev.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(-1);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(1);
+      });
+    }
+    const close = dialog.querySelector('[data-week-close]');
+    if (close) close.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') step(-1);
+      if (event.key === 'ArrowRight') step(1);
+    });
+  }
+</script>
+
+<style>
+  .week {
+    max-width: 56rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .week-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid rgba(212, 163, 90, 0.35);
+  }
+
+  .week-entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(11rem, 0.85fr);
+    gap: 1.1rem 1.4rem;
+    align-items: start;
+    padding: 0 0 2.4rem 1.5rem;
+  }
+
+  .week-entry:last-child {
+    padding-bottom: 0;
+  }
+
+  .week-entry::before {
+    content: '';
+    position: absolute;
+    left: -0.28rem;
+    top: 0.35rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--amber-hot);
+    box-shadow: 0 0 0 3px rgba(212, 163, 90, 0.16);
+  }
+
+  .week-date {
+    display: block;
+    color: var(--amber);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .week-title {
+    margin: 0.4rem 0 0;
+    font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+  }
+
+  .week-note {
+    margin: 0.55rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    max-width: 36rem;
+    white-space: pre-line;
+  }
+
+  .week-send {
+    margin: 0.7rem 0 0;
+  }
+
+  .week-send a {
+    color: var(--amber-hot);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .week-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .week-gallery li {
+    overflow: hidden;
+    border-radius: 0.28rem;
+  }
+
+  .week-gallery .is-lead {
+    grid-column: 1 / -1;
+  }
+
+  .week-gallery--many {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .week-thumb {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .week-thumb:focus-visible {
+    outline: 2px solid var(--amber-hot);
+    outline-offset: 2px;
+  }
+
+  .week-gallery img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+    opacity: 0;
+    animation: week-fade 0.7s ease forwards;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .week-thumb:hover img,
+  .week-thumb:focus-visible img {
+    transform: scale(1.03);
+  }
+
+  .week-gallery .is-lead img {
+    aspect-ratio: 4 / 3;
+  }
+
+  .week-gallery li:nth-child(2) img {
+    animation-delay: 0.08s;
+  }
+
+  .week-gallery li:nth-child(3) img {
+    animation-delay: 0.14s;
+  }
+
+  .week-gallery li:nth-child(4) img {
+    animation-delay: 0.2s;
+  }
+
+  .week-gallery li:nth-child(n + 5) img {
+    animation-delay: 0.26s;
+  }
+
+  @keyframes week-fade {
+    from {
+      opacity: 0;
+      transform: translateY(0.45rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .week-entry {
+      grid-template-columns: 1fr;
+      padding-left: 1.15rem;
+    }
+
+    .week-gallery,
+    .week-gallery--many {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .week-gallery img {
+      animation: none;
+      opacity: 1;
+      transition: none;
+    }
+  }
+
+  .week-dialog {
+    width: min(100% - 1.25rem, 68rem);
+    max-width: 68rem;
+    padding: 0;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1rem;
+    background: #0c1218;
+    color: var(--paper);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .week-dialog::backdrop {
+    background: rgba(6, 10, 14, 0.82);
+  }
+
+  .week-stage {
+    position: relative;
+    background: #080c11;
+  }
+
+  .week-stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(84vh, 52rem);
+    object-fit: contain;
+    background: #080c11;
+  }
+
+  .week-nav,
+  .week-close {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    background: rgba(12, 18, 24, 0.72);
+    color: var(--paper);
+    cursor: pointer;
+  }
+
+  .week-nav {
+    top: 50%;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    transform: translateY(-50%);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .week-prev {
+    left: 0.7rem;
+  }
+
+  .week-next {
+    right: 0.7rem;
+  }
+
+  .week-close {
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  .week-nav:hover,
+  .week-close:hover {
+    background: rgba(212, 163, 90, 0.28);
+  }
+
+  .week-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+    padding: 0.75rem 1rem 0.9rem;
+  }
+
+  .week-caption,
+  .week-count {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.92rem;
+  }
+</style>

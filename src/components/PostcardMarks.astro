@@ -1,0 +1,222 @@
+---
+interface Props {
+  variant: number;
+  sheet?: boolean;
+}
+
+const { variant, sheet = false } = Astro.props;
+const which = variant % 3;
+---
+
+<div class:list={['bauhaus', { sheet }, `v-${which}`]} aria-hidden="true">
+  <i class="sq"></i>
+  <i class="cir"></i>
+  <i class="tri"></i>
+  <i class="bar"></i>
+</div>
+
+<style>
+  .bauhaus {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .bauhaus i {
+    position: absolute;
+    display: block;
+  }
+
+  .cir {
+    border-radius: 50%;
+  }
+
+  .sheet {
+    z-index: 0;
+  }
+
+  .sheet .cir {
+    width: 1.65rem;
+    height: 1.65rem;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #e10600;
+  }
+
+  .sheet .sq {
+    width: 1.25rem;
+    height: 1.25rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    background: #f0c400;
+  }
+
+  .sheet .tri {
+    width: 1.15rem;
+    height: 1.15rem;
+    right: 2.25rem;
+    bottom: 0.75rem;
+    background: #0047bb;
+    clip-path: polygon(0 100%, 100% 100%, 100% 0);
+  }
+
+  .sheet .bar {
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 5px;
+    background: #111;
+  }
+
+  .v-0 .cir {
+    width: 34%;
+    aspect-ratio: 1;
+    top: -8%;
+    right: -8%;
+    background: #e10600;
+  }
+
+  .v-0 .sq {
+    width: 24%;
+    height: 16%;
+    left: 0;
+    bottom: 0;
+    background: #f0c400;
+  }
+
+  .v-0 .tri {
+    width: 22%;
+    aspect-ratio: 1;
+    top: 0;
+    left: 0;
+    background: #0047bb;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+
+  .v-0 .bar {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 7px;
+    background: #111;
+  }
+
+  .v-1 .cir {
+    width: 30%;
+    aspect-ratio: 1;
+    left: -6%;
+    bottom: -8%;
+    background: #0047bb;
+  }
+
+  .v-1 .sq {
+    width: 13%;
+    height: 30%;
+    top: 0;
+    left: 0;
+    background: #e10600;
+  }
+
+  .v-1 .tri {
+    width: 26%;
+    aspect-ratio: 1.15;
+    top: 0;
+    right: 0;
+    background: #f0c400;
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+  }
+
+  .v-1 .bar {
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 7px;
+    background: #111;
+  }
+
+  .v-2 .cir {
+    width: 28%;
+    aspect-ratio: 1;
+    top: -6%;
+    left: -6%;
+    background: #f0c400;
+  }
+
+  .v-2 .sq {
+    width: 15%;
+    height: 32%;
+    top: 34%;
+    right: 0;
+    background: #0047bb;
+  }
+
+  .v-2 .tri {
+    width: 24%;
+    aspect-ratio: 1.2;
+    right: 0;
+    bottom: 0;
+    background: #e10600;
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  }
+
+  .v-2 .bar {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 7px;
+    background: #111;
+  }
+
+  .sheet.v-0 .cir,
+  .sheet.v-1 .cir,
+  .sheet.v-2 .cir {
+    width: 1.65rem;
+    height: 1.65rem;
+    aspect-ratio: auto;
+    top: 0.75rem;
+    right: 0.75rem;
+    bottom: auto;
+    left: auto;
+    background: #e10600;
+    clip-path: none;
+  }
+
+  .sheet.v-0 .sq,
+  .sheet.v-1 .sq,
+  .sheet.v-2 .sq {
+    width: 1.25rem;
+    height: 1.25rem;
+    top: auto;
+    left: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    background: #f0c400;
+  }
+
+  .sheet.v-0 .tri,
+  .sheet.v-1 .tri,
+  .sheet.v-2 .tri {
+    width: 1.15rem;
+    height: 1.15rem;
+    aspect-ratio: auto;
+    top: auto;
+    left: auto;
+    right: 2.25rem;
+    bottom: 0.75rem;
+    background: #0047bb;
+    clip-path: polygon(0 100%, 100% 100%, 100% 0);
+  }
+
+  .sheet.v-0 .bar,
+  .sheet.v-1 .bar,
+  .sheet.v-2 .bar {
+    top: 0;
+    bottom: 0;
+    left: auto;
+    right: 0;
+    width: 5px;
+    height: auto;
+    background: #111;
+  }
+</style>

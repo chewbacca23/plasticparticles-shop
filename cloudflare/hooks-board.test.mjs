@@ -10,6 +10,9 @@ import {
   groupFromHooks,
   normalizePlace,
   spotFromPlace,
+  outskirtsSpotForKey,
+  BERLIN_MAP_CENTER,
+  BERLIN_OUTSKIRTS,
   parseHookPin,
   validatePin,
   validateWrite,
@@ -17,6 +20,13 @@ import {
   callPairKey,
   arePeopleNear,
   canCallUpon,
+  cleanPhone,
+  cleanTelegramUsername,
+  phoneDigitsForWa,
+  waMeUrl,
+  signalMeUrl,
+  telegramMeUrl,
+  WA_PREFILL,
 } from './hooks-board.js';
 
 const originalFetch = globalThis.fetch;
@@ -43,6 +53,9 @@ describe('hooks paths', () => {
     assert.equal(isHooksApiPath('/api/hooks'), true);
     assert.equal(isHooksApiPath('/api/hooks/write'), true);
     assert.equal(isHooksApiPath('/api/hooks/call'), true);
+    assert.equal(isHooksApiPath('/api/hooks/whatsapp'), true);
+    assert.equal(isHooksApiPath('/api/hooks/signal'), true);
+    assert.equal(isHooksApiPath('/api/hooks/telegram'), true);
     assert.equal(isHooksApiPath('/hooks'), false);
     assert.equal(isHooksApiPath('/api/contact'), false);
   });
@@ -62,6 +75,109 @@ describe('hooks privacy', () => {
     assert.equal(card.name, 'Joerg');
     assert.doesNotMatch(JSON.stringify(card), /hidden@example.com/);
     assert.equal(publicHookList([{ name: '' }]).length, 0);
+  });
+
+  it('never puts a phone on a public card, only a whatsapp flag on the person', () => {
+    const card = publicHook({
+      id: 'h1',
+      name: 'Joerg',
+      place: 'Berlin',
+      note: 'Coffee after the park.',
+      phone: '+49 170 1234567',
+      email: 'hidden@example.com',
+      at: '2026-09-24T00:00:00.000Z',
+    });
+    assert.equal(card.phone, undefined);
+    assert.doesNotMatch(JSON.stringify(card), /1701234567/);
+    assert.doesNotMatch(JSON.stringify(card), /\+49/);
+
+    const group = groupFromHooks([
+      {
+        id: 'h1',
+        name: 'Joerg',
+        place: 'Berlin',
+        note: 'Coffee.',
+        phone: '+49 170 1234567',
+        offers: [],
+        at: '2026-09-24T00:00:00.000Z',
+      },
+      {
+        id: 'h2',
+        name: 'Quiet',
+        place: 'Berlin',
+        note: 'No phone.',
+        offers: [],
+        at: '2026-09-24T01:00:00.000Z',
+      },
+    ]);
+    const joerg = group.people.find((person) => person.name === 'Joerg');
+    const quiet = group.people.find((person) => person.name === 'Quiet');
+    assert.equal(joerg.signal, true);
+    assert.equal(quiet.signal, false);
+    assert.equal(joerg.whatsapp, true);
+    assert.equal(quiet.whatsapp, false);
+    assert.doesNotMatch(JSON.stringify(group), /1701234567/);
+    assert.doesNotMatch(JSON.stringify(group), /\+49/);
+  });
+
+  it('never puts a Telegram handle on a public card, only a telegram flag on the person', () => {
+    const card = publicHook({
+      id: 'h1',
+      name: 'Joerg',
+      place: 'Berlin',
+      note: 'Coffee after the park.',
+      telegram: 'soulsearcher_joerg',
+      email: 'hidden@example.com',
+      at: '2026-09-24T00:00:00.000Z',
+    });
+    assert.equal(card.telegram, undefined);
+    assert.doesNotMatch(JSON.stringify(card), /soulsearcher_joerg/);
+
+    const group = groupFromHooks([
+      {
+        id: 'h1',
+        name: 'Joerg',
+        place: 'Berlin',
+        note: 'Coffee.',
+        telegram: '@soulsearcher_joerg',
+        offers: [],
+        at: '2026-09-24T00:00:00.000Z',
+      },
+      {
+        id: 'h2',
+        name: 'Quiet',
+        place: 'Berlin',
+        note: 'No Telegram.',
+        offers: [],
+        at: '2026-09-24T01:00:00.000Z',
+      },
+    ]);
+    const joerg = group.people.find((person) => person.name === 'Joerg');
+    const quiet = group.people.find((person) => person.name === 'Quiet');
+    assert.equal(joerg.telegram, true);
+    assert.equal(quiet.telegram, false);
+    assert.doesNotMatch(JSON.stringify(group), /soulsearcher_joerg/);
+    assert.doesNotMatch(JSON.stringify(group), /@/);
+  });
+
+  it('normalizes phones for Signal and prefers country-code style', () => {
+    assert.equal(cleanPhone('+49 170-123 4567'), '+491701234567');
+    assert.equal(phoneDigitsForWa('+49 170-123 4567'), '491701234567');
+    assert.equal(cleanPhone('0170 1234567'), '01701234567');
+    assert.equal(cleanPhone('short'), '');
+    assert.equal(signalMeUrl('+49 170 1234567'), 'https://signal.me/#p/+491701234567');
+    assert.equal(waMeUrl('+49 170 1234567'), 'https://signal.me/#p/+491701234567');
+    assert.equal(WA_PREFILL.includes('map'), true);
+  });
+
+  it('normalizes Telegram usernames and builds t.me links', () => {
+    assert.equal(cleanTelegramUsername('@Soul_Rider99'), 'Soul_Rider99');
+    assert.equal(cleanTelegramUsername('Soul_Rider99'), 'Soul_Rider99');
+    assert.equal(cleanTelegramUsername('ab'), '');
+    assert.equal(cleanTelegramUsername('1badstart'), '');
+    assert.equal(cleanTelegramUsername('has space'), '');
+    assert.equal(telegramMeUrl('@Soul_Rider99'), 'https://t.me/Soul_Rider99');
+    assert.equal(telegramMeUrl('nope'), '');
   });
 
   it('lays every stall and offer on the same market floor', () => {
@@ -122,7 +238,12 @@ describe('hooks privacy', () => {
     const ab = Math.hypot(a.x - b.x, a.y - b.y);
     const ac = Math.hypot(a.x - c.x, a.y - c.y);
     assert.ok(ab < ac);
-    assert.equal(groupFromHooks([{ id: 'h3', name: 'A', note: 'x', offers: [{ id: 'o2', name: 'a', note: 'self' }] }]).people.length, 1);
+    assert.equal(
+      groupFromHooks([
+        { id: 'h3', name: 'A', note: 'x', offers: [{ id: 'o2', name: 'a', note: 'self' }] },
+      ]).people.length,
+      1,
+    );
   });
 
   it('packs a thousand people inside the room', () => {
@@ -160,11 +281,8 @@ describe('hooks privacy', () => {
     assert.equal(berlin.inBerlin, true);
     assert.equal(nice.inBerlin, false);
 
-    // Kreuzberg sits south of Mitte in world units (wy grows south).
     assert.ok(kreuz.wy > mitte.wy);
-    // Nice is outside the Berlin city radius (~1).
     assert.ok(Math.hypot(nice.wx, nice.wy) > 1.15);
-    // Roughly south of Berlin (Côte d’Azur).
     assert.ok(nice.wy > 0.4);
 
     const onlyBerlin = groupFromHooks([
@@ -215,8 +333,82 @@ describe('hooks privacy', () => {
     const kn = Math.hypot(k.x - n.x, k.y - n.y);
     const kf = Math.hypot(k.x - far.x, k.y - far.y);
     assert.ok(kn < kf);
-    // Nice still south of Berlin riders after the zoom.
     assert.ok(far.y > k.y);
+  });
+
+  it('keeps Bar Italia and a near-spelling on the city, not the south edge', () => {
+    const cafe = spotFromPlace('akex, bar italia', 'henrik', 0);
+    assert.equal(cafe.inBerlin, true);
+    const typo = spotFromPlace('akex', 'henrik', 0);
+    assert.equal(typo.inBerlin, true);
+
+    const group = groupFromHooks([
+      {
+        id: 'h-cafe',
+        name: 'henrik',
+        place: 'akex, bar italia',
+        note: 'coffee on me',
+        offers: [],
+        at: '2026-10-01T12:01:37.511Z',
+      },
+    ]);
+    assert.ok(group.universe.zoom >= 0.85);
+    const person = group.people[0];
+    assert.ok(person.y < 75);
+    assert.ok(person.y > 20);
+  });
+
+  it('generic Berlin lands on the outskirts, not dead centre', () => {
+    const half = 42;
+    const dead = { x: 48, y: 48 };
+    const keys = ['henrik', 'rider-a', 'alice', 'bob', 'charlie', 'dora', 'eve', 'frank', 'gina'];
+    const labels = new Set();
+
+    for (const key of keys) {
+      const spot = spotFromPlace('Berlin', key, 0);
+      assert.equal(spot.inBerlin, true);
+      assert.ok(spot.outskirts, `expected outskirts label for ${key}`);
+      labels.add(spot.outskirts);
+
+      const outer = outskirtsSpotForKey(key);
+      assert.equal(spot.outskirts, outer.label);
+      assert.ok(BERLIN_OUTSKIRTS.some((s) => s.label === spot.outskirts));
+
+      const x = BERLIN_MAP_CENTER.x + spot.wx * half;
+      const y = BERLIN_MAP_CENTER.y + spot.wy * half;
+      const fromDead = Math.hypot(x - dead.x, y - dead.y);
+      const fromCenter = Math.hypot(x - BERLIN_MAP_CENTER.x, y - BERLIN_MAP_CENTER.y);
+      // Old generic dump was ~48,48 with spread 8; outskirts sit on the outer ring.
+      assert.ok(
+        fromDead > 14,
+        `Berlin/${key} too near dead centre (${fromDead.toFixed(1)})`,
+      );
+      assert.ok(
+        fromCenter > 12,
+        `Berlin/${key} too near map centre (${fromCenter.toFixed(1)})`,
+      );
+      assert.ok(Math.hypot(spot.wx, spot.wy) > 0.28);
+    }
+
+    // Stable for the same person key; berlijn / berlino same path.
+    const a = spotFromPlace('Berlin', 'henrik', 0);
+    const b = spotFromPlace('Berlin', 'henrik', 0);
+    const c = spotFromPlace('Berlijn', 'henrik', 0);
+    assert.equal(a.outskirts, b.outskirts);
+    assert.equal(a.outskirts, c.outskirts);
+    assert.equal(a.wx, b.wx);
+    assert.equal(a.wy, b.wy);
+
+    // Named boroughs still pin to their own centroid (Kreuzberg stays central-south).
+    const kreuz = spotFromPlace('Kreuzberg', 'henrik', 0);
+    assert.equal(kreuz.inBerlin, true);
+    assert.equal(kreuz.outskirts, undefined);
+    const kx = BERLIN_MAP_CENTER.x + kreuz.wx * half;
+    const ky = BERLIN_MAP_CENTER.y + kreuz.wy * half;
+    assert.ok(Math.hypot(kx - 49, ky - 56) < 6);
+
+    // Hash spreads across more than one outer district when keys differ.
+    assert.ok(labels.size >= 3, `expected several outskirts, got ${[...labels]}`);
   });
 });
 
@@ -227,9 +419,15 @@ describe('hooks pin', () => {
       place: 'Kreuzberg',
       note: 'Panini and a ride.',
       email: 'alex@example.com',
+      telegram: '@alex_rides',
+      phone: '+49 170 555 1212',
     });
     assert.equal(validatePin(fields), '');
+    assert.equal(fields.telegram, 'alex_rides');
+    assert.equal(fields.phone, '+491705551212');
     assert.equal(validatePin({ ...fields, email: '' }), '');
+    assert.equal(validatePin({ ...fields, phone: '' }), '');
+    assert.equal(validatePin({ ...fields, telegram: '' }), '');
     assert.equal(validatePin({ ...fields, name: '' }), 'Pick a name. Any name.');
   });
 
@@ -244,6 +442,8 @@ describe('hooks pin', () => {
           place: 'Daily Bread',
           note: 'Tires and a calm shop.',
           email: 'goetz@example.com',
+          telegram: '@goetz_rides',
+          phone: '+49 170 9998877',
         }),
       }),
       { STATS: kv },
@@ -255,6 +455,14 @@ describe('hooks pin', () => {
     assert.equal(body.market[0].kind, 'stall');
     assert.equal(body.market[0].name, 'Goetz');
     assert.equal(body.hooks[0].email, undefined);
+    assert.equal(body.hooks[0].phone, undefined);
+    assert.equal(body.hooks[0].telegram, undefined);
+    assert.equal(body.group.people[0].telegram, true);
+    assert.equal(body.group.people[0].signal, true);
+    assert.equal(body.group.people[0].whatsapp, true);
+    assert.doesNotMatch(JSON.stringify(body), /1709998877/);
+    assert.doesNotMatch(JSON.stringify(body), /goetz_rides/);
+    assert.doesNotMatch(JSON.stringify(body), /goetz@example.com/);
 
     const listed = await handleHooksRequest(
       new Request('https://thenewsoulsearchers.de/api/hooks'),
@@ -264,6 +472,11 @@ describe('hooks pin', () => {
     assert.equal(data.hooks.length, 1);
     assert.equal(data.hooks[0].place, 'Daily Bread');
     assert.doesNotMatch(JSON.stringify(data), /goetz@example.com/);
+    assert.doesNotMatch(JSON.stringify(data), /1709998877/);
+    assert.doesNotMatch(JSON.stringify(data), /goetz_rides/);
+    assert.equal(data.group.people[0].telegram, true);
+    assert.equal(data.group.people[0].signal, true);
+    assert.equal(data.group.people[0].whatsapp, true);
   });
 
   it('swallows an empty honeypot and still saves a real stall', async () => {
@@ -296,6 +509,149 @@ describe('hooks pin', () => {
     const body = await human.json();
     assert.equal(body.hooks[0].name, 'Alex');
     assert.equal(body.market[0].kind, 'stall');
+  });
+});
+
+describe('hooks telegram bridge', () => {
+  it('302s to t.me for an opted-in username and never leaks the handle', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify({
+        hooks: [
+          {
+            id: 'h1',
+            name: 'Hanna',
+            place: 'Berlin',
+            note: 'Sunday climb.',
+            telegram: '@hanna_climbs',
+            offers: [],
+            at: '2026-09-24T00:00:00.000Z',
+          },
+        ],
+        calls: [],
+      }),
+    });
+    const res = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/telegram?person=hanna'),
+      { STATS: kv },
+    );
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('location'), 'https://t.me/hanna_climbs');
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].telegram, true);
+    assert.doesNotMatch(JSON.stringify(data), /hanna_climbs/);
+    assert.doesNotMatch(JSON.stringify(data), /t\.me/);
+  });
+
+  it('404s when nobody left a Telegram username', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify({
+        hooks: [
+          {
+            id: 'h1',
+            name: 'Alex',
+            place: 'Berlin',
+            note: 'Spare tires.',
+            telegram: '',
+            offers: [],
+            at: '2026-09-24T00:00:00.000Z',
+          },
+        ],
+        calls: [],
+      }),
+    });
+    const miss = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/telegram?person=alex'),
+      { STATS: kv },
+    );
+    assert.equal(miss.status, 404);
+    assert.match((await miss.json()).error, /Telegram/i);
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].telegram, false);
+  });
+});
+
+describe('hooks signal bridge', () => {
+  it('302s to signal.me for an opted-in phone and never leaks digits', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify({
+        hooks: [
+          {
+            id: 'h1',
+            name: 'Hanna',
+            place: 'Berlin',
+            note: 'Sunday climb.',
+            phone: '+49 170 123 4567',
+            offers: [],
+            at: '2026-09-24T00:00:00.000Z',
+          },
+        ],
+        calls: [],
+      }),
+    });
+    const res = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/signal?person=hanna'),
+      { STATS: kv },
+    );
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('location'), 'https://signal.me/#p/+491701234567');
+
+    const oldDoor = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/whatsapp?person=hanna'),
+      { STATS: kv },
+    );
+    assert.equal(oldDoor.status, 302);
+    assert.equal(oldDoor.headers.get('location'), 'https://signal.me/#p/+491701234567');
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].signal, true);
+    assert.doesNotMatch(JSON.stringify(data), /1701234567|signal\.me|wa\.me/);
+  });
+
+  it('404s when nobody left a phone, and never leaks digits in list JSON', async () => {
+    const kv = memoryKv({
+      'hooks-v1': JSON.stringify({
+        hooks: [
+          {
+            id: 'h1',
+            name: 'Alex',
+            place: 'Berlin',
+            note: 'Spare tires.',
+            phone: '',
+            offers: [],
+            at: '2026-09-24T00:00:00.000Z',
+          },
+        ],
+        calls: [],
+      }),
+    });
+    const miss = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks/signal?person=alex'),
+      { STATS: kv },
+    );
+    assert.equal(miss.status, 404);
+    assert.match((await miss.json()).error, /Signal/i);
+
+    const listed = await handleHooksRequest(
+      new Request('https://thenewsoulsearchers.de/api/hooks'),
+      { STATS: kv },
+    );
+    const data = await listed.json();
+    assert.equal(data.group.people[0].signal, false);
+    assert.doesNotMatch(JSON.stringify(data), /wa\.me|signal\.me/);
   });
 });
 
@@ -337,7 +693,11 @@ describe('hooks write', () => {
     assert.equal(body.hooks[0].offers[0].note, 'I bring the coffee.');
     assert.equal(body.hooks[0].offers[0].email, undefined);
     assert.ok(body.market.some((card) => card.kind === 'stall' && card.name === 'Hanna'));
-    assert.ok(body.market.some((card) => card.kind === 'offer' && card.name === 'The Dog' && card.forName === 'Hanna'));
+    assert.ok(
+      body.market.some(
+        (card) => card.kind === 'offer' && card.name === 'The Dog' && card.forName === 'Hanna',
+      ),
+    );
   });
 
   it('mails the hidden address and not the public list', async () => {

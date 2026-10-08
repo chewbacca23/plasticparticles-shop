@@ -1,0 +1,437 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { existingMedia } from '../lib/media';
+
+const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((a, b) => {
+  if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+  return a.data.name.localeCompare(b.data.name);
+});
+---
+
+<BaseLayout
+  title="Stores around the world"
+  description="Bike shops and cycling stores we trust around the world — Berlin, Cologne, Manchester, and wherever the tour lands next."
+>
+  <section class="section">
+    <div class="site-shell stores">
+      <p class="eyebrow reveal">Stores</p>
+      <h1 class="section-title reveal reveal-delay-1">Stores around the world</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Bike shops that feel like Soul Searchers stops: honest advice, a spare tube when you need
+        it, and people who ask where you rode before they ask what broke.
+      </p>
+
+      {
+        stores.length === 0 ? (
+          <p class="empty">
+            Stores will show here when you add them in the editor under <strong>Stores</strong>.
+          </p>
+        ) : (
+          <ul class="store-list">
+            {stores.map((store, index) => {
+              const { name, city, country, note, url, photos } = store.data;
+              const gallery = existingMedia(photos);
+              const cover = gallery[0];
+              const NameTag = url ? 'a' : 'span';
+              const nameProps = url
+                ? { href: url, target: '_blank', rel: 'noopener noreferrer' }
+                : {};
+              const delayClass =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              return (
+                <li class:list={['store', delayClass]}>
+                  <div class="store-copy">
+                    <NameTag class="store-name" {...nameProps}>
+                      {name}
+                    </NameTag>
+                    <p class="store-place">
+                      {city}, {country}
+                    </p>
+                  </div>
+                  <div class="store-shots">
+                    {cover ? (
+                      <button
+                        type="button"
+                        class="store-photo"
+                        data-store-open
+                        data-store-set={store.id}
+                        data-src={cover}
+                        data-title={name}
+                        aria-label={`Open photo 1 of ${gallery.length} from ${name}`}
+                      >
+                        <img
+                          src={cover}
+                          alt=""
+                          width="1200"
+                          height="900"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </button>
+                    ) : (
+                      <span class="store-pin" aria-hidden="true">
+                        <span class="store-pin-dot" />
+                      </span>
+                    )}
+                    {gallery.length > 1 ? (
+                      <ul class="store-gallery" aria-label={`${name} photos`}>
+                        {gallery.slice(1).map((src, photoIndex) => (
+                          <li>
+                            <button
+                              type="button"
+                              class="store-thumb"
+                              data-store-open
+                              data-store-set={store.id}
+                              data-src={src}
+                              data-title={name}
+                              aria-label={`Open photo ${photoIndex + 2} of ${gallery.length} from ${name}`}
+                            >
+                              <img
+                                src={src}
+                                alt=""
+                                width="1200"
+                                height="900"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                  {note ? <p class="store-note">{note}</p> : null}
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
+
+      <dialog class="store-dialog" data-store-dialog aria-label="Store photo">
+        <div class="store-stage">
+          <img data-store-image alt="" />
+          <button type="button" class="store-nav store-prev" data-store-prev aria-label="Previous photo">
+            ‹
+          </button>
+          <button type="button" class="store-nav store-next" data-store-next aria-label="Next photo">
+            ›
+          </button>
+          <button type="button" class="store-close" data-store-close aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div class="store-meta">
+          <p class="store-caption" data-store-caption></p>
+          <p class="store-count" data-store-count></p>
+        </div>
+      </dialog>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const root = document.querySelector('.stores');
+  const dialog = document.querySelector('[data-store-dialog]');
+  const image = document.querySelector('[data-store-image]');
+  const caption = document.querySelector('[data-store-caption]');
+  const count = document.querySelector('[data-store-count]');
+  const thumbs = root ? [...root.querySelectorAll('[data-store-open]')] : [];
+  if (root && dialog && image && thumbs.length) {
+    let set = thumbs;
+
+    function show(thumb) {
+      const group = thumb.getAttribute('data-store-set') || '';
+      set = thumbs.filter((item) => item.getAttribute('data-store-set') === group);
+      const index = Math.max(0, set.indexOf(thumb));
+      const current = set[index] || thumb;
+      const src = current.getAttribute('data-src') || '';
+      const title = current.getAttribute('data-title') || '';
+      image.src = src;
+      image.alt = title;
+      if (caption) caption.textContent = title;
+      if (count) count.textContent = index + 1 + ' / ' + set.length;
+      const hideNav = set.length < 2;
+      const prevBtn = dialog.querySelector('[data-store-prev]');
+      const nextBtn = dialog.querySelector('[data-store-next]');
+      if (prevBtn) prevBtn.hidden = hideNav;
+      if (nextBtn) nextBtn.hidden = hideNav;
+      if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+    }
+
+    function step(delta) {
+      if (!set.length) return;
+      const src = image.getAttribute('src');
+      const index = Math.max(0, set.findIndex((item) => item.getAttribute('data-src') === src));
+      show(set[(index + delta + set.length) % set.length]);
+    }
+
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => show(thumb));
+    });
+
+    const prev = dialog.querySelector('[data-store-prev]');
+    const next = dialog.querySelector('[data-store-next]');
+    if (prev) {
+      prev.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(-1);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(1);
+      });
+    }
+    const close = dialog.querySelector('[data-store-close]');
+    if (close) close.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') step(-1);
+      if (event.key === 'ArrowRight') step(1);
+    });
+  }
+</script>
+
+<style>
+  .stores {
+    max-width: 56rem;
+  }
+
+  .empty {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .store-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .store {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: start;
+    padding: 1.45rem 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .store:last-child {
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .store-shots {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .store-photo,
+  .store-thumb {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .store-photo {
+    width: min(100%, 28rem);
+  }
+
+  .store-photo:focus-visible,
+  .store-thumb:focus-visible {
+    outline: 2px solid var(--amber-hot);
+    outline-offset: 2px;
+  }
+
+  .store-photo img,
+  .store-gallery img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: rgba(238, 243, 247, 0.04);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .store-photo:hover img,
+  .store-photo:focus-visible img,
+  .store-thumb:hover img,
+  .store-thumb:focus-visible img {
+    transform: scale(1.03);
+  }
+
+  .store-pin {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1px solid rgba(212, 163, 90, 0.35);
+    background:
+      radial-gradient(circle at 30% 28%, rgba(240, 194, 122, 0.22), transparent 62%),
+      linear-gradient(160deg, rgba(30, 58, 69, 0.55), rgba(12, 18, 24, 0.2));
+  }
+
+  .store-pin-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--amber-hot);
+    box-shadow: 0 0 0 4px rgba(212, 163, 90, 0.18);
+  }
+
+  .store-name {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--paper);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  a.store-name:hover {
+    color: var(--amber-hot);
+  }
+
+  .store-place {
+    margin: 0.3rem 0 0;
+    color: var(--amber);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .store-note {
+    margin: 0.2rem 0 0;
+    color: rgba(215, 224, 232, 0.75);
+    font-size: 1rem;
+    max-width: 40rem;
+    white-space: pre-line;
+  }
+
+  .store-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    width: 100%;
+  }
+
+  .store-dialog {
+    width: min(100% - 1.25rem, 68rem);
+    max-width: 68rem;
+    padding: 0;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1rem;
+    background: #0c1218;
+    color: var(--paper);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .store-dialog::backdrop {
+    background: rgba(6, 10, 14, 0.82);
+  }
+
+  .store-stage {
+    position: relative;
+    background: #080c11;
+  }
+
+  .store-stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(84vh, 52rem);
+    object-fit: contain;
+    background: #080c11;
+  }
+
+  .store-nav,
+  .store-close {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    background: rgba(12, 18, 24, 0.72);
+    color: var(--paper);
+    cursor: pointer;
+  }
+
+  .store-nav {
+    top: 50%;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    transform: translateY(-50%);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .store-prev {
+    left: 0.7rem;
+  }
+
+  .store-next {
+    right: 0.7rem;
+  }
+
+  .store-close {
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  .store-nav:hover,
+  .store-close:hover {
+    background: rgba(212, 163, 90, 0.28);
+  }
+
+  .store-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+    padding: 0.75rem 1rem 0.9rem;
+  }
+
+  .store-caption,
+  .store-count {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.92rem;
+  }
+
+  @media (max-width: 640px) {
+    .store-photo,
+    .store-pin {
+      width: 100%;
+    }
+
+    .store-gallery {
+      grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+    }
+
+    .store-name {
+      font-size: 1.2rem;
+    }
+  }
+</style>
