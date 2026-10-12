@@ -75,6 +75,12 @@ import { site } from '../site.config';
               <span class="ware-name">A groupset</span>
             </button>
           </li>
+          <li>
+            <button type="button" class="ware" data-offer="Small parts. Screws, a top cap, a chain. Ask before you come.">
+              <span class="ware-mark parts" aria-hidden="true"></span>
+              <span class="ware-name">Small parts</span>
+            </button>
+          </li>
         </ul>
       </section>
 
@@ -3784,6 +3790,16 @@ import { site } from '../site.config';
     border: 3px solid var(--amber);
     border-radius: 50%;
     background: radial-gradient(circle, var(--amber) 0.16rem, transparent 0.18rem);
+  }
+
+  .ware-mark.parts {
+    width: 1.45rem;
+    height: 0.42rem;
+    margin-top: 0.46rem;
+    background:
+      radial-gradient(circle at 0.2rem 50%, var(--amber) 0.16rem, transparent 0.18rem),
+      radial-gradient(circle at 0.72rem 50%, rgba(215, 224, 232, 0.9) 0.16rem, transparent 0.18rem),
+      radial-gradient(circle at 1.24rem 50%, var(--amber) 0.16rem, transparent 0.18rem);
   }
 
   @media (min-width: 720px) {
