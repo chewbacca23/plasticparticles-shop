@@ -16,7 +16,7 @@ import { site } from '../site.config';
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
         and it opens. Call upon someone near you with a short note. Email, phone, and Telegram stay
         off the page — Telegram only opens a free door if they opted in. Or Telegram a buddy from
-        your contacts: we open the app, you tap Send.         Signal is the other door, quieter, if you
+        your contacts: we open the app, you tap Send. Signal is the other door, quieter, if you
         need it.
       </p>
 
@@ -55,6 +55,12 @@ import { site } from '../site.config';
             <button type="button" class="ware" data-offer="A frame from time to time. Ask before you come.">
               <span class="ware-mark frame" aria-hidden="true"></span>
               <span class="ware-name">A frame</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="ware" data-offer="A bike bag. Frame, saddle, or bar. Ask before you come.">
+              <span class="ware-mark bag" aria-hidden="true"></span>
+              <span class="ware-name">A bag</span>
             </button>
           </li>
         </ul>
@@ -3718,9 +3724,17 @@ import { site } from '../site.config';
     border-bottom: 1.15rem solid rgba(215, 224, 232, 0.88);
   }
 
+  .ware-mark.bag {
+    height: 0.95rem;
+    margin-top: 0.28rem;
+    border: 2px solid var(--amber);
+    border-radius: 0.2rem 0.2rem 0.35rem 0.35rem;
+    box-shadow: 0 -0.32rem 0 -0.14rem var(--amber);
+  }
+
   @media (min-width: 720px) {
     .wares-row {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
