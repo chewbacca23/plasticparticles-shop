@@ -4,13 +4,13 @@ import { site } from '../site.config';
 ---
 
 <BaseLayout
-  title="Marketplace"
-  description="The Soul Searchers marketplace. A crowd of riders — ride together, or trade a tire, a stem, a saddle, a frame."
+  title="Fresh"
+  description="Fresh. A crowd of riders — ride together, or put down a tire, a stem, a saddle, a frame."
 >
   <section class="section">
     <div class="site-shell hooks">
-      <p class="eyebrow">Marketplace</p>
-      <h1 class="section-title">The marketplace</h1>
+      <p class="eyebrow">The floor</p>
+      <h1 class="section-title">Fresh</h1>
       <p class="section-lead">
         Room for a thousand. Berlin is the centre of this little universe — when someone from Nice,
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
@@ -306,7 +306,7 @@ import { site } from '../site.config';
 
       <p class="floor-kicker">The floor</p>
       <ol id="hook-list" class="market">
-        <li class="empty">The market is empty. Open the first stall.</li>
+        <li class="empty">The floor is empty. Open the first stall.</li>
       </ol>
 
       <div id="pin-success" class="success" hidden>
@@ -1410,7 +1410,7 @@ import { site } from '../site.config';
             var cards = cardsFrom(lastPayload);
             list.innerHTML = cards.length
               ? cards.map(renderCard).join('')
-              : '<li class="empty">The market is empty. Open the first stall.</li>';
+              : '<li class="empty">The floor is empty. Open the first stall.</li>';
           }
           if (dockKey) renderChatDock();
           showCallsForYou();
@@ -1859,7 +1859,7 @@ import { site } from '../site.config';
       if (!list) return;
       var cards = cardsFrom(lastPayload);
       if (!cards.length) {
-        list.innerHTML = '<li class="empty">The market is empty. Open the first stall.</li>';
+        list.innerHTML = '<li class="empty">The floor is empty. Open the first stall.</li>';
         return;
       }
       list.innerHTML = cards.map(renderCard).join('');
