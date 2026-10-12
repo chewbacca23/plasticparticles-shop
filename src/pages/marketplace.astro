@@ -16,9 +16,49 @@ import { site } from '../site.config';
         Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
         and it opens. Call upon someone near you with a short note. Email, phone, and Telegram stay
         off the page — Telegram only opens a free door if they opted in. Or Telegram a buddy from
-        your contacts: we open the app, you tap Send. Signal is the other door, quieter, if you
+        your contacts: we open the app, you tap Send.         Signal is the other door, quieter, if you
         need it.
       </p>
+
+      <section class="wares" aria-label="What you can put down">
+        <p class="wares-kicker">On the table</p>
+        <ul class="wares-row">
+          <li>
+            <button
+              type="button"
+              class="ware"
+              data-offer="Sunday ride. Meet when the light is good."
+            >
+              <span class="ware-mark ride" aria-hidden="true"></span>
+              <span class="ware-name">A ride</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="ware" data-offer="28mm tires. Take them if they fit.">
+              <span class="ware-mark tire" aria-hidden="true"></span>
+              <span class="ware-name">A tire</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="ware" data-offer="A stem, if yours is the wrong length.">
+              <span class="ware-mark stem" aria-hidden="true"></span>
+              <span class="ware-name">A stem</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="ware" data-offer="A saddle, sat in, still good.">
+              <span class="ware-mark saddle" aria-hidden="true"></span>
+              <span class="ware-name">A saddle</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="ware" data-offer="A frame from time to time. Ask before you come.">
+              <span class="ware-mark frame" aria-hidden="true"></span>
+              <span class="ware-name">A frame</span>
+            </button>
+          </li>
+        </ul>
+      </section>
 
       <p id="welcome-back" class="welcome-back" hidden>
         <span id="welcome-back-text"></span>
@@ -245,46 +285,6 @@ import { site } from '../site.config';
         </p>
         <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
       </aside>
-
-      <section class="wares" aria-label="What you can put down">
-        <p class="wares-kicker">On the table</p>
-        <ul class="wares-row">
-          <li>
-            <button
-              type="button"
-              class="ware"
-              data-offer="Sunday ride. Meet when the light is good."
-            >
-              <span class="ware-mark ride" aria-hidden="true"></span>
-              <span class="ware-name">A ride</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="ware" data-offer="28mm tires. Take them if they fit.">
-              <span class="ware-mark tire" aria-hidden="true"></span>
-              <span class="ware-name">A tire</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="ware" data-offer="A stem, if yours is the wrong length.">
-              <span class="ware-mark stem" aria-hidden="true"></span>
-              <span class="ware-name">A stem</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="ware" data-offer="A saddle, sat in, still good.">
-              <span class="ware-mark saddle" aria-hidden="true"></span>
-              <span class="ware-name">A saddle</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="ware" data-offer="A frame from time to time. Ask before you come.">
-              <span class="ware-mark frame" aria-hidden="true"></span>
-              <span class="ware-name">A frame</span>
-            </button>
-          </li>
-        </ul>
-      </section>
 
       <p class="floor-kicker">The floor</p>
       <ol id="hook-list" class="market">
@@ -3624,7 +3624,7 @@ import { site } from '../site.config';
   }
 
   .wares {
-    margin: 1.5rem 0 0;
+    margin: 1.35rem 0 0.4rem;
   }
 
   .wares-kicker {
