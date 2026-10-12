@@ -427,50 +427,73 @@ export default {
    * @param {Request} request
    * @param {{ ASSETS?: { fetch: (request: Request) => Promise<Response> }, GITHUB_OAUTH_CLIENT_ID?: string, GITHUB_OAUTH_CLIENT_SECRET?: string, GITHUB_CLIENT_ID?: string, GITHUB_CLIENT_SECRET?: string }} env
    */
-  async fetch(request, env) {
-    const url = new URL(request.url);
+  async fetch(request, env, ctx) {
+    try {
+      const url = new URL(request.url);
 
-    if (url.pathname === '/cms-status') return await statusPage(env);
+      if (url.pathname === '/cms-status') return await statusPage(env);
 
-    const kit = await handleKitRoom(request, env);
-    if (kit) return kit;
+      const kit = await handleKitRoom(request, env);
+      if (kit) return kit;
 
-    const contact = await handleContactRequest(request, env);
-    if (contact) return contact;
+      const contact = await handleContactRequest(request, env);
+      if (contact) return contact;
 
-    const hooks = await handleHooksRequest(request, env);
-    if (hooks) return hooks;
+      const hooks = await handleHooksRequest(request, env);
+      if (hooks) return hooks;
 
-    const looks = await handleLooksRequest(request, env);
-    if (looks) return looks;
+      const looks = await handleLooksRequest(request, env);
+      if (looks) return looks;
 
-    await recordDocumentLook(request, env);
+      const lookJob = recordDocumentLook(request, env);
+      if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(lookJob);
+      else await lookJob;
 
-    const freshRide = await handleFreshRide(request, env);
-    if (freshRide) return freshRide;
+      const freshRide = await handleFreshRide(request, env);
+      if (freshRide) return freshRide;
 
-    const freshShop = await handleFreshShop(request, env);
-    if (freshShop) return freshShop;
+      const freshShop = await handleFreshShop(request, env);
+      if (freshShop) return freshShop;
 
-    const freshSite = await handleFreshSite(request, env);
-    if (freshSite) return freshSite;
+      const freshSite = await handleFreshSite(request, env);
+      if (freshSite) return freshSite;
 
-    if (url.pathname === '/auth' || url.pathname === '/callback') {
-      const creds = oauthCreds(env);
-      if (!creds) return missingSecretsPage(env);
-      if (url.pathname === '/auth') return handleAuth(url, creds);
-      return handleCallback(url, creds);
+      if (url.pathname === '/auth' || url.pathname === '/callback') {
+        const creds = oauthCreds(env);
+        if (!creds) return missingSecretsPage(env);
+        if (url.pathname === '/auth') return handleAuth(url, creds);
+        return handleCallback(url, creds);
+      }
+
+      if (env.ASSETS) {
+        const asset = await env.ASSETS.fetch(request);
+        try {
+          const filled = await applyLooksToAsset(request, env, asset);
+          return filled || asset;
+        } catch {
+          return asset;
+        }
+      }
+
+      const looksPage = await handleLooksPage(request, env);
+      if (looksPage) return looksPage;
+      return new Response('Not found', { status: 404 });
+    } catch {
+      if (env?.ASSETS) {
+        try {
+          return await env.ASSETS.fetch(request);
+        } catch {
+          /* fall through */
+        }
+      }
+      return new Response('The Soul Searchers will be right back.', {
+        status: 503,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'retry-after': '8',
+        },
+      });
     }
-
-    if (env.ASSETS) {
-      const asset = await env.ASSETS.fetch(request);
-      const filled = await applyLooksToAsset(request, env, asset);
-      return filled || asset;
-    }
-
-    const looksPage = await handleLooksPage(request, env);
-    if (looksPage) return looksPage;
-    return new Response('Not found', { status: 404 });
   },
 };
 

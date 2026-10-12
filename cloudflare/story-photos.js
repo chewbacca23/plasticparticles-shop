@@ -1,5 +1,6 @@
 /**
- * Ride photos: one first photo at the top, the rest sit inside the story.
+ * Ride photos: one first photo at the top, the rest sit inside the story
+ * as right-side thumbnails beside the paragraph they belong to.
  * Photos already written into Ride text stay where they are.
  */
 
@@ -58,21 +59,22 @@ export function weaveStoryMarkdown(body, photos) {
   });
   if (!textIndexes.length) return [...blocks, ...imageBlocks].join('\n\n');
 
-  const after = new Map();
+  // Place each shot *before* its paragraph so float:right sits beside that text.
+  const before = new Map();
   extras.forEach((src, i) => {
     const slot = Math.floor(((i + 1) * textIndexes.length) / (extras.length + 1));
     const clamped = Math.min(Math.max(slot, 0), textIndexes.length - 1);
     const blockIndex = textIndexes[clamped];
-    const list = after.get(blockIndex) || [];
+    const list = before.get(blockIndex) || [];
     list.push(`![](${src})`);
-    after.set(blockIndex, list);
+    before.set(blockIndex, list);
   });
 
   const out = [];
   blocks.forEach((block, index) => {
-    out.push(block);
-    const extra = after.get(index);
+    const extra = before.get(index);
     if (extra) out.push(...extra);
+    out.push(block);
   });
   return out.join('\n\n');
 }

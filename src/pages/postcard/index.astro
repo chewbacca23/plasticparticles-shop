@@ -1,0 +1,200 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostcardMarks from '../../components/PostcardMarks.astro';
+import { existingMedia, galleryMedia } from '../../lib/media';
+import { newestFirst } from '../../lib/newest';
+import { site } from '../../site.config';
+
+const stories = await getCollection('stories', ({ data }) => !data.draft);
+const weeks = await getCollection('week', ({ data }) => !data.draft);
+
+const cards = newestFirst(
+  [
+    ...stories.map((story) => ({
+      id: story.id,
+      date: story.data.pubDate,
+      title: story.data.headline,
+      cover: galleryMedia(story.data.cover, story.data.gallery)[0] || '',
+    })),
+    ...weeks.map((entry) => ({
+      id: entry.id,
+      date: entry.data.pubDate,
+      title: entry.data.title,
+      cover: existingMedia(entry.data.photos)[0] || '',
+    })),
+  ],
+  (card) => card.date,
+);
+---
+
+<BaseLayout
+  title="Postcards"
+  description="A postcard from each Soul Searchers ride. The crest is on every picture. Send one to someone who was not there."
+>
+  <section class="section">
+    <div class="site-shell">
+      <p class="eyebrow">Postcards</p>
+      <h1 class="section-title">From the ride</h1>
+      <p class="section-lead">
+        One postcard for each ride. A few words, up to twenty pictures, and the crest on every one.
+        Send it to someone who was not there.
+        <a href="/contact">Sign up for free</a>. No sign-up, no postcard. It is still free of charge.
+      </p>
+
+      {
+        cards.length === 0 ? (
+          <p>No postcard to send just yet.</p>
+        ) : (
+          <div class="grid">
+            {cards.map((card, index) => (
+              <a class="tile" href={`/postcard/${card.id}`}>
+                <span class="frame">
+                  {card.cover ? (
+                    <span class="window">
+                      <img
+                        class="shot"
+                        src={card.cover}
+                        alt=""
+                        width="800"
+                        height="1000"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                        sizes="(max-width: 640px) 92vw, 400px"
+                      />
+                      <PostcardMarks variant={index} />
+                    </span>
+                    <span class="keep" aria-hidden="true"></span>
+                  ) : (
+                    <span class="awaiting">
+                      <img src={site.logo} alt="" width="56" height="71" loading="lazy" />
+                      <span>Crest only</span>
+                    </span>
+                  )}
+                </span>
+                <h2>{card.title}</h2>
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grid {
+    display: grid;
+    gap: 1.75rem 1.25rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 700px) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .grid {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+
+  .tile {
+    display: grid;
+    gap: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .frame {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    padding: 0.55rem;
+    background: #f4f1ea;
+    border: 3px solid #111;
+    box-shadow: 8px 8px 0 #111;
+  }
+
+  .window {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 3px solid #111;
+  }
+
+  .keep {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    -webkit-touch-callout: none;
+  }
+
+  .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .shot {
+    filter: contrast(1.08) saturate(0.9);
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tile:hover .shot {
+    transform: scale(1.04);
+  }
+
+  .awaiting {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    background: #f6efe2;
+  }
+
+  .awaiting img {
+    width: 3.5rem;
+    height: auto;
+    transition: none;
+  }
+
+  .awaiting span {
+    color: #8a5a12;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 0;
+    color: #111;
+    font-family: Figtree, system-ui, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 760;
+    letter-spacing: -0.03em;
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('contextmenu', function (event) {
+    var node = event.target;
+    if (node && node.closest && node.closest('.frame')) event.preventDefault();
+  });
+  document.addEventListener('dragstart', function (event) {
+    var node = event.target;
+    if (node && node.closest && node.closest('.frame')) event.preventDefault();
+  });
+</script>

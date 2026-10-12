@@ -329,30 +329,32 @@
     }
   }
 
-  function stackRightPills() {
-    var mail = $('cms-mail');
-    var looks = document.querySelector('.cms-looks');
-    var save = document.querySelector('[data-ss-save-ride]');
-    var hasSave = !!(save && document.body.contains(save));
-    if (mail) {
-      if (hasSave) mail.setAttribute('data-ss-above-save', '1');
-      else mail.removeAttribute('data-ss-above-save');
+  function pillStack() {
+    var stack = document.getElementById('cms-pill-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = 'cms-pill-stack';
     }
-    if (looks) {
-      looks.setAttribute('data-ss-above-mail', '1');
-      if (hasSave) looks.setAttribute('data-ss-above-save', '1');
-      else looks.removeAttribute('data-ss-above-save');
+    if (stack.parentNode !== document.body) document.body.appendChild(stack);
+    return stack;
+  }
+
+  function stackRightPills() {
+    var stack = pillStack();
+    var nodes = [
+      document.querySelector('[data-ss-save-ride]'),
+      document.querySelector('[data-ss-delete-entry]'),
+      document.querySelector('.cms-looks'),
+      $('cms-mail'),
+    ];
+    var i;
+    for (i = 0; i < nodes.length; i++) {
+      if (nodes[i]) stack.appendChild(nodes[i]);
     }
   }
 
   var mail = $('cms-mail');
-  if (mail) {
-    document.body.appendChild(mail);
-    mail.addEventListener('click', onMailClick);
-  }
-
-  var looks = document.querySelector('.cms-looks');
-  if (looks) document.body.appendChild(looks);
+  if (mail) mail.addEventListener('click', onMailClick);
 
   var extras = document.querySelectorAll('[data-ss-mail]');
   var i;

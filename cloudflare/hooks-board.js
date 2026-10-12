@@ -1,9 +1,13 @@
 /**
  * Riders marketplace. Room for a thousand people. Ride together, or trade
- * a tire, a stem, a saddle, a frame. Emails never appear on the page.
+ * a tire, a stem, a saddle, a frame. Emails, phones, and Telegram handles
+ * never appear on the page.
  *
- * GET  /api/hooks           public stalls + market + group dots + call threads (no emails)
- * POST /api/hooks           pin { name, place, note, email?, company }
+ * GET  /api/hooks           public stalls + market + group dots + call threads (no emails/phones/handles)
+ * GET  /api/hooks/telegram  302 → t.me for an opted-in person (username stays server-side)
+ * GET  /api/hooks/signal    302 → signal.me for an opted-in person (phone stays server-side)
+ * GET  /api/hooks/whatsapp  302 → same Signal door (old bookmarks)
+ * POST /api/hooks           pin { name, place, note, email?, telegram?, phone?, company }
  * POST /api/hooks           { action: 'remove', id } — Henrik, Looks cookie
  * POST /api/hooks/write     offer { hookId, name, message, email?, company }
  * POST /api/hooks/call      call upon { toKey, name, message, email?, place?, company }
@@ -26,6 +30,8 @@ const MAX_PLACE = 80;
 const MAX_NOTE = 400;
 const MAX_MESSAGE = 2000;
 const MAX_CALL_TEXT = 500;
+const MAX_PHONE = 32;
+const MAX_TELEGRAM = 32;
 export const MAX_HOOKS = 1000;
 export const MAX_OFFERS = 80;
 export const MAX_CALL_THREADS = 500;
@@ -36,6 +42,12 @@ const RATE_WINDOW_SEC = 60 * 10;
 const RATE_PIN = 3;
 const RATE_WRITE = 8;
 const RATE_CALL = 10;
+const RATE_WHATSAPP = 20;
+const RATE_SIGNAL = 20;
+const RATE_TELEGRAM = 20;
+/** Prefill kept for old WhatsApp bookmarks — the live door is Signal. */
+export const WA_PREFILL =
+  'Hey from the Soul Searchers map — saw you standing there.';
 
 export function isHooksApiPath(pathname) {
   return (
@@ -44,7 +56,13 @@ export function isHooksApiPath(pathname) {
     pathname === '/api/hooks/write' ||
     pathname === '/api/hooks/write/' ||
     pathname === '/api/hooks/call' ||
-    pathname === '/api/hooks/call/'
+    pathname === '/api/hooks/call/' ||
+    pathname === '/api/hooks/whatsapp' ||
+    pathname === '/api/hooks/whatsapp/' ||
+    pathname === '/api/hooks/signal' ||
+    pathname === '/api/hooks/signal/' ||
+    pathname === '/api/hooks/telegram' ||
+    pathname === '/api/hooks/telegram/'
   );
 }
 
@@ -54,6 +72,76 @@ export function isHooksWritePath(pathname) {
 
 export function isHooksCallPath(pathname) {
   return pathname === '/api/hooks/call' || pathname === '/api/hooks/call/';
+}
+
+export function isHooksWhatsappPath(pathname) {
+  return pathname === '/api/hooks/whatsapp' || pathname === '/api/hooks/whatsapp/';
+}
+
+export function isHooksSignalPath(pathname) {
+  return pathname === '/api/hooks/signal' || pathname === '/api/hooks/signal/';
+}
+
+export function isHooksTelegramPath(pathname) {
+  return pathname === '/api/hooks/telegram' || pathname === '/api/hooks/telegram/';
+}
+
+/**
+ * Opt-in WhatsApp numbers only. Best as +49… with country code.
+ * Stores digits (and leading +) privately — public payloads never see this.
+ */
+export function cleanPhone(raw) {
+  const value = String(raw || '').trim().slice(0, MAX_PHONE);
+  if (!value) return '';
+  const digits = value.replace(/[^\d+]/g, '');
+  const hasPlus = digits.startsWith('+');
+  const only = (hasPlus ? digits.slice(1) : digits).replace(/\D/g, '');
+  if (only.length < 8 || only.length > 15) return '';
+  return hasPlus ? `+${only}` : only;
+}
+
+/**
+ * Opt-in Telegram username only. Strips a leading @. Public payloads never see this —
+ * only a boolean telegram flag on the person.
+ */
+export function cleanTelegramUsername(raw) {
+  let value = String(raw || '').trim().slice(0, MAX_TELEGRAM + 1);
+  if (!value) return '';
+  if (value.startsWith('@')) value = value.slice(1);
+  value = value.trim();
+  // Telegram: 5–32 chars, starts with a letter, a–z / 0–9 / _
+  if (!/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(value)) return '';
+  return value;
+}
+
+/** Digits only for wa.me — keeps country code if the rider left +49… */
+export function phoneDigitsForWa(raw) {
+  const cleaned = cleanPhone(raw);
+  if (!cleaned) return '';
+  return cleaned.replace(/\D/g, '');
+}
+
+export function waMeUrl(phone, text = WA_PREFILL) {
+  return signalMeUrl(phone);
+}
+
+export function phoneE164(raw) {
+  const cleaned = cleanPhone(raw);
+  if (!cleaned) return '';
+  return cleaned.startsWith('+') ? cleaned : `+${cleaned.replace(/\D/g, '')}`;
+}
+
+/** Opt-in Signal chat — same private phone, never shown on the map. */
+export function signalMeUrl(phone) {
+  const e164 = phoneE164(phone);
+  if (!e164) return '';
+  return `https://signal.me/#p/${e164}`;
+}
+
+export function telegramMeUrl(username) {
+  const handle = cleanTelegramUsername(username);
+  if (!handle) return '';
+  return `https://t.me/${handle}`;
 }
 
 export function newHookId(now = Date.now()) {
@@ -67,6 +155,8 @@ export function parseHookPin(raw) {
     place: cleanLine(src.place, MAX_PLACE),
     note: cleanLine(src.note, MAX_NOTE),
     email: cleanEmail(src.email),
+    telegram: cleanTelegramUsername(src.telegram || src.telegramUsername || src.tg),
+    phone: cleanPhone(src.phone || src.signal || src.whatsapp || src.mobile),
     company: cleanLine(src.company || src.fax_number_leave_blank, 80),
   };
 }
@@ -287,7 +377,7 @@ export function normalizePlace(value) {
  */
 const BERLIN_SPOTS = [
   { keys: ['mitte', 'alex', 'alexanderplatz', 'hackescher'], x: 42, y: 43, spread: 4.5 },
-  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann'], x: 49, y: 56, spread: 4 },
+  { keys: ['kreuzberg', 'xberg', 'gorlitzer', 'goerlitzer', 'bergmann', 'bar italia', 'baritalia'], x: 49, y: 56, spread: 4 },
   { keys: ['friedrichshain', 'fhain', 'boxhagener', 'warschauer'], x: 54, y: 46, spread: 4 },
   { keys: ['prenzlauer', 'prenzlberg', 'prenzl', 'helmholtz', 'mauerpark'], x: 50, y: 34, spread: 4 },
   { keys: ['neukolln', 'neukoelln', 'weserstr', 'weser'], x: 54, y: 68, spread: 4 },
@@ -310,7 +400,24 @@ const BERLIN_SPOTS = [
   { keys: ['weissensee', 'weißensee'], x: 56, y: 30, spread: 3.2 },
   { keys: ['friedenau'], x: 36, y: 66, spread: 2.8 },
   { keys: ['tiergarten'], x: 38, y: 48, spread: 3.2 },
+  // Generic city name only — no dead centre; spotFromPlace picks an outskirts Bezirk.
   { keys: ['berlin', 'berlijn', 'berlino'], x: 48, y: 48, spread: 8, generic: true },
+];
+
+/**
+ * Outer districts for plain “Berlin” (no Bezirk named). Stable pick by person key hash.
+ * Centroids match the named BERLIN_SPOTS entries above.
+ */
+export const BERLIN_OUTSKIRTS = [
+  { label: 'spandau', x: 16, y: 45, spread: 3.8 },
+  { label: 'zehlendorf', x: 18, y: 78, spread: 3.2 },
+  { label: 'kopenick', x: 80, y: 76, spread: 3.8 },
+  { label: 'pankow', x: 52, y: 22, spread: 3.5 },
+  { label: 'marzahn', x: 72, y: 38, spread: 3.2 },
+  { label: 'reinickendorf', x: 32, y: 26, spread: 3.5 },
+  { label: 'hellersdorf', x: 78, y: 44, spread: 3.2 },
+  { label: 'treptow', x: 66, y: 62, spread: 3.2 },
+  { label: 'steglitz', x: 28, y: 68, spread: 3.2 },
 ];
 
 /** Berlin stays the centre of the lil universe (map % before zoom). */
@@ -362,9 +469,42 @@ const WORLD_PLACES = [
   { keys: ['sydney'], lat: -33.87, lon: 151.21 },
 ];
 
+/** One-letter slip on a borough name still lands in the city, not the south edge. */
+function almostPlaceKey(token, key) {
+  if (!token || !key || key.includes(' ')) return false;
+  if (token === key) return true;
+  if (token.length < 4 || key.length < 4) return false;
+  if (Math.abs(token.length - key.length) > 1) return false;
+  let misses = 0;
+  if (token.length === key.length) {
+    for (let i = 0; i < token.length; i += 1) {
+      if (token[i] !== key[i]) misses += 1;
+      if (misses > 1) return false;
+    }
+    return true;
+  }
+  const longer = token.length > key.length ? token : key;
+  const shorter = token.length > key.length ? key : token;
+  let i = 0;
+  let j = 0;
+  while (i < longer.length && j < shorter.length) {
+    if (longer[i] === shorter[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    i += 1;
+    misses += 1;
+    if (misses > 1) return false;
+  }
+  return true;
+}
+
 function matchBerlinSpot(folded) {
   if (!folded) return null;
   let generic = null;
+  let fuzzy = null;
+  const tokens = folded.split(' ').filter(Boolean);
   for (const spot of BERLIN_SPOTS) {
     for (const key of spot.keys) {
       if (folded === key || folded.includes(key)) {
@@ -374,9 +514,17 @@ function matchBerlinSpot(folded) {
         }
         return spot;
       }
+      if (!fuzzy && !spot.generic) {
+        for (const token of tokens) {
+          if (almostPlaceKey(token, key)) {
+            fuzzy = spot;
+            break;
+          }
+        }
+      }
     }
   }
-  return generic;
+  return fuzzy || generic;
 }
 
 function matchWorldPlace(folded) {
@@ -406,21 +554,27 @@ function worldRadiusFromKm(km) {
   return 1.2 + Math.log1p(Math.max(0, km) / 90) * 0.92;
 }
 
-/**
- * Map a free-text place into Berlin-centred world units (Berlin city ≈ ±1).
- * Final room % comes from layoutUniverse — Berlin stays the centre.
- */
+/** Stable outskirts Bezirk for a generic “Berlin” pin (hash of person key). */
+export function outskirtsSpotForKey(key = '') {
+  const h = nameHash(String(key || 'berlin'));
+  return BERLIN_OUTSKIRTS[h % BERLIN_OUTSKIRTS.length];
+}
+
 export function spotFromPlace(place, key = '', index = 0) {
   const folded = normalizePlace(place);
   const berlin = matchBerlinSpot(folded);
   if (berlin) {
-    const local = jitterAround(berlin.x, berlin.y, berlin.spread, key, index);
-    return {
+    // Plain “Berlin” → outer ring district; named boroughs keep their own centroid.
+    const base = berlin.generic ? outskirtsSpotForKey(key) : berlin;
+    const local = jitterAround(base.x, base.y, base.spread, key, index);
+    const spot = {
       wx: (local.x - BERLIN_MAP_CENTER.x) / BERLIN_MAP_HALF,
       wy: (local.y - BERLIN_MAP_CENTER.y) / BERLIN_MAP_HALF,
       inBerlin: true,
       placeLabel: folded || 'berlin',
     };
+    if (berlin.generic) spot.outskirts = base.label;
+    return spot;
   }
 
   const world = matchWorldPlace(folded);
@@ -436,9 +590,9 @@ export function spotFromPlace(place, key = '', index = 0) {
     east = eastKm / km;
     south = -northKm / km;
   } else {
-    // Unknown town still joins the universe on an outer ring — Berlin stays centre.
+    // Unknown town still joins — close ring so one typo does not sink the map.
     const angle = ((h % 6283) / 1000) + index * 0.37;
-    radius = 1.55 + ((h >>> 5) % 90) / 100;
+    radius = 1.08 + ((h >>> 5) % 40) / 200;
     east = Math.sin(angle);
     south = Math.cos(angle);
   }
@@ -584,8 +738,43 @@ export function emailForPersonKey(hooks, calls, key) {
   return '';
 }
 
+/** Private phone lookup — never put the number on a public card. */
+export function phoneForPersonKey(hooks, key) {
+  const want = personKey(key);
+  if (!want) return '';
+  for (const hook of Array.isArray(hooks) ? hooks : []) {
+    if (personKey(hook.name) === want) {
+      const phone = cleanPhone(hook.phone);
+      if (phone) return phone;
+    }
+  }
+  return '';
+}
+
+export function personHasWhatsapp(hooks, key) {
+  return !!phoneForPersonKey(hooks, key);
+}
+
+/** Private Telegram username lookup — never put the handle on a public card. */
+export function telegramForPersonKey(hooks, key) {
+  const want = personKey(key);
+  if (!want) return '';
+  for (const hook of Array.isArray(hooks) ? hooks : []) {
+    if (personKey(hook.name) === want) {
+      const handle = cleanTelegramUsername(hook.telegram);
+      if (handle) return handle;
+    }
+  }
+  return '';
+}
+
+export function personHasTelegram(hooks, key) {
+  return !!telegramForPersonKey(hooks, key);
+}
+
 export function groupFromHooks(hooks) {
   const peopleMap = new Map();
+  const rawHooks = Array.isArray(hooks) ? hooks : [];
 
   function ensure(name) {
     const key = personKey(name);
@@ -597,6 +786,9 @@ export function groupFromHooks(hooks) {
         stalls: [],
         offers: [],
         neighborKeys: [],
+        telegram: false,
+        signal: false,
+        whatsapp: false,
       });
     }
     return peopleMap.get(key);
@@ -608,7 +800,7 @@ export function groupFromHooks(hooks) {
     if (!b.neighborKeys.includes(a.key)) b.neighborKeys.push(a.key);
   }
 
-  for (const hook of publicHookList(hooks)) {
+  for (const hook of publicHookList(rawHooks)) {
     const host = ensure(hook.name);
     if (!host) continue;
     host.stalls.push({
@@ -632,6 +824,12 @@ export function groupFromHooks(hooks) {
       });
       link(host, guest);
     }
+  }
+
+  for (const person of peopleMap.values()) {
+    person.telegram = personHasTelegram(rawHooks, person.key);
+    person.signal = personHasWhatsapp(rawHooks, person.key);
+    person.whatsapp = person.signal;
   }
 
   const people = [...peopleMap.values()];
@@ -819,6 +1017,12 @@ async function notifyHenrikPin(env, hook) {
     `Place: ${hook.place}`,
     `Note: ${hook.note}`,
     hook.email ? `Email (hidden on the site): ${hook.email}` : 'No email left.',
+    hook.telegram
+      ? `Telegram username (hidden on the site, bridge only): @${hook.telegram}`
+      : 'No Telegram username left.',
+    hook.phone
+      ? `WhatsApp phone (hidden on the site, bridge only): ${hook.phone}`
+      : 'No WhatsApp phone left.',
     '',
     'https://thenewsoulsearchers.de/marketplace',
   ].join('\n');
@@ -900,7 +1104,61 @@ export async function handleHooksRequest(request, env) {
     });
   }
 
-  if (request.method === 'GET' && !isHooksWritePath(url.pathname) && !isHooksCallPath(url.pathname)) {
+  if (request.method === 'GET' && isHooksTelegramPath(url.pathname)) {
+    if (!(await underRateLimit(env, clientKey(request, 'tg'), RATE_TELEGRAM))) {
+      return json({ error: 'Easy. Try again in a few minutes.' }, 429);
+    }
+    const key = personKey(url.searchParams.get('person') || url.searchParams.get('key') || '');
+    if (!key) return json({ error: 'Who are you messaging?' }, 400);
+    const board = await readBoard(env);
+    const handle = telegramForPersonKey(board.hooks, key);
+    const target = telegramMeUrl(handle);
+    if (!target) {
+      return json({ error: 'They have not opened the Telegram door.' }, 404);
+    }
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: target,
+        'cache-control': 'no-store',
+        'referrer-policy': 'no-referrer',
+      },
+    });
+  }
+
+  if (
+    request.method === 'GET' &&
+    (isHooksSignalPath(url.pathname) || isHooksWhatsappPath(url.pathname))
+  ) {
+    if (!(await underRateLimit(env, clientKey(request, 'sg'), RATE_SIGNAL))) {
+      return json({ error: 'Easy. Try again in a few minutes.' }, 429);
+    }
+    const key = personKey(url.searchParams.get('person') || url.searchParams.get('key') || '');
+    if (!key) return json({ error: 'Who are you messaging?' }, 400);
+    const board = await readBoard(env);
+    const phone = phoneForPersonKey(board.hooks, key);
+    const target = signalMeUrl(phone);
+    if (!target) {
+      return json({ error: 'They have not opened the Signal door.' }, 404);
+    }
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: target,
+        'cache-control': 'no-store',
+        'referrer-policy': 'no-referrer',
+      },
+    });
+  }
+
+  if (
+    request.method === 'GET' &&
+    !isHooksWritePath(url.pathname) &&
+    !isHooksCallPath(url.pathname) &&
+    !isHooksWhatsappPath(url.pathname) &&
+    !isHooksSignalPath(url.pathname) &&
+    !isHooksTelegramPath(url.pathname)
+  ) {
     const board = await readBoard(env);
     return json({
       ok: true,
@@ -919,6 +1177,9 @@ export async function handleHooksRequest(request, env) {
   if (
     !isHooksWritePath(url.pathname) &&
     !isHooksCallPath(url.pathname) &&
+    !isHooksWhatsappPath(url.pathname) &&
+    !isHooksSignalPath(url.pathname) &&
+    !isHooksTelegramPath(url.pathname) &&
     body.action === 'remove'
   ) {
     if (!(await requestHasLooksAccess(request, env))) {
@@ -929,6 +1190,14 @@ export async function handleHooksRequest(request, env) {
     board.hooks = board.hooks.filter((hook) => hook.id !== id);
     await writeBoard(env, board);
     return json({ ok: true, ...boardPayload(board.hooks, board.calls) });
+  }
+
+  if (isHooksTelegramPath(url.pathname)) {
+    return json({ error: 'Open the Telegram bridge with GET.' }, 405);
+  }
+
+  if (isHooksWhatsappPath(url.pathname) || isHooksSignalPath(url.pathname)) {
+    return json({ error: 'Open the Signal bridge with GET.' }, 405);
   }
 
   if (isHooksCallPath(url.pathname)) {
@@ -1074,6 +1343,8 @@ export async function handleHooksRequest(request, env) {
     place: fields.place,
     note: fields.note,
     email: fields.email,
+    telegram: fields.telegram,
+    phone: fields.phone,
     offers: [],
     at: new Date().toISOString(),
   };
@@ -1110,8 +1381,10 @@ export const testables = {
   personHomePlace,
   normalizePlace,
   spotFromPlace,
+  outskirtsSpotForKey,
   layoutUniverse,
   BERLIN_MAP_CENTER,
+  BERLIN_OUTSKIRTS,
   parseHookPin,
   parseHookWrite,
   parseHookCall,
@@ -1122,4 +1395,18 @@ export const testables = {
   arePeopleNear,
   canCallUpon,
   emailForPersonKey,
+  phoneForPersonKey,
+  personHasWhatsapp,
+  telegramForPersonKey,
+  personHasTelegram,
+  cleanPhone,
+  cleanTelegramUsername,
+  phoneDigitsForWa,
+  waMeUrl,
+  signalMeUrl,
+  telegramMeUrl,
+  WA_PREFILL,
+  isHooksWhatsappPath,
+  isHooksSignalPath,
+  isHooksTelegramPath,
 };

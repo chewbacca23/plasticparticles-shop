@@ -11,17 +11,25 @@
 
   function editorOpen() {
     var hash = window.location.hash || '';
-    return hash.indexOf('/entries/') !== -1 || hash.indexOf('/new') !== -1;
+    if (hash.indexOf('/entries/') !== -1 || hash.indexOf('/new') !== -1) return true;
+    if (/\/edit\/[^/]+\/[^/?#]+/.test(hash)) return true;
+    return !!document.querySelector('[class*="EditorContainer"]');
   }
 
   function saveLabel() {
     var hash = window.location.hash || '';
-    if (hash.indexOf('/collections/shots') !== -1) return 'Save this shot';
-    if (hash.indexOf('/collections/journal') !== -1) return 'Save this note';
-    if (hash.indexOf('/collections/friends') !== -1) return 'Save this friend';
-    if (hash.indexOf('/collections/shop') !== -1) return 'Save this product';
-    if (hash.indexOf('/collections/settings') !== -1) {
+    function has(name) {
+      return hash.indexOf('/collections/' + name) !== -1 || hash.indexOf('/edit/' + name) !== -1;
+    }
+    if (has('week')) return 'Save this week note';
+    if (has('stores')) return 'Save this store';
+    if (has('shots')) return 'Save this shot';
+    if (has('journal')) return 'Save this note';
+    if (has('friends')) return 'Save this friend';
+    if (has('shop')) return 'Save this product';
+    if (has('settings')) {
       if (hash.indexOf('/imprint') !== -1) return 'Save mail and imprint';
+      if (hash.indexOf('/home') !== -1) return 'Save home';
       return 'Save Instagram';
     }
     return 'Save this ride';
@@ -216,17 +224,16 @@
     if (!button) {
       button = document.createElement('button');
       button.type = 'button';
+      button.className = 'cms-pill-save';
       button.setAttribute(BTN, '1');
-      button.setAttribute(
-        'style',
-        'position:fixed;right:1.1rem;bottom:1.1rem;z-index:100000;width:9.25rem;min-height:0;padding:0.32rem 0.7rem;border:0;border-radius:999px;background:#f0c27a;color:#0c1218;font:700 0.72rem/1.15 Inter,system-ui,sans-serif;text-align:center;cursor:pointer;box-shadow:0 8px 22px rgba(212,163,90,.2);',
-      );
       button.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
         saveRide();
       });
-      document.body.appendChild(button);
+      var stack = document.getElementById('cms-pill-stack');
+      if (stack) stack.insertBefore(button, stack.firstChild);
+      else document.body.appendChild(button);
     }
     button.disabled = saving;
     button.textContent = saving ? 'Saving…' : saveLabel();
@@ -240,6 +247,15 @@
       saveRide();
     }
   });
+
+  window.ssEditor = {
+    open: editorOpen,
+    save: saveRide,
+    label: saveLabel,
+    saving: function () {
+      return saving;
+    },
+  };
 
   window.addEventListener('hashchange', updateButton);
   setInterval(updateButton, 700);

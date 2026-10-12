@@ -20,5 +20,14 @@ export default defineConfig({
     build: {
       cssMinify: true,
     },
+    server: {
+      // Local Call upon board (scripts/local-hooks-api.mjs on :8788).
+      proxy: {
+        '/api/hooks': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+      },
+    },
   },
 });
