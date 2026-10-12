@@ -1,11 +1,17 @@
 ---
 name: Joerg Haas
 url: beinghunted.com
-thanks: my best friend for a hundred years and counting oh man have we been
-  through stuff together on and off the bike we rode the dolomites and more he
-  taught me stuff about art i did not know and maybe i told him stuff about life
-  he did not know by then. when he moved to berlin from munich he had his first
-  office i nmy flat with beinghunted and firmament ;) these were the times.
+thanks: >-
+  Joerg: A Hundred Years and Counting
+
+
+  Some friendships are measured in years. Ours is measured in a hundred, and we're still counting.
+
+
+  Joerg, we've been through so much together, on and off the bike. We rode the Dolomites and shared more roads than I can list. You taught me about art in ways I never knew, and maybe I showed you a thing or two about life along the way. When you moved from Munich to Berlin, your first office was in my flat, with beinghunted and firmament as neighbours. Those were the times. ✨
+
+
+  Thank you for every mile, every lesson and every laugh. Here's to the next hundred. 🏔️🚲
 order: 0
 draft: false
 ---

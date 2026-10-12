@@ -1,6 +1,6 @@
 # The Soul Searchers
 
-Cycling blog for **thenewsoulsearchers.de**: now, rides, ride notes, how we ride, about, contact.
+Cycling blog for **thenewsoulsearchers.de**: rides, ride notes, about, contact.
 
 > A cycling blog. Tours, roads, and travel by bike.
 
@@ -23,7 +23,11 @@ Open [http://localhost:4321](http://localhost:4321).
 | `npm run cms:proxy` | Local Decap CMS proxy |
 | `npm run photos:check` | Report photos too big for the editor preview |
 | `npm run photos:fix` | Resize those photos in place |
+| `npm run photos:enhance -- path` | Mild colour + sharpen pass (`*_enhanced.jpg`; needs `pip3 install pillow`) |
+| `npm run photos:enhance:check -- path` | Dry-run the enhance pass |
 | `npm test` | Worker OAuth + media checks |
+
+Photo tip: enhance first, then size if needed — `npm run photos:enhance -- ~/Desktop/IMG.jpg` then `npm run photos:fix`. On a Mac one-shot (incl. HEIC): `sh scripts/enhance-photo.sh ~/Desktop/IMG.HEIC`. Use `--in-place` to overwrite the file you passed in.
 
 ## Write a post
 

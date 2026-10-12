@@ -36,7 +36,7 @@ describe('isImageBlock', () => {
 });
 
 describe('weaveStoryMarkdown', () => {
-  it('puts extra photos between paragraphs, not in a pile at the start', () => {
+  it('puts each extra photo just before the paragraph it sits beside', () => {
     const woven = weaveStoryMarkdown(
       'First paragraph.\n\nSecond paragraph.\n\nThird paragraph.\n\nFourth paragraph.',
       ['/stories/a.jpg', '/stories/b.jpg'],
@@ -45,14 +45,16 @@ describe('weaveStoryMarkdown', () => {
       woven,
       [
         'First paragraph.',
-        'Second paragraph.',
         '![](/stories/a.jpg)',
-        'Third paragraph.',
+        'Second paragraph.',
         '![](/stories/b.jpg)',
+        'Third paragraph.',
         'Fourth paragraph.',
       ].join('\n\n'),
     );
-    assert.ok(woven.indexOf('First paragraph.') < woven.indexOf('/stories/a.jpg'));
+    // Shot lands immediately before its paragraph (float:right sits beside it).
+    assert.ok(woven.indexOf('/stories/a.jpg') < woven.indexOf('Second paragraph.'));
+    assert.ok(woven.indexOf('/stories/b.jpg') < woven.indexOf('Third paragraph.'));
   });
 
   it('leaves the story alone when there are no extra photos', () => {

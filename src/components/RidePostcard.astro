@@ -1,0 +1,276 @@
+---
+import { site } from '../site.config';
+import PostcardMarks from './PostcardMarks.astro';
+import { POSTCARD_PHOTO_MAX, postcardMail, rideWords } from '../lib/postcard';
+
+interface Props {
+  title: string;
+  words: string;
+  photos: string[];
+  readHref?: string;
+  slug: string;
+}
+
+const { title, words, photos, readHref, slug } = Astro.props;
+const shown = photos.slice(0, POSTCARD_PHOTO_MAX);
+const line = rideWords(words);
+const paragraphs = line.split(/\n{2,}/).filter(Boolean);
+const url = new URL(`/postcard/${slug}`, site.url).href;
+const mailto = postcardMail({ title, words: line, url });
+const countLabel =
+  shown.length === 0
+    ? 'A few words from the ride'
+    : shown.length === 1
+      ? 'One picture from the ride'
+      : `${shown.length} pictures from the ride`;
+
+---
+
+<article class="stack">
+  <section class="sheet cover">
+    <div class="paper">
+      <PostcardMarks variant={0} sheet />
+      <img class="crest" src={site.logo} alt="The Soul Searchers crest" width="72" height="92" />
+      <p class="eyebrow">A happy postcard</p>
+      <h1>{title}</h1>
+      <p class="count">{countLabel}. The crest is on every page.</p>
+      {
+        paragraphs.map((paragraph) => (
+          <p class="words">{paragraph}</p>
+        ))
+      }
+      <p class="actions">
+        <a class="send" href={mailto}>Send this ride</a>
+        {readHref ? <a class="read" href={readHref}>Read the ride</a> : null}
+      </p>
+      <p class="offer">
+        <a href="/contact">Sign up for free</a>. No sign-up, no postcard. It is still free of charge.
+      </p>
+    </div>
+  </section>
+
+  {
+    shown.map((src, index) => (
+      <figure class="sheet photo">
+        <div class="window">
+          <img class="shot" src={src} alt="" width="1200" height="1500" loading={index === 0 ? 'eager' : 'lazy'} decoding="async" draggable="false" />
+          <PostcardMarks variant={index} />
+        </div>
+        <img class="stamp" src={site.logo} alt="" width="64" height="82" draggable="false" />
+        <span class="keep" aria-hidden="true"></span>
+      </figure>
+    ))
+  }
+</article>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 1.6rem;
+    max-width: 40rem;
+    margin: 0 auto;
+  }
+
+  .sheet {
+    color: #24180f;
+    border-radius: 0;
+    break-after: page;
+    page-break-after: always;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cover {
+    background: #f4f1ea;
+    border: 3px solid #111;
+    box-shadow: 8px 8px 0 #111;
+  }
+
+  .paper {
+    position: relative;
+    background: #f4f1ea;
+    padding: 1.45rem 1.7rem 1.3rem 1.3rem;
+  }
+
+  .crest,
+  .eyebrow,
+  h1,
+  .count,
+  .words,
+  .actions,
+  .offer {
+    position: relative;
+    z-index: 1;
+  }
+
+  .crest {
+    width: 3.4rem;
+    height: auto;
+    display: block;
+    margin-bottom: 0.85rem;
+    border-radius: 0;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.35rem;
+    color: #e10600;
+    font-family: Figtree, system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0 0 0.45rem;
+    color: #111;
+    font-family: Figtree, system-ui, sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 760;
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+  }
+
+  .count {
+    margin: 0 0 1rem;
+    color: #0047bb;
+    font-family: Figtree, system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .words {
+    margin: 0 0 0.85rem;
+    max-width: 36rem;
+    color: #24180f;
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.25rem;
+    align-items: center;
+    margin: 1.15rem 0 0;
+  }
+
+  .send {
+    display: inline-block;
+    padding: 0.7rem 1.15rem;
+    border-radius: 0;
+    background: #e10600;
+    color: #f4f1ea;
+    font-family: Figtree, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .send:hover {
+    background: #111;
+  }
+
+  .read {
+    color: #111;
+    font-family: Figtree, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .offer {
+    margin: 0.85rem 0 0;
+    max-width: 28rem;
+    color: #5c4636;
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .offer a {
+    color: #e10600;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .photo {
+    position: relative;
+    margin: 0;
+    padding: 0.85rem 0.85rem 1.15rem;
+    background: #f4f1ea;
+    border: 3px solid #111;
+    box-shadow: 8px 8px 0 #111;
+  }
+
+  .window {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border: 3px solid #111;
+  }
+
+  .shot,
+  .stamp,
+  .keep {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .shot {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    pointer-events: none;
+    filter: contrast(1.08) saturate(0.9);
+  }
+
+  .keep {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+  }
+
+  .stamp {
+    position: absolute;
+    right: 0.85rem;
+    bottom: 0.7rem;
+    z-index: 2;
+    width: 3.6rem;
+    height: auto;
+    border-radius: 0;
+    background: none;
+  }
+
+  @media print {
+    :global(header),
+    :global(footer),
+    :global(.logo-backdrop) {
+      display: none !important;
+    }
+
+    .stack {
+      max-width: none;
+      gap: 0;
+    }
+
+    .sheet {
+      box-shadow: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('contextmenu', function (event) {
+    var node = event.target;
+    if (node && node.closest && node.closest('.photo')) event.preventDefault();
+  });
+  document.addEventListener('dragstart', function (event) {
+    var node = event.target;
+    if (node && node.closest && node.closest('.photo')) event.preventDefault();
+  });
+</script>
