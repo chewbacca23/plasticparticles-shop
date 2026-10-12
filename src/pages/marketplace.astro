@@ -3925,19 +3925,19 @@ import { site } from '../site.config';
   }
 
   .dot.is-fresh .dot-mark {
-    background: #e24b4b;
-    box-shadow: 0 0 0 6px rgba(226, 75, 75, 0.36);
+    background: linear-gradient(135deg, #f0a010 0%, #90c030 40%, #e02020 72%, #f0e030 100%);
+    box-shadow: 0 0 0 6px rgba(144, 192, 48, 0.34);
   }
 
   .dot.is-fresh .dot-name {
     opacity: 1;
-    color: #f3b4b4;
+    color: #f0e030;
   }
 
   .dot.is-fresh.is-open .dot-mark {
     transform: translate(-50%, -50%) scale(1.28);
-    background: #e24b4b;
-    box-shadow: 0 0 0 7px rgba(226, 75, 75, 0.42);
+    background: linear-gradient(135deg, #f0a010 0%, #90c030 40%, #e02020 72%, #f0e030 100%);
+    box-shadow: 0 0 0 7px rgba(240, 160, 16, 0.4);
   }
 
   .dot-name {
@@ -4630,22 +4630,40 @@ import { site } from '../site.config';
 
   .card.is-fresh,
   .open-bit.is-fresh {
-    border-color: rgba(226, 75, 75, 0.78);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
     background:
-      radial-gradient(ellipse 90% 80% at 0% 0%, rgba(226, 75, 75, 0.18), transparent 58%),
-      rgba(42, 16, 16, 0.72);
-    box-shadow: 0 0 0 1px rgba(226, 75, 75, 0.28);
+      linear-gradient(165deg, rgba(32, 48, 112, 0.42), rgba(12, 16, 28, 0.9) 46%) padding-box,
+      linear-gradient(115deg, #f0a010 0%, #90c030 34%, #e02020 67%, #f0e030 100%) border-box;
+    box-shadow: 0 0 0 1px rgba(144, 192, 48, 0.16);
+  }
+
+  .card.is-fresh::before,
+  .open-bit.is-fresh::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 0.32rem;
+    background: linear-gradient(
+      90deg,
+      #f0a010 0 24%,
+      #90c030 24% 50%,
+      #e02020 50% 76%,
+      #f0e030 76% 100%
+    );
   }
 
   .open-bit.is-fresh {
-    padding: 0.75rem 0.85rem 0.15rem;
-    border: 1px solid rgba(226, 75, 75, 0.78);
+    padding: 0.95rem 0.85rem 0.15rem;
     border-radius: 0.85rem;
   }
 
   .card-fresh {
-    margin: 0 0 0.45rem;
-    color: #e85d5d;
+    margin: 0.35rem 0 0.45rem;
+    color: #90c030;
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.16em;
@@ -4655,8 +4673,8 @@ import { site } from '../site.config';
   .card.is-fresh .hook-write,
   .open-bit.is-fresh + .hook-write,
   .group-open .open-bit.is-fresh ~ .hook-write {
-    border-color: rgba(226, 75, 75, 0.72);
-    color: #ffd6d6;
+    border-color: #90c030;
+    color: #f0e030;
   }
 
   .card-kind {
