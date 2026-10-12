@@ -1009,7 +1009,7 @@ async function sendMail(env, { to, replyTo, subject, text, html, bcc }) {
 
 async function notifyHenrikPin(env, hook) {
   const to = resolveContactTo(env);
-    const subject = `Marketplace · new pin · ${hook.name}`;
+    const subject = `Fresh · new pin · ${hook.name}`;
   const text = [
     'Someone pinned themselves on the Soul Searchers board.',
     '',
@@ -1063,7 +1063,7 @@ async function deliverWrite(env, hook, fields) {
 async function deliverCall(env, { toEmail, fromName, fromEmail, message, toName }) {
   const subject = `Soul Searchers · ${fromName} called upon you`;
   const text = [
-    `${fromName} called upon you on the Soul Searchers marketplace.`,
+    `${fromName} called upon you on Fresh.`,
     toName ? `(For ${toName}.)` : '',
     '',
     message,
@@ -1081,7 +1081,7 @@ async function deliverCall(env, { toEmail, fromName, fromEmail, message, toName 
     text,
     html: [
       '<div style="font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#122">',
-      `<p style="margin:0 0 1rem">${esc(fromName)} called upon you on the Soul Searchers marketplace.</p>`,
+      `<p style="margin:0 0 1rem">${esc(fromName)} called upon you on Fresh.</p>`,
       `<p style="white-space:pre-wrap;margin:0 0 1.25rem">${esc(message)}</p>`,
       '<p style="color:#666;font-size:13px">Answer on the board, or hit Reply. Your email was never on the public page.</p>',
       '</div>',

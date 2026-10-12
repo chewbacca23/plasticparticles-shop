@@ -22,9 +22,9 @@ Decap editor (local): run `npm run cms:proxy` in a second terminal, then open `h
 - Stores around the world: `src/content/stores/*.md` → `/stores` — `photos` list, **up to 24** shots (first = cover); Decap **Stores → Photos**
 - This week / what happened: `src/content/week/*.md` → `/week` — short dated notes plus calm gallery (**up to 40** photos); Decap **This week → Photos**; not the old Now dense grid
 - Config / Impressum fields: `src/site.config.ts`
-- Routes: `/`, `/stories` (Rides), `/week` (This week), `/stores` (Stores), `/marketplace` (Marketplace), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin` (`/now` shot feed and `/journal` stay reachable; off primary nav. `/path` redirects to About)
+- Routes: `/`, `/stories` (Rides), `/week` (This week), `/stores` (Stores), `/marketplace` (Fresh), `/about`, `/contact`, `/impressum`, `/rss.xml`, `/admin` (`/now` shot feed and `/journal` stay reachable; off primary nav. `/path` redirects to About)
 - Kit: `/kit` (public)
-- Marketplace: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / Signal phone (opt-in bridges only; handles and digits never on the public map; Telegram first, Signal second)
+- Fresh: `/marketplace` (`/hooks` redirects here) — group of people, public stalls and offers, optional hidden email / Telegram username / Signal phone (opt-in bridges only; handles and digits never on the public map; Telegram first, Signal second)
 
 ### Photos
 
