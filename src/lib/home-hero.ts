@@ -91,6 +91,8 @@ export function rotateSlidesForDay(
  * Up to a few full-bleed hero slides for the home dia.
  * Newest Now photos lead so occasional fans catch fresh road shots;
  * CMS Site → Home picks and soft defaults fill any gaps.
+ * After deploy, cloudflare/fresh-home.js still prepends new ride covers
+ * from GitHub so a Save does not wait on the next Astro build.
  */
 export function resolveHomeHeroSlides(
   settings: { heroPhoto?: string | null; heroSlides?: unknown } = {},

@@ -16,6 +16,7 @@
     "photos:fix": "python3 scripts/optimise-photos.py",
     "photos:enhance": "python3 scripts/enhance-photos.py",
     "photos:enhance:check": "python3 scripts/enhance-photos.py --check",
+    "photos:startup-pics": "node scripts/sync-ride-startup-pics.mjs",
     "cms:dev": "astro dev",
     "astro": "astro"
   },
