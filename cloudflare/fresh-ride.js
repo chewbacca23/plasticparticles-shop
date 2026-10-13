@@ -342,7 +342,17 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
       border-radius: .7rem;
       box-shadow: 0 14px 32px rgba(0,0,0,.28);
     }
+    .prose figure { cursor: pointer; }
     .prose figure img { aspect-ratio: 4 / 5; object-fit: cover; }
+    .ride-dialog { width: min(100% - 1.25rem, 68rem); max-width: 68rem; padding: 0; border: 1px solid rgba(215,224,232,.12); border-radius: 1rem; background: #0c1218; color: var(--paper); }
+    .ride-dialog::backdrop { background: rgba(6,10,14,.82); }
+    .ride-stage { position: relative; background: #080c11; }
+    .ride-stage img { display: block; width: 100%; height: auto; max-height: min(84vh, 52rem); object-fit: contain; background: #080c11; }
+    .ride-nav, .ride-close { position: absolute; z-index: 2; border: 0; background: rgba(12,18,24,.72); color: var(--paper); cursor: pointer; }
+    .ride-nav { top: 50%; width: 2.4rem; height: 2.4rem; border-radius: 999px; transform: translateY(-50%); font-size: 1.6rem; line-height: 1; }
+    .ride-prev { left: .7rem; }
+    .ride-next { right: .7rem; }
+    .ride-close { top: .7rem; right: .7rem; width: 2.2rem; height: 2.2rem; border-radius: 999px; font-size: 1.4rem; line-height: 1; }
     .prose::after { content: ''; display: table; clear: both; }
     .prose ol, .prose ul { padding-left:1.2rem; }
     .back { margin-top:2.75rem; }
@@ -373,8 +383,53 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
       <div class="prose">${story}</div>
       <p class="back"><a href="${kind === 'note' ? '/journal' : '/stories'}">${kind === 'note' ? '← All ride notes' : '← All rides'}</a></p>
     </article>
+    <dialog class="ride-dialog" data-ride-dialog aria-label="Ride photo">
+      <div class="ride-stage">
+        <img data-ride-image alt="" />
+        <button type="button" class="ride-nav ride-prev" data-ride-prev aria-label="Previous photo">‹</button>
+        <button type="button" class="ride-nav ride-next" data-ride-next aria-label="Next photo">›</button>
+        <button type="button" class="ride-close" data-ride-close aria-label="Close">×</button>
+      </div>
+    </dialog>
   </main>
   <script>
+    (function () {
+      var dialog = document.querySelector('[data-ride-dialog]');
+      var image = document.querySelector('[data-ride-image]');
+      var figures = Array.prototype.slice.call(document.querySelectorAll('.prose figure'));
+      if (!dialog || !image || !figures.length) return;
+      var shots = figures.map(function (figure) { return figure.querySelector('img'); }).filter(Boolean);
+      function show(index) {
+        var shot = shots[(index + shots.length) % shots.length];
+        if (!shot) return;
+        image.src = shot.getAttribute('src') || '';
+        image.alt = shot.getAttribute('alt') || '';
+        var hideNav = shots.length < 2;
+        var prevBtn = dialog.querySelector('[data-ride-prev]');
+        var nextBtn = dialog.querySelector('[data-ride-next]');
+        if (prevBtn) prevBtn.hidden = hideNav;
+        if (nextBtn) nextBtn.hidden = hideNav;
+        if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+      }
+      function step(delta) {
+        var src = image.getAttribute('src');
+        var index = 0;
+        shots.forEach(function (shot, i) { if (shot.getAttribute('src') === src) index = i; });
+        show(index + delta);
+      }
+      figures.forEach(function (figure, index) {
+        figure.setAttribute('role', 'button');
+        figure.tabIndex = 0;
+        figure.addEventListener('click', function () { show(index); });
+      });
+      var prev = dialog.querySelector('[data-ride-prev]');
+      var next = dialog.querySelector('[data-ride-next]');
+      var close = dialog.querySelector('[data-ride-close]');
+      if (prev) prev.addEventListener('click', function (event) { event.stopPropagation(); step(-1); });
+      if (next) next.addEventListener('click', function (event) { event.stopPropagation(); step(1); });
+      if (close) close.addEventListener('click', function () { dialog.close(); });
+      dialog.addEventListener('click', function (event) { if (event.target === dialog) dialog.close(); });
+    })();
     (function () {
       var path = location.pathname || '/';
       if (path.indexOf('/admin') === 0) return;

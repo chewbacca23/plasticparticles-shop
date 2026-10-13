@@ -41,8 +41,84 @@ const storyHtml = renderMarkdown(plan.wovenBody);
         <a href="/stories">← All rides</a>
       </p>
     </div>
+
+    <dialog class="ride-dialog" data-ride-dialog aria-label="Ride photo">
+      <div class="ride-stage">
+        <img data-ride-image alt="" />
+        <button type="button" class="ride-nav ride-prev" data-ride-prev aria-label="Previous photo">‹</button>
+        <button type="button" class="ride-nav ride-next" data-ride-next aria-label="Next photo">›</button>
+        <button type="button" class="ride-close" data-ride-close aria-label="Close">×</button>
+      </div>
+    </dialog>
   </article>
 </BaseLayout>
+
+<script>
+  const article = document.querySelector('article');
+  const dialog = document.querySelector('[data-ride-dialog]');
+  const image = document.querySelector('[data-ride-image]');
+  const figures = article ? [...article.querySelectorAll('.prose figure')] : [];
+  if (article && dialog && image && figures.length) {
+    const shots = figures
+      .map((figure) => figure.querySelector('img'))
+      .filter((img) => img && img.getAttribute('src'));
+
+    function show(index) {
+      const shot = shots[(index + shots.length) % shots.length];
+      if (!shot) return;
+      image.src = shot.getAttribute('src') || '';
+      image.alt = shot.getAttribute('alt') || '';
+      const hideNav = shots.length < 2;
+      const prevBtn = dialog.querySelector('[data-ride-prev]');
+      const nextBtn = dialog.querySelector('[data-ride-next]');
+      if (prevBtn) prevBtn.hidden = hideNav;
+      if (nextBtn) nextBtn.hidden = hideNav;
+      if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+    }
+
+    function step(delta) {
+      const src = image.getAttribute('src');
+      const index = Math.max(0, shots.findIndex((shot) => shot.getAttribute('src') === src));
+      show(index + delta);
+    }
+
+    figures.forEach((figure, index) => {
+      figure.setAttribute('role', 'button');
+      figure.tabIndex = 0;
+      figure.setAttribute('aria-label', `Open photo ${index + 1} of ${figures.length}`);
+      figure.addEventListener('click', () => show(index));
+      figure.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        show(index);
+      });
+    });
+
+    const prev = dialog.querySelector('[data-ride-prev]');
+    const next = dialog.querySelector('[data-ride-next]');
+    if (prev) {
+      prev.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(-1);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', (event) => {
+        event.stopPropagation();
+        step(1);
+      });
+    }
+    const close = dialog.querySelector('[data-ride-close]');
+    if (close) close.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') step(-1);
+      if (event.key === 'ArrowRight') step(1);
+    });
+  }
+</script>
 
 <style>
   .article {
@@ -85,6 +161,7 @@ const storyHtml = renderMarkdown(plan.wovenBody);
     overflow: hidden;
     border-radius: 0.7rem;
     box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+    cursor: pointer;
   }
 
   .prose :global(figure img) {
@@ -118,6 +195,78 @@ const storyHtml = renderMarkdown(plan.wovenBody);
     color: var(--amber-hot);
     text-decoration: none;
     font-weight: 600;
+  }
+
+  .ride-dialog {
+    width: min(100% - 1.25rem, 68rem);
+    max-width: 68rem;
+    padding: 0;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1rem;
+    background: #0c1218;
+    color: var(--paper);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .ride-dialog::backdrop {
+    background: rgba(6, 10, 14, 0.82);
+  }
+
+  .ride-stage {
+    position: relative;
+    background: #080c11;
+  }
+
+  .ride-stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(84vh, 52rem);
+    object-fit: contain;
+    background: #080c11;
+  }
+
+  .ride-nav,
+  .ride-close {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    background: rgba(12, 18, 24, 0.72);
+    color: var(--paper);
+    cursor: pointer;
+  }
+
+  .ride-nav {
+    top: 50%;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    transform: translateY(-50%);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .ride-prev {
+    left: 0.7rem;
+  }
+
+  .ride-next {
+    right: 0.7rem;
+  }
+
+  .ride-close {
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  .ride-nav:hover,
+  .ride-close:hover {
+    background: rgba(212, 163, 90, 0.28);
   }
 
   @media (max-width: 640px) {
