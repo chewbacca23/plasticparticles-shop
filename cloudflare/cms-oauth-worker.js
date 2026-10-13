@@ -24,6 +24,7 @@ import { handleHooksRequest } from './hooks-board.js';
 import { handleFreshRide } from './fresh-ride.js';
 import { handleFreshShop } from './fresh-shop.js';
 import { handleFreshSite } from './fresh-site.js';
+import { handleFreshHome } from './fresh-home.js';
 import {
   describeResendKey,
   handleContactRequest,
@@ -457,6 +458,9 @@ export default {
 
       const freshSite = await handleFreshSite(request, env);
       if (freshSite) return freshSite;
+
+      const freshHome = await handleFreshHome(request, env);
+      if (freshHome) return freshHome;
 
       if (url.pathname === '/auth' || url.pathname === '/callback') {
         const creds = oauthCreds(env);
