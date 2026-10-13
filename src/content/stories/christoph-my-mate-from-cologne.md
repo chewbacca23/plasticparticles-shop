@@ -9,9 +9,8 @@ description: >+
   here is just a wonderful intro into the world of cycling.
 
 draft: false
-cover: /stories/unknown-3.jpeg
+cover: /stories/img_0914.jpeg
 gallery:
-  - /stories/unknown-3.jpeg
   - /stories/img_0914.jpeg
   - /stories/img_0374.jpeg
   - /stories/img_0350.jpeg
@@ -19,6 +18,12 @@ gallery:
   - /stories/img_8270.jpeg
   - /stories/img_0231.jpeg
   - /stories/img_0944.jpeg
+  - /stories/img_0230.jpeg
+  - /stories/img_0358.jpeg
+  - /stories/img_0380.jpeg
+  - /stories/img_0382.jpeg
+  - /stories/img_0522.jpeg
+  - /stories/img_8561.jpeg
 order: 0
 ---
 Embrace the short ride…
