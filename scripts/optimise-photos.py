@@ -44,6 +44,8 @@ TARGET_BYTES = 350_000
 
 # Largest first — keep as much detail as the byte budget allows.
 EDGE_STEPS = (1800, 1600, 1400, 1200, 1000, 800)
+# Ride covers fill the page, so they may use the editor ceiling and more pixels.
+HERO_EDGES = (3200, 2800, 2400, 2000, 1800, 1600)
 QUALITY_STEPS = (80, 76, 72, 68, 64)
 
 RASTER_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
@@ -61,7 +63,25 @@ def find_photos(root: Path) -> list[Path]:
     )
 
 
-def shrink(path: Path, budget: int) -> tuple[bool, str]:
+def ride_cover_files() -> set[Path]:
+    """Story covers are the big hero, not the side thumbnails."""
+    root = Path(__file__).resolve().parent.parent
+    public = root / "public"
+    covers: set[Path] = set()
+    stories = root / "src" / "content" / "stories"
+    if not stories.is_dir():
+        return covers
+    for markdown in stories.glob("*.md"):
+        for line in markdown.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if not line.startswith("cover:"):
+                continue
+            relative = line.split(":", 1)[1].strip().lstrip("/")
+            if relative:
+                covers.add((public / relative).resolve())
+    return covers
+
+
+def shrink(path: Path, budget: int, edges: tuple[int, ...] = EDGE_STEPS) -> tuple[bool, str]:
     """Rewrite `path` under `budget`. Returns (fits, message).
 
     Encodings are built in memory and only written when smaller than what is
@@ -93,7 +113,7 @@ def shrink(path: Path, budget: int) -> tuple[bool, str]:
         keep_png = is_png and has_alpha
         image = image.convert("RGBA" if keep_png else "RGB")
 
-        for edge in EDGE_STEPS:
+        for edge in edges:
             width, height = image.size
             scale = min(1.0, edge / max(width, height))
             resized = (
@@ -186,13 +206,17 @@ def main() -> int:
         print("All photos already fit the web target.")
         return 0
 
+    covers = ride_cover_files()
     stubborn = []
     saved = 0
     for path in oversized_web:
         before = path.stat().st_size
-        # Aim for the web budget; if a PNG with alpha cannot get there, still
-        # pull it under the CMS ceiling so the editor keeps working.
-        changed, message = shrink(path, TARGET_BYTES)
+        # A ride cover is the large picture. Keep it sharp up to the editor
+        # ceiling. Side shots still aim for the smaller web target.
+        is_cover = path.resolve() in covers
+        budget = MAX_BYTES if is_cover else TARGET_BYTES
+        edges = HERO_EDGES if is_cover else EDGE_STEPS
+        changed, message = shrink(path, budget, edges)
         after = path.stat().st_size
         if after > MAX_BYTES:
             changed, message = shrink(path, MAX_BYTES)
