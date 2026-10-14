@@ -1,0 +1,44 @@
+name: Put new ride covers into startup pics
+
+# When a Ride is saved, its first photo should join the home dia without
+# anyone opening Site → Home. This only edits home.json. Photo shrinking
+# stays in keep-photos-small.yml.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/stories/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-ride-startup-pics
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Merge newest ride covers into home.json
+        run: node scripts/sync-ride-startup-pics.mjs
+
+      - name: Commit startup pics
+        run: |
+          if git diff --quiet -- src/content/settings/home.json; then
+            echo "Startup pics already current."
+            exit 0
+          fi
+          git config user.name 'soul-searchers-bot'
+          git config user.email 'bot@users.noreply.github.com'
+          git add src/content/settings/home.json
+          git commit -m 'Add new ride covers to home startup pics'
+          git push
