@@ -294,28 +294,30 @@ export function kindRemarksStripHtml() {
   return `${kindRemarksStyles()}
 <section class="kind-remarks" data-kind-remarks aria-label="Kind words">
   <div class="site-shell kind-inner">
-    <h2 class="kind-title">Kind words</h2>
-    <p class="kind-lead">This is a positive site. Leave a short, kind remark for this page.</p>
-    <ul class="kind-list" data-kind-list hidden></ul>
-    <p class="kind-empty" data-kind-empty>No kind words here yet. Be the first.</p>
-    <p class="kind-status" data-kind-status hidden></p>
-    <form class="kind-form" data-kind-form>
-      <label>
-        <span>Name <em>(optional)</em></span>
-        <input type="text" name="name" maxlength="${MAX_NAME}" autocomplete="nickname" />
-      </label>
-      <label>
-        <span>Your kind word</span>
-        <textarea name="message" rows="2" required maxlength="${MAX_MESSAGE}" minlength="${MIN_MESSAGE}"></textarea>
-      </label>
-      <label class="kind-hp" aria-hidden="true">
-        <span>Website</span>
-        <input type="text" name="website" tabindex="-1" autocomplete="off" />
-      </label>
-      <button type="submit">Leave a kind word</button>
-    </form>
+    <div class="kind-panel" data-kind-panel>
+      <h2 class="kind-title">Kind words</h2>
+      <p class="kind-lead">This is a positive site. Leave a short, kind remark for this page.</p>
+      <ul class="kind-list" data-kind-list hidden></ul>
+      <p class="kind-empty" data-kind-empty>No kind words here yet. Be the first.</p>
+      <p class="kind-status" data-kind-status hidden></p>
+      <form class="kind-form" data-kind-form>
+        <label>
+          <span>Name <em>(optional)</em></span>
+          <input type="text" name="name" maxlength="${MAX_NAME}" autocomplete="nickname" />
+        </label>
+        <label>
+          <span>Your kind word</span>
+          <textarea name="message" rows="2" required maxlength="${MAX_MESSAGE}" minlength="${MIN_MESSAGE}"></textarea>
+        </label>
+        <label class="kind-hp" aria-hidden="true">
+          <span>Website</span>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" />
+        </label>
+        <button type="submit">Leave a kind word</button>
+      </form>
+    </div>
     <div class="kind-member" id="become-a-member" data-kind-member>
-      <h3 class="kind-member-title">Become a member</h3>
+      <h2 class="kind-title">Become a member</h2>
       <p class="kind-lead">Free on thenewsoulsearchers.de. Add your email and you are on our mailing list — nothing to pay, ever.</p>
       <p class="kind-status" data-member-status hidden></p>
       <form class="kind-form" data-member-form>
@@ -342,7 +344,9 @@ ${kindRemarksClientScript()}`;
 export function kindRemarksStyles() {
   return `<style>
 .kind-remarks{margin-top:1.25rem;padding:1.15rem 0 1.35rem;border-top:1px solid rgba(215,224,232,.08);background:linear-gradient(180deg,transparent,rgba(30,58,69,.16))}
-.kind-inner{display:grid;gap:.55rem;max-width:34rem}
+.kind-inner{display:grid;gap:1.25rem;align-items:start}
+@media (min-width:720px){.kind-inner{grid-template-columns:1fr 1fr;gap:1.75rem 2.5rem}}
+.kind-panel,.kind-member{display:grid;gap:.55rem;min-width:0}
 .kind-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:.98rem;color:var(--paper,#eef3f7);font-weight:500}
 .kind-lead,.kind-empty,.kind-status{margin:0;color:rgba(215,224,232,.58);font-size:.8rem;line-height:1.4}
 .kind-list{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
@@ -357,8 +361,7 @@ export function kindRemarksStyles() {
 .kind-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 .kind-status[data-tone="bad"]{color:#e8b4a2}
 .kind-status[data-tone="ok"]{color:#b7d4c4}
-.kind-member{margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(215,224,232,.1);display:grid;gap:.45rem}
-.kind-member-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:.92rem;color:var(--paper,#eef3f7);font-weight:500}
+@media (max-width:719px){.kind-member{padding-top:.75rem;border-top:1px solid rgba(215,224,232,.1)}}
 </style>`;
 }
 
