@@ -306,7 +306,7 @@ export function kindRemarksStripHtml() {
       </label>
       <label>
         <span>Your kind word</span>
-        <textarea name="message" rows="3" required maxlength="${MAX_MESSAGE}" minlength="${MIN_MESSAGE}"></textarea>
+        <textarea name="message" rows="2" required maxlength="${MAX_MESSAGE}" minlength="${MIN_MESSAGE}"></textarea>
       </label>
       <label class="kind-hp" aria-hidden="true">
         <span>Website</span>
@@ -341,24 +341,24 @@ ${kindRemarksClientScript()}`;
 
 export function kindRemarksStyles() {
   return `<style>
-.kind-remarks{margin-top:2.5rem;padding:2rem 0 2.25rem;border-top:1px solid rgba(215,224,232,.08);background:linear-gradient(180deg,transparent,rgba(30,58,69,.22))}
-.kind-inner{display:grid;gap:1rem;max-width:42rem}
-.kind-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:1.35rem;color:var(--paper,#eef3f7);font-weight:500}
-.kind-lead,.kind-empty,.kind-status{margin:0;color:rgba(215,224,232,.62);font-size:.95rem;line-height:1.45}
-.kind-list{list-style:none;margin:0;padding:0;display:grid;gap:.85rem}
-.kind-list li{margin:0;padding:0;color:rgba(238,243,247,.88);font-size:.98rem;line-height:1.45}
-.kind-list .who{display:block;margin-top:.2rem;color:rgba(215,224,232,.48);font-size:.82rem}
-.kind-form{display:grid;gap:.85rem;margin-top:.25rem}
-.kind-form label{display:grid;gap:.35rem;color:rgba(215,224,232,.72);font-size:.88rem}
+.kind-remarks{margin-top:1.25rem;padding:1.15rem 0 1.35rem;border-top:1px solid rgba(215,224,232,.08);background:linear-gradient(180deg,transparent,rgba(30,58,69,.16))}
+.kind-inner{display:grid;gap:.55rem;max-width:34rem}
+.kind-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:.98rem;color:var(--paper,#eef3f7);font-weight:500}
+.kind-lead,.kind-empty,.kind-status{margin:0;color:rgba(215,224,232,.58);font-size:.8rem;line-height:1.4}
+.kind-list{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
+.kind-list li{margin:0;padding:0;color:rgba(238,243,247,.82);font-size:.82rem;line-height:1.4}
+.kind-list .who{display:inline;margin-left:.35rem;color:rgba(215,224,232,.45);font-size:.74rem}
+.kind-form{display:grid;gap:.45rem;margin-top:.15rem}
+.kind-form label{display:grid;gap:.2rem;color:rgba(215,224,232,.68);font-size:.74rem}
 .kind-form em{font-style:normal;opacity:.7}
-.kind-form input,.kind-form textarea{width:100%;box-sizing:border-box;border:1px solid rgba(215,224,232,.16);border-radius:.4rem;background:rgba(8,12,17,.45);color:var(--paper,#eef3f7);padding:.65rem .75rem;font:inherit}
-.kind-form button{justify-self:start;border:0;border-radius:.45rem;padding:.7rem 1.1rem;background:#d4a574;color:#0c1218;font-weight:600;cursor:pointer}
+.kind-form input,.kind-form textarea{width:100%;box-sizing:border-box;border:1px solid rgba(215,224,232,.14);border-radius:.3rem;background:rgba(8,12,17,.4);color:var(--paper,#eef3f7);padding:.4rem .55rem;font:inherit;font-size:.82rem}
+.kind-form button{justify-self:start;border:0;border-radius:.35rem;padding:.4rem .75rem;background:#d4a574;color:#0c1218;font-weight:600;font-size:.8rem;cursor:pointer}
 .kind-form button:disabled{opacity:.6;cursor:wait}
 .kind-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 .kind-status[data-tone="bad"]{color:#e8b4a2}
 .kind-status[data-tone="ok"]{color:#b7d4c4}
-.kind-member{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(215,224,232,.1);display:grid;gap:.85rem}
-.kind-member-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:1.15rem;color:var(--paper,#eef3f7);font-weight:500}
+.kind-member{margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(215,224,232,.1);display:grid;gap:.45rem}
+.kind-member-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:.92rem;color:var(--paper,#eef3f7);font-weight:500}
 </style>`;
 }
 

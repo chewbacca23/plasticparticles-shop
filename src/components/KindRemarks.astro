@@ -33,7 +33,7 @@ const skip =
           </label>
           <label>
             <span>Your kind word</span>
-            <textarea name="message" rows="3" required maxlength="280" minlength="8"></textarea>
+            <textarea name="message" rows="2" required maxlength="280" minlength="8"></textarea>
           </label>
           <label class="kind-hp" aria-hidden="true">
             <span>Website</span>
@@ -242,21 +242,21 @@ const skip =
 <style>
   .kind-remarks {
     margin-top: auto;
-    padding: 2.25rem 0 2.5rem;
+    padding: 1.15rem 0 1.35rem;
     border-top: 1px solid rgba(215, 224, 232, 0.08);
-    background: linear-gradient(180deg, transparent, rgba(30, 58, 69, 0.22));
+    background: linear-gradient(180deg, transparent, rgba(30, 58, 69, 0.16));
   }
 
   .kind-inner {
     display: grid;
-    gap: 1rem;
-    max-width: 42rem;
+    gap: 0.55rem;
+    max-width: 34rem;
   }
 
   .kind-title {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.35rem;
+    font-size: 0.98rem;
     font-weight: 500;
     color: var(--paper);
   }
@@ -265,9 +265,9 @@ const skip =
   .kind-empty,
   .kind-status {
     margin: 0;
-    color: rgba(215, 224, 232, 0.62);
-    font-size: 0.95rem;
-    line-height: 1.45;
+    color: rgba(215, 224, 232, 0.58);
+    font-size: 0.8rem;
+    line-height: 1.4;
   }
 
   .kind-list {
@@ -275,34 +275,34 @@ const skip =
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.85rem;
+    gap: 0.45rem;
   }
 
   .kind-list li {
     margin: 0;
-    color: rgba(238, 243, 247, 0.88);
-    font-size: 0.98rem;
-    line-height: 1.45;
+    color: rgba(238, 243, 247, 0.82);
+    font-size: 0.82rem;
+    line-height: 1.4;
   }
 
   .kind-list :global(.who) {
-    display: block;
-    margin-top: 0.2rem;
-    color: rgba(215, 224, 232, 0.48);
-    font-size: 0.82rem;
+    display: inline;
+    margin-left: 0.35rem;
+    color: rgba(215, 224, 232, 0.45);
+    font-size: 0.74rem;
   }
 
   .kind-form {
     display: grid;
-    gap: 0.85rem;
-    margin-top: 0.25rem;
+    gap: 0.45rem;
+    margin-top: 0.15rem;
   }
 
   .kind-form label {
     display: grid;
-    gap: 0.35rem;
-    color: rgba(215, 224, 232, 0.72);
-    font-size: 0.88rem;
+    gap: 0.2rem;
+    color: rgba(215, 224, 232, 0.68);
+    font-size: 0.74rem;
   }
 
   .kind-form em {
@@ -314,12 +314,18 @@ const skip =
   .kind-form textarea {
     width: 100%;
     box-sizing: border-box;
-    border: 1px solid rgba(215, 224, 232, 0.16);
-    border-radius: 0.4rem;
-    background: rgba(8, 12, 17, 0.45);
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.3rem;
+    background: rgba(8, 12, 17, 0.4);
     color: var(--paper);
-    padding: 0.65rem 0.75rem;
+    padding: 0.4rem 0.55rem;
     font: inherit;
+    font-size: 0.82rem;
+  }
+
+  .kind-form :global(.btn) {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
   }
 
   .kind-form button:disabled {
@@ -344,17 +350,17 @@ const skip =
   }
 
   .kind-member {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
     border-top: 1px solid rgba(215, 224, 232, 0.1);
     display: grid;
-    gap: 0.85rem;
+    gap: 0.45rem;
   }
 
   .kind-member-title {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 0.92rem;
     font-weight: 500;
     color: var(--paper);
   }
