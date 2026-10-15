@@ -346,14 +346,13 @@ export function kindRemarksStyles() {
 .kind-remarks{margin-top:1.25rem;padding:1.15rem 0 1.5rem;border-top:1px solid rgba(215,224,232,.08);background:linear-gradient(180deg,transparent,rgba(30,58,69,.16))}
 .kind-inner{display:grid;gap:.85rem;align-items:stretch}
 @media (min-width:720px){.kind-inner{grid-template-columns:1fr 1fr;gap:1rem}}
-.kind-panel,.kind-member{display:grid;grid-template-rows:auto auto 1fr auto;gap:.5rem;align-content:start;min-width:0;min-height:17rem;padding:1rem 1.05rem 1.05rem;border:1px solid rgba(215,224,232,.14);border-radius:.35rem;background:rgba(8,12,17,.42);box-sizing:border-box}
-@media (min-width:720px){.kind-panel,.kind-member{aspect-ratio:1/1;min-height:0;overflow:auto}}
+.kind-panel,.kind-member{display:grid;gap:.5rem;align-content:start;min-width:0;padding:.85rem .95rem .95rem;border:1px solid rgba(215,224,232,.14);border-radius:.35rem;background:rgba(8,12,17,.42);box-sizing:border-box}
 .kind-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:.98rem;color:var(--paper,#eef3f7);font-weight:500}
 .kind-lead,.kind-empty,.kind-status{margin:0;color:rgba(215,224,232,.58);font-size:.8rem;line-height:1.4}
 .kind-list{list-style:none;margin:0;padding:0;display:grid;gap:.4rem;align-content:start}
 .kind-list li{margin:0;padding:0;color:rgba(238,243,247,.82);font-size:.82rem;line-height:1.4}
 .kind-list .who{display:inline;margin-left:.35rem;color:rgba(215,224,232,.45);font-size:.74rem}
-.kind-form{display:grid;gap:.4rem;margin-top:auto;align-content:end}
+.kind-form{display:grid;gap:.4rem;margin-top:.15rem}
 .kind-form label{display:grid;gap:.2rem;color:rgba(215,224,232,.68);font-size:.74rem}
 .kind-form em{font-style:normal;opacity:.7}
 .kind-form input,.kind-form textarea{width:100%;box-sizing:border-box;border:1px solid rgba(215,224,232,.14);border-radius:.3rem;background:rgba(8,12,17,.5);color:var(--paper,#eef3f7);padding:.4rem .55rem;font:inherit;font-size:.82rem}

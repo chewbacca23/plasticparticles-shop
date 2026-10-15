@@ -265,25 +265,14 @@ const skip =
   .kind-panel,
   .kind-member {
     display: grid;
-    grid-template-rows: auto auto 1fr auto;
     gap: 0.5rem;
     align-content: start;
     min-width: 0;
-    min-height: 17rem;
-    padding: 1rem 1.05rem 1.05rem;
+    padding: 0.85rem 0.95rem 0.95rem;
     border: 1px solid rgba(215, 224, 232, 0.14);
     border-radius: 0.35rem;
     background: rgba(8, 12, 17, 0.42);
     box-sizing: border-box;
-  }
-
-  @media (min-width: 720px) {
-    .kind-panel,
-    .kind-member {
-      aspect-ratio: 1 / 1;
-      min-height: 0;
-      overflow: auto;
-    }
   }
 
   .kind-title {
@@ -329,8 +318,7 @@ const skip =
   .kind-form {
     display: grid;
     gap: 0.4rem;
-    margin-top: auto;
-    align-content: end;
+    margin-top: 0.15rem;
   }
 
   .kind-form label {
