@@ -7,6 +7,7 @@
  */
 
 import { planRidePhotos, safePhotoSrc } from './story-photos.js';
+import { injectKindRemarks } from './kind-remarks.js';
 
 const REPO = 'chewbacca23/thenewsoulsearchersblog';
 const BRANCH = 'main';
@@ -517,7 +518,9 @@ export async function handleFreshRide(request, env) {
     }
   }
 
-  const page = renderRidePage({ slug, data: parsed.data, body: parsed.body, kind });
+  const page = injectKindRemarks(
+    renderRidePage({ slug, data: parsed.data, body: parsed.body, kind }),
+  );
   return new Response(page, {
     status: 200,
     headers: {

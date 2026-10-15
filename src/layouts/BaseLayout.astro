@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { site } from '../site.config';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import KindRemarks from '../components/KindRemarks.astro';
 import LogoBackdrop from '../components/LogoBackdrop.astro';
 
 interface Props {
@@ -57,6 +58,7 @@ const canonical = new URL(Astro.url.pathname, site.url).toString();
       <main>
         <slot />
       </main>
+      <KindRemarks />
       <SiteFooter />
     </div>
     <script is:inline>

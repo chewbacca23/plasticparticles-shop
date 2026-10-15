@@ -36,6 +36,7 @@ import {
   resolveResendKey,
   RESEND_KEY_BINDINGS,
 } from './contact-mail.js';
+import { handleRemarksRequest } from './kind-remarks.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -439,6 +440,9 @@ export default {
 
       const contact = await handleContactRequest(request, env);
       if (contact) return contact;
+
+      const remarks = await handleRemarksRequest(request, env);
+      if (remarks) return remarks;
 
       const hooks = await handleHooksRequest(request, env);
       if (hooks) return hooks;
