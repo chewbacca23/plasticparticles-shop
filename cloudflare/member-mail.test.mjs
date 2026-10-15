@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  addMemberToAudience,
   handleMembersRequest,
   parseMemberBody,
+  splitMemberName,
   validateMember,
 } from './member-mail.js';
 
@@ -20,6 +22,43 @@ describe('parseMemberBody and validateMember', () => {
 
   it('asks for a real email', () => {
     assert.match(validateMember(parseMemberBody({ email: 'nope' })), /email/i);
+  });
+});
+
+describe('splitMemberName', () => {
+  it('splits first and last', () => {
+    assert.deepEqual(splitMemberName('Lars Rider'), {
+      firstName: 'Lars',
+      lastName: 'Rider',
+    });
+    assert.deepEqual(splitMemberName('Ana'), { firstName: 'Ana', lastName: '' });
+  });
+});
+
+describe('addMemberToAudience', () => {
+  it('posts the email into the pinned Resend audience', async () => {
+    const calls = [];
+    const original = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      calls.push({ url: String(url), init });
+      return new Response(JSON.stringify({ id: 'contact_1' }), { status: 200 });
+    };
+    try {
+      const result = await addMemberToAudience(
+        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12', RESEND_AUDIENCE_ID: 'aud_123' },
+        { email: 'rider@example.com', name: 'Lars Rider' },
+      );
+      assert.equal(result.ok, true);
+      assert.equal(result.audienceId, 'aud_123');
+      assert.equal(calls.length, 1);
+      assert.match(calls[0].url, /\/audiences\/aud_123\/contacts$/);
+      const body = JSON.parse(String(calls[0].init.body));
+      assert.equal(body.email, 'rider@example.com');
+      assert.equal(body.first_name, 'Lars');
+      assert.equal(body.last_name, 'Rider');
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });
 

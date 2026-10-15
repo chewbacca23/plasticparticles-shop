@@ -185,6 +185,21 @@ Until a **working** key is there, Send shows **Not delivered yet** (or “Mail k
 Notes land in **`henrik@thenewsoulsearchers.de`** by default (From `hello@thenewsoulsearchers.de`
 via Resend). Reply-To is the rider.
 
+### Free member mailing list (Resend Audience)
+
+“Become a member” saves each email in KV **and** adds it to one Resend Audience named
+**Soul Searchers members**. From Resend → **Audiences** / **Broadcasts** you can write that
+whole group later.
+
+Optional pin (recommended once you have created the audience in Resend):
+
+```sh
+npx --yes wrangler@4 secret put RESEND_AUDIENCE_ID --name thenewsoulsearchersblogc
+```
+
+Paste the audience id from Resend. If this secret is missing, the Worker creates the audience
+on first join and remembers the id in KV (`members:audience_id`).
+
 ### If Resend shows Bounced to henrik@thenewsoulsearchers.de
 
 Your **key is fine**. Strato (`smtpin.rzone.de`) often rejects mail that is:

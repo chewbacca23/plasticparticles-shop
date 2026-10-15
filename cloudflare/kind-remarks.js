@@ -318,7 +318,7 @@ export function kindRemarksStripHtml() {
     </div>
     <div class="kind-member" id="become-a-member" data-kind-member>
       <h2 class="kind-title">Become a member</h2>
-      <p class="kind-lead">Free on thenewsoulsearchers.de. Add your email and you are on our mailing list — nothing to pay, ever.</p>
+      <p class="kind-lead">Free on thenewsoulsearchers.de. Add your email to our list — we keep one big group so we can write you back. Nothing to pay, ever.</p>
       <p class="kind-status" data-member-status hidden></p>
       <form class="kind-form" data-member-form>
         <label>
