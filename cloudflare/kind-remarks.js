@@ -314,6 +314,26 @@ export function kindRemarksStripHtml() {
       </label>
       <button type="submit">Leave a kind word</button>
     </form>
+    <div class="kind-member" id="become-a-member" data-kind-member>
+      <h3 class="kind-member-title">Become a member</h3>
+      <p class="kind-lead">Free on thenewsoulsearchers.de. Add your email and you are on our mailing list — nothing to pay, ever.</p>
+      <p class="kind-status" data-member-status hidden></p>
+      <form class="kind-form" data-member-form>
+        <label>
+          <span>Name <em>(optional)</em></span>
+          <input type="text" name="name" maxlength="80" autocomplete="name" />
+        </label>
+        <label>
+          <span>Your email</span>
+          <input type="email" name="email" required maxlength="200" autocomplete="email" />
+        </label>
+        <label class="kind-hp" aria-hidden="true">
+          <span>Website</span>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" />
+        </label>
+        <button type="submit">Join free</button>
+      </form>
+    </div>
   </div>
 </section>
 ${kindRemarksClientScript()}`;
@@ -337,6 +357,8 @@ export function kindRemarksStyles() {
 .kind-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 .kind-status[data-tone="bad"]{color:#e8b4a2}
 .kind-status[data-tone="ok"]{color:#b7d4c4}
+.kind-member{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(215,224,232,.1);display:grid;gap:.85rem}
+.kind-member-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:1.15rem;color:var(--paper,#eef3f7);font-weight:500}
 </style>`;
 }
 
@@ -392,39 +414,79 @@ export function kindRemarksClientScript() {
     .then(function (data) { paint(data && data.remarks ? data.remarks : []); })
     .catch(function () {});
 
-  if (!form) return;
-  form.addEventListener('submit', function (event) {
-    event.preventDefault();
-    showStatus('', '');
-    var fd = new FormData(form);
-    var payload = {
-      path: path,
-      name: String(fd.get('name') || ''),
-      message: String(fd.get('message') || ''),
-      website: String(fd.get('website') || ''),
-    };
-    var button = form.querySelector('button[type="submit"]');
-    if (button) button.disabled = true;
-    fetch('/api/remarks', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
-      .then(function (result) {
-        if (!result.ok || !result.data || !result.data.ok) {
-          showStatus((result.data && result.data.error) || 'Could not save that just now.', 'bad');
-          return;
-        }
-        form.reset();
-        showStatus('Thank you. Your kind word is on the page.', 'ok');
-        return fetch('/api/remarks?path=' + encodeURIComponent(path), { headers: { accept: 'application/json' } })
-          .then(function (res) { return res.json(); })
-          .then(function (data) { paint(data && data.remarks ? data.remarks : []); });
+  if (form) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      showStatus('', '');
+      var fd = new FormData(form);
+      var payload = {
+        path: path,
+        name: String(fd.get('name') || ''),
+        message: String(fd.get('message') || ''),
+        website: String(fd.get('website') || ''),
+      };
+      var button = form.querySelector('button[type="submit"]');
+      if (button) button.disabled = true;
+      fetch('/api/remarks', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(payload),
       })
-      .catch(function () { showStatus('Could not save that just now.', 'bad'); })
-      .finally(function () { if (button) button.disabled = false; });
-  });
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.data || !result.data.ok) {
+            showStatus((result.data && result.data.error) || 'Could not save that just now.', 'bad');
+            return;
+          }
+          form.reset();
+          showStatus('Thank you. Your kind word is on the page.', 'ok');
+          return fetch('/api/remarks?path=' + encodeURIComponent(path), { headers: { accept: 'application/json' } })
+            .then(function (res) { return res.json(); })
+            .then(function (data) { paint(data && data.remarks ? data.remarks : []); });
+        })
+        .catch(function () { showStatus('Could not save that just now.', 'bad'); })
+        .finally(function () { if (button) button.disabled = false; });
+    });
+  }
+
+  var memberForm = root.querySelector('[data-member-form]');
+  var memberStatus = root.querySelector('[data-member-status]');
+  function showMemberStatus(text, tone) {
+    if (!memberStatus) return;
+    memberStatus.hidden = !text;
+    memberStatus.textContent = text || '';
+    memberStatus.setAttribute('data-tone', tone || '');
+  }
+  if (memberForm) {
+    memberForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      showMemberStatus('', '');
+      var fd = new FormData(memberForm);
+      var payload = {
+        name: String(fd.get('name') || ''),
+        email: String(fd.get('email') || ''),
+        website: String(fd.get('website') || ''),
+      };
+      var button = memberForm.querySelector('button[type="submit"]');
+      if (button) button.disabled = true;
+      fetch('/api/members', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.data || !result.data.ok) {
+            showMemberStatus((result.data && result.data.error) || 'Could not join just now.', 'bad');
+            return;
+          }
+          memberForm.reset();
+          showMemberStatus((result.data && result.data.message) || 'Welcome. You are on the free list.', 'ok');
+        })
+        .catch(function () { showMemberStatus('Could not join just now.', 'bad'); })
+        .finally(function () { if (button) button.disabled = false; });
+    });
+  }
 })();
 </script>`;
 }
