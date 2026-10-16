@@ -40,7 +40,14 @@ const countLabel =
         ))
       }
       <p class="actions">
-        <a class="send" href={mailto}>Send this ride</a>
+        <a
+          class="send"
+          href={mailto}
+          data-postcard-share
+          data-slug={slug}
+          data-title={title}
+          data-path={`/postcard/${slug}`}
+        >Send this ride</a>
         {readHref ? <a class="read" href={readHref}>Read the ride</a> : null}
       </p>
       <p class="offer">
@@ -272,5 +279,31 @@ const countLabel =
   document.addEventListener('dragstart', function (event) {
     var node = event.target;
     if (node && node.closest && node.closest('.photo')) event.preventDefault();
+  });
+  document.addEventListener('click', function (event) {
+    var link = event.target && event.target.closest
+      ? event.target.closest('[data-postcard-share]')
+      : null;
+    if (!link) return;
+    var payload = JSON.stringify({
+      slug: link.getAttribute('data-slug') || '',
+      title: link.getAttribute('data-title') || '',
+      path: link.getAttribute('data-path') || '',
+    });
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          '/api/postcard-shares',
+          new Blob([payload], { type: 'application/json' }),
+        );
+      } else {
+        fetch('/api/postcard-shares', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        });
+      }
+    } catch (_) {}
   });
 </script>

@@ -81,6 +81,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <ol class="pages" data-members-list>
         <li class="empty">No free members yet. When someone joins, they show here.</li>
       </ol>
+
+      <h2 class="pages-title">
+        Postcards started <span data-postcard-shares-count>—</span>
+      </h2>
+      <p class="note">
+        Private for you. Someone tapped Send this ride — they send it themselves. Newest first.
+      </p>
+      <ol class="pages" data-postcard-shares-list>
+        <li class="empty">No postcards started yet. When someone taps Send this ride, it shows here.</li>
+      </ol>
     </div>
   </section>
 </BaseLayout>

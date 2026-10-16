@@ -5,6 +5,10 @@
  */
 
 import { membersListHtml, readMemberList } from './member-mail.js';
+import {
+  postcardSharesListHtml,
+  readPostcardShares,
+} from './postcard-shares.js';
 
 const STORE_KEY = 'looks-v1';
 const SKIP = new Set([
@@ -597,7 +601,7 @@ export async function recordDocumentLook(request, env) {
   }
 }
 
-export function looksDashboardPage(summary, members = []) {
+export function looksDashboardPage(summary, members = [], shares = []) {
   const today = Number(summary?.today) || 0;
   const week = Number(summary?.week) || 0;
   const year = Number(summary?.year) || 0;
@@ -626,6 +630,8 @@ export function looksDashboardPage(summary, members = []) {
   );
   const memberCount = Array.isArray(members) ? members.length : 0;
   const memberRows = membersListHtml(members);
+  const shareCount = Array.isArray(shares) ? shares.length : 0;
+  const shareRows = postcardSharesListHtml(shares);
 
   return new Response(
     `<!doctype html>
@@ -698,6 +704,9 @@ export function looksDashboardPage(summary, members = []) {
     <h2>Free members <span data-members-count>${memberCount}</span></h2>
     <p class="lead" style="margin-top:-.35rem;margin-bottom:.85rem;font-size:.92rem">Private for you. Everyone who joined the free list, newest first.</p>
     <ol data-members-list>${memberRows}</ol>
+    <h2>Postcards started <span data-postcard-shares-count>${shareCount}</span></h2>
+    <p class="lead" style="margin-top:-.35rem;margin-bottom:.85rem;font-size:.92rem">Private for you. Someone tapped Send this ride — they send it themselves.</p>
+    <ol data-postcard-shares-list>${shareRows}</ol>
     <p class="back"><a href="/">← Home</a> · <a href="/admin/">Editor</a></p>
   </main>
 </body>
@@ -808,12 +817,13 @@ export const LOOKS_BARS_LIST_STYLE =
   'border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
 
 
-export function fillLooksInHtml(html, summary, members = []) {
+export function fillLooksInHtml(html, summary, members = [], shares = []) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
   const year = String(Number(summary?.year) || 0);
   const total = String(Number(summary?.total) || 0);
   const memberCount = String(Array.isArray(members) ? members.length : 0);
+  const shareCount = String(Array.isArray(shares) ? shares.length : 0);
   const rows = looksPageRows(summary?.pages);
   const countryRows = looksNamedRows(
     summary?.countries,
@@ -837,6 +847,7 @@ export function fillLooksInHtml(html, summary, members = []) {
     { wideLabel: true },
   );
   const memberRows = membersListHtml(members);
+  const shareRows = postcardSharesListHtml(shares);
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
@@ -845,6 +856,10 @@ export function fillLooksInHtml(html, summary, members = []) {
     .replace(
       /data-members-count([^>]*)>[\s\S]*?</,
       `data-members-count$1>${memberCount}<`,
+    )
+    .replace(
+      /data-postcard-shares-count([^>]*)>[\s\S]*?</,
+      `data-postcard-shares-count$1>${shareCount}<`,
     )
     .replace(
       /<ol([^>]*data-looks-years[^>]*)>[\s\S]*?<\/ol>/,
@@ -873,6 +888,10 @@ export function fillLooksInHtml(html, summary, members = []) {
     .replace(
       /<ol([^>]*data-members-list[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${memberRows}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-postcard-shares-list[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${shareRows}</ol>`,
     );
 }
 
@@ -942,10 +961,16 @@ export async function applyLooksToAsset(request, env, asset) {
   } catch {
     members = [];
   }
+  let shares = [];
+  try {
+    shares = await readPostcardShares(env);
+  } catch {
+    shares = [];
+  }
   const raw = await asset.text();
   const html = isMembersPath(url.pathname)
     ? fillMembersInHtml(raw, members)
-    : fillLooksInHtml(raw, await safeReadLooks(env), members);
+    : fillLooksInHtml(raw, await safeReadLooks(env), members, shares);
   const headers = new Headers(asset.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
   headers.set('cache-control', 'no-store');
@@ -979,7 +1004,13 @@ export async function handleLooksPage(request, env) {
   } catch {
     members = [];
   }
-  return looksDashboardPage(await safeReadLooks(env), members);
+  let shares = [];
+  try {
+    shares = await readPostcardShares(env);
+  } catch {
+    shares = [];
+  }
+  return looksDashboardPage(await safeReadLooks(env), members, shares);
 }
 
 export function membersDashboardPage(members = []) {

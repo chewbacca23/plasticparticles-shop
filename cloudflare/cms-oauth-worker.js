@@ -38,6 +38,7 @@ import {
 } from './contact-mail.js';
 import { handleRemarksRequest } from './kind-remarks.js';
 import { handleMembersRequest } from './member-mail.js';
+import { handlePostcardSharesRequest } from './postcard-shares.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -447,6 +448,9 @@ export default {
 
       const members = await handleMembersRequest(request, env);
       if (members) return members;
+
+      const postcardShares = await handlePostcardSharesRequest(request, env);
+      if (postcardShares) return postcardShares;
 
       const hooks = await handleHooksRequest(request, env);
       if (hooks) return hooks;
