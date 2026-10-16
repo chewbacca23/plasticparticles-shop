@@ -2,11 +2,27 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   addMemberToAudience,
+  formatMemberWhen,
   handleMembersRequest,
+  membersListHtml,
   parseMemberBody,
   splitMemberName,
   validateMember,
 } from './member-mail.js';
+import { looksSetCookie, looksToken } from './page-looks.js';
+
+function memoryKv(start = {}) {
+  const store = { ...start };
+  return {
+    async get(key) {
+      return store[key] ?? null;
+    },
+    async put(key, value) {
+      store[key] = value;
+    },
+    _store: store,
+  };
+}
 
 describe('parseMemberBody and validateMember', () => {
   it('keeps a clean free-member email', () => {
@@ -45,7 +61,10 @@ describe('addMemberToAudience', () => {
     };
     try {
       const result = await addMemberToAudience(
-        { RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12', RESEND_AUDIENCE_ID: 'aud_123' },
+        {
+          RESEND_API_KEY: 're_testkey_abcdefghijklmnopqrstuvwxyz12',
+          RESEND_AUDIENCE_ID: 'aud_123',
+        },
         { email: 'rider@example.com', name: 'Lars Rider' },
       );
       assert.equal(result.ok, true);
@@ -63,19 +82,6 @@ describe('addMemberToAudience', () => {
 });
 
 describe('handleMembersRequest', () => {
-  function memoryKv(start = {}) {
-    const store = { ...start };
-    return {
-      async get(key) {
-        return store[key] ?? null;
-      },
-      async put(key, value) {
-        store[key] = value;
-      },
-      _store: store,
-    };
-  }
-
   it('says membership is free without listing emails', async () => {
     const res = await handleMembersRequest(
       new Request('https://thenewsoulsearchers.de/api/members'),
@@ -87,11 +93,42 @@ describe('handleMembersRequest', () => {
     assert.equal(data.members, undefined);
   });
 
+  it('shows the full signup list only with the looks cookie', async () => {
+    const secret = 'test-looks-secret';
+    const token = await looksToken(secret);
+    const cookie = looksSetCookie(token, { secure: false }).split(';')[0];
+    const kv = memoryKv({
+      'members:list': JSON.stringify([
+        {
+          id: '1',
+          email: 'rider@example.com',
+          name: 'Lars',
+          at: '2026-10-15T12:00:00.000Z',
+        },
+      ]),
+    });
+    const publicGet = await handleMembersRequest(
+      new Request('https://thenewsoulsearchers.de/api/members'),
+      { STATS: kv, GITHUB_OAUTH_CLIENT_SECRET: secret },
+    );
+    assert.equal((await publicGet.json()).members, undefined);
+
+    const privateGet = await handleMembersRequest(
+      new Request('https://thenewsoulsearchers.de/api/members', {
+        headers: { cookie },
+      }),
+      { STATS: kv, GITHUB_OAUTH_CLIENT_SECRET: secret },
+    );
+    const data = await privateGet.json();
+    assert.equal(data.private, true);
+    assert.equal(data.count, 1);
+    assert.equal(data.members[0].email, 'rider@example.com');
+  });
+
   it('saves a new member and treats a second join as already on the list', async () => {
     const kv = memoryKv();
     const env = {
       STATS: kv,
-      // No Resend key — notify will fail softly after save.
     };
     const first = await handleMembersRequest(
       new Request('https://thenewsoulsearchers.de/api/members', {
@@ -138,5 +175,17 @@ describe('handleMembersRequest', () => {
     const data = await res.json();
     assert.equal(data.ok, true);
     assert.equal(data.via, 'discard');
+  });
+});
+
+describe('membersListHtml', () => {
+  it('renders emails for the private roster', () => {
+    const html = membersListHtml([
+      { email: 'a@b.co', name: 'Ana', at: '2026-10-15T12:00:00.000Z' },
+    ]);
+    assert.match(html, /Ana/);
+    assert.match(html, /a@b\.co/);
+    assert.match(html, /mailto:a@b\.co/);
+    assert.match(formatMemberWhen('2026-10-15T12:00:00.000Z'), /2026/);
   });
 });

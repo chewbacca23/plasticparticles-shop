@@ -111,6 +111,56 @@ export async function readMemberList(env) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Private roster HTML for /looks — never on the public site.
+ * @param {Array<{ email?: string, name?: string, at?: string }>} members
+ */
+export function membersListHtml(members) {
+  const list = Array.isArray(members) ? members : [];
+  if (!list.length) {
+    return '<li class="empty">No free members yet. When someone joins below, they show here.</li>';
+  }
+  return list
+    .map((row) => {
+      const email = escapeHtml(row?.email || '');
+      const name = String(row?.name || '').trim();
+      const when = formatMemberWhen(row?.at);
+      const who = name
+        ? `<span class="looks-name">${escapeHtml(name)}</span> · <a href="mailto:${email}">${email}</a>`
+        : `<a href="mailto:${email}">${email}</a>`;
+      return `<li>${who}<span>${escapeHtml(when)}</span></li>`;
+    })
+    .join('');
+}
+
+/**
+ * @param {unknown} iso
+ */
+export function formatMemberWhen(iso) {
+  const raw = String(iso || '').trim();
+  if (!raw) return '—';
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw.slice(0, 10);
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Berlin',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  } catch {
+    return raw.slice(0, 10);
+  }
+}
+
 /**
  * @param {any} env
  * @param {{ email: string, name: string }} fields
@@ -330,12 +380,33 @@ export async function handleMembersRequest(request, env) {
   }
 
   if (request.method === 'GET') {
-    // Never publish the list. Just confirm membership is free and open.
     const { key } = resolveResendKey(env);
     const pinned = audienceIdFromEnv(env);
+    // Public callers only learn that membership is free — never the addresses.
+    // Henrik’s looks cookie unlocks the full signup list.
+    let privateView = false;
+    try {
+      const { requestHasLooksAccess } = await import('./page-looks.js');
+      privateView = await requestHasLooksAccess(request, env);
+    } catch {
+      privateView = false;
+    }
+    if (!privateView) {
+      return json({
+        ok: true,
+        free: true,
+        inbox: resolveContactTo(env),
+        listWired: Boolean(key),
+        audiencePinned: Boolean(pinned),
+      });
+    }
+    const members = await readMemberList(env);
     return json({
       ok: true,
       free: true,
+      private: true,
+      count: members.length,
+      members,
       inbox: resolveContactTo(env),
       listWired: Boolean(key),
       audiencePinned: Boolean(pinned),

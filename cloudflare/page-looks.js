@@ -1,7 +1,10 @@
 /**
  * Anonymous page opens for Henrik's Looks dashboard.
  * No cookies, no names. One count per open of a public page.
+ * Also fills the private free-members roster (emails stay off the public site).
  */
+
+import { membersListHtml, readMemberList } from './member-mail.js';
 
 const STORE_KEY = 'looks-v1';
 const SKIP = new Set([
@@ -584,7 +587,7 @@ export async function recordDocumentLook(request, env) {
   }
 }
 
-export function looksDashboardPage(summary) {
+export function looksDashboardPage(summary, members = []) {
   const today = Number(summary?.today) || 0;
   const week = Number(summary?.week) || 0;
   const year = Number(summary?.year) || 0;
@@ -611,6 +614,8 @@ export function looksDashboardPage(summary) {
     'Week bars show once people have opened the site.',
     { wideLabel: true },
   );
+  const memberCount = Array.isArray(members) ? members.length : 0;
+  const memberRows = membersListHtml(members);
 
   return new Response(
     `<!doctype html>
@@ -680,6 +685,9 @@ export function looksDashboardPage(summary) {
     <ol>${countryRows}</ol>
     <h2>What sent them</h2>
     <ol>${fromRows}</ol>
+    <h2>Free members <span data-members-count>${memberCount}</span></h2>
+    <p class="lead" style="margin-top:-.35rem;margin-bottom:.85rem;font-size:.92rem">Private for you. Everyone who joined the free list, newest first.</p>
+    <ol data-members-list>${memberRows}</ol>
     <p class="back"><a href="/">← Home</a> · <a href="/admin/">Editor</a></p>
   </main>
 </body>
@@ -790,11 +798,12 @@ export const LOOKS_BARS_LIST_STYLE =
   'border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
 
 
-export function fillLooksInHtml(html, summary) {
+export function fillLooksInHtml(html, summary, members = []) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
   const year = String(Number(summary?.year) || 0);
   const total = String(Number(summary?.total) || 0);
+  const memberCount = String(Array.isArray(members) ? members.length : 0);
   const rows = looksPageRows(summary?.pages);
   const countryRows = looksNamedRows(
     summary?.countries,
@@ -817,11 +826,16 @@ export function fillLooksInHtml(html, summary) {
     'Week bars show once people have opened the site.',
     { wideLabel: true },
   );
+  const memberRows = membersListHtml(members);
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
     .replace(/data-looks="year"([^>]*)>[\s\S]*?</, `data-looks="year"$1>${year}<`)
     .replace(/data-looks="total"([^>]*)>[\s\S]*?</, `data-looks="total"$1>${total}<`)
+    .replace(
+      /data-members-count([^>]*)>[\s\S]*?</,
+      `data-members-count$1>${memberCount}<`,
+    )
     .replace(
       /<ol([^>]*data-looks-years[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${yearRows}</ol>`,
@@ -845,6 +859,10 @@ export function fillLooksInHtml(html, summary) {
     .replace(
       /<ol([^>]*data-looks-from[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${fromRows}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-members-list[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${memberRows}</ol>`,
     );
 }
 
@@ -887,7 +905,13 @@ export async function applyLooksToAsset(request, env, asset) {
   const type = asset.headers.get('content-type') || '';
   if (type && !type.includes('html') && !type.includes('text')) return asset;
   const summary = await safeReadLooks(env);
-  const html = fillLooksInHtml(await asset.text(), summary);
+  let members = [];
+  try {
+    members = await readMemberList(env);
+  } catch {
+    members = [];
+  }
+  const html = fillLooksInHtml(await asset.text(), summary, members);
   const headers = new Headers(asset.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
   return new Response(html, { status: 200, headers });
@@ -900,7 +924,13 @@ export async function handleLooksPage(request, env) {
   const asset = await fetchLooksAsset(request, env);
   const filled = await applyLooksToAsset(request, env, asset);
   if (filled) return filled;
-  return looksDashboardPage(await safeReadLooks(env));
+  let members = [];
+  try {
+    members = await readMemberList(env);
+  } catch {
+    members = [];
+  }
+  return looksDashboardPage(await safeReadLooks(env), members);
 }
 
 export async function handleLooksRequest(request, env) {
