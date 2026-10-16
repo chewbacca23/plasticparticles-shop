@@ -1,11 +1,12 @@
 ---
 import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
+import BarItaliaMark from '../../components/BarItaliaMark.astro';
 ---
 
 <BarItaliaLayout>
   <header class="top">
     <div class="shell top-inner">
-      <a class="brand" href="/bar-italia">Bar Italia</a>
+      <a class="brand" href="/bar-italia"><BarItaliaMark size="nav" /></a>
       <nav class="nav" aria-label="Bar Italia">
         <a href="#coffee">Coffee</a>
         <a href="#music">Music</a>
@@ -26,7 +27,7 @@ import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
       </div>
       <div class="shell hero-copy">
         <p class="eyebrow">Kreuzberg · Mehringdamm</p>
-        <h1 class="brand-hero">Bar Italia</h1>
+        <h1 class="brand-hero"><BarItaliaMark size="hero" /></h1>
         <p class="lead">
           A small Italian espresso bar with impeccable taste — in the cup, and on the stereo.
         </p>
@@ -125,7 +126,7 @@ import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
 
   <footer class="foot">
     <div class="shell foot-inner">
-      <p class="foot-brand">Bar Italia</p>
+      <p class="foot-brand"><BarItaliaMark size="foot" /></p>
       <p class="foot-gift">
         A small surprise site for Alex — from a friend on two wheels.
       </p>
@@ -158,10 +159,7 @@ import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
 
   .brand {
     color: var(--bi-foam);
-    font-family: var(--bi-font-display);
-    font-size: 1.15rem;
     text-decoration: none;
-    letter-spacing: 0.02em;
   }
 
   .nav {
@@ -308,13 +306,9 @@ import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
   }
 
   .brand-hero {
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.9rem;
     color: var(--bi-foam);
-    font-family: var(--bi-font-display);
-    font-size: clamp(3rem, 10vw, 5.2rem);
-    font-weight: 500;
-    line-height: 0.95;
-    letter-spacing: -0.02em;
+    line-height: 1.05;
   }
 
   .lead {
@@ -490,10 +484,8 @@ import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
   }
 
   .foot-brand {
-    margin: 0 0 0.35rem;
+    margin: 0 0 0.45rem;
     color: var(--bi-foam);
-    font-family: var(--bi-font-display);
-    font-size: 1.2rem;
   }
 
   .foot-gift {

@@ -1,0 +1,85 @@
+---
+/**
+ * Alex’s wordmark: plain medium Futura, red dots above the i’s.
+ */
+interface Props {
+  size?: 'nav' | 'hero' | 'foot';
+}
+
+const { size = 'nav' } = Astro.props;
+---
+
+<span class:list={['bi-mark', size === 'nav' && 'bi-mark--nav', size === 'hero' && 'bi-mark--hero', size === 'foot' && 'bi-mark--foot']}>
+  <span class="bi-mark-text" aria-label="Bar Italia">
+    Bar{' '}
+    <span class="bi-i"><span class="bi-dot" aria-hidden="true"></span>I</span>tal<span
+      class="bi-i bi-i--low"
+      ><span class="bi-dot" aria-hidden="true"></span>ı</span
+    >a
+  </span>
+</span>
+
+<style>
+  .bi-mark {
+    display: inline-block;
+    color: var(--bi-foam, #f6f0e6);
+    font-family:
+      Futura,
+      'Futura PT',
+      'Futura Std',
+      'Century Gothic',
+      'URW Gothic',
+      'AppleGothic',
+      'Tw Cen MT',
+      'Segoe UI',
+      sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    line-height: 1;
+  }
+
+  .bi-mark-text {
+    display: inline-block;
+  }
+
+  .bi-mark--nav {
+    font-size: 1.2rem;
+  }
+
+  .bi-mark--hero {
+    font-size: clamp(2.8rem, 9vw, 4.8rem);
+    letter-spacing: 0.06em;
+  }
+
+  .bi-mark--foot {
+    font-size: 1.25rem;
+  }
+
+  .bi-i {
+    position: relative;
+    display: inline-block;
+  }
+
+  .bi-dot {
+    position: absolute;
+    left: 50%;
+    width: 0.2em;
+    height: 0.2em;
+    margin-left: -0.1em;
+    border-radius: 50%;
+    background: #e10600;
+    pointer-events: none;
+  }
+
+  /* Capital I — red tittle sits above the stem */
+  .bi-i:not(.bi-i--low) .bi-dot {
+    top: -0.02em;
+  }
+
+  /* Dotless ı + red tittle (same height as a Futura i) */
+  .bi-i--low .bi-dot {
+    top: 0.02em;
+  }
+</style>
