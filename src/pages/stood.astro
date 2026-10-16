@@ -1,0 +1,325 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const places = (await getCollection('stood', ({ data }) => !data.draft)).sort((a, b) => {
+  const aTime = a.data.stoodAt ? a.data.stoodAt.getTime() : 0;
+  const bTime = b.data.stoodAt ? b.data.stoodAt.getTime() : 0;
+  if (bTime !== aTime) return bTime - aTime;
+  return (a.data.order ?? 0) - (b.data.order ?? 0);
+});
+
+const pins = places.map((entry) => ({
+  id: entry.id,
+  place: entry.data.place,
+  lat: entry.data.lat,
+  lng: entry.data.lng,
+  note: entry.data.note,
+  href: entry.data.href,
+  when: entry.data.stoodAt
+    ? new Intl.DateTimeFormat('en-GB', {
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'Europe/Berlin',
+      }).format(entry.data.stoodAt)
+    : '',
+}));
+
+const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
+---
+
+<BaseLayout
+  title="Where I stood"
+  description="A quiet trail of places The Soul Searchers have been — soft pins on the map, brother to brother."
+>
+  <link
+    slot="head"
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    slot="head"
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+  <section class="section stood">
+    <div class="site-shell">
+      <p class="eyebrow reveal">The trail</p>
+      <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        Soft pins from the rides — not a race heat map. Tap a place and open the story. Brother to
+        brother.
+      </p>
+
+      <div class="map-frame reveal reveal-delay-3" aria-label="Map of places I stood">
+        <div id="stood-map" class="map" data-pins={pinsJson} role="presentation"></div>
+      </div>
+
+      {
+        places.length === 0 ? (
+          <p class="empty">
+            Places will show here when you add them in the editor under <strong>Where I stood</strong>.
+          </p>
+        ) : (
+          <ol class="stood-list">
+            {places.map((entry, index) => {
+              const delay =
+                index === 0 ? 'reveal reveal-delay-2' : index === 1 ? 'reveal reveal-delay-3' : 'reveal';
+              const when = entry.data.stoodAt
+                ? new Intl.DateTimeFormat('en-GB', {
+                    month: 'short',
+                    year: 'numeric',
+                    timeZone: 'Europe/Berlin',
+                  }).format(entry.data.stoodAt)
+                : '';
+              return (
+                <li class:list={['stood-item', delay]}>
+                  {entry.data.href ? (
+                    <a class="stood-link" href={entry.data.href}>
+                      <span class="stood-place">{entry.data.place}</span>
+                      {when ? <span class="stood-when">{when}</span> : null}
+                      {entry.data.note ? <span class="stood-note">{entry.data.note}</span> : null}
+                    </a>
+                  ) : (
+                    <div class="stood-link stood-link--plain">
+                      <span class="stood-place">{entry.data.place}</span>
+                      {when ? <span class="stood-when">{when}</span> : null}
+                      {entry.data.note ? <span class="stood-note">{entry.data.note}</span> : null}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    function paint() {
+      if (!window.L) return;
+      var el = document.getElementById('stood-map');
+      if (!el || el.getAttribute('data-ready')) return;
+      var pins = [];
+      try {
+        pins = JSON.parse(el.getAttribute('data-pins') || '[]');
+      } catch (_) {
+        pins = [];
+      }
+      el.setAttribute('data-ready', '1');
+
+      var map = window.L.map(el, {
+        scrollWheelZoom: false,
+        zoomControl: true,
+        attributionControl: true,
+      });
+
+      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 18,
+      }).addTo(map);
+
+      var icon = window.L.divIcon({
+        className: 'stood-pin',
+        html: '<span class="stood-pin-dot"></span>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10],
+      });
+
+      var bounds = [];
+      pins.forEach(function (pin) {
+        if (typeof pin.lat !== 'number' || typeof pin.lng !== 'number') return;
+        bounds.push([pin.lat, pin.lng]);
+        var title = pin.place || 'A place';
+        var body = '';
+        if (pin.note) body += '<p class="stood-pop-note">' + escapeHtml(pin.note) + '</p>';
+        if (pin.when) body += '<p class="stood-pop-when">' + escapeHtml(pin.when) + '</p>';
+        if (pin.href) {
+          body +=
+            '<p class="stood-pop-go"><a href="' +
+            escapeAttr(pin.href) +
+            '">Open the story</a></p>';
+        }
+        var marker = window.L.marker([pin.lat, pin.lng], { icon: icon }).addTo(map);
+        marker.bindPopup(
+          '<div class="stood-pop"><strong>' + escapeHtml(title) + '</strong>' + body + '</div>',
+        );
+      });
+
+      if (bounds.length === 1) {
+        map.setView(bounds[0], 6);
+      } else if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 7 });
+      } else {
+        map.setView([48.5, 10.5], 4);
+      }
+
+      setTimeout(function () {
+        map.invalidateSize();
+      }, 80);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/'/g, '&#39;');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', paint);
+    } else {
+      paint();
+    }
+    window.addEventListener('load', paint);
+  })();
+</script>
+
+<style>
+  .stood {
+    padding-bottom: 3.5rem;
+  }
+
+  .map-frame {
+    margin: 1.75rem 0 2.25rem;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 1rem;
+    overflow: hidden;
+    background: rgba(18, 26, 34, 0.7);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  }
+
+  .map {
+    height: min(68vh, 32rem);
+    width: 100%;
+    background: #121a22;
+  }
+
+  .stood-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .stood-item {
+    margin: 0;
+  }
+
+  .stood-link {
+    display: grid;
+    gap: 0.25rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    background: rgba(18, 26, 34, 0.45);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .stood-link:hover {
+    border-color: rgba(240, 194, 122, 0.35);
+    background: rgba(30, 58, 69, 0.35);
+    color: inherit;
+  }
+
+  .stood-link--plain {
+    cursor: default;
+  }
+
+  .stood-place {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--paper);
+  }
+
+  .stood-when {
+    color: var(--amber);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .stood-note {
+    color: rgba(215, 224, 232, 0.78);
+    max-width: 38rem;
+  }
+
+  .empty {
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  :global(.stood-pin) {
+    background: transparent;
+    border: 0;
+  }
+
+  :global(.stood-pin-dot) {
+    display: block;
+    width: 14px;
+    height: 14px;
+    margin: 2px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f0c27a, #d4a35a 55%, #8a5a28);
+    box-shadow:
+      0 0 0 3px rgba(12, 18, 24, 0.85),
+      0 0 18px rgba(240, 194, 122, 0.45);
+  }
+
+  :global(.leaflet-popup-content-wrapper) {
+    background: #121a22;
+    color: #d7e0e8;
+    border-radius: 0.85rem;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  :global(.leaflet-popup-tip) {
+    background: #121a22;
+  }
+
+  :global(.stood-pop strong) {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #eef3f7;
+    font-family: Fraunces, Georgia, serif;
+    font-size: 1.05rem;
+  }
+
+  :global(.stood-pop-note),
+  :global(.stood-pop-when),
+  :global(.stood-pop-go) {
+    margin: 0.25rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  :global(.stood-pop-when) {
+    color: #f0c27a;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  :global(.stood-pop-go a) {
+    color: #f0c27a;
+    font-weight: 600;
+  }
+</style>

@@ -163,4 +163,25 @@ const week = defineCollection({
     })),
 });
 
-export const collections = { journal, stories, shots, friends, shop, stores, week };
+const stood = defineCollection({
+  loader: glob({ base: './src/content/stood', pattern: '**/*.{md,mdx}' }),
+  schema: z
+    .object({
+      place: z.string(),
+      lat: z.coerce.number(),
+      lng: z.coerce.number(),
+      note: z.string().optional().default(''),
+      href: z.string().optional().default(''),
+      stoodAt: z.coerce.date().optional(),
+      order: z.number().optional().default(0),
+      draft: z.boolean().default(false),
+    })
+    .transform((data) => ({
+      ...data,
+      place: data.place.trim(),
+      note: data.note.trim(),
+      href: data.href.trim(),
+    })),
+});
+
+export const collections = { journal, stories, shots, friends, shop, stores, week, stood };
