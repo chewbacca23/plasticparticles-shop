@@ -191,9 +191,10 @@ via Resend). Reply-To is the rider.
 **Soul Searchers members**. From Resend → **Audiences** / **Broadcasts** you can write that
 whole group later.
 
-Your private roster (name, email, date joined) lives on **`/looks`** under **Free members** —
-same login cookie as Looks (set when you open the Decap editor). The public site never shows
-those addresses.
+Your private roster (name, email, date joined) lives on **`/members`** in the top nav (also under
+**Free members** on `/looks`). Same login cookie as Looks (set when you open the Decap editor).
+Strangers who tap Members only see “Nothing to see here.” The public site never shows those
+addresses.
 
 Optional pin (recommended once you have created the audience in Resend):
 

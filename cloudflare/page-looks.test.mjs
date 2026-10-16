@@ -283,6 +283,13 @@ describe('GET/POST /api/looks', () => {
     assert.match(closedHtml, /Nothing to see here/);
     assert.doesNotMatch(closedHtml, /GitHub/);
 
+    const closedMembers = await handleLooksPage(
+      new Request('https://thenewsoulsearchers.de/members'),
+      env,
+    );
+    assert.equal(closedMembers.status, 401);
+    assert.match(await closedMembers.text(), /Nothing to see here/);
+
     const auth = await looksAuthEnv({ STATS: env.STATS });
     const open = await handleLooksRequest(
       withLooksCookie('https://thenewsoulsearchers.de/api/looks', auth.cookie),
@@ -297,6 +304,19 @@ describe('GET/POST /api/looks', () => {
     );
     assert.equal(page.status, 200);
     assert.match(await page.text(), /\/now/);
+
+    await auth.STATS.put(
+      'members:list',
+      JSON.stringify([{ id: '1', email: 'rider@example.com', name: 'Lars', at: '2026-10-15T12:00:00.000Z' }]),
+    );
+    const membersPage = await handleLooksPage(
+      withLooksCookie('https://thenewsoulsearchers.de/members', auth.cookie),
+      auth,
+    );
+    assert.equal(membersPage.status, 200);
+    const membersHtml = await membersPage.text();
+    assert.match(membersHtml, /rider@example\.com/);
+    assert.match(membersHtml, /Lars/);
 
     const site = await handleLooksPage(
       withLooksCookie('https://thenewsoulsearchers.de/looks', auth.cookie),

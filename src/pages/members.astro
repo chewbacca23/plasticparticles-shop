@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Members"
+  description="Private free-member signup list for The Soul Searchers."
+  robots="noindex, nofollow"
+>
+  <section class="section">
+    <div class="site-shell members">
+      <p class="eyebrow">Private</p>
+      <h1 class="section-title">
+        Free members <span data-members-count>—</span>
+      </h1>
+      <p class="section-lead">
+        Only for you. Everyone who joined the free list, newest first. Names and emails stay off the
+        public site.
+      </p>
+
+      <ol class="pages" data-members-list>
+        <li class="empty">No free members yet. When someone joins, they show here.</li>
+      </ol>
+
+      <p class="note">
+        <a href="/looks">Looks</a>
+        ·
+        <a href="/admin/">Editor</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .members {
+    max-width: 40rem;
+  }
+
+  .pages {
+    margin: 1.5rem 0 1.75rem;
+    padding: 0;
+    list-style: none;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .pages :global(li) {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.15rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.08);
+  }
+
+  .pages :global(li:first-child) {
+    border-top: 0;
+  }
+
+  .pages :global(a) {
+    color: var(--paper);
+  }
+
+  .pages :global(span) {
+    color: var(--amber-hot);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .pages :global(.empty) {
+    color: rgba(215, 224, 232, 0.68);
+  }
+
+  .note {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.62);
+    font-size: 0.92rem;
+  }
+
+  .note a {
+    color: var(--amber-hot);
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>

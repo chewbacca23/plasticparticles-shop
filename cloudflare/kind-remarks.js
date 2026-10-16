@@ -123,7 +123,7 @@ export function normalizeRemarkPath(raw) {
   if (!/^\/[A-Za-z0-9/_.,~%-]*$/.test(path)) return '';
   if (path.startsWith('/api')) return '';
   if (path.startsWith('/admin')) return '';
-  if (path === '/auth' || path === '/callback' || path === '/looks') return '';
+  if (path === '/auth' || path === '/callback' || path === '/looks' || path === '/members') return '';
   return path || '/';
 }
 
@@ -371,7 +371,7 @@ export function kindRemarksClientScript() {
   if (!root) return;
   var path = location.pathname || '/';
   if (path.indexOf('/admin') === 0) { root.hidden = true; return; }
-  if (path === '/looks' || path === '/auth' || path === '/callback') { root.hidden = true; return; }
+  if (path === '/looks' || path === '/members' || path === '/auth' || path === '/callback') { root.hidden = true; return; }
   if (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
   var list = root.querySelector('[data-kind-list]');
   var empty = root.querySelector('[data-kind-empty]');

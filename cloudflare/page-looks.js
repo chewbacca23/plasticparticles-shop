@@ -15,6 +15,8 @@ const SKIP = new Set([
   '/api/looks',
   '/looks',
   '/looks/',
+  '/members',
+  '/members/',
   '/rss.xml',
   '/sitemap-index.xml',
   '/sitemap-0.xml',
@@ -556,12 +558,20 @@ export function isLooksPath(pathname) {
   return pathname === '/looks' || pathname === '/looks/';
 }
 
+export function isMembersPath(pathname) {
+  return pathname === '/members' || pathname === '/members/';
+}
+
+export function isPrivateDeskPath(pathname) {
+  return isLooksPath(pathname) || isMembersPath(pathname);
+}
+
 export function isAdminPath(pathname) {
   return pathname === '/admin' || pathname === '/admin/' || pathname === '/admin/index.html';
 }
 
 export function shouldFillLooks(pathname) {
-  return isLooksPath(pathname) || isAdminPath(pathname);
+  return isLooksPath(pathname) || isMembersPath(pathname) || isAdminPath(pathname);
 }
 
 export function shouldCountDocument(request) {
@@ -874,9 +884,8 @@ async function safeReadLooks(env) {
   }
 }
 
-async function fetchLooksAsset(request, env) {
+async function fetchDeskAsset(request, env, paths) {
   if (!env?.ASSETS?.fetch) return null;
-  const paths = ['/looks', '/looks/', '/looks/index.html'];
   for (const path of paths) {
     const url = new URL(request.url);
     url.pathname = path;
@@ -895,32 +904,72 @@ async function fetchLooksAsset(request, env) {
   return null;
 }
 
+async function fetchLooksAsset(request, env) {
+  return fetchDeskAsset(request, env, ['/looks', '/looks/', '/looks/index.html']);
+}
+
+async function fetchMembersAsset(request, env) {
+  return fetchDeskAsset(request, env, ['/members', '/members/', '/members/index.html']);
+}
+
+export function fillMembersInHtml(html, members = []) {
+  const memberCount = String(Array.isArray(members) ? members.length : 0);
+  const memberRows = membersListHtml(members);
+  return String(html)
+    .replace(
+      /data-members-count([^>]*)>[\s\S]*?</,
+      `data-members-count$1>${memberCount}<`,
+    )
+    .replace(
+      /<ol([^>]*data-members-list[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${memberRows}</ol>`,
+    );
+}
+
 export async function applyLooksToAsset(request, env, asset) {
   const url = new URL(request.url);
   if (!shouldFillLooks(url.pathname)) return asset;
-  if (!asset || !asset.ok) return isLooksPath(url.pathname) ? null : asset;
+  const privateDesk = isPrivateDeskPath(url.pathname);
+  if (!asset || !asset.ok) return privateDesk ? null : asset;
   if (!(await requestHasLooksAccess(request, env))) {
-    return isLooksPath(url.pathname) ? looksGatePage() : asset;
+    return privateDesk ? looksGatePage() : asset;
   }
   const type = asset.headers.get('content-type') || '';
   if (type && !type.includes('html') && !type.includes('text')) return asset;
-  const summary = await safeReadLooks(env);
   let members = [];
   try {
     members = await readMemberList(env);
   } catch {
     members = [];
   }
-  const html = fillLooksInHtml(await asset.text(), summary, members);
+  const raw = await asset.text();
+  const html = isMembersPath(url.pathname)
+    ? fillMembersInHtml(raw, members)
+    : fillLooksInHtml(raw, await safeReadLooks(env), members);
   const headers = new Headers(asset.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
+  headers.set('cache-control', 'no-store');
   return new Response(html, { status: 200, headers });
 }
 
 export async function handleLooksPage(request, env) {
   const url = new URL(request.url);
-  if (!isLooksPath(url.pathname)) return null;
+  if (!isPrivateDeskPath(url.pathname)) return null;
   if (!(await requestHasLooksAccess(request, env))) return looksGatePage();
+
+  if (isMembersPath(url.pathname)) {
+    const asset = await fetchMembersAsset(request, env);
+    const filled = await applyLooksToAsset(request, env, asset);
+    if (filled) return filled;
+    let members = [];
+    try {
+      members = await readMemberList(env);
+    } catch {
+      members = [];
+    }
+    return membersDashboardPage(members);
+  }
+
   const asset = await fetchLooksAsset(request, env);
   const filled = await applyLooksToAsset(request, env, asset);
   if (filled) return filled;
@@ -931,6 +980,58 @@ export async function handleLooksPage(request, env) {
     members = [];
   }
   return looksDashboardPage(await safeReadLooks(env), members);
+}
+
+export function membersDashboardPage(members = []) {
+  const memberCount = Array.isArray(members) ? members.length : 0;
+  const memberRows = membersListHtml(members);
+  return new Response(
+    `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Members · The Soul Searchers</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber:#d4a35a; --amber-hot:#f0c27a; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
+      font-family: Figtree, "Avenir Next", system-ui, sans-serif; }
+    a { color: inherit; }
+    a:hover { color: var(--amber-hot); }
+    .site-shell { width: min(40rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
+    .eyebrow { margin:0 0 .4rem; letter-spacing:.16em; text-transform:uppercase; font-size:.78rem; color:var(--amber); font-weight:700; }
+    h1 { margin:0 0 .75rem; font-size: clamp(2rem, 4vw, 2.8rem); color:var(--paper); }
+    .lead { margin:0 0 1.75rem; color:rgba(215,224,232,.75); }
+    ol { margin:0 0 1.5rem; padding:0; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; overflow:hidden; }
+    li { display:flex; justify-content:space-between; gap:1rem; padding:.9rem 1.15rem; border-top:1px solid rgba(215,224,232,.08); }
+    li:first-child { border-top:0; }
+    li a { color:var(--paper); text-decoration:underline; text-decoration-color:rgba(240,194,122,.45); text-underline-offset:.18em; }
+    li span { color:var(--amber-hot); font-weight:600; }
+    .empty { color:rgba(215,224,232,.68); }
+    .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <main class="site-shell">
+    <p class="eyebrow">Private</p>
+    <h1>Free members <span data-members-count>${memberCount}</span></h1>
+    <p class="lead">Only for you. Everyone who joined the free list, newest first.</p>
+    <ol data-members-list>${memberRows}</ol>
+    <p class="back"><a href="/looks">Looks</a> · <a href="/admin/">Editor</a> · <a href="/">Home</a></p>
+  </main>
+</body>
+</html>`,
+    {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+      },
+    },
+  );
 }
 
 export async function handleLooksRequest(request, env) {
