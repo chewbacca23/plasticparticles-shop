@@ -1,0 +1,88 @@
+---
+import '../styles/fonts.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Bar Italia · Berlin',
+  description =
+    'A small Italian espresso bar on Mehringdamm. Coffee with care, funk soul and jazz on the stereo — Alex behind the counter.',
+} = Astro.props;
+
+const canonical = 'https://thenewsoulsearchers.de/bar-italia';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="theme-color" content="#140e0c" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="preload" href="/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bi-espresso: #140e0c;
+    --bi-roast: #241814;
+    --bi-crema: #e8dcc8;
+    --bi-foam: #f6f0e6;
+    --bi-brass: #c4a35a;
+    --bi-brass-hot: #e2c478;
+    --bi-vinyl: #0a0706;
+    --bi-font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --bi-font-body: 'Figtree', 'Avenir Next', 'Segoe UI', sans-serif;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--bi-crema);
+    background: var(--bi-espresso);
+    font-family: var(--bi-font-body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--bi-brass-hot);
+    text-underline-offset: 0.18em;
+  }
+
+  a:hover {
+    color: var(--bi-foam);
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+</style>

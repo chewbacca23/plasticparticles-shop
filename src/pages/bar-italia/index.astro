@@ -1,0 +1,504 @@
+---
+import BarItaliaLayout from '../../layouts/BarItaliaLayout.astro';
+---
+
+<BarItaliaLayout>
+  <header class="top">
+    <div class="shell top-inner">
+      <a class="brand" href="/bar-italia">Bar Italia</a>
+      <nav class="nav" aria-label="Bar Italia">
+        <a href="#coffee">Coffee</a>
+        <a href="#music">Music</a>
+        <a href="#find">Find us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Welcome">
+      <div class="hero-stage" aria-hidden="true">
+        <div class="hero-wash"></div>
+        <div class="vinyl"></div>
+        <div class="vinyl vinyl--two"></div>
+        <div class="steam">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="shell hero-copy">
+        <p class="eyebrow">Kreuzberg · Mehringdamm</p>
+        <h1 class="brand-hero">Bar Italia</h1>
+        <p class="lead">
+          A small Italian espresso bar with impeccable taste — in the cup, and on the stereo.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="#find">Find us</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="block coffee" id="coffee">
+      <div class="shell split">
+        <div>
+          <p class="eyebrow">In the cup</p>
+          <h2>Coffee with care</h2>
+          <p>
+            Alex searched until he found the right beans — Pasucci, from a family in the Italian
+            mountains who have been roasting with quiet pride for generations. Elegant, strong, and
+            made for the kind of morning where time slows down for a minute.
+          </p>
+          <p>
+            Come early if you can. Light through the small windows, the room filling with aroma, and
+            the traffic on Mehringdamm somehow far away.
+          </p>
+        </div>
+        <aside class="panel" aria-label="What we love in the cup">
+          <p class="panel-kicker">The blend</p>
+          <p class="panel-title">Pasucci</p>
+          <p class="panel-note">
+            Brought back from Italy for Bar Italia. A cup that tastes like someone meant it.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="block music" id="music">
+      <div class="shell">
+        <p class="eyebrow">On the stereo</p>
+        <h2>Funk, soul &amp; jazz</h2>
+        <p class="music-lead">
+          Alex has impeccable taste — not as decoration, as the weather in the room. Grooves that
+          sit beside the espresso machine. Horns, basslines, and records that keep Kreuzberg
+          company while the milk steams.
+        </p>
+        <ul class="groove-list" aria-label="The feeling on the stereo">
+          <li>
+            <span class="groove-mark" aria-hidden="true"></span>
+            <span>Funk that moves without shouting</span>
+          </li>
+          <li>
+            <span class="groove-mark" aria-hidden="true"></span>
+            <span>Soul for slow mornings and long afternoons</span>
+          </li>
+          <li>
+            <span class="groove-mark" aria-hidden="true"></span>
+            <span>Jazz that knows when to leave space</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block find" id="find">
+      <div class="shell find-grid">
+        <div>
+          <p class="eyebrow">The corner</p>
+          <h2>Find us</h2>
+          <p>
+            Mehringdamm 72<br />
+            Entrance on Kreuzbergstraße<br />
+            10961 Berlin-Kreuzberg
+          </p>
+          <p>
+            <a href="tel:+493078714417">030 78 71 44 17</a><br />
+            <a href="mailto:bar@bar-italia-berlin.de">bar@bar-italia-berlin.de</a>
+          </p>
+          <p class="hours">
+            Mon–Fri 8:00–18:00<br />
+            Sat–Sun 10:00–18:00
+          </p>
+        </div>
+        <div class="map-card">
+          <p class="panel-kicker">Open the map</p>
+          <a
+            class="map-link"
+            href="https://maps.google.com/?q=Bar+Italia+Mehringdamm+72+Berlin"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Mehringdamm 72<br />
+            <span>Google Maps →</span>
+          </a>
+          <p class="map-note">A tiny Italy on the corner — look for the entrance on Kreuzbergstraße.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="shell foot-inner">
+      <p class="foot-brand">Bar Italia</p>
+      <p class="foot-gift">
+        A small surprise site for Alex — from a friend on two wheels.
+      </p>
+    </div>
+  </footer>
+</BarItaliaLayout>
+
+<style>
+  .shell {
+    width: min(44rem, calc(100% - 2.4rem));
+    margin: 0 auto;
+  }
+
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    background: rgba(20, 14, 12, 0.78);
+    border-bottom: 1px solid rgba(232, 220, 200, 0.08);
+  }
+
+  .top-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+  }
+
+  .brand {
+    color: var(--bi-foam);
+    font-family: var(--bi-font-display);
+    font-size: 1.15rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+
+  .nav {
+    display: flex;
+    gap: 1.1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .nav a {
+    color: rgba(232, 220, 200, 0.72);
+    text-decoration: none;
+  }
+
+  .nav a:hover {
+    color: var(--bi-brass-hot);
+  }
+
+  .hero {
+    position: relative;
+    min-height: calc(100vh - 3.5rem);
+    min-height: calc(100dvh - 3.5rem);
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero-stage {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 70% 55% at 18% 20%, rgba(196, 163, 90, 0.16), transparent 55%),
+      radial-gradient(ellipse 60% 50% at 88% 70%, rgba(90, 40, 28, 0.45), transparent 60%),
+      linear-gradient(165deg, #1c1210 0%, #140e0c 45%, #0c0908 100%);
+  }
+
+  .hero-wash {
+    position: absolute;
+    inset: 0;
+    opacity: 0.09;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .vinyl {
+    position: absolute;
+    width: min(58vw, 26rem);
+    aspect-ratio: 1;
+    right: -8%;
+    bottom: 8%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, #2a1c14 0 12%, transparent 12.5%),
+      repeating-radial-gradient(
+        circle at center,
+        #0a0706 0 0.12rem,
+        #15100e 0.12rem 0.24rem
+      );
+    box-shadow: 0 0 0 0.35rem rgba(196, 163, 90, 0.12), 0 30px 80px rgba(0, 0, 0, 0.45);
+    animation: spin 48s linear infinite;
+  }
+
+  .vinyl--two {
+    width: min(32vw, 14rem);
+    right: auto;
+    left: -6%;
+    bottom: 28%;
+    opacity: 0.55;
+    animation-duration: 64s;
+    animation-direction: reverse;
+  }
+
+  .steam {
+    position: absolute;
+    left: 18%;
+    bottom: 22%;
+    width: 3rem;
+    height: 7rem;
+    pointer-events: none;
+  }
+
+  .steam span {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0.55rem;
+    height: 2.8rem;
+    margin-left: -0.28rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, transparent, rgba(246, 240, 230, 0.28));
+    filter: blur(2px);
+    animation: rise 3.6s ease-in-out infinite;
+  }
+
+  .steam span:nth-child(2) {
+    left: 30%;
+    animation-delay: 0.7s;
+    height: 2.2rem;
+  }
+
+  .steam span:nth-child(3) {
+    left: 70%;
+    animation-delay: 1.4s;
+    height: 2.5rem;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes rise {
+    0%,
+    100% {
+      transform: translateY(0) scaleX(1);
+      opacity: 0.15;
+    }
+    50% {
+      transform: translateY(-1.4rem) scaleX(1.4);
+      opacity: 0.55;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vinyl,
+    .steam span {
+      animation: none;
+    }
+  }
+
+  .hero-copy {
+    padding: 3.5rem 0 3.25rem;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.55rem;
+    color: var(--bi-brass);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .brand-hero {
+    margin: 0 0 0.75rem;
+    color: var(--bi-foam);
+    font-family: var(--bi-font-display);
+    font-size: clamp(3rem, 10vw, 5.2rem);
+    font-weight: 500;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  .lead {
+    margin: 0 0 1.4rem;
+    max-width: 28rem;
+    color: rgba(232, 220, 200, 0.82);
+    font-size: 1.12rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.7rem 1.2rem;
+    border: 1px solid rgba(196, 163, 90, 0.55);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(196, 163, 90, 0.22), rgba(196, 163, 90, 0.08));
+    color: var(--bi-foam);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .btn:hover {
+    border-color: var(--bi-brass-hot);
+    color: var(--bi-brass-hot);
+  }
+
+  .block {
+    padding: 4.5rem 0;
+    border-top: 1px solid rgba(232, 220, 200, 0.08);
+  }
+
+  .block h2 {
+    margin: 0 0 1rem;
+    color: var(--bi-foam);
+    font-family: var(--bi-font-display);
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 500;
+  }
+
+  .block p {
+    margin: 0 0 1rem;
+    color: rgba(232, 220, 200, 0.8);
+    max-width: 36rem;
+  }
+
+  .split {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  @media (min-width: 800px) {
+    .split {
+      grid-template-columns: 1.3fr 0.9fr;
+      align-items: start;
+      gap: 2.5rem;
+    }
+  }
+
+  .panel,
+  .map-card {
+    padding: 1.35rem 1.4rem;
+    border: 1px solid rgba(196, 163, 90, 0.22);
+    border-radius: 1.1rem;
+    background:
+      radial-gradient(ellipse 80% 70% at 20% 0%, rgba(196, 163, 90, 0.12), transparent 55%),
+      rgba(36, 24, 20, 0.85);
+  }
+
+  .panel-kicker {
+    margin: 0 0 0.35rem;
+    color: var(--bi-brass);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .panel-title {
+    margin: 0 0 0.55rem;
+    color: var(--bi-foam);
+    font-family: var(--bi-font-display);
+    font-size: 1.8rem;
+  }
+
+  .panel-note {
+    margin: 0;
+    color: rgba(232, 220, 200, 0.75);
+  }
+
+  .music {
+    background:
+      radial-gradient(ellipse 50% 60% at 100% 0%, rgba(196, 163, 90, 0.08), transparent 50%),
+      var(--bi-espresso);
+  }
+
+  .music-lead {
+    font-size: 1.12rem;
+  }
+
+  .groove-list {
+    margin: 1.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .groove-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid rgba(232, 220, 200, 0.1);
+    border-radius: 0.9rem;
+    background: rgba(36, 24, 20, 0.55);
+    color: var(--bi-foam);
+  }
+
+  .groove-mark {
+    flex: 0 0 auto;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--bi-brass);
+    box-shadow: 0 0 0 3px rgba(20, 14, 12, 0.9), 0 0 14px rgba(196, 163, 90, 0.35);
+  }
+
+  .find-grid {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  @media (min-width: 800px) {
+    .find-grid {
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2.25rem;
+    }
+  }
+
+  .hours {
+    color: var(--bi-brass-hot) !important;
+    font-weight: 600;
+  }
+
+  .map-link {
+    display: block;
+    margin: 0.35rem 0 0.85rem;
+    color: var(--bi-foam);
+    font-family: var(--bi-font-display);
+    font-size: 1.45rem;
+    text-decoration: none;
+    line-height: 1.25;
+  }
+
+  .map-link span {
+    display: inline-block;
+    margin-top: 0.35rem;
+    color: var(--bi-brass-hot);
+    font-family: var(--bi-font-body);
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .map-note {
+    margin: 0;
+    color: rgba(232, 220, 200, 0.7);
+    font-size: 0.92rem;
+  }
+
+  .foot {
+    border-top: 1px solid rgba(232, 220, 200, 0.08);
+    padding: 2.5rem 0 3rem;
+  }
+
+  .foot-brand {
+    margin: 0 0 0.35rem;
+    color: var(--bi-foam);
+    font-family: var(--bi-font-display);
+    font-size: 1.2rem;
+  }
+
+  .foot-gift {
+    margin: 0;
+    color: rgba(232, 220, 200, 0.55);
+    font-size: 0.92rem;
+  }
+</style>
