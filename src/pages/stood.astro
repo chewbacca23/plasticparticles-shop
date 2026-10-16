@@ -31,6 +31,7 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
 <BaseLayout
   title="Where I stood"
   description="A quiet trail of places The Soul Searchers have been — soft pins on the map, brother to brother."
+  watermark={false}
 >
   <link
     slot="head"
@@ -46,7 +47,8 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
     crossorigin=""></script>
 
   <section class="section stood">
-    <div class="site-shell">
+    <div class="stood-world" aria-hidden="true"></div>
+    <div class="site-shell stood-copy">
       <p class="eyebrow reveal">The trail</p>
       <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
       <p class="section-lead reveal reveal-delay-2">
@@ -96,6 +98,10 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
           </ol>
         )
       }
+
+      <p class="stood-credit">
+        World map in the background is free — public domain (CC0).
+      </p>
     </div>
   </section>
 </BaseLayout>
@@ -191,7 +197,47 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
 
 <style>
   .stood {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     padding-bottom: 3.5rem;
+    min-height: calc(100vh - 4.25rem);
+  }
+
+  .stood-world {
+    position: absolute;
+    inset: -4% -8% auto;
+    height: min(78vh, 42rem);
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 42%, rgba(30, 58, 69, 0.35), transparent 70%),
+      url('/stood/world.svg') center 42% / min(1180px, 128%) no-repeat;
+    opacity: 0.18;
+    filter: saturate(0.7) brightness(1.05);
+  }
+
+  .stood-world::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 55%,
+      rgba(12, 18, 24, 0.55) 78%,
+      var(--ink) 100%
+    );
+  }
+
+  .stood-copy {
+    position: relative;
+    z-index: 1;
+  }
+
+  .stood-credit {
+    margin: 2rem 0 0;
+    color: rgba(215, 224, 232, 0.45);
+    font-size: 0.78rem;
   }
 
   .map-frame {
@@ -199,8 +245,9 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
     border: 1px solid rgba(215, 224, 232, 0.12);
     border-radius: 1rem;
     overflow: hidden;
-    background: rgba(18, 26, 34, 0.7);
+    background: rgba(18, 26, 34, 0.82);
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(2px);
   }
 
   .map {

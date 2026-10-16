@@ -104,6 +104,7 @@ const heroPhoto = heroSlides[0] || null;
   </section>
 
   <section class="stood-tease" aria-label="Where I stood">
+    <div class="stood-tease-world" aria-hidden="true"></div>
     <div class="site-shell stood-tease-inner">
       <p class="stood-tease-eyebrow">The trail</p>
       <h2 class="stood-tease-title">Where I stood</h2>
@@ -358,6 +359,8 @@ const heroPhoto = heroSlides[0] || null;
 
   .stood-tease {
     position: relative;
+    isolation: isolate;
+    overflow: hidden;
     padding: 3.25rem 0 3.75rem;
     border-top: 1px solid rgba(215, 224, 232, 0.08);
     background:
@@ -365,7 +368,19 @@ const heroPhoto = heroSlides[0] || null;
       radial-gradient(ellipse 50% 60% at 90% 80%, rgba(212, 163, 90, 0.08), transparent 50%);
   }
 
+  .stood-tease-world {
+    position: absolute;
+    inset: -20% -5% -30% 28%;
+    z-index: 0;
+    pointer-events: none;
+    background: url('/stood/world.svg') right center / min(920px, 95%) no-repeat;
+    opacity: 0.12;
+    filter: saturate(0.65);
+  }
+
   .stood-tease-inner {
+    position: relative;
+    z-index: 1;
     max-width: 28rem;
   }
 
