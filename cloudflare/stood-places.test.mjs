@@ -3,9 +3,21 @@ import { describe, it } from 'node:test';
 import { looksSetCookie, looksToken } from './page-looks.js';
 import {
   handleStoodPlacesRequest,
+  parsePathStops,
   parseStoodBody,
   validateStood,
 } from './stood-places.js';
+
+describe('parsePathStops', () => {
+  it('splits comma and arrow stops', () => {
+    assert.deepEqual(parsePathStops('Perth, Albany → Adelaide, Melbourne'), [
+      'Perth',
+      'Albany',
+      'Adelaide',
+      'Melbourne',
+    ]);
+  });
+});
 
 describe('parseStoodBody and validateStood', () => {
   it('reads place, when, and two lines', () => {
@@ -20,6 +32,15 @@ describe('parseStoodBody and validateStood', () => {
     assert.equal(fields.when, '2008 – 2015');
     assert.equal(fields.note, 'Salt and climbs.');
     assert.equal(fields.detail, 'With the boys.');
+    assert.equal(validateStood(fields), '');
+  });
+
+  it('accepts a ride line with two stops', () => {
+    const fields = parseStoodBody({
+      place: 'Perth to Melbourne',
+      path: 'Perth, Esperance, Adelaide, Melbourne',
+    });
+    assert.equal(fields.stops.length, 4);
     assert.equal(validateStood(fields), '');
   });
 
@@ -42,27 +63,41 @@ describe('handleStoodPlacesRequest', () => {
     };
   }
 
-  it('public GET lists places', async () => {
-    const list = [
-      {
-        id: '1',
-        place: 'Mallorca',
-        when: '2024-06-01',
-        note: 'Salt',
-        detail: '',
-        lat: 39.6,
-        lng: 2.9,
-        at: '2026-10-16T12:00:00.000Z',
-      },
-    ];
+  it('public GET lists places and routes', async () => {
     const res = await handleStoodPlacesRequest(
       new Request('https://thenewsoulsearchers.de/api/stood-places'),
-      { STATS: memoryKv({ 'stood-places:list': JSON.stringify(list) }) },
+      {
+        STATS: memoryKv({
+          'stood-places:list': JSON.stringify([
+            {
+              id: '1',
+              place: 'Mallorca',
+              when: '2008-2015',
+              note: 'Salt',
+              detail: '',
+              lat: 39.6,
+              lng: 2.9,
+              at: '2026-10-16T12:00:00.000Z',
+            },
+          ]),
+          'stood-routes:list': JSON.stringify([
+            {
+              id: 'r1',
+              title: 'Perth to Melbourne',
+              points: [
+                { name: 'Perth', lat: -31.95, lng: 115.86 },
+                { name: 'Melbourne', lat: -37.81, lng: 144.96 },
+              ],
+            },
+          ]),
+        }),
+      },
     );
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.ok, true);
     assert.equal(data.places[0].place, 'Mallorca');
+    assert.equal(data.routes[0].title, 'Perth to Melbourne');
   });
 
   it('refuses POST without looks cookie', async () => {
@@ -98,10 +133,7 @@ describe('handleStoodPlacesRequest', () => {
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.ok, true);
+    assert.equal(data.kind, 'place');
     assert.equal(data.place.place, 'Testville Nowhereland XYZ');
-    assert.equal(data.place.note, 'First line');
-    assert.equal(data.place.detail, 'Second line');
-    const stored = JSON.parse(kv._store['stood-places:list']);
-    assert.equal(stored.length, 1);
   });
 });

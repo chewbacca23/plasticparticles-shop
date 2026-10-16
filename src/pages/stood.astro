@@ -58,8 +58,8 @@ const pins = resolved.filter((row) => row.pin);
       <p class="eyebrow reveal">The trail</p>
       <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
       <p class="section-lead reveal reveal-delay-2">
-        Add a place on the right — name, when you were there, and two short lines. Zoom the map with
-        the buttons, the scroll wheel, or a drag. Brother to brother.
+        Add a place as a dot, or a whole ride as a thin line — list the stops in order (Perth, then
+        south, then east to Melbourne). Zoom with the buttons, wheel, or a drag. Brother to brother.
       </p>
 
       <div class="stood-board reveal reveal-delay-3">
@@ -74,6 +74,13 @@ const pins = resolved.filter((row) => row.pin);
               decoding="async"
               draggable="false"
             />
+            <svg
+              class="map-routes"
+              data-stood-routes
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            ></svg>
             <ul class="map-pins" data-stood-pins>
               {
                 pins.map((pin) => (
@@ -149,6 +156,62 @@ const pins = resolved.filter((row) => row.pin);
             <button class="btn btn-primary" type="submit">Put it on the map</button>
           </form>
 
+          <p class="stood-side-kicker stood-side-kicker--list">Add a ride line</p>
+          <form class="stood-form" data-stood-route-form>
+            <label class="stood-field">
+              <span>Name of the ride</span>
+              <input
+                type="text"
+                name="place"
+                maxlength="120"
+                required
+                placeholder="Perth to Melbourne"
+                autocomplete="off"
+              />
+            </label>
+            <label class="stood-field">
+              <span>The line — stops in order</span>
+              <input
+                type="text"
+                name="path"
+                maxlength="800"
+                required
+                placeholder="Perth, Esperance, Adelaide, Melbourne"
+                autocomplete="off"
+              />
+            </label>
+            <label class="stood-field">
+              <span>When</span>
+              <input type="text" name="when" maxlength="80" placeholder="2012" autocomplete="off" />
+            </label>
+            <label class="stood-field">
+              <span>A line</span>
+              <input
+                type="text"
+                name="note"
+                maxlength="280"
+                placeholder="First south, then east all the way."
+                autocomplete="off"
+              />
+            </label>
+            <label class="stood-field">
+              <span>Another line</span>
+              <input
+                type="text"
+                name="detail"
+                maxlength="280"
+                placeholder="Thin tyres, big sky."
+                autocomplete="off"
+              />
+            </label>
+            <label class="stood-honey" aria-hidden="true">
+              <span>Website</span>
+              <input type="text" name="website" tabindex="-1" autocomplete="off" />
+            </label>
+            <p class="stood-status" data-stood-route-status hidden></p>
+            <button class="btn btn-primary" type="submit">Draw the line</button>
+          </form>
+
           <p class="stood-side-kicker stood-side-kicker--list">Places</p>
           <ol class="stood-list" data-stood-list>
             {
@@ -185,12 +248,19 @@ const pins = resolved.filter((row) => row.pin);
               )
             }
           </ol>
+
+          <p class="stood-side-kicker stood-side-kicker--list">Ride lines</p>
+          <ol class="stood-list" data-stood-route-list>
+            <li class="stood-item stood-item--empty-routes">
+              <p class="empty">No ride lines yet. Add stops in order above — we draw the thin line.</p>
+            </li>
+          </ol>
         </aside>
       </div>
 
       <p class="stood-credit">
-        World map is free — Natural Earth, public domain. Place names find pins via OpenStreetMap
-        Nominatim (free, no key). No Carto.
+        World map is free — Natural Earth, public domain. Place names find pins and ride lines via
+        OpenStreetMap Nominatim (free, no key). No Carto.
       </p>
     </div>
   </section>
@@ -199,9 +269,13 @@ const pins = resolved.filter((row) => row.pin);
 <script is:inline>
   (function () {
     var form = document.querySelector('[data-stood-form]');
+    var routeForm = document.querySelector('[data-stood-route-form]');
     var list = document.querySelector('[data-stood-list]');
+    var routeList = document.querySelector('[data-stood-route-list]');
     var pins = document.querySelector('[data-stood-pins]');
+    var routesSvg = document.querySelector('[data-stood-routes]');
     var status = document.querySelector('[data-stood-status]');
+    var routeStatus = document.querySelector('[data-stood-route-status]');
     var map = document.querySelector('[data-stood-map]');
     var stage = document.querySelector('[data-stood-stage]');
     if (!form || !list || !pins) return;
@@ -227,7 +301,10 @@ const pins = resolved.filter((row) => row.pin);
           tx = 0;
           ty = 0;
         }
+        // Counter-scale pins so they shrink (on screen) as you zoom into the map.
+        var pinScale = 1 / Math.pow(scale, 1.15);
         stage.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+        stage.style.setProperty('--pin-scale', String(pinScale));
         map.classList.toggle('is-zoomed', scale > 1.01);
       }
 
@@ -346,11 +423,11 @@ const pins = resolved.filter((row) => row.pin);
       return text;
     }
 
-    function setStatus(text, tone) {
-      if (!status) return;
-      status.hidden = !text;
-      status.textContent = text || '';
-      status.setAttribute('data-tone', tone || '');
+    function setStatus(el, text, tone) {
+      if (!el) return;
+      el.hidden = !text;
+      el.textContent = text || '';
+      el.setAttribute('data-tone', tone || '');
     }
 
     function listItemHtml(row) {
@@ -398,6 +475,64 @@ const pins = resolved.filter((row) => row.pin);
       );
     }
 
+    function routeListItemHtml(row) {
+      var when = formatWhen(row.when || '');
+      var stops = Array.isArray(row.points)
+        ? row.points
+            .map(function (p) {
+              return p.name;
+            })
+            .join(' → ')
+        : row.path || '';
+      return (
+        '<li class="stood-item" data-stood-route-id="' +
+        escapeHtml(row.id) +
+        '"><div class="stood-link stood-link--plain">' +
+        '<span class="stood-place">' +
+        escapeHtml(row.title || row.place || 'A ride') +
+        '</span>' +
+        (when ? '<span class="stood-when">' + escapeHtml(when) + '</span>' : '') +
+        (stops ? '<span class="stood-note">' + escapeHtml(stops) + '</span>' : '') +
+        (row.note ? '<span class="stood-note">' + escapeHtml(row.note) + '</span>' : '') +
+        (row.detail ? '<span class="stood-note">' + escapeHtml(row.detail) + '</span>' : '') +
+        '</div></li>'
+      );
+    }
+
+    function drawRouteLine(row) {
+      if (!routesSvg || !row || !row.id || !Array.isArray(row.points) || row.points.length < 2) {
+        return;
+      }
+      if (routesSvg.querySelector('[data-stood-route-id="' + row.id + '"]')) return;
+      var pairs = [];
+      row.points.forEach(function (point) {
+        if (point.lat == null || point.lng == null) return;
+        var pos = pinPercent(Number(point.lat), Number(point.lng));
+        pairs.push(pos.left.toFixed(2) + ',' + pos.top.toFixed(2));
+        // Soft dots on each stop of the ride.
+        var stopId = row.id + '-' + String(point.name || '').toLowerCase().replace(/\s+/g, '-');
+        if (!pins.querySelector('[data-stood-id="' + stopId + '"]')) {
+          pins.insertAdjacentHTML(
+            'beforeend',
+            pinItemHtml({
+              id: stopId,
+              place: point.name,
+              when: row.when || '',
+              lat: point.lat,
+              lng: point.lng,
+            }),
+          );
+        }
+      });
+      if (pairs.length < 2) return;
+      var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('data-stood-route-id', row.id);
+      poly.setAttribute('points', pairs.join(' '));
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('class', 'map-route-line');
+      routesSvg.appendChild(poly);
+    }
+
     function mergeLivePlaces(places) {
       if (!Array.isArray(places) || !places.length) return;
       var empty = list.querySelector('.stood-item--empty');
@@ -410,11 +545,26 @@ const pins = resolved.filter((row) => row.pin);
           if (!list.querySelector('[data-stood-id="' + row.id + '"]')) {
             list.insertAdjacentHTML('afterbegin', listItemHtml(row));
           }
-          // Always drop a map dot when we have coordinates.
           var pinHtml = pinItemHtml(row);
           if (pinHtml && !pins.querySelector('[data-stood-id="' + row.id + '"]')) {
             pins.insertAdjacentHTML('beforeend', pinHtml);
           }
+        });
+    }
+
+    function mergeLiveRoutes(routes) {
+      if (!Array.isArray(routes) || !routes.length || !routeList) return;
+      var empty = routeList.querySelector('.stood-item--empty-routes');
+      if (empty) empty.remove();
+      routes
+        .slice()
+        .reverse()
+        .forEach(function (row) {
+          if (!row || !row.id) return;
+          if (!routeList.querySelector('[data-stood-route-id="' + row.id + '"]')) {
+            routeList.insertAdjacentHTML('afterbegin', routeListItemHtml(row));
+          }
+          drawRouteLine(row);
         });
     }
 
@@ -424,52 +574,66 @@ const pins = resolved.filter((row) => row.pin);
           return res.json();
         })
         .then(function (data) {
-          if (data && data.ok) mergeLivePlaces(data.places || []);
+          if (!data || !data.ok) return;
+          mergeLivePlaces(data.places || []);
+          mergeLiveRoutes(data.routes || []);
         })
         .catch(function () {});
     }
 
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      var fd = new FormData(form);
-      var payload = {
-        place: String(fd.get('place') || '').trim(),
-        when: String(fd.get('when') || '').trim(),
-        note: String(fd.get('note') || '').trim(),
-        detail: String(fd.get('detail') || '').trim(),
-        website: String(fd.get('website') || '').trim(),
-      };
-      var button = form.querySelector('button[type="submit"]');
-      if (button) button.disabled = true;
-      setStatus('Saving…', '');
-      fetch('/api/stood-places', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-        .then(function (res) {
-          return res.json().then(function (data) {
-            return { res: res, data: data };
+    function bindSave(formEl, statusEl, onOk) {
+      if (!formEl) return;
+      formEl.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var fd = new FormData(formEl);
+        var payload = {
+          place: String(fd.get('place') || '').trim(),
+          when: String(fd.get('when') || '').trim(),
+          note: String(fd.get('note') || '').trim(),
+          detail: String(fd.get('detail') || '').trim(),
+          path: String(fd.get('path') || '').trim(),
+          website: String(fd.get('website') || '').trim(),
+        };
+        var button = formEl.querySelector('button[type="submit"]');
+        if (button) button.disabled = true;
+        setStatus(statusEl, payload.path ? 'Drawing the line…' : 'Saving…', '');
+        fetch('/api/stood-places', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { data: data };
+            });
+          })
+          .then(function (pack) {
+            if (button) button.disabled = false;
+            if (!pack.data || !pack.data.ok) {
+              setStatus(
+                statusEl,
+                (pack.data && pack.data.error) || 'Could not save that just now.',
+                'bad',
+              );
+              return;
+            }
+            formEl.reset();
+            setStatus(statusEl, pack.data.kind === 'route' ? 'Line on the map.' : 'On the map.', 'ok');
+            onOk(pack.data);
+          })
+          .catch(function () {
+            if (button) button.disabled = false;
+            setStatus(statusEl, 'Could not save that just now.', 'bad');
           });
-        })
-        .then(function (pack) {
-          if (button) button.disabled = false;
-          if (!pack.data || !pack.data.ok) {
-            setStatus(
-              (pack.data && pack.data.error) || 'Could not save that just now.',
-              'bad',
-            );
-            return;
-          }
-          form.reset();
-          setStatus('On the map.', 'ok');
-          mergeLivePlaces([pack.data.place]);
-        })
-        .catch(function () {
-          if (button) button.disabled = false;
-          setStatus('Could not save that just now.', 'bad');
-        });
+      });
+    }
+
+    bindSave(form, status, function (data) {
+      if (data.place) mergeLivePlaces([data.place]);
+    });
+    bindSave(routeForm, routeStatus, function (data) {
+      if (data.route) mergeLiveRoutes([data.route]);
     });
 
     loadLive();
@@ -555,6 +719,25 @@ const pins = resolved.filter((row) => row.pin);
     pointer-events: none;
   }
 
+  .map-routes {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  :global(.map-route-line) {
+    fill: none;
+    stroke: #f0c27a;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.9;
+    vector-effect: non-scaling-stroke;
+  }
+
   .map-zoom {
     position: absolute;
     right: 0.75rem;
@@ -584,7 +767,8 @@ const pins = resolved.filter((row) => row.pin);
   /* :global so dots added from the form still get styles (Astro scope otherwise hides them). */
   :global(.map-pin) {
     position: absolute;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(var(--pin-scale, 1));
+    transform-origin: center center;
     z-index: 2;
     pointer-events: auto;
   }
