@@ -2,6 +2,14 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
+/** Equirectangular fit for Natural Earth land (public domain) in world.svg. */
+function pinPercent(lat: number, lng: number) {
+  return {
+    left: Math.min(98, Math.max(2, ((lng + 180) / 360) * 100)),
+    top: Math.min(96, Math.max(4, ((90 - lat) / 180) * 100)),
+  };
+}
+
 const places = (await getCollection('stood', ({ data }) => !data.draft)).sort((a, b) => {
   const aTime = a.data.stoodAt ? a.data.stoodAt.getTime() : 0;
   const bTime = b.data.stoodAt ? b.data.stoodAt.getTime() : 0;
@@ -9,23 +17,24 @@ const places = (await getCollection('stood', ({ data }) => !data.draft)).sort((a
   return (a.data.order ?? 0) - (b.data.order ?? 0);
 });
 
-const pins = places.map((entry) => ({
-  id: entry.id,
-  place: entry.data.place,
-  lat: entry.data.lat,
-  lng: entry.data.lng,
-  note: entry.data.note,
-  href: entry.data.href,
-  when: entry.data.stoodAt
-    ? new Intl.DateTimeFormat('en-GB', {
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'Europe/Berlin',
-      }).format(entry.data.stoodAt)
-    : '',
-}));
-
-const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
+const pins = places.map((entry) => {
+  const { left, top } = pinPercent(entry.data.lat, entry.data.lng);
+  return {
+    id: entry.id,
+    place: entry.data.place,
+    note: entry.data.note,
+    href: entry.data.href,
+    left,
+    top,
+    when: entry.data.stoodAt
+      ? new Intl.DateTimeFormat('en-GB', {
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'Europe/Berlin',
+        }).format(entry.data.stoodAt)
+      : '',
+  };
+});
 ---
 
 <BaseLayout
@@ -33,21 +42,7 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
   description="A quiet trail of places The Soul Searchers have been — soft pins on the map, brother to brother."
   watermark={false}
 >
-  <link
-    slot="head"
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-  <script
-    slot="head"
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-
   <section class="section stood">
-    <div class="stood-world" aria-hidden="true"></div>
     <div class="site-shell stood-copy">
       <p class="eyebrow reveal">The trail</p>
       <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
@@ -57,7 +52,40 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
       </p>
 
       <div class="map-frame reveal reveal-delay-3" aria-label="Map of places I stood">
-        <div id="stood-map" class="map" data-pins={pinsJson} role="presentation"></div>
+        <img class="map-world" src="/stood/world.svg" alt="" width="1000" height="500" decoding="async" />
+        <ul class="map-pins">
+          {
+            pins.map((pin) => (
+              <li
+                class="map-pin"
+                style={`left: ${pin.left}%; top: ${pin.top}%;`}
+              >
+                {pin.href ? (
+                  <a
+                    class="map-pin-hit"
+                    href={pin.href}
+                    title={pin.place}
+                    aria-label={`${pin.place}${pin.note ? `. ${pin.note}` : ''}`}
+                  >
+                    <span class="map-pin-dot" aria-hidden="true"></span>
+                    <span class="map-pin-label">
+                      <strong>{pin.place}</strong>
+                      {pin.when ? <span class="map-pin-when">{pin.when}</span> : null}
+                    </span>
+                  </a>
+                ) : (
+                  <span class="map-pin-hit map-pin-hit--plain" title={pin.place}>
+                    <span class="map-pin-dot" aria-hidden="true"></span>
+                    <span class="map-pin-label">
+                      <strong>{pin.place}</strong>
+                      {pin.when ? <span class="map-pin-when">{pin.when}</span> : null}
+                    </span>
+                  </span>
+                )}
+              </li>
+            ))
+          }
+        </ul>
       </div>
 
       {
@@ -100,133 +128,17 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
       }
 
       <p class="stood-credit">
-        World map in the background is free — public domain (CC0).
+        World map is free — Natural Earth, public domain. No map keys. No Carto.
       </p>
     </div>
   </section>
 </BaseLayout>
 
-<script is:inline>
-  (function () {
-    function paint() {
-      if (!window.L) return;
-      var el = document.getElementById('stood-map');
-      if (!el || el.getAttribute('data-ready')) return;
-      var pins = [];
-      try {
-        pins = JSON.parse(el.getAttribute('data-pins') || '[]');
-      } catch (_) {
-        pins = [];
-      }
-      el.setAttribute('data-ready', '1');
-
-      var map = window.L.map(el, {
-        scrollWheelZoom: false,
-        zoomControl: true,
-        attributionControl: true,
-      });
-
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 18,
-      }).addTo(map);
-
-      var icon = window.L.divIcon({
-        className: 'stood-pin',
-        html: '<span class="stood-pin-dot"></span>',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -10],
-      });
-
-      var bounds = [];
-      pins.forEach(function (pin) {
-        if (typeof pin.lat !== 'number' || typeof pin.lng !== 'number') return;
-        bounds.push([pin.lat, pin.lng]);
-        var title = pin.place || 'A place';
-        var body = '';
-        if (pin.note) body += '<p class="stood-pop-note">' + escapeHtml(pin.note) + '</p>';
-        if (pin.when) body += '<p class="stood-pop-when">' + escapeHtml(pin.when) + '</p>';
-        if (pin.href) {
-          body +=
-            '<p class="stood-pop-go"><a href="' +
-            escapeAttr(pin.href) +
-            '">Open the story</a></p>';
-        }
-        var marker = window.L.marker([pin.lat, pin.lng], { icon: icon }).addTo(map);
-        marker.bindPopup(
-          '<div class="stood-pop"><strong>' + escapeHtml(title) + '</strong>' + body + '</div>',
-        );
-      });
-
-      if (bounds.length === 1) {
-        map.setView(bounds[0], 6);
-      } else if (bounds.length > 1) {
-        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 7 });
-      } else {
-        map.setView([48.5, 10.5], 4);
-      }
-
-      setTimeout(function () {
-        map.invalidateSize();
-      }, 80);
-    }
-
-    function escapeHtml(value) {
-      return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function escapeAttr(value) {
-      return escapeHtml(value).replace(/'/g, '&#39;');
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', paint);
-    } else {
-      paint();
-    }
-    window.addEventListener('load', paint);
-  })();
-</script>
-
 <style>
   .stood {
     position: relative;
-    isolation: isolate;
-    overflow: hidden;
     padding-bottom: 3.5rem;
     min-height: calc(100vh - 4.25rem);
-  }
-
-  .stood-world {
-    position: absolute;
-    inset: -4% -8% auto;
-    height: min(78vh, 42rem);
-    z-index: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 70% 55% at 50% 42%, rgba(30, 58, 69, 0.35), transparent 70%),
-      url('/stood/world.svg') center 42% / min(1180px, 128%) no-repeat;
-    opacity: 0.18;
-    filter: saturate(0.7) brightness(1.05);
-  }
-
-  .stood-world::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      180deg,
-      transparent 55%,
-      rgba(12, 18, 24, 0.55) 78%,
-      var(--ink) 100%
-    );
   }
 
   .stood-copy {
@@ -241,19 +153,118 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
   }
 
   .map-frame {
+    position: relative;
     margin: 1.75rem 0 2.25rem;
     border: 1px solid rgba(215, 224, 232, 0.12);
     border-radius: 1rem;
     overflow: hidden;
-    background: rgba(18, 26, 34, 0.82);
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 45%, rgba(30, 58, 69, 0.55), rgba(12, 18, 24, 0.96));
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
-    backdrop-filter: blur(2px);
+    aspect-ratio: 2 / 1;
+    max-height: min(68vh, 34rem);
   }
 
-  .map {
-    height: min(68vh, 32rem);
+  .map-world {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    background: #121a22;
+    height: 100%;
+    object-fit: fill;
+    opacity: 0.48;
+    filter: saturate(0.75) brightness(1.05);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .map-pins {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    pointer-events: none;
+  }
+
+  .map-pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: auto;
+  }
+
+  .map-pin-hit {
+    position: relative;
+    display: block;
+    width: 1.15rem;
+    height: 1.15rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .map-pin-hit--plain {
+    cursor: default;
+  }
+
+  .map-pin-dot {
+    display: block;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin: 0.15rem auto 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f0c27a, #d4a35a 55%, #8a5a28);
+    box-shadow:
+      0 0 0 3px rgba(12, 18, 24, 0.85),
+      0 0 16px rgba(240, 194, 122, 0.55);
+    transition: transform 0.2s ease;
+  }
+
+  .map-pin-hit:hover .map-pin-dot,
+  .map-pin-hit:focus-visible .map-pin-dot {
+    transform: scale(1.25);
+  }
+
+  .map-pin-label {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.45rem);
+    transform: translateX(-50%) translateY(0.25rem);
+    min-width: max-content;
+    max-width: 11rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.65rem;
+    background: rgba(12, 18, 24, 0.92);
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .map-pin-hit:hover .map-pin-label,
+  .map-pin-hit:focus-visible .map-pin-label {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .map-pin-label strong {
+    display: block;
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    font-weight: 500;
+  }
+
+  .map-pin-when {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--amber-hot);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   .stood-list {
@@ -313,60 +324,10 @@ const pinsJson = JSON.stringify(pins).replace(/</g, '\\u003c');
     color: rgba(215, 224, 232, 0.72);
   }
 
-  :global(.stood-pin) {
-    background: transparent;
-    border: 0;
-  }
-
-  :global(.stood-pin-dot) {
-    display: block;
-    width: 14px;
-    height: 14px;
-    margin: 2px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #f0c27a, #d4a35a 55%, #8a5a28);
-    box-shadow:
-      0 0 0 3px rgba(12, 18, 24, 0.85),
-      0 0 18px rgba(240, 194, 122, 0.45);
-  }
-
-  :global(.leaflet-popup-content-wrapper) {
-    background: #121a22;
-    color: #d7e0e8;
-    border-radius: 0.85rem;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-  }
-
-  :global(.leaflet-popup-tip) {
-    background: #121a22;
-  }
-
-  :global(.stood-pop strong) {
-    display: block;
-    margin-bottom: 0.35rem;
-    color: #eef3f7;
-    font-family: Fraunces, Georgia, serif;
-    font-size: 1.05rem;
-  }
-
-  :global(.stood-pop-note),
-  :global(.stood-pop-when),
-  :global(.stood-pop-go) {
-    margin: 0.25rem 0 0;
-    font-size: 0.92rem;
-    line-height: 1.45;
-  }
-
-  :global(.stood-pop-when) {
-    color: #f0c27a;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  :global(.stood-pop-go a) {
-    color: #f0c27a;
-    font-weight: 600;
+  @media (max-width: 640px) {
+    .map-pin-label {
+      max-width: 9rem;
+      font-size: 0.85rem;
+    }
   }
 </style>
