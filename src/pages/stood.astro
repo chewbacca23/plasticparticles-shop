@@ -59,7 +59,8 @@ const pins = resolved.filter((row) => row.pin);
       <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
       <p class="section-lead reveal reveal-delay-2">
         Add a place as a dot, or a whole ride as a thin line — list the stops in order (Perth, then
-        south, then east to Melbourne). Zoom with the buttons, wheel, or a drag. Brother to brother.
+        south, then east to Melbourne). Take one off anytime, then add another. Zoom with the
+        buttons, wheel, or a drag. Brother to brother.
       </p>
 
       <div class="stood-board reveal reveal-delay-3">
@@ -447,6 +448,9 @@ const pins = resolved.filter((row) => row.pin);
         (row.note ? '<span class="stood-note">' + escapeHtml(row.note) + '</span>' : '') +
         (row.detail ? '<span class="stood-note">' + escapeHtml(row.detail) + '</span>' : '') +
         miss +
+        '<button type="button" class="stood-remove" data-stood-remove="place" data-id="' +
+        escapeHtml(row.id) +
+        '">Take off the map</button>' +
         '</div></li>'
       );
     }
@@ -495,8 +499,76 @@ const pins = resolved.filter((row) => row.pin);
         (stops ? '<span class="stood-note">' + escapeHtml(stops) + '</span>' : '') +
         (row.note ? '<span class="stood-note">' + escapeHtml(row.note) + '</span>' : '') +
         (row.detail ? '<span class="stood-note">' + escapeHtml(row.detail) + '</span>' : '') +
+        '<button type="button" class="stood-remove" data-stood-remove="route" data-id="' +
+        escapeHtml(row.id) +
+        '">Take off the map</button>' +
         '</div></li>'
       );
+    }
+
+    function removeFromDom(kind, id) {
+      if (kind === 'route') {
+        var routeRow = routeList && routeList.querySelector('[data-stood-route-id="' + id + '"]');
+        if (routeRow) routeRow.remove();
+        if (routesSvg) {
+          var line = routesSvg.querySelector('[data-stood-route-id="' + id + '"]');
+          if (line) line.remove();
+        }
+        // Dots for that ride’s stops.
+        pins.querySelectorAll('[data-stood-id^="' + id + '-"]').forEach(function (node) {
+          node.remove();
+        });
+        if (routeList && !routeList.querySelector('.stood-item:not(.stood-item--empty-routes)')) {
+          routeList.innerHTML =
+            '<li class="stood-item stood-item--empty-routes"><p class="empty">No ride lines yet. Add stops in order above — we draw the thin line.</p></li>';
+        }
+        return;
+      }
+      var placeRow = list.querySelector('[data-stood-id="' + id + '"]');
+      if (placeRow) placeRow.remove();
+      var pin = pins.querySelector('[data-stood-id="' + id + '"]');
+      if (pin) pin.remove();
+    }
+
+    function bindRemove(root) {
+      if (!root) return;
+      root.addEventListener('click', function (event) {
+        var btn = event.target && event.target.closest
+          ? event.target.closest('[data-stood-remove]')
+          : null;
+        if (!btn) return;
+        event.preventDefault();
+        var id = btn.getAttribute('data-id') || '';
+        var kind = btn.getAttribute('data-stood-remove') === 'route' ? 'route' : 'place';
+        if (!id) return;
+        btn.disabled = true;
+        fetch('/api/stood-places', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', kind: kind, id: id }),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { res: res, data: data };
+            });
+          })
+          .then(function (pack) {
+            if (!pack.data || !pack.data.ok) {
+              btn.disabled = false;
+              window.alert(
+                (pack.data && pack.data.error) ||
+                  'Could not take that off. Open Looks once while signed in, then try again.',
+              );
+              return;
+            }
+            removeFromDom(kind, id);
+          })
+          .catch(function () {
+            btn.disabled = false;
+            window.alert('Could not take that off just now.');
+          });
+      });
     }
 
     function drawRouteLine(row) {
@@ -635,6 +707,8 @@ const pins = resolved.filter((row) => row.pin);
     bindSave(routeForm, routeStatus, function (data) {
       if (data.route) mergeLiveRoutes([data.route]);
     });
+    bindRemove(list);
+    bindRemove(routeList);
 
     loadLive();
   })();
@@ -986,6 +1060,26 @@ const pins = resolved.filter((row) => row.pin);
   :global(.stood-miss) {
     color: rgba(240, 194, 122, 0.75);
     font-size: 0.8rem;
+  }
+
+  :global(.stood-remove) {
+    justify-self: start;
+    margin-top: 0.35rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgba(215, 224, 232, 0.55);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+    cursor: pointer;
+  }
+
+  :global(.stood-remove:hover) {
+    color: #f0c27a;
   }
 
   .empty {

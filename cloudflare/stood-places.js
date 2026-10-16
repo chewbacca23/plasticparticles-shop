@@ -258,6 +258,29 @@ export async function saveStoodRoute(env, fields, points) {
 }
 
 /**
+ * @param {any} env
+ * @param {'place' | 'route'} kind
+ * @param {string} id
+ */
+export async function removeStoodItem(env, kind, id) {
+  const kv = env?.STATS;
+  if (!kv || typeof kv.get !== 'function' || typeof kv.put !== 'function') {
+    const err = new Error('Stood place storage is not wired.');
+    // @ts-expect-error code
+    err.code = 'E_STOOD_KV';
+    throw err;
+  }
+  const key = kind === 'route' ? STOOD_ROUTES_KEY : STOOD_LIST_KEY;
+  const list = await readList(env, key);
+  const next = list.filter((row) => row && row.id !== id);
+  if (next.length === list.length) {
+    return { removed: false };
+  }
+  await kv.put(key, JSON.stringify(next));
+  return { removed: true };
+}
+
+/**
  * @param {Request} request
  * @param {any} env
  */
@@ -309,7 +332,34 @@ export async function handleStoodPlacesRequest(request, env) {
     return json({ ok: false, error: 'Easy, rider. Wait a little, then try again.' }, 429);
   }
 
-  const fields = parseStoodBody(await readJson(request));
+  const body = await readJson(request);
+  const action = String(body?.action || body?.op || '')
+    .trim()
+    .toLowerCase();
+  if (action === 'remove' || action === 'delete') {
+    const id = cleanLine(body.id, 80);
+    const kind = String(body.kind || '').trim() === 'route' ? 'route' : 'place';
+    if (!id) return json({ ok: false, error: 'Which one should come off the map?' }, 400);
+    try {
+      const result = await removeStoodItem(env, kind, id);
+      if (!result.removed) {
+        return json({ ok: false, error: 'That one was already gone.' }, 404);
+      }
+      return json({ ok: true, removed: true, kind, id });
+    } catch (error) {
+      const code = error && typeof error === 'object' ? error.code : '';
+      if (code === 'E_STOOD_KV') {
+        return json(
+          { ok: false, error: 'Stood places are not wired on the Worker yet.', code },
+          503,
+        );
+      }
+      console.error('stood remove failed', error);
+      return json({ ok: false, error: 'Could not take that off just now.' }, 502);
+    }
+  }
+
+  const fields = parseStoodBody(body);
   if (fields.website) {
     return json({ ok: true, via: 'discard' });
   }

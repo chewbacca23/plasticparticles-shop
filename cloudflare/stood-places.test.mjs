@@ -136,4 +136,35 @@ describe('handleStoodPlacesRequest', () => {
     assert.equal(data.kind, 'place');
     assert.equal(data.place.place, 'Testville Nowhereland XYZ');
   });
+
+  it('removes a ride line with looks cookie', async () => {
+    const secret = 'test-stood-secret';
+    const token = await looksToken(secret);
+    const cookie = looksSetCookie(token, { secure: false }).split(';')[0];
+    const kv = memoryKv({
+      'stood-routes:list': JSON.stringify([
+        {
+          id: 'ride1',
+          title: 'Perth to Melbourne',
+          points: [
+            { name: 'Perth', lat: -31.95, lng: 115.86 },
+            { name: 'Melbourne', lat: -37.81, lng: 144.96 },
+          ],
+        },
+      ]),
+    });
+    const res = await handleStoodPlacesRequest(
+      new Request('https://thenewsoulsearchers.de/api/stood-places', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie },
+        body: JSON.stringify({ action: 'remove', kind: 'route', id: 'ride1' }),
+      }),
+      { STATS: kv, GITHUB_OAUTH_CLIENT_SECRET: secret },
+    );
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.ok, true);
+    assert.equal(data.removed, true);
+    assert.deepEqual(JSON.parse(kv._store['stood-routes:list']), []);
+  });
 });
