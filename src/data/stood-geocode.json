@@ -1,0 +1,38 @@
+{
+  "Berlin · Kreuzberg": {
+    "lat": 52.4983,
+    "lng": 13.4067
+  },
+  "Berlin Kreuzberg": {
+    "lat": 52.4983,
+    "lng": 13.4067
+  },
+  "Nice · Promenade": {
+    "lat": 43.695,
+    "lng": 7.2656
+  },
+  "Nice": {
+    "lat": 43.695,
+    "lng": 7.2656
+  },
+  "Col d'Èze": {
+    "lat": 43.7275,
+    "lng": 7.3617
+  },
+  "Mont Ventoux": {
+    "lat": 44.1736,
+    "lng": 5.2786
+  },
+  "Cologne": {
+    "lat": 50.9375,
+    "lng": 6.9603
+  },
+  "Köln": {
+    "lat": 50.9375,
+    "lng": 6.9603
+  },
+  "Mallorca": {
+    "lat": 39.613432,
+    "lng": 2.8829185
+  }
+}

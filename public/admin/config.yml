@@ -264,7 +264,7 @@ collections:
   - name: stood
     label: Where I stood
     label_singular: Place
-    description: Soft pins on the trail map. Shows on Where I stood.
+    description: Type a place name — we put the pin on the map. Shows on Where I stood (list on the right).
     folder: src/content/stood
     create: true
     delete: true
@@ -276,12 +276,12 @@ collections:
     editor:
       preview: false
     fields:
-      - { label: Place name, name: place, widget: string, hint: "Like Nice · Promenade or Mont Ventoux." }
-      - { label: Latitude, name: lat, widget: number, value_type: float, hint: "North–south. Example 43.695 for Nice." }
-      - { label: Longitude, name: lng, widget: number, value_type: float, hint: "East–west. Example 7.2656 for Nice." }
-      - { label: Short note, name: note, widget: text, required: false, hint: "One or two lines. Why this spot matters." }
+      - { label: Place name, name: place, widget: string, hint: "Just the name — like Mallorca, Dolomites, or Café du Cycliste Nice. We drop the pin for you." }
+      - { label: Short note, name: note, widget: text, required: false, hint: "Optional. One or two lines. Why this spot matters." }
       - { label: Link, name: href, widget: string, required: false, hint: "Optional. Like /stories/nice or /week." }
       - { label: When you stood here, name: stoodAt, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", required: false, hint: "Optional. Newest shows first in the list." }
+      - { label: Latitude (optional), name: lat, widget: number, value_type: float, required: false, hint: "Leave blank — we find it from the name. Only fill if a pin lands wrong." }
+      - { label: Longitude (optional), name: lng, widget: number, value_type: float, required: false, hint: "Leave blank — we find it from the name. Only fill if a pin lands wrong." }
       - { label: Order, name: order, widget: number, value_type: int, min: 0, max: 999, step: 1, required: false, default: 0, hint: "Lower number shows earlier if dates match." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
 

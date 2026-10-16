@@ -163,13 +163,19 @@ const week = defineCollection({
     })),
 });
 
+const optionalCoord = z.preprocess((value) => {
+  if (value === '' || value == null) return undefined;
+  return value;
+}, z.coerce.number().optional());
+
 const stood = defineCollection({
   loader: glob({ base: './src/content/stood', pattern: '**/*.{md,mdx}' }),
   schema: z
     .object({
       place: z.string(),
-      lat: z.coerce.number(),
-      lng: z.coerce.number(),
+      /** Optional — leave blank and the place name finds the pin. */
+      lat: optionalCoord,
+      lng: optionalCoord,
       note: z.string().optional().default(''),
       href: z.string().optional().default(''),
       stoodAt: z.coerce.date().optional(),
