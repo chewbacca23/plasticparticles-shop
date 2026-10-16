@@ -11,13 +11,13 @@ describe('parseStoodBody and validateStood', () => {
   it('reads place, when, and two lines', () => {
     const fields = parseStoodBody({
       place: '  Mallorca  ',
-      when: '2024-06-01',
+      when: '2008 – 2015',
       note: '  Salt and climbs.  ',
       detail: '  With the boys.  ',
       website: '',
     });
     assert.equal(fields.place, 'Mallorca');
-    assert.equal(fields.when, '2024-06-01');
+    assert.equal(fields.when, '2008 – 2015');
     assert.equal(fields.note, 'Salt and climbs.');
     assert.equal(fields.detail, 'With the boys.');
     assert.equal(validateStood(fields), '');

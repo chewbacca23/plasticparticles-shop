@@ -117,7 +117,13 @@ const pins = resolved.filter((row) => row.pin);
             </label>
             <label class="stood-field">
               <span>When I was there</span>
-              <input type="date" name="when" />
+              <input
+                type="text"
+                name="when"
+                maxlength="80"
+                placeholder="2008 – 2015"
+                autocomplete="off"
+              />
             </label>
             <label class="stood-field">
               <span>A line</span>
@@ -208,17 +214,20 @@ const pins = resolved.filter((row) => row.pin);
     function formatWhen(raw) {
       var text = String(raw || '').trim();
       if (!text) return '';
-      var date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(text) ? text + 'T12:00:00' : text);
-      if (Number.isNaN(date.getTime())) return text.slice(0, 10);
-      try {
-        return new Intl.DateTimeFormat('en-GB', {
-          month: 'short',
-          year: 'numeric',
-          timeZone: 'Europe/Berlin',
-        }).format(date);
-      } catch (_) {
-        return text.slice(0, 10);
+      // Single calendar day → short label. Ranges stay as typed (e.g. 2008 – 2015).
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+        var date = new Date(text + 'T12:00:00');
+        if (!Number.isNaN(date.getTime())) {
+          try {
+            return new Intl.DateTimeFormat('en-GB', {
+              month: 'short',
+              year: 'numeric',
+              timeZone: 'Europe/Berlin',
+            }).format(date);
+          } catch (_) {}
+        }
       }
+      return text;
     }
 
     function setStatus(text, tone) {

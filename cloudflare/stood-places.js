@@ -7,6 +7,7 @@
 import { cleanLine } from './contact-mail.js';
 
 export const MAX_PLACE = 120;
+export const MAX_WHEN = 80;
 export const MAX_NOTE = 280;
 export const STORE_LIMIT = 200;
 export const RATE_WINDOW_SEC = 60 * 60;
@@ -69,9 +70,8 @@ async function underRateLimit(env, key) {
  */
 export function parseStoodBody(body) {
   const data = body && typeof body === 'object' ? body : {};
-  let when = cleanLine(data.when || data.stoodAt || data.date, 32);
-  if (when && !/^\d{4}-\d{2}-\d{2}/.test(when)) when = when.slice(0, 32);
-  else if (when) when = when.slice(0, 10);
+  // Free text — a day, a year, or a stretch like "2008 – 2015".
+  const when = cleanLine(data.when || data.stoodAt || data.date, MAX_WHEN);
   return {
     place: cleanLine(data.place || data.point || data.name, MAX_PLACE),
     when,
