@@ -39,6 +39,7 @@ import {
 import { handleRemarksRequest } from './kind-remarks.js';
 import { handleMembersRequest } from './member-mail.js';
 import { handlePostcardSharesRequest } from './postcard-shares.js';
+import { handleStoodPlacesRequest } from './stood-places.js';
 
 const PROVIDER = 'github';
 const SCOPE = 'public_repo,user';
@@ -451,6 +452,9 @@ export default {
 
       const postcardShares = await handlePostcardSharesRequest(request, env);
       if (postcardShares) return postcardShares;
+
+      const stoodPlaces = await handleStoodPlacesRequest(request, env);
+      if (stoodPlaces) return stoodPlaces;
 
       const hooks = await handleHooksRequest(request, env);
       if (hooks) return hooks;

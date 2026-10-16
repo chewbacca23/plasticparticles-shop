@@ -36,6 +36,7 @@ const resolved = await Promise.all(
       id: entry.id,
       place: entry.data.place,
       note: entry.data.note,
+      detail: '',
       href: entry.data.href,
       when,
       coords,
@@ -57,8 +58,8 @@ const pins = resolved.filter((row) => row.pin);
       <p class="eyebrow reveal">The trail</p>
       <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
       <p class="section-lead reveal reveal-delay-2">
-        Type a place name in the editor — we put the pin on the map. Tap a town on the right or a
-        pin on the map. Brother to brother.
+        Add a place on the right — name, when you were there, and two short lines. We drop the pin.
+        Brother to brother.
       </p>
 
       <div class="stood-board reveal reveal-delay-3">
@@ -71,10 +72,14 @@ const pins = resolved.filter((row) => row.pin);
             height="500"
             decoding="async"
           />
-          <ul class="map-pins">
+          <ul class="map-pins" data-stood-pins>
             {
               pins.map((pin) => (
-                <li class="map-pin" style={`left: ${pin.pin!.left}%; top: ${pin.pin!.top}%;`}>
+                <li
+                  class="map-pin"
+                  data-stood-id={pin.id}
+                  style={`left: ${pin.pin!.left}%; top: ${pin.pin!.top}%;`}
+                >
                   {pin.href ? (
                     <a
                       class="map-pin-hit"
@@ -104,22 +109,48 @@ const pins = resolved.filter((row) => row.pin);
         </div>
 
         <aside class="stood-side" aria-label="Places I have been">
-          <p class="stood-side-kicker">Places</p>
-          {
-            resolved.length === 0 ? (
-              <p class="empty">
-                Add a place in the editor under <strong>Where I stood</strong> — just the name. We
-                drop the pin.
-              </p>
-            ) : (
-              <ol class="stood-list">
-                {resolved.map((entry) => (
-                  <li class="stood-item">
+          <p class="stood-side-kicker">Add a place</p>
+          <form class="stood-form" data-stood-form>
+            <label class="stood-field">
+              <span>Where I was</span>
+              <input type="text" name="place" maxlength="120" required placeholder="Mallorca" autocomplete="off" />
+            </label>
+            <label class="stood-field">
+              <span>When I was there</span>
+              <input type="date" name="when" />
+            </label>
+            <label class="stood-field">
+              <span>A line</span>
+              <input type="text" name="note" maxlength="280" placeholder="Salt air, long climbs." autocomplete="off" />
+            </label>
+            <label class="stood-field">
+              <span>Another line</span>
+              <input type="text" name="detail" maxlength="280" placeholder="With mates from the road." autocomplete="off" />
+            </label>
+            <label class="stood-honey" aria-hidden="true">
+              <span>Website</span>
+              <input type="text" name="website" tabindex="-1" autocomplete="off" />
+            </label>
+            <p class="stood-status" data-stood-status hidden></p>
+            <button class="btn btn-primary" type="submit">Put it on the map</button>
+          </form>
+
+          <p class="stood-side-kicker stood-side-kicker--list">Places</p>
+          <ol class="stood-list" data-stood-list>
+            {
+              resolved.length === 0 ? (
+                <li class="stood-item stood-item--empty">
+                  <p class="empty">No places yet. Add one above — we drop the pin.</p>
+                </li>
+              ) : (
+                resolved.map((entry) => (
+                  <li class="stood-item" data-stood-id={entry.id}>
                     {entry.href ? (
                       <a class="stood-link" href={entry.href}>
                         <span class="stood-place">{entry.place}</span>
                         {entry.when ? <span class="stood-when">{entry.when}</span> : null}
                         {entry.note ? <span class="stood-note">{entry.note}</span> : null}
+                        {entry.detail ? <span class="stood-note">{entry.detail}</span> : null}
                         {!entry.pin ? (
                           <span class="stood-miss">Name saved — pin needs a clearer place name.</span>
                         ) : null}
@@ -129,16 +160,17 @@ const pins = resolved.filter((row) => row.pin);
                         <span class="stood-place">{entry.place}</span>
                         {entry.when ? <span class="stood-when">{entry.when}</span> : null}
                         {entry.note ? <span class="stood-note">{entry.note}</span> : null}
+                        {entry.detail ? <span class="stood-note">{entry.detail}</span> : null}
                         {!entry.pin ? (
                           <span class="stood-miss">Name saved — pin needs a clearer place name.</span>
                         ) : null}
                       </div>
                     )}
                   </li>
-                ))}
-              </ol>
-            )
-          }
+                ))
+              )
+            }
+          </ol>
         </aside>
       </div>
 
@@ -149,6 +181,173 @@ const pins = resolved.filter((row) => row.pin);
     </div>
   </section>
 </BaseLayout>
+
+<script is:inline>
+  (function () {
+    var form = document.querySelector('[data-stood-form]');
+    var list = document.querySelector('[data-stood-list]');
+    var pins = document.querySelector('[data-stood-pins]');
+    var status = document.querySelector('[data-stood-status]');
+    if (!form || !list || !pins) return;
+
+    function pinPercent(lat, lng) {
+      return {
+        left: Math.min(98, Math.max(2, ((lng + 180) / 360) * 100)),
+        top: Math.min(96, Math.max(4, ((90 - lat) / 180) * 100)),
+      };
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatWhen(raw) {
+      var text = String(raw || '').trim();
+      if (!text) return '';
+      var date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(text) ? text + 'T12:00:00' : text);
+      if (Number.isNaN(date.getTime())) return text.slice(0, 10);
+      try {
+        return new Intl.DateTimeFormat('en-GB', {
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'Europe/Berlin',
+        }).format(date);
+      } catch (_) {
+        return text.slice(0, 10);
+      }
+    }
+
+    function setStatus(text, tone) {
+      if (!status) return;
+      status.hidden = !text;
+      status.textContent = text || '';
+      status.setAttribute('data-tone', tone || '');
+    }
+
+    function listItemHtml(row) {
+      var when = formatWhen(row.when || row.stoodAt || '');
+      var miss =
+        row.lat == null || row.lng == null
+          ? '<span class="stood-miss">Name saved — pin needs a clearer place name.</span>'
+          : '';
+      return (
+        '<li class="stood-item" data-stood-id="' +
+        escapeHtml(row.id) +
+        '"><div class="stood-link stood-link--plain">' +
+        '<span class="stood-place">' +
+        escapeHtml(row.place) +
+        '</span>' +
+        (when ? '<span class="stood-when">' + escapeHtml(when) + '</span>' : '') +
+        (row.note ? '<span class="stood-note">' + escapeHtml(row.note) + '</span>' : '') +
+        (row.detail ? '<span class="stood-note">' + escapeHtml(row.detail) + '</span>' : '') +
+        miss +
+        '</div></li>'
+      );
+    }
+
+    function pinItemHtml(row) {
+      if (row.lat == null || row.lng == null) return '';
+      var pos = pinPercent(Number(row.lat), Number(row.lng));
+      var when = formatWhen(row.when || '');
+      return (
+        '<li class="map-pin" data-stood-id="' +
+        escapeHtml(row.id) +
+        '" style="left:' +
+        pos.left +
+        '%;top:' +
+        pos.top +
+        '%;">' +
+        '<span class="map-pin-hit map-pin-hit--plain" title="' +
+        escapeHtml(row.place) +
+        '">' +
+        '<span class="map-pin-dot" aria-hidden="true"></span>' +
+        '<span class="map-pin-label"><strong>' +
+        escapeHtml(row.place) +
+        '</strong>' +
+        (when ? '<span class="map-pin-when">' + escapeHtml(when) + '</span>' : '') +
+        '</span></span></li>'
+      );
+    }
+
+    function mergeLivePlaces(places) {
+      if (!Array.isArray(places) || !places.length) return;
+      var empty = list.querySelector('.stood-item--empty');
+      if (empty) empty.remove();
+      places
+        .slice()
+        .reverse()
+        .forEach(function (row) {
+          if (!row || !row.id) return;
+          if (list.querySelector('[data-stood-id="' + row.id + '"]')) return;
+          list.insertAdjacentHTML('afterbegin', listItemHtml(row));
+          var pinHtml = pinItemHtml(row);
+          if (pinHtml && !pins.querySelector('[data-stood-id="' + row.id + '"]')) {
+            pins.insertAdjacentHTML('beforeend', pinHtml);
+          }
+        });
+    }
+
+    function loadLive() {
+      fetch('/api/stood-places', { credentials: 'same-origin' })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (data && data.ok) mergeLivePlaces(data.places || []);
+        })
+        .catch(function () {});
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var fd = new FormData(form);
+      var payload = {
+        place: String(fd.get('place') || '').trim(),
+        when: String(fd.get('when') || '').trim(),
+        note: String(fd.get('note') || '').trim(),
+        detail: String(fd.get('detail') || '').trim(),
+        website: String(fd.get('website') || '').trim(),
+      };
+      var button = form.querySelector('button[type="submit"]');
+      if (button) button.disabled = true;
+      setStatus('Saving…', '');
+      fetch('/api/stood-places', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { res: res, data: data };
+          });
+        })
+        .then(function (pack) {
+          if (button) button.disabled = false;
+          if (!pack.data || !pack.data.ok) {
+            setStatus(
+              (pack.data && pack.data.error) || 'Could not save that just now.',
+              'bad',
+            );
+            return;
+          }
+          form.reset();
+          setStatus('On the map.', 'ok');
+          mergeLivePlaces([pack.data.place]);
+        })
+        .catch(function () {
+          if (button) button.disabled = false;
+          setStatus('Could not save that just now.', 'bad');
+        });
+    });
+
+    loadLive();
+  })();
+</script>
 
 <style>
   .stood {
@@ -312,6 +511,70 @@ const pins = resolved.filter((row) => row.pin);
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
+  }
+
+  .stood-side-kicker--list {
+    margin-top: 1.35rem;
+  }
+
+  .stood-form {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .stood-field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .stood-field span {
+    color: rgba(215, 224, 232, 0.72);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .stood-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(215, 224, 232, 0.14);
+    border-radius: 0.7rem;
+    background: rgba(12, 18, 24, 0.55);
+    color: var(--paper);
+    font: inherit;
+  }
+
+  .stood-field input:focus {
+    outline: 1px solid rgba(240, 194, 122, 0.55);
+    border-color: rgba(240, 194, 122, 0.45);
+  }
+
+  .stood-honey {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .stood-status {
+    margin: 0;
+    font-size: 0.88rem;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .stood-status[data-tone='ok'] {
+    color: var(--amber-hot);
+  }
+
+  .stood-status[data-tone='bad'] {
+    color: #f0a27a;
+  }
+
+  .stood-form .btn {
+    justify-self: start;
+    margin-top: 0.15rem;
   }
 
   .stood-list {
