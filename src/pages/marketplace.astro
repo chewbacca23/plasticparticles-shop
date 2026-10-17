@@ -5,19 +5,18 @@ import { site } from '../site.config';
 
 <BaseLayout
   title="Fresh"
-  description="Fresh. A crowd of riders — ride together, or put down a tire, a stem, a saddle, a frame."
+  description="Fresh. A crowd of riders. Ride together, or put down a tire, a saddle, a frame."
 >
   <section class="section">
     <div class="site-shell hooks">
       <p class="eyebrow">The floor</p>
       <h1 class="section-title">Fresh</h1>
       <p class="section-lead">
-        Room for a thousand. Berlin is the centre of this little universe — when someone from Nice,
-        Mallorca, or a train joins, they land on the map around it. Each dot is a person. Click one
-        and it opens. Call upon someone near you with a short note. Email, phone, and Telegram stay
-        off the page — Telegram only opens a free door if they opted in. Or Telegram a buddy from
-        your contacts: we open the app, you tap Send. Signal is the other door, quieter, if you
-        need it.
+        Room for a thousand. Berlin is the centre of this little universe. When someone from Nice or
+        a train joins, they land on the map around it. Each dot is a person. Click one and it opens.
+        Call upon someone near you with a short note. Email and Telegram stay private. Telegram
+        opens a free door when they opted in. Or Telegram a buddy from your contacts: we open the
+        app, you tap Send. Signal is another quiet door when you want it.
       </p>
 
       <section class="wares" aria-label="What you can put down">
@@ -40,7 +39,7 @@ import { site } from '../site.config';
             </button>
           </li>
           <li>
-            <button type="button" class="ware" data-offer="A stem, if yours is the wrong length.">
+            <button type="button" class="ware" data-offer="A stem, ready for a new cockpit.">
               <span class="ware-mark stem" aria-hidden="true"></span>
               <span class="ware-name">A stem</span>
             </button>
@@ -94,7 +93,7 @@ import { site } from '../site.config';
         <button type="button" class="calls-for-you-open" id="calls-for-you-open" hidden>Open them</button>
       </p>
 
-      <!-- Top calling toast — calm popup when a brother Call-upons you (on-site only). -->
+      <!-- Top calling toast, calm popup when a brother Call-upons you (on-site only). -->
       <div id="call-toast" class="call-toast" hidden role="status" aria-live="polite">
         <div class="call-toast-card">
           <p class="call-toast-kicker">Call upon</p>
@@ -111,7 +110,7 @@ import { site } from '../site.config';
         </div>
       </div>
 
-      <!-- Client-only Telegram window — paste a name + @handle, open t.me; they still tap Send. -->
+      <!-- Client-only Telegram window, paste a name + @handle, open t.me; they still tap Send. -->
       <div id="tg-compose" class="tg-compose" hidden>
         <button type="button" class="tg-compose-backdrop" id="tg-compose-backdrop" aria-label="Close Telegram"></button>
         <div
@@ -143,8 +142,8 @@ import { site } from '../site.config';
             </button>
           </header>
           <p class="tg-compose-lead">
-            Paste a name and their Telegram username. We open Telegram — you tap Send. Nothing is
-            stored on our server.
+            Paste a name and their Telegram username. We open Telegram, you tap Send. This stays on
+            your device.
           </p>
           <form class="tg-compose-form" id="tg-compose-form">
             <label class="tg-compose-field">
@@ -170,18 +169,18 @@ import { site } from '../site.config';
               />
             </label>
             <p class="tg-compose-hint">
-              With or without the <code>@</code>. Opens Telegram on your phone or in the browser —
-              the chat waits until you hit Send.
+              The <code>@</code> is optional. Opens Telegram on your phone or in the browser; the
+              chat waits until you hit Send.
             </p>
             <p class="tg-compose-error" id="tg-compose-error" hidden></p>
             <button class="btn btn-primary tg-compose-send" type="submit">
-              Open Telegram — then Send
+              Open Telegram, then Send
             </button>
           </form>
         </div>
       </div>
 
-      <!-- Client-only Signal window — paste a name + number, open signal.me; they still tap Send. -->
+      <!-- Client-only Signal window, paste a name + number, open signal.me; they still tap Send. -->
       <div id="wa-compose" class="wa-compose" hidden>
         <button type="button" class="wa-compose-backdrop" id="wa-compose-backdrop" aria-label="Close Signal"></button>
         <div
@@ -213,8 +212,8 @@ import { site } from '../site.config';
             </button>
           </header>
           <p class="wa-compose-lead">
-            Paste a name and number from your phone. We open Signal — you tap Send. Nothing is
-            stored on our server.
+            Paste a name and number from your phone. We open Signal, you tap Send. This stays on
+            your device.
           </p>
           <form class="wa-compose-form" id="wa-compose-form">
             <label class="wa-compose-field">
@@ -240,12 +239,12 @@ import { site } from '../site.config';
               />
             </label>
             <p class="wa-compose-hint">
-              Keep the country code — <code>+49…</code> for Germany. Opens Signal on your phone or
+              Keep the country code, <code>+49…</code> for Germany. Opens Signal on your phone or
               in the browser; you still tap Send.
             </p>
             <p class="wa-compose-error" id="wa-compose-error" hidden></p>
             <button class="btn btn-primary wa-compose-send" type="submit">
-              Open Signal — then Send
+              Open Signal, then Send
             </button>
           </form>
         </div>
@@ -257,7 +256,7 @@ import { site } from '../site.config';
       <section class="group" id="group" aria-label="The group">
         <p class="group-kicker">The crowd · Berlin at the centre <span id="group-count"></span></p>
         <div class="group-room" id="group-room">
-          <!-- Soft Berlin outline — dots sit roughly where people said they ride. -->
+          <!-- Soft Berlin outline, dots sit roughly where people said they ride. -->
           <svg
             class="berlin-outline"
             viewBox="0 0 121.42 100.0"
@@ -299,12 +298,11 @@ import { site } from '../site.config';
 
       <aside id="cookie-note" class="cookie-note" hidden>
         <p class="cookie-note-text">
-          Yes — cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
+          Yes, cookies. A light one called <code>soul_on_map</code>, plus a little local memory on
           your machine, so when you stand on the map we can welcome you back to the person you last
           talked to, and quietly show if someone called upon you. Optional email, Telegram username,
-          and Signal phone stay private — never on the public map. Messengers only open for people
-          who opted in; the visitor still taps Send. No ads. No trackers. Just the good kind of
-          remembering.
+          and Signal phone stay private, off the public map. Messengers open for people who opted
+          in; the visitor still taps Send. Private visits. Just the good kind of remembering.
           <span class="cookie-wink" aria-hidden="true">;)</span>
         </p>
         <button type="button" class="cookie-note-ok" id="cookie-note-ok">Got it, brother</button>
@@ -319,12 +317,12 @@ import { site } from '../site.config';
         <h2>It’s on the floor</h2>
         <p>
           If you left a mail, offers can also land in your inbox. If you left a Telegram username or
-          a phone, brothers can open that messenger to you — the handle and digits stay off the map,
+          a phone, brothers can open that messenger to you. The handle and digits stay off the map,
           and they still tap Send. Either way, the stall shows here.
         </p>
       </div>
 
-      <!-- One calm Call upon dock — stays open while you wander the map. -->
+      <!-- One calm Call upon dock, stays open while you wander the map. -->
       <aside id="chat-dock" class="chat-dock" hidden aria-live="polite">
         <div class="chat-dock-card">
           <header class="chat-dock-head">
@@ -362,11 +360,11 @@ import { site } from '../site.config';
           </p>
           <form class="chat-dock-form" id="chat-dock-form">
             <label class="chat-dock-field chat-dock-field-name">
-              <span>A name — any name</span>
+              <span>A name, any name</span>
               <input type="text" name="name" required maxlength="80" autocomplete="nickname" />
             </label>
             <label class="chat-dock-field chat-dock-field-place">
-              <span>Your place — so we know you are near</span>
+              <span>Your place, so we know you are near</span>
               <input type="text" name="place" maxlength="80" placeholder="Berlin outskirts, Kreuzberg, Nice…" />
             </label>
             <label class="chat-dock-field chat-dock-field-msg">
@@ -376,11 +374,11 @@ import { site } from '../site.config';
                 rows="2"
                 required
                 maxlength="500"
-                placeholder="Brother — coffee before the climb?"
+                placeholder="Brother, coffee before the climb?"
               ></textarea>
             </label>
             <label class="chat-dock-field chat-dock-field-email">
-              <span>Email — optional, stays off the page</span>
+              <span>Email, optional, stays off the page</span>
               <input type="email" name="email" maxlength="200" autocomplete="email" />
             </label>
             <label class="hp" aria-hidden="true">
@@ -397,7 +395,7 @@ import { site } from '../site.config';
       <form id="pin-form" class="form" method="post" action="/api/hooks">
         <h2 class="form-title">Open a stall</h2>
         <label>
-          <span>A name — any name</span>
+          <span>A name, any name</span>
           <input type="text" name="name" required maxlength="80" placeholder="The dog, Alex, nobody" />
         </label>
         <label>
@@ -421,11 +419,11 @@ import { site } from '../site.config';
           ></textarea>
         </label>
         <label>
-          <span>Email — optional, stays off the page</span>
+          <span>Email, optional, stays off the page</span>
           <input type="email" name="email" autocomplete="email" maxlength="200" />
         </label>
         <label>
-          <span>Telegram — optional, never shown on the map</span>
+          <span>Telegram, optional, kept off the map</span>
           <input
             type="text"
             name="telegram"
@@ -436,11 +434,11 @@ import { site } from '../site.config';
           />
         </label>
         <p class="phone-bridge-hint">
-          Opt in only if you want an Open Telegram button on your dot. The username stays private —
-          we open Telegram for visitors; they still hit Send. With or without the <code>@</code>.
+          Opt in if you want an Open Telegram button on your dot. The username stays private. We
+          open Telegram for visitors; they still hit Send. The <code>@</code> is optional.
         </p>
         <label>
-          <span>Signal — optional, quieter, never on the map</span>
+          <span>Signal, optional, quieter, kept off the map</span>
           <input
             type="tel"
             name="phone"
@@ -460,7 +458,7 @@ import { site } from '../site.config';
         </label>
         <button class="btn btn-primary" type="submit">Put it on the floor</button>
         <p class="cookie-pin-hint">
-          Putting yourself on the floor leaves that light cookie and local memory — so coming back
+          Putting yourself on the floor leaves that light cookie and local memory, so coming back
           still finds you. More in the note up top, and on the
           <a href="/impressum">imprint</a>.
         </p>
@@ -513,7 +511,7 @@ import { site } from '../site.config';
     var waComposeForm = document.getElementById('wa-compose-form');
     var waComposeError = document.getElementById('wa-compose-error');
     var waComposeCloseTimer = 0;
-    /** Same crest as the compose header — keep map messenger blocks in lockstep. */
+    /** Same crest as the compose header, keep map messenger blocks in lockstep. */
     var siteLogo = '/logo.png';
     var tgMarkSvg =
       '<svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">' +
@@ -801,7 +799,7 @@ import { site } from '../site.config';
       var opts = options || {};
       var sig = callToastSignature(row);
       if (toastDismissedSig && toastDismissedSig === sig) return;
-      // Dock already open on this brother — bing/nudge owns the moment.
+      // Dock already open on this brother, bing/nudge owns the moment.
       if (dockKey && dockKey === row.otherKey && !opts.force) {
         hideCallToast();
         return;
@@ -940,7 +938,7 @@ import { site } from '../site.config';
         : 'Always a wonderful day, brother. Welcome back.';
       if (who) {
         welcomeBackText.textContent =
-          hello + ' Your last conversation was with ' + who + ' — open them when you are ready.';
+          hello + ' Your last conversation was with ' + who + ', open them when you are ready.';
       } else if (mem.place) {
         welcomeBackText.textContent =
           hello + ' Your place on the map still remembers ' + mem.place + '.';
@@ -969,7 +967,7 @@ import { site } from '../site.config';
           count === 0
             ? 'Be the first. Open a stall, show up for a ride, make coming back a habit.'
             : count === 1
-              ? 'One soul is already here. Stand with them — rides get easier when you come back.'
+              ? 'One soul is already here. Stand with them, rides get easier when you come back.'
               : count +
                 ' souls already here. Come for the rides. Make showing up a habit.';
       }
@@ -1041,9 +1039,9 @@ import { site } from '../site.config';
         '<form class="write-form" hidden data-for="' +
         esc(hookId) +
         '">' +
-        '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
+        '<label><span>A name, any name</span><input type="text" name="name" required maxlength="80" /></label>' +
         '<label><span>Your offer</span><textarea name="message" rows="3" required maxlength="2000"></textarea></label>' +
-        '<label><span>Email — optional</span><input type="email" name="email" maxlength="200" /></label>' +
+        '<label><span>Email, optional</span><input type="email" name="email" maxlength="200" /></label>' +
         '<label class="hp" aria-hidden="true"><span>Fax</span><input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" /></label>' +
         '<button class="btn btn-primary" type="submit">Leave offer</button>' +
         '</form>'
@@ -1055,10 +1053,10 @@ import { site } from '../site.config';
         '<form class="call-form" hidden data-call="' +
         esc(toKey) +
         '">' +
-        '<label><span>A name — any name</span><input type="text" name="name" required maxlength="80" /></label>' +
-        '<label><span>Your place — so we know you are near</span><input type="text" name="place" maxlength="80" placeholder="Berlin outskirts, Kreuzberg, Nice…" /></label>' +
-        '<label><span>Call upon them</span><textarea name="message" rows="2" required maxlength="500" placeholder="Brother — coffee before the climb?"></textarea></label>' +
-        '<label><span>Email — optional, stays off the page</span><input type="email" name="email" maxlength="200" /></label>' +
+        '<label><span>A name, any name</span><input type="text" name="name" required maxlength="80" /></label>' +
+        '<label><span>Your place, so we know you are near</span><input type="text" name="place" maxlength="80" placeholder="Berlin outskirts, Kreuzberg, Nice…" /></label>' +
+        '<label><span>Call upon them</span><textarea name="message" rows="2" required maxlength="500" placeholder="Brother, coffee before the climb?"></textarea></label>' +
+        '<label><span>Email, optional, stays off the page</span><input type="email" name="email" maxlength="200" /></label>' +
         '<label class="hp" aria-hidden="true"><span>Fax</span><input type="text" name="fax_number_leave_blank" tabindex="-1" autocomplete="off" /></label>' +
         '<button class="btn btn-primary" type="submit">Send call upon</button>' +
         '</form>'
@@ -1227,7 +1225,7 @@ import { site } from '../site.config';
       if (typeof Notification === 'undefined') return;
       if (Notification.permission !== 'granted') return;
       try {
-        var note = new Notification('Call upon — ' + String(fromName || 'someone'), {
+        var note = new Notification('Call upon, ' + String(fromName || 'someone'), {
           body: String(text || 'A short reply landed.').slice(0, 120),
           silent: true,
           tag: 'soul-call-upon-' + String(dockKey || 'thread'),
@@ -1361,7 +1359,7 @@ import { site } from '../site.config';
       if (msgArea) {
         msgArea.setAttribute(
           'placeholder',
-          hasThread ? 'A short reply, brother…' : 'Brother — coffee before the climb?',
+          hasThread ? 'A short reply, brother…' : 'Brother, coffee before the climb?',
         );
       }
       fillFormsFromMemory();
@@ -1635,7 +1633,7 @@ import { site } from '../site.config';
         ? '<div class="call-upon">' +
           '<p class="call-upon-kicker">Call upon</p>' +
           (hasThread
-            ? '<p class="call-upon-hint">A thread is open — keep talking in the little window.</p>'
+            ? '<p class="call-upon-hint">A thread is open, keep talking in the little window.</p>'
             : '<p class="call-upon-hint">A short note, brother. The chat stays open while you wander.</p>') +
           '<button type="button" class="btn btn-ghost hook-call" data-open-dock="' +
           esc(person.key) +
@@ -1657,10 +1655,10 @@ import { site } from '../site.config';
           '</div>' +
           '<p class="tg-bridge-kicker">Soul Searchers · opens Telegram</p>' +
           '</div>' +
-          '<p class="tg-bridge-hint">They opted in. Opens their chat in Telegram — you still tap Send. Username stays off this map.</p>' +
+          '<p class="tg-bridge-hint">They opted in. Opens their chat in Telegram, you still tap Send. Username stays off this map.</p>' +
           '<a class="btn btn-primary hook-tg" href="/api/hooks/telegram?person=' +
           encodeURIComponent(person.key) +
-          '" target="soul-telegram">Open Telegram — then Send</a>' +
+          '" target="soul-telegram">Open Telegram, then Send</a>' +
           '</div>'
         : '';
       var waBlock = person.signal || person.whatsapp
@@ -1676,10 +1674,10 @@ import { site } from '../site.config';
           '</div>' +
           '<p class="wa-bridge-kicker">Soul Searchers · opens Signal</p>' +
           '</div>' +
-          '<p class="wa-bridge-hint">They also left Signal. Opens their chat — you still tap Send. Digits stay off this map.</p>' +
+          '<p class="wa-bridge-hint">They also left Signal. Opens their chat, you still tap Send. Digits stay off this map.</p>' +
           '<a class="btn btn-ghost hook-wa" href="/api/hooks/signal?person=' +
           encodeURIComponent(person.key) +
-          '" target="soul-signal">Open Signal — then Send</a>' +
+          '" target="soul-signal">Open Signal, then Send</a>' +
           '</div>'
         : '';
       openBox.hidden = false;
@@ -1708,7 +1706,7 @@ import { site } from '../site.config';
       if (showCall && meKey && hasThread) markCallsSeen();
     }
 
-    /** Visual mark centre in the shared floor’s 0–100 space (matches SVG viewBox). */
+    /** Visual mark centre in the shared floor’s 0-100 space (matches SVG viewBox). */
     function markCenterPct(dotEl, floorRect) {
       if (!dotEl || !floorRect || floorRect.width < 1 || floorRect.height < 1) return null;
       var mark = dotEl.querySelector('.dot-mark') || dotEl;
@@ -1721,7 +1719,7 @@ import { site } from '../site.config';
     }
 
     /**
-     * Centre of bubble A → centre of bubble B in the shared floor’s 0–100 space.
+     * Centre of bubble A → centre of bubble B in the shared floor’s 0-100 space.
      * Measures live .dot-mark boxes so host / crowd / pack / open-scale stay aligned.
      */
     function linkChord(a, b, floorRect) {
@@ -2285,7 +2283,7 @@ import { site } from '../site.config';
       var who = String(name || '')
         .trim()
         .slice(0, 80);
-      if (who) return 'Hey ' + who + ' — from the Soul Searchers map.';
+      if (who) return 'Hey ' + who + ', from the Soul Searchers map.';
       return 'Hey from the Soul Searchers map.';
     }
 
@@ -2372,7 +2370,7 @@ import { site } from '../site.config';
     function openWaCompose() {
       if (!waCompose) return;
       if (tgComposeIsOpen()) closeTgCompose();
-      // Already open — just focus the form; don't restart as if closed.
+      // Already open, just focus the form; don't restart as if closed.
       if (waComposeIsOpen()) {
         focusWaComposeForm();
         return;
@@ -2462,7 +2460,7 @@ import { site } from '../site.config';
         var url = telegramMeUrl(handle);
         if (!url) {
           showTgComposeError(
-            'Need a real Telegram username — like @handle — then Open Telegram and tap Send.',
+            'Add a Telegram username, like @handle, then Open Telegram and tap Send.',
           );
           var tgEl = tgComposeForm.elements.namedItem('telegram');
           if (tgEl) tgEl.focus();
@@ -2497,7 +2495,7 @@ import { site } from '../site.config';
         var url = waMeUrl(phone, name);
         if (!url) {
           showWaComposeError(
-            'Need a real number with country code — like +49… — then Open Signal and tap Send.',
+            'Add a number with country code, like +49…, then Open Signal and tap Send.',
           );
           var phoneEl = waComposeForm.elements.namedItem('phone');
           if (phoneEl) phoneEl.focus();
@@ -3814,7 +3812,7 @@ import { site } from '../site.config';
 
   .group-room {
     position: relative;
-    /* Match Berlin’s real east–west stretch so the outline isn’t kid-stretched. */
+    /* Match Berlin’s real east-west stretch so the outline isn’t kid-stretched. */
     aspect-ratio: 121.42 / 100;
     width: min(100%, calc(min(64vh, 34rem) * 121.42 / 100));
     max-height: min(64vh, 34rem);

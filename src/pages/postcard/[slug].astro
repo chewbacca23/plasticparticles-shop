@@ -47,7 +47,7 @@ const { slug } = Astro.params;
 const blurb = (words || title).replace(/\s+/g, ' ').trim();
 ---
 
-<BaseLayout title={`${title} — postcard`} description={blurb} ogType="article">
+<BaseLayout title={`${title} · postcard`} description={blurb} ogType="article">
   <section class="section">
     <div class="site-shell">
       <RidePostcard title={title} words={words} photos={photos} readHref={readHref} slug={slug} />

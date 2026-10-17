@@ -23,7 +23,7 @@ const skip =
           <p class="kind-lead">This is a positive site. Leave a short, kind remark for this page.</p>
           <ul class="kind-list" data-kind-list hidden></ul>
           <p class="kind-empty" data-kind-empty>
-            No kind words here yet. Be the first.
+            Kind words show here when someone leaves the first one.
           </p>
           <p class="kind-status" data-kind-status hidden></p>
           <form class="kind-form" data-kind-form>
@@ -48,8 +48,8 @@ const skip =
         <div class="kind-member" id="become-a-member" data-kind-member>
           <h2 class="kind-title">Become a member</h2>
           <p class="kind-lead">
-            Free on thenewsoulsearchers.de. Add your email to our list — we keep one big group so
-            we can write you back. Nothing to pay, ever.
+            Free on thenewsoulsearchers.de. Add your email to our list. We keep one big group so
+            we can write you back. Always free.
           </p>
           <p class="kind-status" data-member-status hidden></p>
           <form class="kind-form" data-member-form>
@@ -115,7 +115,7 @@ const skip =
           list.hidden = false;
           items.forEach(function (item) {
             var li = document.createElement('li');
-            var who = item.name ? '<span class="who">— ' + escapeText(item.name) + '</span>' : '';
+            var who = item.name ? '<span class="who">· ' + escapeText(item.name) + '</span>' : '';
             li.innerHTML = '<span class="said">' + escapeText(item.message) + '</span>' + who;
             list.appendChild(li);
           });

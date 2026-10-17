@@ -30,7 +30,7 @@ const cards = newestFirst(
 
 <BaseLayout
   title="Postcards"
-  description="A postcard from each Soul Searchers ride. The crest is on every picture. Send one to someone who was not there."
+  description="A postcard from each Soul Searchers ride. The crest is on every picture. Send one to someone who loves the road."
 >
   <section class="section">
     <div class="site-shell">
@@ -38,13 +38,13 @@ const cards = newestFirst(
       <h1 class="section-title">From the ride</h1>
       <p class="section-lead">
         One postcard for each ride. A few words, up to twenty pictures, and the crest on every one.
-        Send it to someone who was not there.
-        <a href="/#become-a-member">Become a free member</a>. Add your email on the list — still free of charge.
+        Send it to someone who loves the road.
+        <a href="/#become-a-member">Become a free member</a>. Add your email on the list. Still free of charge.
       </p>
 
       {
         cards.length === 0 ? (
-          <p>No postcard to send just yet.</p>
+          <p>Postcards show here when a ride is ready to send.</p>
         ) : (
           <div class="grid">
             {cards.map((card, index) => (

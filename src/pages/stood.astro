@@ -50,7 +50,7 @@ const pins = resolved.filter((row) => row.pin);
 
 <BaseLayout
   title="Where I stood"
-  description="A quiet trail of places The Soul Searchers have been — soft pins on the map, brother to brother."
+  description="A quiet trail of places The Soul Searchers have been. Soft pins on the map, brother to brother."
   watermark={false}
 >
   <section class="section stood">
@@ -58,9 +58,9 @@ const pins = resolved.filter((row) => row.pin);
       <p class="eyebrow reveal">The trail</p>
       <h1 class="section-title reveal reveal-delay-1">Where I stood</h1>
       <p class="section-lead reveal reveal-delay-2">
-        Add a place as a dot, or a whole ride as a thin line — list the stops in order (Perth, then
-        south, then east to Melbourne). Take one off anytime, then add another. Zoom with the
-        buttons, wheel, or a drag. Brother to brother.
+        Add a place as a dot, or a whole ride as a thin line. List the stops in order (Perth, then
+        east to Melbourne). Take one off anytime, then add another. Zoom with the buttons or a
+        drag. Brother to brother.
       </p>
 
       <div class="stood-board reveal reveal-delay-3">
@@ -137,7 +137,7 @@ const pins = resolved.filter((row) => row.pin);
                 type="text"
                 name="when"
                 maxlength="80"
-                placeholder="2008 – 2015"
+                placeholder="2008-2015"
                 autocomplete="off"
               />
             </label>
@@ -171,7 +171,7 @@ const pins = resolved.filter((row) => row.pin);
               />
             </label>
             <label class="stood-field">
-              <span>The line — stops in order</span>
+              <span>The line: stops in order</span>
               <input
                 type="text"
                 name="path"
@@ -218,7 +218,7 @@ const pins = resolved.filter((row) => row.pin);
             {
               resolved.length === 0 ? (
                 <li class="stood-item stood-item--empty">
-                  <p class="empty">No places yet. Add one above — we drop the pin.</p>
+                  <p class="empty">Places show here when you add one above. We drop the pin.</p>
                 </li>
               ) : (
                 resolved.map((entry) => (
@@ -230,7 +230,7 @@ const pins = resolved.filter((row) => row.pin);
                         {entry.note ? <span class="stood-note">{entry.note}</span> : null}
                         {entry.detail ? <span class="stood-note">{entry.detail}</span> : null}
                         {!entry.pin ? (
-                          <span class="stood-miss">Name saved — pin needs a clearer place name.</span>
+                          <span class="stood-miss">Name saved. Try a clearer place name for the pin.</span>
                         ) : null}
                       </a>
                     ) : (
@@ -240,7 +240,7 @@ const pins = resolved.filter((row) => row.pin);
                         {entry.note ? <span class="stood-note">{entry.note}</span> : null}
                         {entry.detail ? <span class="stood-note">{entry.detail}</span> : null}
                         {!entry.pin ? (
-                          <span class="stood-miss">Name saved — pin needs a clearer place name.</span>
+                          <span class="stood-miss">Name saved. Try a clearer place name for the pin.</span>
                         ) : null}
                       </div>
                     )}
@@ -253,15 +253,15 @@ const pins = resolved.filter((row) => row.pin);
           <p class="stood-side-kicker stood-side-kicker--list">Ride lines</p>
           <ol class="stood-list" data-stood-route-list>
             <li class="stood-item stood-item--empty-routes">
-              <p class="empty">No ride lines yet. Add stops in order above — we draw the thin line.</p>
+              <p class="empty">Ride lines show here when you add stops in order above. We draw the thin line.</p>
             </li>
           </ol>
         </aside>
       </div>
 
       <p class="stood-credit">
-        World map is free — Natural Earth, public domain. Place names find pins and ride lines via
-        OpenStreetMap Nominatim (free, no key). No Carto.
+        World map is free: Natural Earth, public domain. Place names find pins and ride lines via
+        OpenStreetMap Nominatim (free, open).
       </p>
     </div>
   </section>
@@ -435,7 +435,7 @@ const pins = resolved.filter((row) => row.pin);
       var when = formatWhen(row.when || row.stoodAt || '');
       var miss =
         row.lat == null || row.lng == null
-          ? '<span class="stood-miss">Name saved — pin needs a clearer place name.</span>'
+          ? '<span class="stood-miss">Name saved. Try a clearer place name for the pin.</span>'
           : '';
       return (
         '<li class="stood-item" data-stood-id="' +
@@ -520,7 +520,7 @@ const pins = resolved.filter((row) => row.pin);
         });
         if (routeList && !routeList.querySelector('.stood-item:not(.stood-item--empty-routes)')) {
           routeList.innerHTML =
-            '<li class="stood-item stood-item--empty-routes"><p class="empty">No ride lines yet. Add stops in order above — we draw the thin line.</p></li>';
+            '<li class="stood-item stood-item--empty-routes"><p class="empty">Ride lines show here when you add stops in order above. We draw the thin line.</p></li>';
         }
         return;
       }
