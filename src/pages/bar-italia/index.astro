@@ -19,31 +19,12 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
     <section class="hero" aria-label="Welcome">
       <div class="hero-stage" aria-hidden="true">
         <div class="hero-wash"></div>
-        <div class="vinyl vinyl--soft"></div>
-
-        <div class="cup cup--espresso">
-          <div class="cup-steam">
-            <span></span><span></span>
-          </div>
-          <div class="cup-handle"></div>
-          <div class="cup-bowl">
-            <div class="cup-rim"></div>
-            <div class="cup-drink cup-drink--espresso"></div>
-          </div>
-          <div class="cup-saucer"></div>
+        {/* Top-down cups that still read as vinyls: concentric rings, slow spin. */}
+        <div class="disc disc--cappu" title="Cappuccino">
+          <span class="disc-steam"><i></i><i></i><i></i></span>
         </div>
-
-        <div class="cup cup--cappu">
-          <div class="cup-steam">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="cup-handle cup-handle--wide"></div>
-          <div class="cup-bowl cup-bowl--wide">
-            <div class="cup-rim"></div>
-            <div class="cup-drink cup-drink--cappu"></div>
-            <div class="cup-foam"></div>
-          </div>
-          <div class="cup-saucer cup-saucer--wide"></div>
+        <div class="disc disc--espresso" title="Espresso">
+          <span class="disc-steam"><i></i><i></i></span>
         </div>
       </div>
       <div class="shell hero-copy">
@@ -210,197 +191,148 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* Soft vinyl still spinning far back */
-  .vinyl--soft {
+  /*
+   * Top-down cups that still read as vinyls:
+   * concentric rings = grooves / crema / foam.
+   */
+  .disc {
     position: absolute;
-    width: min(48vw, 22rem);
     aspect-ratio: 1;
-    right: -12%;
-    top: 8%;
     border-radius: 50%;
-    opacity: 0.35;
+    pointer-events: none;
+    animation: spin 48s linear infinite;
+  }
+
+  .disc--cappu {
+    width: min(58vw, 26rem);
+    right: -8%;
+    bottom: 8%;
     background:
-      radial-gradient(circle at center, #2a1c14 0 12%, transparent 12.5%),
+      radial-gradient(circle at 48% 46%, rgba(90, 48, 22, 0.35) 0 4%, transparent 9%),
+      radial-gradient(circle at 52% 52%, rgba(90, 48, 22, 0.22) 0 3%, transparent 8%),
+      radial-gradient(
+        circle at center,
+        #f7efe2 0 11%,
+        #efe4d2 11% 13%,
+        #f4ebdc 13% 22%,
+        #e8dcc6 22% 24%,
+        #f2e8d8 24% 34%,
+        #d9c4a0 34% 36%,
+        #efe3d0 36% 46%,
+        transparent 46.5%
+      ),
+      radial-gradient(circle at center, transparent 0 45%, #4a2814 45.5% 52%, transparent 52.5%),
+      radial-gradient(
+        circle at center,
+        transparent 0 52%,
+        #f6efe4 52.5% 58%,
+        #e4d6c0 58% 61%,
+        transparent 61.5%
+      ),
       repeating-radial-gradient(
         circle at center,
-        #0a0706 0 0.12rem,
-        #15100e 0.12rem 0.24rem
+        #1a120e 0 0.11rem,
+        #0e0a08 0.11rem 0.22rem
       );
-    box-shadow: 0 0 0 0.3rem rgba(196, 163, 90, 0.08);
-    animation: spin 64s linear infinite;
-  }
-
-  .cup {
-    position: absolute;
-    pointer-events: none;
-    filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.45));
-  }
-
-  .cup--espresso {
-    left: 6%;
-    bottom: 14%;
-    width: min(22vw, 9.5rem);
-    transform: rotate(-8deg);
-    animation: cup-bob 7s ease-in-out infinite;
-  }
-
-  .cup--cappu {
-    right: 4%;
-    bottom: 10%;
-    width: min(34vw, 15rem);
-    transform: rotate(6deg);
-    animation: cup-bob 8.5s ease-in-out infinite reverse;
-  }
-
-  .cup-bowl {
-    position: relative;
-    z-index: 2;
-    width: 78%;
-    margin: 0 auto;
-    aspect-ratio: 1.15 / 1;
-    border-radius: 12% 12% 42% 42% / 8% 8% 72% 72%;
-    background:
-      linear-gradient(160deg, #f7f0e4 0%, #e8dcc8 45%, #cfc0a8 100%);
     box-shadow:
-      inset 0 0.15em 0.35em rgba(255, 255, 255, 0.55),
-      inset 0 -0.35em 0.55em rgba(80, 50, 30, 0.18);
-    overflow: hidden;
+      0 0 0 0.35rem rgba(196, 163, 90, 0.12),
+      0 30px 80px rgba(0, 0, 0, 0.45),
+      inset 0 0 2.5rem rgba(246, 240, 230, 0.08);
   }
 
-  .cup-bowl--wide {
-    width: 82%;
-    aspect-ratio: 1.25 / 1;
-    border-radius: 14% 14% 40% 40% / 10% 10% 68% 68%;
-  }
-
-  .cup-rim {
-    position: absolute;
-    top: 0;
-    left: 4%;
-    right: 4%;
-    height: 14%;
-    border-radius: 50%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(232, 220, 200, 0.15));
-    box-shadow: 0 0.08em 0.2em rgba(0, 0, 0, 0.12);
-  }
-
-  .cup-drink {
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    top: 18%;
-    bottom: 12%;
-    border-radius: 40% 40% 46% 46% / 20% 20% 70% 70%;
-  }
-
-  .cup-drink--espresso {
+  .disc--espresso {
+    width: min(32vw, 14rem);
+    right: auto;
+    left: -6%;
+    bottom: 28%;
+    opacity: 0.92;
+    animation-duration: 64s;
+    animation-direction: reverse;
     background:
-      radial-gradient(ellipse 70% 45% at 50% 18%, rgba(196, 140, 70, 0.85), transparent 55%),
-      linear-gradient(180deg, #5c3418 0%, #2a160c 55%, #1a0e08 100%);
-    box-shadow: inset 0 0.2em 0.35em rgba(0, 0, 0, 0.35);
-  }
-
-  .cup-drink--cappu {
-    background: linear-gradient(180deg, #6b3a1a 0%, #3a1e10 60%, #24140c 100%);
-  }
-
-  .cup-foam {
-    position: absolute;
-    left: 9%;
-    right: 9%;
-    top: 16%;
-    height: 38%;
-    border-radius: 50% 50% 42% 42%;
-    background:
-      radial-gradient(circle at 42% 48%, rgba(120, 70, 35, 0.28) 0 10%, transparent 18%),
-      radial-gradient(circle at 58% 42%, rgba(120, 70, 35, 0.18) 0 7%, transparent 14%),
-      radial-gradient(ellipse 80% 70% at 50% 40%, #fff8ee 0%, #f0e4d0 55%, #e2d2b8 100%);
-    box-shadow: inset 0 -0.15em 0.25em rgba(140, 90, 40, 0.15);
-  }
-
-  .cup-handle {
-    position: absolute;
-    z-index: 1;
-    right: 2%;
-    top: 28%;
-    width: 28%;
-    height: 38%;
-    border: 0.28em solid #e4d6c0;
-    border-left: 0;
-    border-radius: 0 70% 70% 0 / 0 55% 55% 0;
-    box-shadow: inset -0.08em 0 0.1em rgba(255, 255, 255, 0.35);
-  }
-
-  .cup-handle--wide {
-    right: 0;
-    top: 26%;
-    width: 30%;
-    height: 42%;
-    border-width: 0.32em;
-  }
-
-  .cup-saucer {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    height: 0.55em;
-    margin-top: -0.15em;
-    border-radius: 50%;
-    background:
-      radial-gradient(ellipse at center, #f4ebe0 0%, #d9cbb4 55%, #b8a48a 100%);
+      radial-gradient(circle at center, #1a0e08 0 10%, transparent 10.5%),
+      radial-gradient(
+        circle at center,
+        transparent 0 10%,
+        #c4924a 10.5% 16%,
+        #8a5a22 16% 18%,
+        transparent 18.5%
+      ),
+      repeating-radial-gradient(
+        circle at center,
+        #6b3a18 0 0.1rem,
+        #4a2810 0.1rem 0.2rem
+      ),
+      radial-gradient(
+        circle at center,
+        transparent 0 48%,
+        #f3e9da 48.5% 56%,
+        #dccdb4 56% 59%,
+        transparent 59.5%
+      ),
+      repeating-radial-gradient(
+        circle at center,
+        #120c0a 0 0.1rem,
+        #080605 0.1rem 0.2rem
+      );
     box-shadow:
-      0 0.35em 0.7em rgba(0, 0, 0, 0.35),
-      inset 0 0.08em 0.15em rgba(255, 255, 255, 0.4);
+      0 0 0 0.28rem rgba(196, 163, 90, 0.1),
+      0 22px 55px rgba(0, 0, 0, 0.4),
+      inset 0 0 1.5rem rgba(196, 140, 70, 0.12);
   }
 
-  .cup-saucer--wide {
-    height: 0.7em;
-  }
-
-  .cup-steam {
+  .disc-steam {
     position: absolute;
     left: 50%;
-    bottom: 72%;
-    width: 2.4em;
-    height: 4.5em;
-    margin-left: -1.2em;
+    top: 18%;
+    width: 2.5rem;
+    height: 4.5rem;
+    margin-left: -1.25rem;
     pointer-events: none;
+    animation: steam-counter 48s linear infinite;
   }
 
-  .cup--cappu .cup-steam {
-    width: 3.2em;
-    height: 5.5em;
-    margin-left: -1.6em;
+  .disc--espresso .disc-steam {
+    animation-duration: 64s;
+    animation-direction: reverse;
+    width: 1.8rem;
+    height: 3.4rem;
+    margin-left: -0.9rem;
   }
 
-  .cup-steam span {
+  .disc-steam i {
     position: absolute;
     bottom: 0;
     left: 50%;
-    width: 0.45em;
-    height: 2.4em;
-    margin-left: -0.22em;
+    width: 0.4rem;
+    height: 2rem;
+    margin-left: -0.2rem;
     border-radius: 999px;
-    background: linear-gradient(180deg, transparent, rgba(246, 240, 230, 0.42));
+    background: linear-gradient(180deg, transparent, rgba(246, 240, 230, 0.38));
     filter: blur(2px);
     animation: rise 3.8s ease-in-out infinite;
   }
 
-  .cup-steam span:nth-child(2) {
+  .disc-steam i:nth-child(2) {
     left: 28%;
-    animation-delay: 0.8s;
-    height: 2em;
+    animation-delay: 0.7s;
+    height: 1.6rem;
   }
 
-  .cup-steam span:nth-child(3) {
+  .disc-steam i:nth-child(3) {
     left: 72%;
-    animation-delay: 1.5s;
-    height: 2.2em;
+    animation-delay: 1.4s;
+    height: 1.8rem;
   }
 
   @keyframes spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @keyframes steam-counter {
+    to {
+      transform: rotate(-360deg);
     }
   }
 
@@ -411,45 +343,28 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
       opacity: 0.12;
     }
     50% {
-      transform: translateY(-1.5rem) scaleX(1.45);
+      transform: translateY(-1.35rem) scaleX(1.4);
       opacity: 0.55;
     }
   }
 
-  @keyframes cup-bob {
-    0%,
-    100% {
-      translate: 0 0;
-    }
-    50% {
-      translate: 0 -0.45rem;
-    }
-  }
-
   @media (max-width: 640px) {
-    .cup--espresso {
-      left: -2%;
-      bottom: 18%;
-      width: min(34vw, 7.5rem);
-      opacity: 0.85;
+    .disc--cappu {
+      right: -14%;
+      bottom: 4%;
     }
 
-    .cup--cappu {
-      right: -4%;
-      bottom: 8%;
-      width: min(48vw, 11rem);
-    }
-
-    .vinyl--soft {
-      opacity: 0.22;
+    .disc--espresso {
+      left: -12%;
+      bottom: 32%;
+      opacity: 0.75;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .vinyl--soft,
-    .cup-steam span,
-    .cup--espresso,
-    .cup--cappu {
+    .disc,
+    .disc-steam,
+    .disc-steam i {
       animation: none;
     }
   }
