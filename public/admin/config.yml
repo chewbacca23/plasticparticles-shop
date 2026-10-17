@@ -261,6 +261,40 @@ collections:
           choose_url: false
           required: false
 
+  - name: calendar
+    label: Berlin calendar
+    label_singular: Calendar date
+    description: Club rides, open floors, and race watches in Berlin. Shows on Berlin calendar. People come back for what is next.
+    folder: src/content/calendar
+    create: true
+    delete: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: calendar
+    summary: "{{title}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Like Rapha Saturday ride or Giro opening weekend watch." }
+      - { label: Date, name: start, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "The day it happens." }
+      - { label: End date, name: end, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", required: false, hint: "Optional. For a weekend or a stage week." }
+      - { label: Time, name: when, widget: string, required: false, hint: "Like 09:00 or Afternoon stages." }
+      - label: Kind
+        name: kind
+        widget: select
+        default: club
+        options:
+          - { label: Club ride, value: club }
+          - { label: Race watch, value: watch }
+          - { label: Open floor, value: open }
+          - { label: Other, value: other }
+      - { label: Host / club, name: host, widget: string, required: false, hint: "Rapha Berlin, MAAP, Wahoo, The Soul Searchers, Daily Bread…" }
+      - { label: Place, name: place, widget: string, required: false, hint: "Where people meet." }
+      - { label: Link, name: url, widget: string, required: false, hint: "Optional. Club page or a story on this site." }
+      - { label: Short note, name: note, widget: text, required: false, hint: "One or two lines. Quote it if you use a colon." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
+
   - name: stood
     label: Where I stood
     label_singular: Place

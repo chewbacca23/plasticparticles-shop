@@ -1,0 +1,367 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const entries = (await getCollection('calendar', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.start.getTime() - b.data.start.getTime(),
+);
+
+const startOfToday = new Date();
+startOfToday.setHours(0, 0, 0, 0);
+
+const upcoming = entries.filter((entry) => {
+  const end = entry.data.end ?? entry.data.start;
+  const endDay = new Date(end);
+  endDay.setHours(23, 59, 59, 999);
+  return endDay >= startOfToday;
+});
+
+const weekEnd = new Date(startOfToday);
+weekEnd.setDate(weekEnd.getDate() + 7);
+
+const thisWeek = upcoming.filter((entry) => entry.data.start <= weekEnd);
+const later = upcoming.filter((entry) => entry.data.start > weekEnd);
+
+const dayFmt = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Europe/Berlin',
+});
+
+const rangeFmt = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Europe/Berlin',
+});
+
+const kindLabel: Record<string, string> = {
+  club: 'Club ride',
+  watch: 'Race watch',
+  open: 'Open floor',
+  other: 'On the calendar',
+};
+
+function dateLine(start: Date, end?: Date) {
+  if (end && end.getTime() !== start.getTime()) {
+    return `${rangeFmt.format(start)} to ${rangeFmt.format(end)}`;
+  }
+  return dayFmt.format(start);
+}
+
+function groupByDay(list: typeof upcoming) {
+  const map = new Map<string, typeof upcoming>();
+  for (const entry of list) {
+    const key = entry.data.start.toISOString().slice(0, 10);
+    const bucket = map.get(key) ?? [];
+    bucket.push(entry);
+    map.set(key, bucket);
+  }
+  return [...map.entries()];
+}
+---
+
+<BaseLayout
+  title="Berlin calendar"
+  description="What is happening in Berlin cycling this week. Club rides, open floors, and where to watch the Giro, Tour, and Vuelta."
+>
+  <section class="section">
+    <div class="site-shell cal">
+      <p class="eyebrow reveal">Berlin</p>
+      <h1 class="section-title reveal reveal-delay-1">The calendar</h1>
+      <p class="section-lead reveal reveal-delay-2">
+        A simple service for the city. Club rides from Rapha, MAAP, Wahoo, Soul Searchers and friends.
+        Race watch days for the Giro, Tour de France, and Vuelta. Come back for what is next.
+      </p>
+
+      <div class="cal-filters reveal reveal-delay-2" role="group" aria-label="Show">
+        <button type="button" class="cal-chip is-on" data-cal-filter="all">All</button>
+        <button type="button" class="cal-chip" data-cal-filter="club">Club rides</button>
+        <button type="button" class="cal-chip" data-cal-filter="watch">Race watches</button>
+        <button type="button" class="cal-chip" data-cal-filter="open">Open floors</button>
+      </div>
+
+      {
+        upcoming.length === 0 ? (
+          <p class="empty">
+            Dates show here when Henrik adds them in the editor under <strong>Berlin calendar</strong>.
+          </p>
+        ) : (
+          <>
+            <section class="cal-block reveal reveal-delay-3" aria-labelledby="cal-week">
+              <h2 id="cal-week" class="cal-heading">This week</h2>
+              {thisWeek.length === 0 ? (
+                <p class="cal-quiet">A quiet stretch. Scroll for what is coming later.</p>
+              ) : (
+                <ol class="cal-days">
+                  {groupByDay(thisWeek).map(([day, dayEntries]) => (
+                    <li class="cal-day">
+                      <h3 class="cal-day-label">
+                        <time datetime={day}>{dayFmt.format(new Date(`${day}T12:00:00`))}</time>
+                      </h3>
+                      <ul class="cal-list">
+                        {dayEntries.map((entry) => (
+                          <li class="cal-card" data-kind={entry.data.kind}>
+                            <p class="cal-kind">{kindLabel[entry.data.kind] ?? 'On the calendar'}</p>
+                            <h4 class="cal-title">
+                              {entry.data.url ? (
+                                <a href={entry.data.url} target={entry.data.url.startsWith('http') ? '_blank' : undefined} rel={entry.data.url.startsWith('http') ? 'noopener noreferrer' : undefined}>
+                                  {entry.data.title}
+                                </a>
+                              ) : (
+                                entry.data.title
+                              )}
+                            </h4>
+                            <p class="cal-meta">
+                              {[entry.data.when, entry.data.host, entry.data.place].filter(Boolean).join(' · ')}
+                            </p>
+                            {entry.data.note ? <p class="cal-note">{entry.data.note}</p> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+
+            {
+              later.length > 0 ? (
+                <section class="cal-block" aria-labelledby="cal-later">
+                  <h2 id="cal-later" class="cal-heading">Coming up</h2>
+                  <ol class="cal-list cal-list--flat">
+                    {later.map((entry) => (
+                      <li class="cal-card" data-kind={entry.data.kind}>
+                        <p class="cal-when">
+                          <time datetime={entry.data.start.toISOString().slice(0, 10)}>
+                            {dateLine(entry.data.start, entry.data.end)}
+                          </time>
+                          {entry.data.when ? <span> · {entry.data.when}</span> : null}
+                        </p>
+                        <p class="cal-kind">{kindLabel[entry.data.kind] ?? 'On the calendar'}</p>
+                        <h3 class="cal-title">
+                          {entry.data.url ? (
+                            <a href={entry.data.url} target={entry.data.url.startsWith('http') ? '_blank' : undefined} rel={entry.data.url.startsWith('http') ? 'noopener noreferrer' : undefined}>
+                              {entry.data.title}
+                            </a>
+                          ) : (
+                            entry.data.title
+                          )}
+                        </h3>
+                        <p class="cal-meta">
+                          {[entry.data.host, entry.data.place].filter(Boolean).join(' · ')}
+                        </p>
+                        {entry.data.note ? <p class="cal-note">{entry.data.note}</p> : null}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : null
+            }
+          </>
+        )
+      }
+
+      <aside class="cal-season" aria-label="Grand tours">
+        <p class="cal-season-kicker">Grand tours</p>
+        <p>
+          Giro d'Italia in May, Tour de France in July, Vuelta a España in late summer. When a Berlin
+          room puts the race on a screen, it lands here under Race watches. Clubs and shops stay under
+          Club rides and Open floors.
+        </p>
+        <p class="cal-season-mail">
+          Got a date for the list?
+          <a href="mailto:henrik@thenewsoulsearchers.de?subject=Berlin calendar">Write Henrik</a>.
+        </p>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    var chips = document.querySelectorAll('[data-cal-filter]');
+    var cards = document.querySelectorAll('.cal-card[data-kind]');
+    if (!chips.length) return;
+
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var filter = chip.getAttribute('data-cal-filter') || 'all';
+        chips.forEach(function (c) {
+          c.classList.toggle('is-on', c === chip);
+        });
+        cards.forEach(function (card) {
+          var kind = card.getAttribute('data-kind');
+          var show = filter === 'all' || kind === filter;
+          card.hidden = !show;
+          var day = card.closest('.cal-day');
+          if (day) {
+            var visible = day.querySelectorAll('.cal-card:not([hidden])');
+            day.hidden = visible.length === 0;
+          }
+        });
+      });
+    });
+  })();
+</script>
+
+<style>
+  .cal {
+    max-width: 42rem;
+  }
+
+  .cal-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 2.25rem;
+  }
+
+  .cal-chip {
+    appearance: none;
+    border: 1px solid rgba(215, 224, 232, 0.18);
+    border-radius: 999px;
+    background: rgba(215, 224, 232, 0.04);
+    color: rgba(215, 224, 232, 0.78);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+  }
+
+  .cal-chip.is-on,
+  .cal-chip:hover {
+    border-color: rgba(212, 163, 90, 0.55);
+    color: var(--amber-hot);
+    background: rgba(212, 163, 90, 0.1);
+  }
+
+  .cal-block {
+    margin: 0 0 2.75rem;
+  }
+
+  .cal-heading {
+    margin: 0 0 1rem;
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 500;
+    color: var(--paper);
+  }
+
+  .cal-quiet,
+  .empty {
+    color: rgba(215, 224, 232, 0.7);
+  }
+
+  .cal-days {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .cal-day-label {
+    margin: 0 0 0.65rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .cal-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .cal-list--flat {
+    gap: 1rem;
+  }
+
+  .cal-card {
+    padding: 1.05rem 1.15rem;
+    border: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 0.9rem;
+    background: rgba(215, 224, 232, 0.03);
+  }
+
+  .cal-card[data-kind='watch'] {
+    border-color: rgba(212, 163, 90, 0.28);
+    background:
+      radial-gradient(ellipse 80% 70% at 0% 0%, rgba(212, 163, 90, 0.1), transparent 55%),
+      rgba(215, 224, 232, 0.03);
+  }
+
+  .cal-kind,
+  .cal-when {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .cal-title {
+    margin: 0 0 0.35rem;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--paper);
+  }
+
+  .cal-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .cal-title a:hover {
+    color: var(--amber-hot);
+  }
+
+  .cal-meta {
+    margin: 0;
+    color: rgba(215, 224, 232, 0.72);
+    font-size: 0.95rem;
+  }
+
+  .cal-note {
+    margin: 0.55rem 0 0;
+    color: rgba(215, 224, 232, 0.78);
+  }
+
+  .cal-season {
+    margin-top: 1rem;
+    padding: 1.35rem 1.4rem;
+    border: 1px solid rgba(212, 163, 90, 0.22);
+    border-radius: 1rem;
+    background: rgba(30, 58, 69, 0.22);
+  }
+
+  .cal-season-kicker {
+    margin: 0 0 0.45rem;
+    color: var(--amber);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .cal-season p {
+    margin: 0 0 0.75rem;
+    color: rgba(215, 224, 232, 0.8);
+  }
+
+  .cal-season-mail {
+    margin-bottom: 0 !important;
+  }
+
+  .cal-season a {
+    color: var(--amber-hot);
+  }
+</style>

@@ -190,4 +190,30 @@ const stood = defineCollection({
     })),
 });
 
-export const collections = { journal, stories, shots, friends, shop, stores, week, stood };
+const calendar = defineCollection({
+  loader: glob({ base: './src/content/calendar', pattern: '**/*.{md,mdx}' }),
+  schema: z
+    .object({
+      title: z.string(),
+      start: z.coerce.date(),
+      end: z.coerce.date().optional(),
+      when: z.string().optional().default(''),
+      kind: z.enum(['club', 'watch', 'open', 'other']).default('club'),
+      host: z.string().optional().default(''),
+      place: z.string().optional().default(''),
+      url: z.string().optional().default(''),
+      note: z.string().optional().default(''),
+      draft: z.boolean().default(false),
+    })
+    .transform((data) => ({
+      ...data,
+      title: data.title.trim(),
+      when: data.when.trim(),
+      host: data.host.trim(),
+      place: data.place.trim(),
+      url: data.url.trim(),
+      note: data.note.trim(),
+    })),
+});
+
+export const collections = { journal, stories, shots, friends, shop, stores, week, stood, calendar };
