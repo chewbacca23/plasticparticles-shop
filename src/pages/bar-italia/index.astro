@@ -204,9 +204,9 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
   }
 
   .disc--cappu {
-    width: min(42vw, 18rem);
-    right: 8%;
-    bottom: 12%;
+    width: min(58vw, 26rem);
+    right: -8%;
+    bottom: 8%;
     background:
       radial-gradient(circle at 48% 46%, rgba(90, 48, 22, 0.35) 0 4%, transparent 9%),
       radial-gradient(circle at 52% 52%, rgba(90, 48, 22, 0.22) 0 3%, transparent 8%),
@@ -241,13 +241,12 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
   }
 
   .disc--espresso {
-    width: min(34vw, 14.5rem);
-    right: calc(8% + min(42vw, 18rem) + 1.25rem);
-    left: auto;
-    bottom: 16%;
+    width: min(28vw, 12.5rem);
+    /* Parked on the top-left of the big cappuccino, a little crooked */
+    right: calc(-8% + min(58vw, 26rem) * 0.42);
+    bottom: calc(8% + min(58vw, 26rem) * 0.52);
     opacity: 0.95;
-    animation-duration: 64s;
-    animation-direction: reverse;
+    animation: spin-tilted 64s linear infinite;
     background:
       radial-gradient(circle at center, #1a0e08 0 10%, transparent 10.5%),
       radial-gradient(
@@ -292,8 +291,7 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
   }
 
   .disc--espresso .disc-steam {
-    animation-duration: 64s;
-    animation-direction: reverse;
+    animation: steam-counter-tilted 64s linear infinite;
     width: 1.8rem;
     height: 3.4rem;
     margin-left: -0.9rem;
@@ -330,9 +328,27 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
     }
   }
 
+  @keyframes spin-tilted {
+    from {
+      transform: rotate(-12deg);
+    }
+    to {
+      transform: rotate(348deg);
+    }
+  }
+
   @keyframes steam-counter {
     to {
       transform: rotate(-360deg);
+    }
+  }
+
+  @keyframes steam-counter-tilted {
+    from {
+      transform: rotate(12deg);
+    }
+    to {
+      transform: rotate(-348deg);
     }
   }
 
@@ -350,15 +366,14 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
 
   @media (max-width: 640px) {
     .disc--cappu {
-      width: min(46vw, 11.5rem);
-      right: 4%;
-      bottom: 6%;
+      right: -14%;
+      bottom: 4%;
     }
 
     .disc--espresso {
-      width: min(38vw, 9.5rem);
-      right: calc(4% + min(46vw, 11.5rem) + 0.75rem);
-      bottom: 9%;
+      width: min(34vw, 9rem);
+      right: calc(-14% + min(58vw, 26rem) * 0.38);
+      bottom: calc(4% + min(58vw, 26rem) * 0.48);
       opacity: 0.88;
     }
   }
