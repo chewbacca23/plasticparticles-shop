@@ -204,9 +204,9 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
   }
 
   .disc--cappu {
-    width: min(58vw, 26rem);
-    right: -8%;
-    bottom: 8%;
+    width: min(42vw, 18rem);
+    right: 8%;
+    bottom: 12%;
     background:
       radial-gradient(circle at 48% 46%, rgba(90, 48, 22, 0.35) 0 4%, transparent 9%),
       radial-gradient(circle at 52% 52%, rgba(90, 48, 22, 0.22) 0 3%, transparent 8%),
@@ -241,11 +241,11 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
   }
 
   .disc--espresso {
-    width: min(32vw, 14rem);
-    right: auto;
-    left: -6%;
-    bottom: 28%;
-    opacity: 0.92;
+    width: min(34vw, 14.5rem);
+    right: calc(8% + min(42vw, 18rem) + 1.25rem);
+    left: auto;
+    bottom: 16%;
+    opacity: 0.95;
     animation-duration: 64s;
     animation-direction: reverse;
     background:
@@ -350,14 +350,16 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
 
   @media (max-width: 640px) {
     .disc--cappu {
-      right: -14%;
-      bottom: 4%;
+      width: min(46vw, 11.5rem);
+      right: 4%;
+      bottom: 6%;
     }
 
     .disc--espresso {
-      left: -12%;
-      bottom: 32%;
-      opacity: 0.75;
+      width: min(38vw, 9.5rem);
+      right: calc(4% + min(46vw, 11.5rem) + 0.75rem);
+      bottom: 9%;
+      opacity: 0.88;
     }
   }
 
