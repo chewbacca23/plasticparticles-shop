@@ -216,4 +216,36 @@ const calendar = defineCollection({
     })),
 });
 
-export const collections = { journal, stories, shots, friends, shop, stores, week, stood, calendar };
+/** Public wall of postcard sends. First name only. No emails. */
+const postcardWall = defineCollection({
+  loader: glob({ base: './src/content/postcard-wall', pattern: '**/*.{md,mdx}' }),
+  schema: z
+    .object({
+      rideSlug: z.string(),
+      rideTitle: z.string(),
+      who: z.string().optional().default('A brother'),
+      line: z.string().optional().default(''),
+      sentAt: z.coerce.date(),
+      draft: z.boolean().default(false),
+    })
+    .transform((data) => ({
+      ...data,
+      rideSlug: data.rideSlug.trim().replace(/^\/+|\/+$/g, ''),
+      rideTitle: data.rideTitle.trim(),
+      who: data.who.trim() || 'A brother',
+      line: data.line.trim(),
+    })),
+});
+
+export const collections = {
+  journal,
+  stories,
+  shots,
+  friends,
+  shop,
+  stores,
+  week,
+  stood,
+  calendar,
+  postcardWall,
+};

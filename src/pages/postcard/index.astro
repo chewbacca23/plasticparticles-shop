@@ -26,6 +26,17 @@ const cards = newestFirst(
   ],
   (card) => card.date,
 );
+
+const wall = newestFirst(
+  await getCollection('postcardWall', ({ data }) => !data.draft),
+  (entry) => entry.data.sentAt,
+);
+
+const wallDate = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Europe/Berlin',
+});
 ---
 
 <BaseLayout
@@ -41,6 +52,35 @@ const cards = newestFirst(
         Send it to someone who loves the road.<br />
         <a href="/#become-a-member">Become a free member</a>. Add your email on the list. Still free of charge.
       </p>
+
+      {
+        wall.length > 0 ? (
+          <section class="wall" aria-labelledby="wall-title">
+            <p class="wall-kicker">The wall</p>
+            <h2 id="wall-title" class="wall-title">Postcards on the move</h2>
+            <p class="wall-lead">
+              First names only. A quiet tick when someone sends a ride to a friend.
+            </p>
+            <ol class="wall-list">
+              {wall.map((entry) => (
+                <li class="wall-card">
+                  <p class="wall-when">
+                    <time datetime={entry.data.sentAt.toISOString().slice(0, 10)}>
+                      {wallDate.format(entry.data.sentAt)}
+                    </time>
+                  </p>
+                  <p class="wall-who">{entry.data.who}</p>
+                  <p class="wall-ride">
+                    sent{' '}
+                    <a href={`/postcard/${entry.data.rideSlug}`}>{entry.data.rideTitle}</a>
+                  </p>
+                  {entry.data.line ? <p class="wall-line">{entry.data.line}</p> : null}
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null
+      }
 
       {
         cards.length === 0 ? (
@@ -84,6 +124,97 @@ const cards = newestFirst(
 </BaseLayout>
 
 <style>
+  .wall {
+    margin: 0 0 2.75rem;
+    padding: 1.35rem 1.4rem 1.5rem;
+    border: 1px solid rgba(212, 163, 90, 0.22);
+    border-radius: 1.1rem;
+    background:
+      radial-gradient(ellipse 70% 80% at 10% 0%, rgba(212, 163, 90, 0.1), transparent 55%),
+      rgba(18, 26, 34, 0.45);
+  }
+
+  .wall-kicker {
+    margin: 0 0 0.35rem;
+    color: var(--amber);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .wall-title {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 500;
+    color: var(--paper);
+  }
+
+  .wall-lead {
+    margin: 0 0 1.15rem;
+    color: rgba(215, 224, 232, 0.72);
+    max-width: 32rem;
+  }
+
+  .wall-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 720px) {
+    .wall-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .wall-card {
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(215, 224, 232, 0.1);
+    border-radius: 0.75rem;
+    background: rgba(10, 14, 20, 0.35);
+  }
+
+  .wall-when {
+    margin: 0 0 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .wall-who {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--paper);
+  }
+
+  .wall-ride {
+    margin: 0.2rem 0 0;
+    color: rgba(215, 224, 232, 0.78);
+    font-size: 0.95rem;
+  }
+
+  .wall-ride a {
+    color: var(--amber-hot);
+    text-decoration: none;
+  }
+
+  .wall-ride a:hover {
+    text-decoration: underline;
+  }
+
+  .wall-line {
+    margin: 0.45rem 0 0;
+    color: rgba(215, 224, 232, 0.68);
+    font-size: 0.92rem;
+  }
+
   .grid {
     display: grid;
     gap: 1.75rem 1.25rem;
@@ -178,7 +309,7 @@ const cards = newestFirst(
     text-transform: uppercase;
   }
 
-  h2 {
+  .tile h2 {
     margin: 0;
     color: #111;
     font-family: Figtree, system-ui, sans-serif;

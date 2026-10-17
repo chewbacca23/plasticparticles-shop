@@ -261,6 +261,28 @@ collections:
           choose_url: false
           required: false
 
+  - name: postcard-wall
+    label: Postcard wall
+    label_singular: Wall tick
+    description: Quiet public ticks when someone sends a postcard. First name only. Shows on Postcards.
+    folder: src/content/postcard-wall
+    create: true
+    delete: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: md
+    format: frontmatter
+    preview_path: postcard
+    summary: "{{who}} · {{rideTitle}}"
+    editor:
+      preview: false
+    fields:
+      - { label: Ride slug, name: rideSlug, widget: string, hint: "Like christoph-my-mate-from-cologne or nice." }
+      - { label: Ride title, name: rideTitle, widget: string, hint: "How the ride shows on the wall." }
+      - { label: Who sent it, name: who, widget: string, required: false, default: "A brother", hint: "First name only. Or leave A brother." }
+      - { label: Short line, name: line, widget: text, required: false, hint: "Optional. Quote it if you use a colon." }
+      - { label: When, name: sentAt, widget: datetime, date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", hint: "Newest shows first." }
+      - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "On = hidden until you turn it off." }
+
   - name: calendar
     label: Berlin calendar
     label_singular: Calendar date
