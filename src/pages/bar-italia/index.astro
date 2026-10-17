@@ -19,10 +19,31 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
     <section class="hero" aria-label="Welcome">
       <div class="hero-stage" aria-hidden="true">
         <div class="hero-wash"></div>
-        <div class="vinyl"></div>
-        <div class="vinyl vinyl--two"></div>
-        <div class="steam">
-          <span></span><span></span><span></span>
+        <div class="vinyl vinyl--soft"></div>
+
+        <div class="cup cup--espresso">
+          <div class="cup-steam">
+            <span></span><span></span>
+          </div>
+          <div class="cup-handle"></div>
+          <div class="cup-bowl">
+            <div class="cup-rim"></div>
+            <div class="cup-drink cup-drink--espresso"></div>
+          </div>
+          <div class="cup-saucer"></div>
+        </div>
+
+        <div class="cup cup--cappu">
+          <div class="cup-steam">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="cup-handle cup-handle--wide"></div>
+          <div class="cup-bowl cup-bowl--wide">
+            <div class="cup-rim"></div>
+            <div class="cup-drink cup-drink--cappu"></div>
+            <div class="cup-foam"></div>
+          </div>
+          <div class="cup-saucer cup-saucer--wide"></div>
         </div>
       </div>
       <div class="shell hero-copy">
@@ -189,13 +210,15 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  .vinyl {
+  /* Soft vinyl still spinning far back */
+  .vinyl--soft {
     position: absolute;
-    width: min(58vw, 26rem);
+    width: min(48vw, 22rem);
     aspect-ratio: 1;
-    right: -8%;
-    bottom: 8%;
+    right: -12%;
+    top: 8%;
     border-radius: 50%;
+    opacity: 0.35;
     background:
       radial-gradient(circle at center, #2a1c14 0 12%, transparent 12.5%),
       repeating-radial-gradient(
@@ -203,52 +226,176 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
         #0a0706 0 0.12rem,
         #15100e 0.12rem 0.24rem
       );
-    box-shadow: 0 0 0 0.35rem rgba(196, 163, 90, 0.12), 0 30px 80px rgba(0, 0, 0, 0.45);
-    animation: spin 48s linear infinite;
+    box-shadow: 0 0 0 0.3rem rgba(196, 163, 90, 0.08);
+    animation: spin 64s linear infinite;
   }
 
-  .vinyl--two {
-    width: min(32vw, 14rem);
-    right: auto;
-    left: -6%;
-    bottom: 28%;
-    opacity: 0.55;
-    animation-duration: 64s;
-    animation-direction: reverse;
-  }
-
-  .steam {
+  .cup {
     position: absolute;
-    left: 18%;
-    bottom: 22%;
-    width: 3rem;
-    height: 7rem;
+    pointer-events: none;
+    filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.45));
+  }
+
+  .cup--espresso {
+    left: 6%;
+    bottom: 14%;
+    width: min(22vw, 9.5rem);
+    transform: rotate(-8deg);
+    animation: cup-bob 7s ease-in-out infinite;
+  }
+
+  .cup--cappu {
+    right: 4%;
+    bottom: 10%;
+    width: min(34vw, 15rem);
+    transform: rotate(6deg);
+    animation: cup-bob 8.5s ease-in-out infinite reverse;
+  }
+
+  .cup-bowl {
+    position: relative;
+    z-index: 2;
+    width: 78%;
+    margin: 0 auto;
+    aspect-ratio: 1.15 / 1;
+    border-radius: 12% 12% 42% 42% / 8% 8% 72% 72%;
+    background:
+      linear-gradient(160deg, #f7f0e4 0%, #e8dcc8 45%, #cfc0a8 100%);
+    box-shadow:
+      inset 0 0.15em 0.35em rgba(255, 255, 255, 0.55),
+      inset 0 -0.35em 0.55em rgba(80, 50, 30, 0.18);
+    overflow: hidden;
+  }
+
+  .cup-bowl--wide {
+    width: 82%;
+    aspect-ratio: 1.25 / 1;
+    border-radius: 14% 14% 40% 40% / 10% 10% 68% 68%;
+  }
+
+  .cup-rim {
+    position: absolute;
+    top: 0;
+    left: 4%;
+    right: 4%;
+    height: 14%;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(232, 220, 200, 0.15));
+    box-shadow: 0 0.08em 0.2em rgba(0, 0, 0, 0.12);
+  }
+
+  .cup-drink {
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    top: 18%;
+    bottom: 12%;
+    border-radius: 40% 40% 46% 46% / 20% 20% 70% 70%;
+  }
+
+  .cup-drink--espresso {
+    background:
+      radial-gradient(ellipse 70% 45% at 50% 18%, rgba(196, 140, 70, 0.85), transparent 55%),
+      linear-gradient(180deg, #5c3418 0%, #2a160c 55%, #1a0e08 100%);
+    box-shadow: inset 0 0.2em 0.35em rgba(0, 0, 0, 0.35);
+  }
+
+  .cup-drink--cappu {
+    background: linear-gradient(180deg, #6b3a1a 0%, #3a1e10 60%, #24140c 100%);
+  }
+
+  .cup-foam {
+    position: absolute;
+    left: 9%;
+    right: 9%;
+    top: 16%;
+    height: 38%;
+    border-radius: 50% 50% 42% 42%;
+    background:
+      radial-gradient(circle at 42% 48%, rgba(120, 70, 35, 0.28) 0 10%, transparent 18%),
+      radial-gradient(circle at 58% 42%, rgba(120, 70, 35, 0.18) 0 7%, transparent 14%),
+      radial-gradient(ellipse 80% 70% at 50% 40%, #fff8ee 0%, #f0e4d0 55%, #e2d2b8 100%);
+    box-shadow: inset 0 -0.15em 0.25em rgba(140, 90, 40, 0.15);
+  }
+
+  .cup-handle {
+    position: absolute;
+    z-index: 1;
+    right: 2%;
+    top: 28%;
+    width: 28%;
+    height: 38%;
+    border: 0.28em solid #e4d6c0;
+    border-left: 0;
+    border-radius: 0 70% 70% 0 / 0 55% 55% 0;
+    box-shadow: inset -0.08em 0 0.1em rgba(255, 255, 255, 0.35);
+  }
+
+  .cup-handle--wide {
+    right: 0;
+    top: 26%;
+    width: 30%;
+    height: 42%;
+    border-width: 0.32em;
+  }
+
+  .cup-saucer {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 0.55em;
+    margin-top: -0.15em;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at center, #f4ebe0 0%, #d9cbb4 55%, #b8a48a 100%);
+    box-shadow:
+      0 0.35em 0.7em rgba(0, 0, 0, 0.35),
+      inset 0 0.08em 0.15em rgba(255, 255, 255, 0.4);
+  }
+
+  .cup-saucer--wide {
+    height: 0.7em;
+  }
+
+  .cup-steam {
+    position: absolute;
+    left: 50%;
+    bottom: 72%;
+    width: 2.4em;
+    height: 4.5em;
+    margin-left: -1.2em;
     pointer-events: none;
   }
 
-  .steam span {
+  .cup--cappu .cup-steam {
+    width: 3.2em;
+    height: 5.5em;
+    margin-left: -1.6em;
+  }
+
+  .cup-steam span {
     position: absolute;
     bottom: 0;
     left: 50%;
-    width: 0.55rem;
-    height: 2.8rem;
-    margin-left: -0.28rem;
+    width: 0.45em;
+    height: 2.4em;
+    margin-left: -0.22em;
     border-radius: 999px;
-    background: linear-gradient(180deg, transparent, rgba(246, 240, 230, 0.28));
+    background: linear-gradient(180deg, transparent, rgba(246, 240, 230, 0.42));
     filter: blur(2px);
-    animation: rise 3.6s ease-in-out infinite;
+    animation: rise 3.8s ease-in-out infinite;
   }
 
-  .steam span:nth-child(2) {
-    left: 30%;
-    animation-delay: 0.7s;
-    height: 2.2rem;
+  .cup-steam span:nth-child(2) {
+    left: 28%;
+    animation-delay: 0.8s;
+    height: 2em;
   }
 
-  .steam span:nth-child(3) {
-    left: 70%;
-    animation-delay: 1.4s;
-    height: 2.5rem;
+  .cup-steam span:nth-child(3) {
+    left: 72%;
+    animation-delay: 1.5s;
+    height: 2.2em;
   }
 
   @keyframes spin {
@@ -261,17 +408,48 @@ import BarItaliaMark from '../../components/BarItaliaMark.astro';
     0%,
     100% {
       transform: translateY(0) scaleX(1);
-      opacity: 0.15;
+      opacity: 0.12;
     }
     50% {
-      transform: translateY(-1.4rem) scaleX(1.4);
+      transform: translateY(-1.5rem) scaleX(1.45);
       opacity: 0.55;
     }
   }
 
+  @keyframes cup-bob {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 0 -0.45rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .cup--espresso {
+      left: -2%;
+      bottom: 18%;
+      width: min(34vw, 7.5rem);
+      opacity: 0.85;
+    }
+
+    .cup--cappu {
+      right: -4%;
+      bottom: 8%;
+      width: min(48vw, 11rem);
+    }
+
+    .vinyl--soft {
+      opacity: 0.22;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .vinyl,
-    .steam span {
+    .vinyl--soft,
+    .cup-steam span,
+    .cup--espresso,
+    .cup--cappu {
       animation: none;
     }
   }
