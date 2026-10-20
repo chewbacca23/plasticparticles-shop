@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import MemberDelete from '../components/MemberDelete.astro';
 ---
 
 <BaseLayout
@@ -29,6 +30,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </p>
     </div>
   </section>
+  <MemberDelete />
 </BaseLayout>
 
 <style>
@@ -58,9 +60,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .pages :global(li) {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
     padding: 0.9rem 1.15rem;
     border-top: 1px solid rgba(215, 224, 232, 0.08);
   }
@@ -71,12 +70,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .pages :global(a) {
     color: var(--paper);
-  }
-
-  .pages :global(span) {
-    color: var(--amber-hot);
-    font-weight: 600;
-    white-space: nowrap;
   }
 
   .pages :global(.empty) {

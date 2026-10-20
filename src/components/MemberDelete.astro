@@ -1,0 +1,117 @@
+---
+/**
+ * Private roster × buttons on /members and /looks.
+ * Needs the looks cookie; API refuses deletes without it.
+ */
+---
+
+<style is:global>
+  .member-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .member-who {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .member-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex: 0 0 auto;
+  }
+
+  .member-when {
+    color: var(--amber-hot, #f0c27a);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .member-delete {
+    appearance: none;
+    border: 0;
+    margin: 0;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.35rem;
+    background: rgba(111, 207, 138, 0.12);
+    color: #6fcf8a;
+    font: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .member-delete:hover,
+  .member-delete:focus-visible {
+    background: rgba(111, 207, 138, 0.22);
+    color: #9aefb0;
+    outline: none;
+  }
+
+  .member-delete:disabled {
+    opacity: 0.45;
+    cursor: wait;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    if (window.__soulMemberDeleteBound) return;
+    window.__soulMemberDeleteBound = true;
+
+    document.addEventListener('click', function (event) {
+      var btn = event.target && event.target.closest && event.target.closest('[data-member-delete]');
+      if (!btn) return;
+      event.preventDefault();
+
+      var id = btn.getAttribute('data-member-delete') || '';
+      var email = btn.getAttribute('data-member-email') || '';
+      var label = email || id || 'this member';
+      if (!window.confirm('Remove ' + label + ' from the free list?')) return;
+
+      btn.disabled = true;
+      fetch('/api/members', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: id || undefined, email: email || undefined }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { res: res, data: data };
+          });
+        })
+        .then(function (pack) {
+          if (!pack.res.ok || !pack.data || !pack.data.ok) {
+            var msg =
+              (pack.data && pack.data.error) ||
+              'Could not remove just now. Open Looks first so you are signed in.';
+            window.alert(msg);
+            btn.disabled = false;
+            return;
+          }
+          var row = btn.closest('[data-member-id], .member-row, li');
+          if (row && row.parentNode) row.parentNode.removeChild(row);
+          var counts = document.querySelectorAll('[data-members-count]');
+          var next = typeof pack.data.count === 'number' ? String(pack.data.count) : '';
+          counts.forEach(function (node) {
+            if (next) node.textContent = next;
+          });
+          var lists = document.querySelectorAll('[data-members-list]');
+          lists.forEach(function (list) {
+            if (list.querySelector('li:not(.empty)')) return;
+            list.innerHTML =
+              '<li class="empty">No free members yet. When someone joins, they show here.</li>';
+          });
+        })
+        .catch(function () {
+          window.alert('Could not reach the member list just now.');
+          btn.disabled = false;
+        });
+    });
+  })();
+</script>

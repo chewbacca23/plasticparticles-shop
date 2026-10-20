@@ -6,6 +6,7 @@ import {
   handleMembersRequest,
   membersListHtml,
   parseMemberBody,
+  removeMember,
   splitMemberName,
   validateMember,
 } from './member-mail.js';
@@ -181,11 +182,70 @@ describe('handleMembersRequest', () => {
 describe('membersListHtml', () => {
   it('renders emails for the private roster', () => {
     const html = membersListHtml([
-      { email: 'a@b.co', name: 'Ana', at: '2026-10-15T12:00:00.000Z' },
+      { id: 'abc', email: 'a@b.co', name: 'Ana', at: '2026-10-15T12:00:00.000Z' },
     ]);
     assert.match(html, /Ana/);
     assert.match(html, /a@b\.co/);
     assert.match(html, /mailto:a@b\.co/);
+    assert.match(html, /data-member-delete="abc"/);
+    assert.match(html, /aria-label="Remove Ana"/);
     assert.match(formatMemberWhen('2026-10-15T12:00:00.000Z'), /2026/);
+  });
+});
+
+describe('removeMember', () => {
+  it('drops a member by id from KV', async () => {
+    const kv = memoryKv({
+      'members:list': JSON.stringify([
+        { id: 'keep', email: 'keep@example.com', name: 'Keep', at: '2026-10-15T12:00:00.000Z' },
+        { id: 'gone', email: 'gone@example.com', name: 'Gone', at: '2026-10-16T12:00:00.000Z' },
+      ]),
+    });
+    const result = await removeMember({ STATS: kv }, { id: 'gone' });
+    assert.equal(result.removed, true);
+    assert.equal(result.count, 1);
+    assert.equal(result.email, 'gone@example.com');
+    const list = JSON.parse(kv._store['members:list']);
+    assert.equal(list.length, 1);
+    assert.equal(list[0].email, 'keep@example.com');
+  });
+});
+
+describe('handleMembersRequest DELETE', () => {
+  it('refuses deletes without the looks cookie', async () => {
+    const res = await handleMembersRequest(
+      new Request('https://thenewsoulsearchers.de/api/members', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'gone@example.com' }),
+      }),
+      { STATS: memoryKv() },
+    );
+    assert.equal(res.status, 401);
+  });
+
+  it('removes a member when Henrik has the looks cookie', async () => {
+    const secret = 'test-looks-secret';
+    const token = await looksToken(secret);
+    const cookie = looksSetCookie(token, { secure: false }).split(';')[0];
+    const kv = memoryKv({
+      'members:list': JSON.stringify([
+        { id: '1', email: 'gone@example.com', name: 'Gone', at: '2026-10-15T12:00:00.000Z' },
+      ]),
+    });
+    const res = await handleMembersRequest(
+      new Request('https://thenewsoulsearchers.de/api/members', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json', cookie },
+        body: JSON.stringify({ id: '1' }),
+      }),
+      { STATS: kv, GITHUB_OAUTH_CLIENT_SECRET: secret },
+    );
+    const data = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(data.ok, true);
+    assert.equal(data.removed, true);
+    assert.equal(data.count, 0);
+    assert.equal(JSON.parse(kv._store['members:list']).length, 0);
   });
 });

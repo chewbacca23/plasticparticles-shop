@@ -1,7 +1,8 @@
 /**
  * Free Soul Searchers membership — email on the big mailing list.
- * POST /api/members  { email, name?, website? }
- * GET  /api/members  → { ok, free: true } (never lists addresses publicly)
+ * POST   /api/members  { email, name?, website? }
+ * GET    /api/members  → { ok, free: true } (never lists addresses publicly)
+ * DELETE /api/members  { id? , email? } with looks cookie (Henrik only)
  *
  * Each join is stored in STATS KV and pushed into one Resend Audience
  * (“Soul Searchers members”). Henrik can email that whole group back from
@@ -130,13 +131,24 @@ export function membersListHtml(members) {
   }
   return list
     .map((row) => {
-      const email = escapeHtml(row?.email || '');
+      const emailRaw = String(row?.email || '').trim().toLowerCase();
+      const email = escapeHtml(emailRaw);
+      const id = escapeHtml(String(row?.id || ''));
       const name = String(row?.name || '').trim();
       const when = formatMemberWhen(row?.at);
       const who = name
         ? `<span class="looks-name">${escapeHtml(name)}</span> · <a href="mailto:${email}">${email}</a>`
         : `<a href="mailto:${email}">${email}</a>`;
-      return `<li>${who}<span>${escapeHtml(when)}</span></li>`;
+      const label = escapeHtml(name || emailRaw || 'member');
+      return (
+        `<li class="member-row" data-member-id="${id}" data-member-email="${email}">` +
+        `<div class="member-who">${who}</div>` +
+        `<span class="member-meta">` +
+        `<span class="member-when">${escapeHtml(when)}</span>` +
+        `<button type="button" class="member-delete" data-member-delete="${id}" data-member-email="${email}" aria-label="Remove ${label}">×</button>` +
+        `</span>` +
+        `</li>`
+      );
     })
     .join('');
 }
@@ -192,6 +204,82 @@ export async function saveMember(env, fields) {
   list = [entry, ...list].slice(0, MEMBER_STORE_LIMIT);
   await kv.put(MEMBERS_LIST_KEY, JSON.stringify(list));
   return { entry, created: true };
+}
+
+/**
+ * Remove one member from the private KV roster (by id, else email).
+ * @param {any} env
+ * @param {{ id?: string, email?: string }} fields
+ */
+export async function removeMember(env, fields) {
+  const kv = env?.STATS;
+  if (!kv || typeof kv.get !== 'function' || typeof kv.put !== 'function') {
+    const err = new Error('Member storage is not wired.');
+    // @ts-expect-error code
+    err.code = 'E_MEMBERS_KV';
+    throw err;
+  }
+
+  const id = cleanLine(fields?.id, 80);
+  const email = cleanEmail(fields?.email || '').toLowerCase();
+  if (!id && !email) {
+    const err = new Error('Missing member.');
+    // @ts-expect-error code
+    err.code = 'E_MEMBERS_MISSING';
+    throw err;
+  }
+
+  const list = await readMemberList(env);
+  const hit = list.find((item) => {
+    if (!item || typeof item !== 'object') return false;
+    if (id && String(item.id || '') === id) return true;
+    if (email && String(item.email || '').toLowerCase() === email) return true;
+    return false;
+  });
+
+  if (!hit) {
+    return { removed: false, count: list.length, email };
+  }
+
+  const next = list.filter((item) => item !== hit);
+  await kv.put(MEMBERS_LIST_KEY, JSON.stringify(next));
+  return {
+    removed: true,
+    count: next.length,
+    email: String(hit.email || email || '').toLowerCase(),
+  };
+}
+
+/**
+ * Best-effort remove from the Resend audience so Broadcasts stay clean.
+ * @param {any} env
+ * @param {string} email
+ */
+export async function removeMemberFromAudience(env, email) {
+  const address = cleanEmail(email).toLowerCase();
+  if (!address) return { ok: false, reason: 'no_email' };
+
+  const { key } = resolveResendKey(env);
+  if (!key) return { ok: false, reason: 'no_resend_key' };
+
+  const audienceId = await resolveMemberAudienceId(env);
+  if (!audienceId) return { ok: false, reason: 'no_audience' };
+
+  const res = await fetch(
+    `https://api.resend.com/audiences/${audienceId}/contacts/${encodeURIComponent(address)}`,
+    {
+      method: 'DELETE',
+      headers: { authorization: `Bearer ${key}` },
+    },
+  );
+
+  if (res.ok || res.status === 404) {
+    return { ok: true, audienceId, status: res.status };
+  }
+
+  const detail = await res.text();
+  console.error('resend contact delete failed', res.status, detail);
+  return { ok: false, reason: 'resend_error', status: res.status, detail };
 }
 
 /**
@@ -373,10 +461,57 @@ export async function handleMembersRequest(request, env) {
       status: 204,
       headers: {
         'access-control-allow-origin': '*',
-        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
         'access-control-allow-headers': 'content-type',
       },
     });
+  }
+
+  if (request.method === 'DELETE') {
+    let privateView = false;
+    try {
+      const { requestHasLooksAccess } = await import('./page-looks.js');
+      privateView = await requestHasLooksAccess(request, env);
+    } catch {
+      privateView = false;
+    }
+    if (!privateView) {
+      return json({ ok: false, error: 'Private for Henrik.' }, 401);
+    }
+
+    const body = await readJson(request);
+    const id = cleanLine(body?.id, 80);
+    const email = cleanEmail(body?.email || '').toLowerCase();
+    if (!id && !email) {
+      return json({ ok: false, error: 'Pick a member to remove.' }, 400);
+    }
+
+    try {
+      const result = await removeMember(env, { id, email });
+      if (result.removed && result.email && String(result.email).includes('@')) {
+        try {
+          await removeMemberFromAudience(env, result.email);
+        } catch (syncErr) {
+          console.error('member audience delete failed', syncErr);
+        }
+      }
+      return json({
+        ok: true,
+        removed: result.removed,
+        count: result.count,
+        message: result.removed ? 'Member removed from the free list.' : 'That member was already gone.',
+      });
+    } catch (error) {
+      const code = error && typeof error === 'object' ? error.code : '';
+      if (code === 'E_MEMBERS_KV') {
+        return json(
+          { ok: false, error: 'Membership is not wired on the Worker yet.', code },
+          503,
+        );
+      }
+      console.error('member delete failed', error);
+      return json({ ok: false, error: 'Could not remove just now.' }, 502);
+    }
   }
 
   if (request.method === 'GET') {
@@ -414,7 +549,7 @@ export async function handleMembersRequest(request, env) {
   }
 
   if (request.method !== 'POST') {
-    return json({ ok: false, error: 'POST your email to join.' }, 405);
+    return json({ ok: false, error: 'POST your email to join, or DELETE with the looks cookie.' }, 405);
   }
 
   if (!(await underRateLimit(env, clientKey(request)))) {
