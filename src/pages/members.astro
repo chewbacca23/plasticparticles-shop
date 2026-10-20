@@ -9,8 +9,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 >
   <section class="section">
     <div class="site-shell members">
-      <p class="eyebrow">Private</p>
-      <h1 class="section-title">
+      <p class="eyebrow members-private">Private · only for you</p>
+      <h1 class="section-title members-title">
         Free members <span data-members-count>—</span>
       </h1>
       <p class="section-lead">
@@ -34,6 +34,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <style>
   .members {
     max-width: 40rem;
+  }
+
+  .members-private {
+    color: #6fcf8a;
+  }
+
+  .members-title {
+    color: #8fe0a4;
+  }
+
+  .members-title :global([data-members-count]) {
+    color: #6fcf8a;
   }
 
   .pages {

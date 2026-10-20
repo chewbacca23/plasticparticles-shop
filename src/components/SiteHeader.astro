@@ -7,9 +7,9 @@ const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const isHome = pathname === '/';
 const instagram = instagramBind(settings);
 
-type NavLink = { href: string; label: string; match?: string };
+type NavLink = { href: string; label: string; match?: string; private?: boolean };
 type NavItem =
-  | { type: 'link'; href: string; label: string; match?: string }
+  | { type: 'link'; href: string; label: string; match?: string; private?: boolean }
   | { type: 'group'; label: string; children: NavLink[] };
 
 const items: NavItem[] = [
@@ -31,7 +31,7 @@ const items: NavItem[] = [
     children: [
       { href: '/stores', label: 'Stores' },
       { href: '/friends', label: 'Friends' },
-      { href: '/members', label: 'Members' },
+      { href: '/members', label: 'Members', private: true },
     ],
   },
   { type: 'link', href: '/marketplace', label: 'Fresh' },
@@ -85,8 +85,12 @@ function groupActive(children: NavLink[]) {
                 {item.children.map((child) => (
                   <a
                     href={child.href}
-                    class:list={['nav-drop-link', { active: linkActive(child.href, child.match) }]}
+                    class:list={[
+                      'nav-drop-link',
+                      { active: linkActive(child.href, child.match), 'nav-drop-link--private': child.private },
+                    ]}
                     aria-current={linkActive(child.href, child.match) ? 'page' : undefined}
+                    title={child.private ? 'Private for you' : undefined}
                   >
                     {child.label}
                   </a>
@@ -576,6 +580,18 @@ function groupActive(children: NavLink[]) {
   .nav-drop-link.active {
     color: var(--amber-hot);
     background: rgba(212, 163, 90, 0.1);
+  }
+
+  /* Henrik-only cue: private pages in green so they stand out in the menu */
+  .nav-drop-link--private {
+    color: #6fcf8a;
+    font-weight: 650;
+  }
+
+  .nav-drop-link--private:hover,
+  .nav-drop-link--private.active {
+    color: #9aefb0;
+    background: rgba(111, 207, 138, 0.12);
   }
 
   @media (max-width: 640px) {
