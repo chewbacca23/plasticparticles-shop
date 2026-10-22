@@ -67,7 +67,7 @@ function groupByDay(list: typeof upcoming) {
 >
   <section class="section">
     <div class="site-shell cal">
-      <p class="eyebrow reveal">Berlin</p>
+      <p class="eyebrow reveal"><a href="/cities/berlin">Berlin</a></p>
       <h1 class="section-title reveal reveal-delay-1">The calendar</h1>
       <p class="section-lead reveal reveal-delay-2">
         A simple service for the city. Club rides from Rapha, MAAP, Wahoo, Soul Searchers and
@@ -209,6 +209,16 @@ function groupByDay(list: typeof upcoming) {
 <style>
   .cal {
     max-width: 42rem;
+  }
+
+  .cal .eyebrow a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .cal .eyebrow a:hover,
+  .cal .eyebrow a:focus-visible {
+    color: var(--amber-hot);
   }
 
   .cal-filters {

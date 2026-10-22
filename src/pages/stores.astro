@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { slugifyCityName } from '../lib/cities';
 import { existingMedia } from '../lib/media';
 
 const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((a, b) => {
@@ -33,6 +34,7 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
               const { name, city, country, note, url, photos } = store.data;
               const gallery = existingMedia(photos);
               const cover = gallery[0];
+              const citySlug = slugifyCityName(city);
               const NameTag = url ? 'a' : 'span';
               const nameProps = url
                 ? { href: url, target: '_blank', rel: 'noopener noreferrer' }
@@ -46,7 +48,7 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
                       {name}
                     </NameTag>
                     <p class="store-place">
-                      {city}, {country}
+                      {citySlug ? <a href={`/cities/${citySlug}`}>{city}</a> : city}, {country}
                     </p>
                   </div>
                   <div class="store-shots">
@@ -313,6 +315,16 @@ const stores = (await getCollection('stores', ({ data }) => !data.draft)).sort((
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  .store-place a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .store-place a:hover,
+  .store-place a:focus-visible {
+    color: var(--amber-hot, #f0c27a);
   }
 
   .store-note {

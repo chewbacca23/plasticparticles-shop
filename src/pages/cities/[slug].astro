@@ -1,0 +1,294 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { cities, cityBySlug, storeMatchesCity, textMatchesCity } from '../../lib/cities';
+import { existingMedia } from '../../lib/media';
+
+export function getStaticPaths() {
+  return cities.map((city) => ({ params: { slug: city.slug } }));
+}
+
+const { slug } = Astro.params;
+const city = cityBySlug(slug!);
+if (!city) {
+  return Astro.redirect('/cities');
+}
+
+const [storesAll, storiesAll, stoodAll] = await Promise.all([
+  getCollection('stores', ({ data }) => !data.draft),
+  getCollection('stories', ({ data }) => !data.draft),
+  getCollection('stood', ({ data }) => !data.draft),
+]);
+
+const stores = storesAll
+  .filter((entry) => storeMatchesCity(city, entry.data.city))
+  .sort((a, b) => a.data.order - b.data.order || a.data.name.localeCompare(b.data.name));
+
+const rides = storiesAll
+  .filter((entry) =>
+    textMatchesCity(city, entry.id, entry.data.title, entry.data.headline, entry.data.description),
+  )
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+const pins = stoodAll
+  .filter((entry) => textMatchesCity(city, entry.data.place, entry.data.note))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const cover = city.cover ? existingMedia([city.cover])[0] : undefined;
+const pageTitle = `Cycling in ${city.name}`;
+---
+
+<BaseLayout title={pageTitle} description={city.description} image={cover}>
+  <section class="section">
+    <div class="site-shell city">
+      <p class="eyebrow reveal">
+        <a href="/cities">Cities</a>
+        <span aria-hidden="true"> · </span>
+        {city.country}
+      </p>
+      <h1 class="section-title reveal reveal-delay-1">{city.name}</h1>
+      <p class="section-lead reveal reveal-delay-2">{city.lead}</p>
+
+      {
+        cover && (
+          <figure class="city-hero reveal reveal-delay-2">
+            <img
+              src={cover}
+              alt=""
+              width="1400"
+              height="900"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+        )
+      }
+
+      {
+        city.hasCalendar && (
+          <p class="city-callout reveal">
+            <a href="/calendar">Berlin calendar</a>
+            <span>Club rides, open floors, and race watch days in the city.</span>
+          </p>
+        )
+      }
+
+      {
+        rides.length > 0 && (
+          <div class="city-block reveal">
+            <h2 class="city-h2">Rides</h2>
+            <ul class="city-list">
+              {rides.map((ride) => (
+                <li>
+                  <a href={`/stories/${ride.id}`}>{ride.data.headline || ride.data.title}</a>
+                  {ride.data.description ? <p>{ride.data.description}</p> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+
+      {
+        stores.length > 0 && (
+          <div class="city-block reveal">
+            <h2 class="city-h2">Stores</h2>
+            <ul class="city-list">
+              {stores.map((store) => {
+                const shot = existingMedia(store.data.photos)[0];
+                return (
+                  <li class="city-store">
+                    {shot ? (
+                      <img src={shot} alt="" width="160" height="120" loading="lazy" decoding="async" />
+                    ) : null}
+                    <div>
+                      {store.data.url ? (
+                        <a href={store.data.url} target="_blank" rel="noopener noreferrer">
+                          {store.data.name}
+                        </a>
+                      ) : (
+                        <span class="city-store-name">{store.data.name}</span>
+                      )}
+                      {store.data.note ? <p>{store.data.note}</p> : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p class="city-more">
+              <a href="/stores">All stores around the world</a>
+            </p>
+          </div>
+        )
+      }
+
+      {
+        pins.length > 0 && (
+          <div class="city-block reveal">
+            <h2 class="city-h2">Where I stood</h2>
+            <ul class="city-list">
+              {pins.map((pin) => (
+                <li>
+                  {pin.data.href ? (
+                    <a href={pin.data.href}>{pin.data.place}</a>
+                  ) : (
+                    <span class="city-store-name">{pin.data.place}</span>
+                  )}
+                  {pin.data.note ? <p>{pin.data.note}</p> : null}
+                </li>
+              ))}
+            </ul>
+            <p class="city-more">
+              <a href="/stood">Full map of where I stood</a>
+            </p>
+          </div>
+        )
+      }
+
+      <nav class="city-nav reveal" aria-label="Other cities">
+        <a href="/cities">All cities</a>
+        {
+          cities
+            .filter((other) => other.slug !== city.slug)
+            .map((other) => <a href={`/cities/${other.slug}`}>{other.name}</a>)
+        }
+      </nav>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .city {
+    max-width: 42rem;
+  }
+
+  .eyebrow a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .eyebrow a:hover,
+  .eyebrow a:focus-visible {
+    color: var(--amber-hot, #f0c27a);
+  }
+
+  .city-hero {
+    margin: 1.75rem 0 0;
+  }
+
+  .city-hero img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+
+  .city-callout {
+    margin: 1.75rem 0 0;
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+  }
+
+  .city-callout a {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--paper);
+    text-decoration: none;
+  }
+
+  .city-callout a:hover,
+  .city-callout span {
+    color: rgba(215, 224, 232, 0.7);
+  }
+
+  .city-callout a:hover,
+  .city-callout a:focus-visible {
+    color: var(--amber-hot, #f0c27a);
+  }
+
+  .city-block {
+    margin-top: 2.5rem;
+  }
+
+  .city-h2 {
+    margin: 0 0 0.85rem;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--paper);
+  }
+
+  .city-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .city-list a,
+  .city-store-name {
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    color: var(--paper);
+    text-decoration: none;
+  }
+
+  .city-list a:hover,
+  .city-list a:focus-visible {
+    color: var(--amber-hot, #f0c27a);
+  }
+
+  .city-list p {
+    margin: 0.3rem 0 0;
+    color: rgba(215, 224, 232, 0.68);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .city-store {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.85rem;
+    align-items: start;
+  }
+
+  .city-store img {
+    width: 4.5rem;
+    height: 3.4rem;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+
+  .city-more {
+    margin: 1rem 0 0;
+    font-size: 0.92rem;
+  }
+
+  .city-more a {
+    color: rgba(215, 224, 232, 0.72);
+  }
+
+  .city-nav {
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(215, 224, 232, 0.12);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .city-nav a {
+    color: rgba(215, 224, 232, 0.7);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .city-nav a:hover,
+  .city-nav a:focus-visible {
+    color: var(--amber-hot, #f0c27a);
+  }
+</style>
