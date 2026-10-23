@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
-import { mediaExists } from '../../lib/media';
+import { galleryMedia } from '../../lib/media';
 import { newestFirst } from '../../lib/newest';
 import { site } from '../../site.config';
 
@@ -13,7 +13,8 @@ const stories = newestFirst(
 
 const tiles = stories.map((story) => ({
   story,
-  cover: mediaExists(story.data.cover) ? story.data.cover : null,
+  // Cover first; if that field is empty, first gallery shot still fills the tile.
+  cover: galleryMedia(story.data.cover, story.data.gallery)[0] || null,
 }));
 ---
 

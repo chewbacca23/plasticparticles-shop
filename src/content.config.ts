@@ -18,10 +18,11 @@ const journal = defineCollection({
     cover: z.string().optional(),
     gallery: z.array(galleryItem).optional().default([]),
     draft: z.boolean().default(false),
-  }).transform((data) => ({
-    ...data,
-    gallery: data.gallery.map((item) => item.trim()).filter(Boolean),
-  })),
+  }).transform((data) => {
+    const gallery = data.gallery.map((item) => item.trim()).filter(Boolean);
+    const cover = (data.cover ?? '').trim() || gallery[0] || undefined;
+    return { ...data, cover, gallery };
+  }),
 });
 
 const stories = defineCollection({
@@ -46,12 +47,17 @@ const stories = defineCollection({
       order: z.number().optional().default(0),
       draft: z.boolean().default(false),
     })
-    .transform((data) => ({
-      ...data,
-      headline: data.headline.trim() || data.title,
-      description: data.description.trim() || data.title,
-      gallery: data.gallery.map((item) => item.trim()).filter(Boolean),
-    })),
+    .transform((data) => {
+      const gallery = data.gallery.map((item) => item.trim()).filter(Boolean);
+      const cover = (data.cover ?? '').trim() || gallery[0] || undefined;
+      return {
+        ...data,
+        headline: data.headline.trim() || data.title,
+        description: data.description.trim() || data.title,
+        cover,
+        gallery,
+      };
+    }),
 });
 
 const shots = defineCollection({
