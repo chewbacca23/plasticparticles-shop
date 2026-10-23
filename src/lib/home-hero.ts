@@ -1,4 +1,33 @@
-import { mediaExists } from './media.ts';
+import { galleryMedia, mediaExists } from './media.ts';
+
+export type RidePhotoLink = {
+  href: string;
+  label: string;
+};
+
+/**
+ * Map every ride photo (cover + gallery) to its story URL so the home dia
+ * can open that ride on click. Newer rides win when two share a file.
+ */
+export function buildRidePhotoHrefs(
+  rides: readonly {
+    id: string;
+    headline?: string | null;
+    title?: string | null;
+    cover?: string | null;
+    gallery?: readonly (string | null | undefined)[];
+  }[],
+): Map<string, RidePhotoLink> {
+  const map = new Map<string, RidePhotoLink>();
+  for (const ride of rides) {
+    const href = `/stories/${ride.id}`;
+    const label = String(ride.headline || ride.title || ride.id).trim() || ride.id;
+    for (const photo of galleryMedia(ride.cover, ride.gallery ?? [])) {
+      if (!map.has(photo)) map.set(photo, { href, label });
+    }
+  }
+  return map;
+}
 
 /**
  * Home opens on one full-bleed road photo. Prefer the shot Henrik picks in

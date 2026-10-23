@@ -7,6 +7,7 @@ import {
   isHomePath,
   mergeStartupPics,
   rideCoverFromData,
+  rideHrefByPhoto,
   slidesFromHtml,
   sortRideCovers,
   startupPicsFrom,
@@ -104,6 +105,28 @@ describe('startupPicsFrom', () => {
   });
 });
 
+describe('rideHrefByPhoto', () => {
+  it('maps cover and gallery shots to the ride URL', () => {
+    assert.deepEqual(
+      rideHrefByPhoto([
+        {
+          slug: 'alps',
+          data: {
+            pubDate: '2026-10-12',
+            headline: 'Alps',
+            cover: '/stories/alps.jpg',
+            gallery: ['/stories/alps-detail.jpg'],
+          },
+        },
+      ]),
+      {
+        '/stories/alps.jpg': { href: '/stories/alps', label: 'Alps' },
+        '/stories/alps-detail.jpg': { href: '/stories/alps', label: 'Alps' },
+      },
+    );
+  });
+});
+
 describe('fillHomeDiaInHtml', () => {
   it('paints a new ride cover onto a stale baked dia', () => {
     const html = fillHomeDiaInHtml(
@@ -116,9 +139,12 @@ describe('fillHomeDiaInHtml', () => {
         </div>
       </section>`,
       ['/stories/new-climb.jpg', '/stories/old.jpg'],
+      { '/stories/new-climb.jpg': { href: '/stories/new-climb', label: 'New climb' } },
     );
     assert.match(html, /data-count="2"/);
     assert.match(html, /src="\/stories\/new-climb\.jpg"/);
+    assert.match(html, /data-ride-href="\/stories\/new-climb"/);
+    assert.match(html, /class="hero hero--ride-links has-photo"/);
     assert.match(html, /src="\/stories\/old\.jpg"/);
     assert.doesNotMatch(html, /older\.jpg/);
     assert.deepEqual(slidesFromHtml(html), ['/stories/new-climb.jpg', '/stories/old.jpg']);
@@ -189,7 +215,7 @@ describe('handleFreshHome', () => {
     };
 
     const baked = `<div class="hero-dia" data-hero-dia data-count="1">
-      <img class="hero-photo" src="/stories/alps.jpg" alt="">
+      <img class="hero-photo" src="/stories/alps.jpg" alt="Alps" data-ride-href="/stories/alps">
     </div>`;
     const res = await handleFreshHome(new Request('https://thenewsoulsearchers.de/'), {
       ASSETS: {
@@ -198,7 +224,9 @@ describe('handleFreshHome', () => {
     });
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('cache-control'), null);
-    assert.deepEqual(slidesFromHtml(await res.text()), ['/stories/alps.jpg']);
+    const html = await res.text();
+    assert.deepEqual(slidesFromHtml(html), ['/stories/alps.jpg']);
+    assert.match(html, /data-ride-href="\/stories\/alps"/);
   });
 
   it('skips non-home paths', async () => {

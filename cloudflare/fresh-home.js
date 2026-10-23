@@ -64,6 +64,30 @@ export function sortRideCovers(rides) {
     .filter((photo, index, all) => all.indexOf(photo) === index);
 }
 
+/** Photo path → story URL so a click on the home dia opens that ride. */
+export function rideHrefByPhoto(rides) {
+  const map = {};
+  const ordered = [...rides].sort((a, b) => {
+    const byDate = rideDateValue(b.data) - rideDateValue(a.data);
+    if (byDate !== 0) return byDate;
+    return String(a.slug || '').localeCompare(String(b.slug || ''));
+  });
+  for (const ride of ordered) {
+    const slug = String(ride.slug || '');
+    if (!SAFE_SLUG.test(slug) || ride.data?.draft === true) continue;
+    const href = `/stories/${slug}`;
+    const label = String(
+      ride.data?.headline || ride.data?.title || slug,
+    ).trim() || slug;
+    for (const photo of galleryPaths(ride.data?.cover, ride.data?.gallery)) {
+      const path = String(photo || '').split('?')[0];
+      if (!STORY_PHOTO.test(path) || map[path]) continue;
+      map[path] = { href, label };
+    }
+  }
+  return map;
+}
+
 /**
  * Newest ride covers go first so a published ride opens the site.
  * Cap six: a new cover slides in at the front, the one that has been
@@ -95,21 +119,26 @@ function astroCid(html) {
   return fromSky ? fromSky[0] : '';
 }
 
-function renderDiaImgs(slides, cid) {
+function renderDiaImgs(slides, cid, hrefMap = {}) {
   const attr = cid ? ` ${cid}` : '';
   return slides
     .map((src, index) => {
       const decoding = index === 0 ? 'sync' : 'async';
       const priority = index === 0 ? 'high' : 'low';
-      return `<img class="hero-photo" src="${escapeHtml(src)}" alt="" width="1920" height="1080" decoding="${decoding}" fetchpriority="${priority}" loading="eager" style="--dia-i: ${index};"${attr}>`;
+      const link = hrefMap[src] || hrefMap[String(src).split('?')[0]] || null;
+      const rideHref = link?.href
+        ? ` data-ride-href="${escapeHtml(link.href)}"`
+        : '';
+      const alt = link?.label ? escapeHtml(link.label) : '';
+      return `<img class="hero-photo" src="${escapeHtml(src)}" alt="${alt}" width="1920" height="1080" decoding="${decoding}" fetchpriority="${priority}" loading="eager" style="--dia-i: ${index};"${rideHref}${attr}>`;
     })
     .join('');
 }
 
-export function renderHomeDia(slides, cid = '') {
+export function renderHomeDia(slides, cid = '', hrefMap = {}) {
   const count = slides.length;
   const cidAttr = cid ? ` ${cid}` : '';
-  return `<div class="hero-dia" data-hero-dia data-count="${count}" style="--dia-count: ${count};"${cidAttr}> ${renderDiaImgs(slides, cid)} </div>`;
+  return `<div class="hero-dia" data-hero-dia data-count="${count}" style="--dia-count: ${count};" aria-label="Open the ride for this photo"${cidAttr}> ${renderDiaImgs(slides, cid, hrefMap)} </div>`;
 }
 
 function withHasPhoto(html) {
@@ -119,11 +148,11 @@ function withHasPhoto(html) {
   });
 }
 
-export function fillHomeDiaInHtml(html, slides) {
+export function fillHomeDiaInHtml(html, slides, hrefMap = {}) {
   const source = String(html || '');
   if (!slides.length) return source;
   const cid = astroCid(source);
-  const block = renderHomeDia(slides, cid);
+  const block = renderHomeDia(slides, cid, hrefMap);
   let next = source;
   if (/<div[^>]*data-hero-dia[^>]*>/i.test(next)) {
     next = next.replace(/<div[^>]*data-hero-dia[^>]*>[\s\S]*?<\/div>/i, block);
@@ -131,6 +160,12 @@ export function fillHomeDiaInHtml(html, slides) {
     next = next.replace(/(<div[^>]*class="[^"]*\bsky\b[^"]*"[^>]*>)/i, `$1 ${block}`);
   } else {
     return source;
+  }
+  if (Object.keys(hrefMap).length) {
+    next = next.replace(
+      /class="hero(?![-\w])([^"]*)"/g,
+      (full, rest) => (/\bhero--ride-links\b/.test(rest) ? full : `class="hero hero--ride-links${rest}"`),
+    );
   }
   return withHasPhoto(next);
 }
@@ -221,7 +256,7 @@ export async function handleFreshHome(request, env) {
 
   const baked = slidesFromHtml(html);
   const slides = startupPicsFrom(rides, settings, baked);
-  if (!slides.length || sameSlides(slides, baked)) {
+  if (!slides.length) {
     return new Response(html, {
       status: 200,
       headers: {
@@ -230,7 +265,18 @@ export async function handleFreshHome(request, env) {
     });
   }
 
-  const filled = fillHomeDiaInHtml(html, slides);
+  const hrefMap = rideHrefByPhoto(rides);
+  const alreadyLinked = /data-ride-href=/.test(html);
+  if (sameSlides(slides, baked) && alreadyLinked) {
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'content-type': asset.headers.get('content-type') || 'text/html; charset=utf-8',
+      },
+    });
+  }
+
+  const filled = fillHomeDiaInHtml(html, slides, hrefMap);
   const headers = new Headers(asset.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
   headers.set('cache-control', 'no-store');

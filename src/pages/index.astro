@@ -4,7 +4,7 @@ import LogoBackdrop from '../components/LogoBackdrop.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
 import { galleryMedia } from '../lib/media';
-import { resolveHomeHeroSlides } from '../lib/home-hero';
+import { buildRidePhotoHrefs, resolveHomeHeroSlides } from '../lib/home-hero';
 import { newestFirst } from '../lib/newest';
 import { site } from '../site.config';
 import homeSettings from '../content/settings/home.json';
@@ -25,6 +25,10 @@ const rideCovers = ridesNewest
   .map((story) => galleryMedia(story.data.cover, story.data.gallery)[0])
   .filter(Boolean);
 
+const rideLinks = buildRidePhotoHrefs(
+  ridesNewest.map((story) => ({ id: story.id, ...story.data })),
+);
+
 const allNow = collectFeed(
   shots.map((shot) => ({ id: shot.id, ...shot.data })),
   stories.map((story) => ({ id: story.id, ...story.data })),
@@ -36,8 +40,12 @@ const heroSlides = resolveHomeHeroSlides(
   homeSettings,
   allNow.map((item) => item.photo),
   rideCovers,
-);
-const heroPhoto = heroSlides[0] || null;
+).map((photo) => ({
+  photo,
+  ride: rideLinks.get(photo) ?? null,
+}));
+const heroPhoto = heroSlides[0]?.photo || null;
+const hasRideLinks = heroSlides.some((slide) => slide.ride);
 ---
 
 <BaseLayout watermark={false}>
@@ -46,8 +54,11 @@ const heroPhoto = heroSlides[0] || null;
       <link slot="head" rel="preload" as="image" href={heroPhoto} fetchpriority="high" />
     )
   }
-  <section class:list={['hero', { 'has-photo': Boolean(heroPhoto) }]} aria-label="Welcome">
-    <div class="sky" aria-hidden="true">
+  <section
+    class:list={['hero', { 'has-photo': Boolean(heroPhoto), 'hero--ride-links': hasRideLinks }]}
+    aria-label="Welcome"
+  >
+    <div class="sky">
       {
         heroSlides.length > 0 ? (
           <>
@@ -56,19 +67,21 @@ const heroPhoto = heroSlides[0] || null;
               data-hero-dia
               data-count={heroSlides.length}
               style={`--dia-count: ${heroSlides.length};`}
+              aria-label="Open the ride for this photo"
             >
               {
-                heroSlides.map((photo, index) => (
+                heroSlides.map(({ photo, ride }, index) => (
                   <img
                     class="hero-photo"
                     src={photo}
-                    alt=""
+                    alt={ride ? ride.label : ''}
                     width="1920"
                     height="1080"
                     decoding={index === 0 ? 'sync' : 'async'}
                     fetchpriority={index === 0 ? 'high' : 'low'}
                     loading="eager"
                     style={`--dia-i: ${index};`}
+                    data-ride-href={ride?.href}
                   />
                 ))
               }
@@ -76,6 +89,7 @@ const heroPhoto = heroSlides[0] || null;
             {/*
               Rebuilds --dia-i from the calendar day so returning fans land
               on a different opener even when the HTML was built days ago.
+              Click the photo (or through the title stack) to open that ride.
             */}
             <script is:inline>
               (() => {
@@ -83,14 +97,54 @@ const heroPhoto = heroSlides[0] || null;
                 if (!dia) return;
                 const imgs = [...dia.querySelectorAll('.hero-photo')];
                 const n = imgs.length;
-                if (n < 2) return;
-                const offset = Math.floor(Date.now() / 86400000) % n;
-                imgs.forEach((img, i) => {
-                  img.style.setProperty('--dia-i', String((i - offset + n) % n));
+                if (n >= 2) {
+                  const offset = Math.floor(Date.now() / 86400000) % n;
+                  imgs.forEach((img, i) => {
+                    img.style.setProperty('--dia-i', String((i - offset + n) % n));
+                  });
+                }
+
+                function currentRideHref() {
+                  let best = null;
+                  let bestOpacity = -1;
+                  for (const img of dia.querySelectorAll('.hero-photo')) {
+                    const href = img.getAttribute('data-ride-href');
+                    if (!href) continue;
+                    const opacity = parseFloat(getComputedStyle(img).opacity) || 0;
+                    if (opacity > bestOpacity) {
+                      bestOpacity = opacity;
+                      best = href;
+                    }
+                  }
+                  return best;
+                }
+
+                const hero = dia.closest('.hero');
+                if (!hero) return;
+
+                function openRide(event) {
+                  if (event.target.closest('a, button, input, label')) return;
+                  const href = currentRideHref();
+                  if (!href) return;
+                  event.preventDefault();
+                  window.location.href = href;
+                }
+
+                hero.addEventListener('click', openRide);
+                hero.addEventListener('keydown', (event) => {
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  if (event.target !== hero) return;
+                  const href = currentRideHref();
+                  if (!href) return;
+                  event.preventDefault();
+                  window.location.href = href;
                 });
+                if (dia.querySelector('[data-ride-href]')) {
+                  hero.tabIndex = 0;
+                }
               })();
             </script>
-            <div class="hero-scrim"></div>
+            <div class="hero-scrim" aria-hidden="true"></div>
           </>
         ) : (
           <>
@@ -148,7 +202,7 @@ const heroPhoto = heroSlides[0] || null;
   .sky {
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     background:
       radial-gradient(ellipse 85% 60% at 72% 18%, rgba(61, 107, 122, 0.38), transparent 62%),
       radial-gradient(ellipse 55% 50% at 12% 28%, rgba(212, 163, 90, 0.14), transparent 58%),
@@ -158,6 +212,21 @@ const heroPhoto = heroSlides[0] || null;
   .hero-dia {
     position: absolute;
     inset: 0;
+  }
+
+  .hero--ride-links {
+    cursor: pointer;
+  }
+
+  .hero--ride-links .hero-copy {
+    pointer-events: none;
+  }
+
+  .hero--ride-links .hero-copy a,
+  .hero--ride-links .hero-copy .btn,
+  .hero--ride-links .hero-copy button {
+    pointer-events: auto;
+    cursor: pointer;
   }
 
   .hero-photo {
@@ -231,6 +300,7 @@ const heroPhoto = heroSlides[0] || null;
     position: absolute;
     inset: 0;
     z-index: 2;
+    pointer-events: none;
     background:
       linear-gradient(180deg, rgba(8, 12, 17, 0.28) 0%, rgba(8, 12, 17, 0.12) 34%, rgba(8, 12, 17, 0.55) 68%, rgba(8, 12, 17, 0.88) 100%),
       radial-gradient(ellipse 70% 55% at 18% 78%, rgba(8, 12, 17, 0.45), transparent 70%);
@@ -286,6 +356,7 @@ const heroPhoto = heroSlides[0] || null;
 
   .hero-copy {
     position: relative;
+    z-index: 3;
     padding: 7rem 0 5.5rem;
     max-width: 44rem;
   }

@@ -2,11 +2,33 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   DEFAULT_HERO_SLIDES,
+  buildRidePhotoHrefs,
   feedWithoutHeroRepeats,
   resolveHomeHero,
   resolveHomeHeroSlides,
   rotateSlidesForDay,
 } from './home-hero.ts';
+
+describe('buildRidePhotoHrefs', () => {
+  it('maps cover and gallery photos to the ride URL', () => {
+    const map = buildRidePhotoHrefs([
+      {
+        id: 'nice',
+        headline: 'Nice',
+        cover: '/stories/nice-baie-des-anges.jpg',
+        gallery: ['/stories/nice-promenade-detail.jpg'],
+      },
+    ]);
+    assert.deepEqual(map.get('/stories/nice-baie-des-anges.jpg'), {
+      href: '/stories/nice',
+      label: 'Nice',
+    });
+    assert.deepEqual(map.get('/stories/nice-promenade-detail.jpg'), {
+      href: '/stories/nice',
+      label: 'Nice',
+    });
+  });
+});
 
 describe('resolveHomeHero', () => {
   it('uses the CMS photo when the file is there', () => {
