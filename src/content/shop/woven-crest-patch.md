@@ -11,7 +11,7 @@ blurb: >-
 
 
   These are wonderful I`d say. And if you could afford a tenner for each patch that would help up, cheers.
-photo: ""
+photo: /stories/thepatch.jpeg
 limit: 50 worldwide
 mailSubject: Patch
 order: 0
