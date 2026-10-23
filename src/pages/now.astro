@@ -5,6 +5,7 @@ import InstagramLatest from '../components/InstagramLatest.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
 import { feedWithoutHeroRepeats, resolveHomeHeroSlides } from '../lib/home-hero';
+import { galleryMedia } from '../lib/media';
 import homeSettings from '../content/settings/home.json';
 
 const [shots, stories] = await Promise.all([
@@ -16,7 +17,16 @@ const allNow = collectFeed(
   shots.map((shot) => ({ id: shot.id, ...shot.data })),
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
-const heroSlides = resolveHomeHeroSlides(homeSettings, allNow.map((item) => item.photo));
+const rideCovers = stories
+  .slice()
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .map((story) => galleryMedia(story.data.cover, story.data.gallery)[0])
+  .filter(Boolean);
+const heroSlides = resolveHomeHeroSlides(
+  homeSettings,
+  allNow.map((item) => item.photo),
+  rideCovers,
+);
 const items = feedWithoutHeroRepeats(allNow, heroSlides);
 ---
 

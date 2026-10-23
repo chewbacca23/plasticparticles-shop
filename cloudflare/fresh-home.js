@@ -66,7 +66,8 @@ export function sortRideCovers(rides) {
 
 /**
  * Newest ride covers go first so a published ride opens the site.
- * Existing CMS / baked slides stay as fillers, capped at six.
+ * Cap six: a new cover slides in at the front, the one that has been
+ * on the dia longest drops off the end. CMS / baked slides fill gaps only.
  */
 export function mergeStartupPics(existing = [], rideCovers = [], limit = HERO_SLIDE_LIMIT) {
   const out = [];

@@ -2,13 +2,12 @@
 /**
  * Put newest ride covers into Site → Home startup pics (home.json).
  *
- * Used by .github/workflows/sync-ride-startup-pics.yml after a ride Save.
- * On the Mac, from the blog checkout:
+ * Newest cover leads. Cap is six — when a seventh ride lands, the oldest
+ * cover drops off the end. Used by .github/workflows/sync-ride-startup-pics.yml
+ * after a ride Save. On the Mac:
  *
  *   npm run photos:startup-pics
  *   npm run photos:startup-pics -- --check
- *
- * Does not shrink photos and does not watch a camera roll or drop folder.
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';

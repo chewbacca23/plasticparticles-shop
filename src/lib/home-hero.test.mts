@@ -29,7 +29,49 @@ describe('resolveHomeHero', () => {
 });
 
 describe('resolveHomeHeroSlides', () => {
-  it('leads with newest Now photos so fans see fresh road shots', () => {
+  it('leads with newest ride covers so a new ride opens the home dia', () => {
+    assert.deepEqual(
+      resolveHomeHeroSlides(
+        {
+          heroSlides: [
+            '/stories/img_6372.jpeg',
+            '/stories/img_5940.jpg',
+          ],
+        },
+        ['/stories/img_2878.jpg', '/stories/nice-baie-des-anges.jpg'],
+        ['/stories/thepatch.jpeg', '/stories/img_0914.jpeg'],
+      ),
+      [
+        '/stories/thepatch.jpeg',
+        '/stories/img_0914.jpeg',
+        '/stories/img_6372.jpeg',
+        '/stories/img_5940.jpg',
+        '/stories/img_2878.jpg',
+        '/stories/nice-baie-des-anges.jpg',
+      ],
+    );
+  });
+
+  it('drops the oldest when a seventh ride cover arrives', () => {
+    const slides = resolveHomeHeroSlides(
+      {},
+      [],
+      [
+        '/stories/img_2878.jpg',
+        '/stories/nice-baie-des-anges.jpg',
+        '/stories/nice-promenade-detail.jpg',
+        '/stories/img_6344.jpg',
+        '/stories/img_6125.jpg',
+        '/stories/img_6072.jpg',
+        '/stories/img_6400.jpeg',
+      ],
+    );
+    assert.equal(slides.length, 6);
+    assert.equal(slides[0], '/stories/img_2878.jpg');
+    assert.ok(!slides.includes('/stories/img_6400.jpeg'));
+  });
+
+  it('falls back to Now photos when ride covers are empty', () => {
     assert.deepEqual(
       resolveHomeHeroSlides(
         {
@@ -41,10 +83,10 @@ describe('resolveHomeHeroSlides', () => {
         ['/stories/img_2878.jpg', '/stories/nice-baie-des-anges.jpg'],
       ),
       [
-        '/stories/img_2878.jpg',
-        '/stories/nice-baie-des-anges.jpg',
         '/stories/img_6372.jpeg',
         '/stories/img_5940.jpg',
+        '/stories/img_2878.jpg',
+        '/stories/nice-baie-des-anges.jpg',
         '/stories/img_1442.jpeg',
         '/stories/img_5956.jpg',
       ],

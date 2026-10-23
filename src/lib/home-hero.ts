@@ -37,7 +37,8 @@ export const HERO_ONCE_EXTRAS = [
   '/stories/nice-promenade-detail.jpg',
 ] as const;
 
-const HERO_SLIDE_LIMIT = 6;
+/** Newest ride covers on the dia. A seventh ride pushes the oldest cover off. */
+export const HERO_SLIDE_LIMIT = 6;
 
 function uniqueExisting(paths: readonly (string | null | undefined)[]): string[] {
   const out: string[] = [];
@@ -88,22 +89,24 @@ export function rotateSlidesForDay(
 }
 
 /**
- * Up to a few full-bleed hero slides for the home dia.
- * Newest Now photos lead so occasional fans catch fresh road shots;
- * CMS Site → Home picks and soft defaults fill any gaps.
- * After deploy, cloudflare/fresh-home.js still prepends new ride covers
- * from GitHub so a Save does not wait on the next Astro build.
+ * Home dia: newest ride covers first (cap six). A new ride slides in at the
+ * front and the cover that landed longest ago drops off the end.
+ * Site → Home and soft defaults only fill when there are fewer than six rides.
+ * cloudflare/fresh-home.js does the same from GitHub so a Save shows up
+ * before the next full rebuild.
  */
 export function resolveHomeHeroSlides(
   settings: { heroPhoto?: string | null; heroSlides?: unknown } = {},
   fallbacks: readonly (string | null | undefined)[] = [],
+  rideCovers: readonly (string | null | undefined)[] = [],
 ): string[] {
+  const fromRides = uniqueExisting(rideCovers);
   const fromCms = parseCmsSlides(settings.heroSlides);
   const fromFeed = uniqueExisting(fallbacks);
   const defaults = uniqueExisting(DEFAULT_HERO_SLIDES);
 
   const pool: string[] = [];
-  for (const source of [fromFeed, fromCms, defaults]) {
+  for (const source of [fromRides, fromCms, fromFeed, defaults]) {
     for (const photo of source) {
       if (pool.includes(photo)) continue;
       pool.push(photo);
@@ -113,6 +116,6 @@ export function resolveHomeHeroSlides(
 
   if (pool.length >= 2) return pool;
 
-  const single = resolveHomeHero(settings.heroPhoto, fallbacks);
+  const single = resolveHomeHero(settings.heroPhoto, [...rideCovers, ...fallbacks]);
   return single ? [single] : [];
 }

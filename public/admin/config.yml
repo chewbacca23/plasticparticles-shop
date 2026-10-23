@@ -363,7 +363,7 @@ collections:
             widget: list
             required: false
             summary: '{{slide}}'
-            hint: "Soft dia on the home hero. Newest ride covers join this list on their own. Leave empty for Nice, the café cup, Henrik, and the little moped. About nine seconds between soft blends."
+            hint: "Home hero dia. The computer adds each new ride cover here and drops the oldest once there are six. You can leave this alone. Soft blends about every nine seconds."
             field:
               label: Slide
               name: slide

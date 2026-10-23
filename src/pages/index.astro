@@ -3,7 +3,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import LogoBackdrop from '../components/LogoBackdrop.astro';
 import { getCollection } from 'astro:content';
 import { collectFeed } from '../lib/feed';
+import { galleryMedia } from '../lib/media';
 import { resolveHomeHeroSlides } from '../lib/home-hero';
+import { newestFirst } from '../lib/newest';
 import { site } from '../site.config';
 import homeSettings from '../content/settings/home.json';
 
@@ -12,14 +14,29 @@ const [shots, stories] = await Promise.all([
   getCollection('stories', ({ data }) => !data.draft),
 ]);
 
+const ridesNewest = newestFirst(
+  stories,
+  (story) => story.data.pubDate,
+  (a, b) => (b.data.order ?? 0) - (a.data.order ?? 0),
+);
+
+// Newest ride cover first. A seventh ride drops the oldest cover off the dia.
+const rideCovers = ridesNewest
+  .map((story) => galleryMedia(story.data.cover, story.data.gallery)[0])
+  .filter(Boolean);
+
 const allNow = collectFeed(
   shots.map((shot) => ({ id: shot.id, ...shot.data })),
   stories.map((story) => ({ id: story.id, ...story.data })),
 );
 
-// Newest Now covers first, then CMS picks. An inline script below shifts
-// --dia-i by calendar day so a static deploy still opens differently each morning.
-const heroSlides = resolveHomeHeroSlides(homeSettings, allNow.map((item) => item.photo));
+// An inline script below shifts --dia-i by calendar day so a static deploy
+// still opens on a different slide each morning.
+const heroSlides = resolveHomeHeroSlides(
+  homeSettings,
+  allNow.map((item) => item.photo),
+  rideCovers,
+);
 const heroPhoto = heroSlides[0] || null;
 ---
 
