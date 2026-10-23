@@ -143,7 +143,7 @@ describe('recentDayBars and recentWeekBars', () => {
 });
 
 describe('looksBarsHtml', () => {
-  it('scales bars against the busiest day', () => {
+  it('scales upright columns against the busiest day', () => {
     const html = looksBarsHtml(
       [
         { label: 'Mon', looks: 2 },
@@ -151,10 +151,11 @@ describe('looksBarsHtml', () => {
       ],
       'empty',
     );
-    assert.match(html, /width:50%/);
-    assert.match(html, /width:100%/);
+    assert.match(html, /height:50%/);
+    assert.match(html, /height:100%/);
     assert.match(html, /looks-bar-num"[^>]*>4</);
-    assert.match(html, /display:grid/);
+    assert.match(html, /flex-direction:column/);
+    assert.match(html, /linear-gradient\(180deg/);
   });
 });
 

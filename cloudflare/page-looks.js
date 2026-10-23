@@ -668,12 +668,12 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     li span { color:var(--amber-hot); font-weight:600; }
     li .looks-name { color:var(--paper); font-weight:400; }
     .empty { color:rgba(215,224,232,.68); }
-    .looks-bars { display:grid; gap:.55rem; margin:0; padding:1rem 1.15rem; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); }
-    .looks-bar { display:grid; grid-template-columns:3.6rem 1fr 2.4rem; align-items:center; gap:.65rem; padding:0; border:0; }
-    .looks-bar-label { color:rgba(215,224,232,.78); font-size:.82rem; font-weight:600; }
-    .looks-bar-track { display:block; height:.55rem; border-radius:999px; background:rgba(215,224,232,.1); overflow:hidden; }
-    .looks-bar-fill { display:block; height:100%; width:var(--looks-bar,0%); border-radius:inherit; background:linear-gradient(90deg,#f0c27a,#d4a35a); }
-    .looks-bar-num { text-align:right; color:var(--amber-hot); font-weight:700; font-variant-numeric:tabular-nums; }
+    .looks-bars { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2.1rem,1fr); align-items:end; gap:.4rem; margin:0; padding:1.1rem 1rem .9rem; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); min-height:12.5rem; overflow-x:auto; }
+    .looks-bar { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:.35rem; height:10.5rem; padding:0; border:0; min-width:0; }
+    .looks-bar-label { color:rgba(215,224,232,.78); font-size:.72rem; font-weight:600; text-align:center; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+    .looks-bar-track { display:flex; flex-direction:column; justify-content:flex-end; width:100%; max-width:2.4rem; flex:1 1 auto; border-radius:8px 8px 4px 4px; background:rgba(215,224,232,.1); overflow:hidden; }
+    .looks-bar-fill { display:block; width:100%; height:var(--looks-bar,0%); min-height:0; border-radius:inherit; background:linear-gradient(180deg,#f0c27a,#d4a35a); }
+    .looks-bar-num { color:var(--amber-hot); font-weight:700; font-size:.78rem; font-variant-numeric:tabular-nums; line-height:1; }
     .back { margin:1.5rem 0 0; padding-left:1.15rem; }
     .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
   </style>
@@ -692,7 +692,7 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     <h2>Last 14 days</h2>
     <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>
     <h2>Last 8 weeks</h2>
-    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${weekBars}</ol>
+    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE_WIDE}">${weekBars}</ol>
     <h2>All the years</h2>
     <ol>${yearRows}</ol>
     <h2>Pages people opened</h2>
@@ -767,7 +767,8 @@ export function looksFromRows(items, emptyText) {
 }
 
 /**
- * CSS bar chart rows for day/week Looks graphics.
+ * Day/week Looks charts as upright columns (grew left-to-right before;
+ * now 90° counter-clockwise so tallest day is easiest to spot).
  * Inline styles on purpose: Worker-injected nodes miss Astro scoped CSS,
  * and a stale deploy without global.css still needs visible bars.
  * @param {{ label?: string, looks?: number }[]} bars
@@ -777,34 +778,36 @@ export function looksFromRows(items, emptyText) {
 export function looksBarsHtml(bars, emptyText, opts = {}) {
   const list = Array.isArray(bars) ? bars : [];
   if (!list.length) {
-    return `<li class="empty">${emptyText}</li>`;
+    return `<li class="empty" style="grid-column:1/-1;color:rgba(215,224,232,0.68)">${emptyText}</li>`;
   }
   const max = Math.max(1, ...list.map((row) => Number(row.looks) || 0));
-  const labelCol = opts.wideLabel ? 'minmax(5.5rem, 7.5rem)' : '3.6rem';
-  const rowStyle =
-    `display:grid;grid-template-columns:${labelCol} minmax(0,1fr) 2.75rem;` +
-    'align-items:center;gap:0.65rem;padding:0;border:0;margin:0;list-style:none';
+  const colMin = opts.wideLabel ? '3.1rem' : '2.1rem';
+  const colStyle =
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;' +
+    `gap:0.35rem;height:10.5rem;padding:0;border:0;margin:0;list-style:none;min-width:${colMin}`;
   const labelStyle =
-    'color:rgba(215,224,232,0.78);font-size:0.82rem;font-weight:600;white-space:nowrap';
+    'color:rgba(215,224,232,0.78);font-size:0.72rem;font-weight:600;text-align:center;' +
+    'line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis';
   const trackStyle =
-    'display:block;height:0.55rem;border-radius:999px;background:rgba(215,224,232,0.12);overflow:hidden';
+    'display:flex;flex-direction:column;justify-content:flex-end;width:100%;max-width:2.4rem;' +
+    'flex:1 1 auto;border-radius:8px 8px 4px 4px;background:rgba(215,224,232,0.12);overflow:hidden';
   const numStyle =
-    'text-align:right;color:#f0c27a;font-weight:700;font-variant-numeric:tabular-nums';
+    'color:#f0c27a;font-weight:700;font-size:0.78rem;font-variant-numeric:tabular-nums;line-height:1';
   return list
     .map((row) => {
       const looks = Number(row.looks) || 0;
       const pct = Math.round((looks / max) * 100);
       const label = escapeHtml(row.label || '—');
       const fillStyle =
-        `display:block;height:100%;width:${pct}%;min-width:${looks > 0 ? '0.35rem' : '0'};` +
-        'border-radius:inherit;background:linear-gradient(90deg,#f0c27a,#d4a35a)';
+        `display:block;width:100%;height:${pct}%;min-height:${looks > 0 ? '0.35rem' : '0'};` +
+        'border-radius:inherit;background:linear-gradient(180deg,#f0c27a,#d4a35a)';
       return (
-        `<li class="looks-bar" style="${rowStyle}">` +
-        `<span class="looks-bar-label" style="${labelStyle}">${label}</span>` +
+        `<li class="looks-bar" style="${colStyle}">` +
+        `<span class="looks-bar-num" style="${numStyle}">${looks}</span>` +
         `<span class="looks-bar-track" style="${trackStyle}" aria-hidden="true">` +
         `<span class="looks-bar-fill" style="${fillStyle}"></span>` +
         `</span>` +
-        `<span class="looks-bar-num" style="${numStyle}">${looks}</span>` +
+        `<span class="looks-bar-label" style="${labelStyle}">${label}</span>` +
         `</li>`
       );
     })
@@ -813,8 +816,14 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
 
 /** List shell styles so the chart box shows even without global.css. */
 export const LOOKS_BARS_LIST_STYLE =
-  'display:grid;gap:0.55rem;margin:0 0 0.5rem;padding:1rem 1.15rem;list-style:none;' +
-  'border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
+  'display:grid;grid-auto-flow:column;grid-auto-columns:minmax(2.1rem,1fr);align-items:end;' +
+  'gap:0.4rem;margin:0 0 0.5rem;padding:1.1rem 1rem 0.9rem;list-style:none;min-height:12.5rem;' +
+  'overflow-x:auto;border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
+
+export const LOOKS_BARS_LIST_STYLE_WIDE = LOOKS_BARS_LIST_STYLE.replace(
+  'minmax(2.1rem,1fr)',
+  'minmax(3.1rem,1fr)',
+);
 
 
 export function fillLooksInHtml(html, summary, members = [], shares = []) {
@@ -871,7 +880,7 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     )
     .replace(
       /<ol([^>]*data-looks-weeks[^>]*)>[\s\S]*?<\/ol>/,
-      `<ol$1 style="${LOOKS_BARS_LIST_STYLE}">${weekBars}</ol>`,
+      `<ol$1 style="${LOOKS_BARS_LIST_STYLE_WIDE}">${weekBars}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,
