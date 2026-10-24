@@ -465,8 +465,8 @@ function groupActive(children: NavLink[]) {
   }
 
   .brand-logo {
-    width: 2.4rem;
-    height: auto;
+    width: auto;
+    height: 2.75rem;
     object-fit: contain;
     filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
   }
@@ -480,8 +480,10 @@ function groupActive(children: NavLink[]) {
   }
 
   .header--home .brand-logo {
-    width: 2.4rem;
-    max-width: calc(2.4rem * var(--crest));
+    width: auto;
+    height: 2.75rem;
+    max-height: calc(2.75rem * var(--crest));
+    max-width: calc(1.75rem * var(--crest));
     opacity: 0;
     overflow: hidden;
     pointer-events: none;
@@ -492,11 +494,13 @@ function groupActive(children: NavLink[]) {
     pointer-events: auto;
   }
 
+  /* Cap height matches the crest beside it. */
   .brand-text {
     font-family: var(--font-display);
-    font-size: 1.12rem;
+    font-size: 2.55rem;
     font-weight: 400;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
+    line-height: 0.85;
     white-space: nowrap;
   }
 

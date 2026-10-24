@@ -356,6 +356,8 @@ const hasRideLinks = heroSlides.some((slide) => slide.ride);
   }
 
   .hero-copy {
+    /* Crest height — wordmark matches it. */
+    --crest-h: clamp(5.5rem, 16vw, 8.75rem);
     position: relative;
     z-index: 3;
     padding: 7rem 0 5.5rem;
@@ -363,9 +365,9 @@ const hasRideLinks = heroSlides.some((slide) => slide.ride);
   }
 
   .hero-logo {
-    width: clamp(3.5rem, 10vw, 5.5rem);
-    height: auto;
-    margin-bottom: 1.25rem;
+    width: auto;
+    height: var(--crest-h);
+    margin-bottom: 0.85rem;
     opacity: 0.92;
     filter: drop-shadow(0 12px 32px rgba(212, 163, 90, 0.25));
   }
@@ -373,10 +375,10 @@ const hasRideLinks = heroSlides.some((slide) => slide.ride);
   .brand-hero {
     margin: 0 0 1rem;
     font-family: var(--font-display);
-    font-size: clamp(2.85rem, 9vw, 5.6rem);
+    font-size: var(--crest-h);
     font-weight: 300;
-    line-height: 0.92;
-    letter-spacing: 0.04em;
+    line-height: 0.85;
+    letter-spacing: 0;
     color: var(--paper);
     text-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
   }
@@ -411,18 +413,17 @@ const hasRideLinks = heroSlides.some((slide) => slide.ride);
     }
 
     .hero-copy {
+      --crest-h: clamp(3.4rem, 22vw, 4.6rem);
       padding: 2.25rem 0 1.35rem;
     }
 
     .hero-logo {
-      width: 2.35rem;
-      margin-bottom: 0.55rem;
+      margin-bottom: 0.45rem;
     }
 
     .brand-hero {
       margin-bottom: 0.45rem;
-      font-size: clamp(1.75rem, 8vw, 2.2rem);
-      line-height: 1.02;
+      line-height: 0.85;
     }
 
     h1 {

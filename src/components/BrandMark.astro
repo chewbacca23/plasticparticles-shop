@@ -10,8 +10,9 @@ const { class: className } = Astro.props;
 ---
 
 <span class:list={['brand-mark', className]} aria-label={site.name}>
-  <span class="brand-mark__the">the</span><span class="brand-mark__soul">SOUL</span
-  ><span class="brand-mark__searchers">SEARCHERS</span>
+  <span class="brand-mark__the">the</span><span class="brand-mark__caps"
+    ><span class="brand-mark__soul">SOUL</span><span class="brand-mark__searchers">SEARCHERS</span></span
+  >
 </span>
 
 <style>
@@ -19,21 +20,25 @@ const { class: className } = Astro.props;
     display: inline-flex;
     align-items: baseline;
     white-space: nowrap;
+    line-height: 0.85;
+    letter-spacing: 0;
   }
 
   .brand-mark__the {
-    font-size: 0.72em;
+    font-size: 0.55em;
     font-weight: 300;
-    letter-spacing: 0.02em;
-    margin-right: 0.04em;
+    letter-spacing: 0;
+    margin-right: 0.02em;
     color: var(--crest-red, #e31b23);
   }
 
-  .brand-mark__soul {
-    letter-spacing: 0.03em;
+  .brand-mark__caps {
+    display: inline-flex;
+    letter-spacing: -0.045em;
   }
 
+  .brand-mark__soul,
   .brand-mark__searchers {
-    letter-spacing: -0.01em;
+    letter-spacing: inherit;
   }
 </style>
