@@ -28,8 +28,11 @@ const { class: className } = Astro.props;
 
 <style>
   .brand-mark {
+    position: relative;
+    z-index: 0;
     display: inline-flex;
     align-items: baseline;
+    isolation: isolate;
     white-space: nowrap;
     line-height: 0.85;
     letter-spacing: 0;
@@ -38,7 +41,6 @@ const { class: className } = Astro.props;
   .brand-mark__the {
     position: relative;
     z-index: 1;
-    isolation: isolate;
     font-size: 0.55em;
     font-weight: 300;
     letter-spacing: 0;
@@ -46,7 +48,7 @@ const { class: className } = Astro.props;
     color: var(--crest-red, #e31b23);
   }
 
-  /* Exact inkdot — only behind the red “the”, on the photo. */
+  /* Inkdot on the photo, behind every letter in the lockup. */
   .brand-mark__splash {
     position: absolute;
     left: 50%;
@@ -62,6 +64,8 @@ const { class: className } = Astro.props;
   }
 
   .brand-mark__caps {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
     letter-spacing: -0.045em;
   }
