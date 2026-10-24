@@ -347,7 +347,7 @@ export function kindRemarksStyles() {
 .kind-inner{display:grid;gap:.85rem;align-items:stretch}
 @media (min-width:720px){.kind-inner{grid-template-columns:1fr 1fr;gap:1rem}}
 .kind-panel,.kind-member{display:grid;gap:.5rem;align-content:start;min-width:0;padding:.85rem .95rem .95rem;border:1px solid rgba(215,224,232,.14);border-radius:.35rem;background:rgba(8,12,17,.42);box-sizing:border-box}
-.kind-title{margin:0;font-family:var(--font-display),Fraunces,Georgia,serif;font-size:.98rem;color:var(--paper,#eef3f7);font-weight:500}
+.kind-title{margin:0;font-family:var(--font-display),'Host Grotesk',Helvetica,Arial,sans-serif;font-size:.98rem;color:var(--paper,#eef3f7);font-weight:400}
 .kind-lead,.kind-empty,.kind-status{margin:0;color:rgba(215,224,232,.58);font-size:.8rem;line-height:1.4}
 .kind-list{list-style:none;margin:0;padding:0;display:grid;gap:.4rem;align-content:start}
 .kind-list li{margin:0;padding:0;color:rgba(238,243,247,.82);font-size:.82rem;line-height:1.4}

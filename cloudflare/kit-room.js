@@ -69,12 +69,12 @@ export function kitGatePage({ wrong = false, wired = true } = {}) {
     :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber:#d4a35a; --amber-hot:#f0c27a; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
-      font-family: Figtree, "Avenir Next", system-ui, sans-serif; }
+      font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; }
     main { max-width:22rem; margin:0 auto; padding:5rem 1.2rem 4rem; }
     .eyebrow { margin:0 0 .85rem; color:var(--amber); font-size:.78rem; font-weight:700;
       letter-spacing:.18em; text-transform:uppercase; }
-    h1 { margin:0 0 .65rem; color:var(--paper); font-family: Fraunces, Georgia, serif;
-      font-size:2rem; font-weight:500; letter-spacing:-.02em; }
+    h1 { margin:0 0 .65rem; color:var(--paper); font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size:2rem; font-weight:300; letter-spacing:-.03em; }
     p { margin:0 0 1.4rem; line-height:1.6; color:rgba(215,224,232,.72); }
     form { display:grid; gap:.85rem; }
     label { display:grid; gap:.4rem; }

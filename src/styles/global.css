@@ -12,8 +12,8 @@
   --sea-deep: #1e3a45;
   --glow: rgba(212, 163, 90, 0.35);
 
-  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Figtree', 'Avenir Next', 'Segoe UI', sans-serif;
+  --font-display: 'Host Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: 'Host Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
   --space-xs: 0.5rem;
   --space-sm: 1rem;
@@ -85,9 +85,9 @@ h2,
 h3,
 h4 {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   color: var(--paper);
 }
 
@@ -281,7 +281,8 @@ p {
   color: rgba(238, 243, 247, 0.88);
   font-family: var(--font-display);
   font-size: 1.15rem;
-  font-style: italic;
+  font-weight: 350;
+  font-style: normal;
 }
 
 .prose ul,

@@ -307,27 +307,27 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
   <title>${escapeHtml(title)} · The Soul Searchers</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <link rel="icon" type="image/png" href="/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link rel="preload" href="/fonts/host-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
   <style>
+    @font-face { font-family:'Host Grotesk'; font-style:normal; font-weight:300 700; font-display:swap;
+      src:url('/fonts/host-grotesk-latin.woff2') format('woff2'); }
     :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber-hot:#f0c27a; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
-      font-family: Figtree, "Avenir Next", "Segoe UI", sans-serif; font-size:1.0625rem; line-height:1.65; }
+      font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size:1.0625rem; line-height:1.65; }
     a { color: inherit; }
     a:hover { color: var(--amber-hot); }
     .site-shell { width: min(72rem, calc(100% - 2rem)); margin: 0 auto; }
     header { position: sticky; top: 0; border-bottom: 1px solid rgba(215,224,232,.06);
       background: rgba(10,14,20,.65); backdrop-filter: blur(16px); }
     .header-inner { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.85rem 0; }
-    .brand { display:flex; align-items:center; gap:.65rem; text-decoration:none; font-weight:600; }
+    .brand { display:flex; align-items:center; gap:.65rem; text-decoration:none; font-weight:500; }
     .brand img { width:2rem; height:auto; }
     nav { display:flex; flex-wrap:wrap; gap:.85rem 1.1rem; font-size:.92rem; }
     main { padding: 2.5rem 0 4rem; }
     article { max-width: 52rem; }
     .eyebrow { margin:0 0 .4rem; letter-spacing:.08em; text-transform:uppercase; font-size:.78rem; color:rgba(215,224,232,.55); }
-    h1 { margin:0 0 .75rem; font-family: Fraunces, Georgia, serif; font-size: clamp(2rem, 4.5vw, 3.1rem); color:var(--paper); }
+    h1 { margin:0 0 .75rem; font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight:300; letter-spacing:-.03em; font-size: clamp(2rem, 4.5vw, 3.1rem); color:var(--paper); }
     .dek { margin:0 0 1.75rem; color:rgba(215,224,232,.75); font-size:1.1rem; }
     .hero { margin:0 0 2rem; }
     figure { margin:0; overflow:hidden; border-radius:.9rem; box-shadow:0 18px 40px rgba(0,0,0,.25); }
