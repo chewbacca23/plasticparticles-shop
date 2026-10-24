@@ -11,7 +11,27 @@ const { class: className } = Astro.props;
 
 <span class:list={['brand-mark', className]} aria-label={site.name}>
   <span class="brand-mark__the">
-    <span class="brand-mark__splash" aria-hidden="true"></span>
+    <svg
+      class="brand-mark__splash"
+      viewBox="0 0 120 90"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <!-- Solid Photoshop-style grey paint splat -->
+      <path
+        fill="var(--paint-splash, #c8d0d8)"
+        d="M58 8c8-6 18-5 24 2 4 4 5 9 3 14 7 1 14 6 15 14 1 7-3 13-9 16 4 5 4 12 0 17-3 5-9 7-14 6 0 7-5 14-13 15-7 1-13-3-16-9-4 4-11 5-16 1-5-3-7-9-5-14-6-1-11-6-11-13 0-6 4-11 10-13-2-5 0-12 5-15 5-4 12-3 16 1 2-5 7-9 11-12z"
+      />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="22" cy="28" r="5.5" />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="18" cy="48" r="3.2" />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="98" cy="24" r="4.5" />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="104" cy="42" r="2.8" />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="92" cy="68" r="3.6" />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="34" cy="74" r="2.6" />
+      <circle fill="var(--paint-splash, #c8d0d8)" cx="72" cy="12" r="2.4" />
+      <circle fill="var(--paint-splash, #b8c2cc)" cx="48" cy="78" r="2" />
+      <circle fill="var(--paint-splash, #b8c2cc)" cx="12" cy="58" r="1.8" />
+    </svg>
     the
   </span><span class="brand-mark__caps"
     ><span class="brand-mark__soul">SOUL</span><span class="brand-mark__searchers">SEARCHERS</span></span
@@ -34,28 +54,20 @@ const { class: className } = Astro.props;
     font-size: 0.55em;
     font-weight: 300;
     letter-spacing: 0;
-    margin-right: 0.02em;
+    margin-right: 0.06em;
     color: var(--crest-red, #e31b23);
   }
 
-  /* Light grey paint dash so the crest-red the jumps. */
   .brand-mark__splash {
     position: absolute;
     left: 50%;
     top: 50%;
     z-index: -1;
-    width: 2.15em;
-    height: 1.55em;
-    transform: translate(-48%, -52%) rotate(-12deg);
+    width: 2.85em;
+    height: 2.15em;
+    transform: translate(-50%, -54%) rotate(-9deg);
     pointer-events: none;
-    background:
-      radial-gradient(ellipse 42% 38% at 28% 42%, rgba(238, 243, 247, 0.72) 0%, transparent 72%),
-      radial-gradient(ellipse 48% 44% at 62% 48%, rgba(215, 224, 232, 0.58) 0%, transparent 70%),
-      radial-gradient(ellipse 28% 32% at 78% 28%, rgba(238, 243, 247, 0.5) 0%, transparent 68%),
-      radial-gradient(ellipse 22% 26% at 18% 68%, rgba(215, 224, 232, 0.45) 0%, transparent 65%),
-      radial-gradient(ellipse 18% 20% at 88% 72%, rgba(238, 243, 247, 0.4) 0%, transparent 70%);
-    filter: blur(0.35px) contrast(1.05);
-    opacity: 0.92;
+    overflow: visible;
   }
 
   .brand-mark__caps {
