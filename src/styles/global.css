@@ -406,7 +406,8 @@ p {
     rgba(8, 12, 17, 0.55);
 }
 
-.looks .looks-bars[data-looks-weeks] {
+.looks .looks-bars[data-looks-weeks],
+.looks .looks-bars[data-looks-months] {
   grid-auto-columns: minmax(3rem, 1fr);
 }
 

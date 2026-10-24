@@ -13,8 +13,8 @@ import MemberDelete from '../components/MemberDelete.astro';
       <p class="eyebrow">Open counts</p>
       <h1 class="section-title">Looks</h1>
       <p class="section-lead">
-        Private for you. Opens per page, day, and week — Berlin calendar. No names. Counts start
-        after this Worker is live.
+        Private for you. Opens per page, day, week, and month — Berlin calendar. No names. Counts
+        start after this Worker is live.
       </p>
 
       <div class="cards" role="group" aria-label="Summary counts">
@@ -27,6 +27,11 @@ import MemberDelete from '../components/MemberDelete.astro';
           <p class="card-label">n<sub>7</sub></p>
           <p class="card-hint">Last 7 days</p>
           <p class="card-num" data-looks="week">—</p>
+        </article>
+        <article class="card">
+          <p class="card-label">n<sub>month</sub></p>
+          <p class="card-hint">This month</p>
+          <p class="card-num" data-looks="month">—</p>
         </article>
         <article class="card">
           <p class="card-label">n<sub>year</sub></p>
@@ -50,6 +55,12 @@ import MemberDelete from '../components/MemberDelete.astro';
       <p class="note">Each column = 7 days. Compare this week to last.</p>
       <ol class="looks-bars" data-looks-weeks>
         <li class="empty">Week bars show once people have opened the site.</li>
+      </ol>
+
+      <h2 class="pages-title">12 months</h2>
+      <p class="note">Berlin calendar months. Column height ∝ opens. Max column = busiest month.</p>
+      <ol class="looks-bars" data-looks-months>
+        <li class="empty">Month bars show once people have opened the site.</li>
       </ol>
 
       <h2 class="pages-title">Years</h2>
@@ -115,13 +126,13 @@ import MemberDelete from '../components/MemberDelete.astro';
     background: rgba(8, 12, 17, 0.45);
   }
 
-  @media (min-width: 640px) {
+  @media (min-width: 720px) {
     .cards {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
 
-  @media (max-width: 639px) {
+  @media (max-width: 719px) {
     .cards {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -136,22 +147,22 @@ import MemberDelete from '../components/MemberDelete.astro';
     background: transparent;
   }
 
-  @media (min-width: 640px) {
-    .card:nth-child(4n) {
+  @media (min-width: 720px) {
+    .card:nth-child(5n) {
       border-right: 0;
     }
 
-    .card:nth-child(n + 1) {
+    .card {
       border-bottom: 0;
     }
   }
 
-  @media (max-width: 639px) {
+  @media (max-width: 719px) {
     .card:nth-child(2n) {
       border-right: 0;
     }
 
-    .card:nth-child(n + 3) {
+    .card:nth-child(n + 5) {
       border-bottom: 0;
     }
   }

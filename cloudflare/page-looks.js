@@ -44,6 +44,22 @@ export function berlinYear(now = new Date()) {
   return berlinDay(now).slice(0, 4);
 }
 
+export function berlinMonth(now = new Date()) {
+  return berlinDay(now).slice(0, 7);
+}
+
+/** Month label for charts (Oct 26). */
+export function berlinMonthLabel(monthKey) {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(monthKey || ''));
+  if (!match) return '—';
+  const at = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 15, 12));
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    month: 'short',
+    year: '2-digit',
+  }).format(at);
+}
+
 export function emptyLooks() {
   return { total: 0, days: {}, paths: {}, countries: {}, from: {} };
 }
@@ -171,10 +187,42 @@ export function recentWeekBars(days, now = new Date(), count = 8) {
   return bars;
 }
 
+/**
+ * Last N Berlin calendar months (oldest → newest).
+ * @param {Record<string, number>} days
+ * @param {Date} [now]
+ * @param {number} [count]
+ */
+export function recentMonthBars(days, now = new Date(), count = 12) {
+  const bars = [];
+  const n = Math.max(1, Math.min(24, Number(count) || 12));
+  const [y0, m0] = berlinDay(now).split('-').map(Number);
+  for (let i = n - 1; i >= 0; i--) {
+    let y = y0;
+    let m = m0 - i;
+    while (m < 1) {
+      m += 12;
+      y -= 1;
+    }
+    const month = `${y}-${String(m).padStart(2, '0')}`;
+    let looks = 0;
+    for (const [day, value] of Object.entries(days || {})) {
+      if (String(day).startsWith(month)) looks += Number(value) || 0;
+    }
+    bars.push({
+      month,
+      label: berlinMonthLabel(month),
+      looks,
+    });
+  }
+  return bars;
+}
+
 export function summarizeLooks(data, now = new Date()) {
   const days = data.days || {};
   const today = berlinDay(now);
   const thisYear = berlinYear(now);
+  const thisMonth = berlinMonth(now);
   const weekDays = [];
   for (let i = 6; i >= 0; i--) {
     const at = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
@@ -183,6 +231,10 @@ export function summarizeLooks(data, now = new Date()) {
   const week = weekDays.reduce((sum, day) => sum + (Number(days[day]) || 0), 0);
   const years = yearTotals(days);
   const year = years.find((row) => row.name === thisYear)?.looks || 0;
+  const month = Object.entries(days).reduce((sum, [day, value]) => {
+    if (String(day).startsWith(thisMonth)) return sum + (Number(value) || 0);
+    return sum;
+  }, 0);
   const pages = Object.entries(data.paths || {})
     .map(([path, looks]) => ({ path, looks: Number(looks) || 0 }))
     .sort((a, b) => b.looks - a.looks || a.path.localeCompare(b.path))
@@ -191,9 +243,11 @@ export function summarizeLooks(data, now = new Date()) {
   const from = topNamedCounts(data.from);
   const dayBars = recentDayBars(days, now, 14);
   const weekBars = recentWeekBars(days, now, 8);
+  const monthBars = recentMonthBars(days, now, 12);
   return {
     today: Number(days[today]) || 0,
     week,
+    month,
     year,
     total: Number(data.total) || 0,
     years,
@@ -202,6 +256,7 @@ export function summarizeLooks(data, now = new Date()) {
     from,
     dayBars,
     weekBars,
+    monthBars,
   };
 }
 
@@ -604,6 +659,7 @@ export async function recordDocumentLook(request, env) {
 export function looksDashboardPage(summary, members = [], shares = []) {
   const today = Number(summary?.today) || 0;
   const week = Number(summary?.week) || 0;
+  const month = Number(summary?.month) || 0;
   const year = Number(summary?.year) || 0;
   const total = Number(summary?.total) || 0;
   const rows = looksPageRows(summary?.pages);
@@ -626,6 +682,11 @@ export function looksDashboardPage(summary, members = [], shares = []) {
   const weekBars = looksBarsHtml(
     summary?.weekBars,
     'Week bars show once people have opened the site.',
+    { wideLabel: true },
+  );
+  const monthBars = looksBarsHtml(
+    summary?.monthBars,
+    'Month bars show once people have opened the site.',
     { wideLabel: true },
   );
   const memberCount = Array.isArray(members) ? members.length : 0;
@@ -654,10 +715,10 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     h1 { margin:0 0 .75rem; font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-weight:300; font-size: clamp(2rem, 4vw, 2.8rem); color:var(--paper); }
     .lead { margin:0 0 1.75rem; color:rgba(215,224,232,.72); }
     .cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; margin:0 0 2.25rem; border:1px solid rgba(215,224,232,.16); background:rgba(8,12,17,.45); }
-    @media (min-width:640px) { .cards { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    @media (min-width:720px) { .cards { grid-template-columns:repeat(5,minmax(0,1fr)); } }
     .card { padding:.95rem 1rem 1.05rem; border:0; border-right:1px solid rgba(215,224,232,.12); border-bottom:1px solid rgba(215,224,232,.12); border-radius:0; background:transparent; }
-    @media (min-width:640px) { .card:nth-child(4n){border-right:0} .card{border-bottom:0} }
-    @media (max-width:639px) { .card:nth-child(2n){border-right:0} .card:nth-child(n+3){border-bottom:0} }
+    @media (min-width:720px) { .card:nth-child(5n){border-right:0} .card{border-bottom:0} }
+    @media (max-width:719px) { .card:nth-child(2n){border-right:0} .card:nth-child(n+5){border-bottom:0} }
     .card-label { margin:0; color:var(--amber); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:.95rem; font-weight:300; letter-spacing:.04em; line-height:1; }
     .card-label sub { font-size:.65em; }
     .card-hint { margin:.28rem 0 0; color:rgba(215,224,232,.55); font-size:.68rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; }
@@ -686,10 +747,11 @@ export function looksDashboardPage(summary, members = [], shares = []) {
   <main class="site-shell">
     <p class="eyebrow">Open counts</p>
     <h1>Looks</h1>
-    <p class="lead">Opens per page, day, and week — Berlin calendar. No names. Private for you.</p>
+    <p class="lead">Opens per page, day, week, and month — Berlin calendar. No names. Private for you.</p>
     <div class="cards" role="group" aria-label="Summary counts">
       <article class="card"><p class="card-label">n<sub>day</sub></p><p class="card-hint">Today</p><p class="card-num">${today}</p></article>
       <article class="card"><p class="card-label">n<sub>7</sub></p><p class="card-hint">Last 7 days</p><p class="card-num">${week}</p></article>
+      <article class="card"><p class="card-label">n<sub>month</sub></p><p class="card-hint">This month</p><p class="card-num">${month}</p></article>
       <article class="card"><p class="card-label">n<sub>year</sub></p><p class="card-hint">This year</p><p class="card-num">${year}</p></article>
       <article class="card"><p class="card-label">Σ</p><p class="card-hint">All time</p><p class="card-num">${total}</p></article>
     </div>
@@ -699,6 +761,9 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     <h2>8 weeks</h2>
     <p class="note">Each column = 7 days.</p>
     <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE_WIDE}">${weekBars}</ol>
+    <h2>12 months</h2>
+    <p class="note">Berlin calendar months. Column height ∝ opens.</p>
+    <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE_WIDE}">${monthBars}</ol>
     <h2>Years</h2>
     <ol>${yearRows}</ol>
     <h2>Pages</h2>
@@ -840,6 +905,7 @@ export const LOOKS_BARS_LIST_STYLE_WIDE = LOOKS_BARS_LIST_STYLE.replace(
 export function fillLooksInHtml(html, summary, members = [], shares = []) {
   const today = String(Number(summary?.today) || 0);
   const week = String(Number(summary?.week) || 0);
+  const month = String(Number(summary?.month) || 0);
   const year = String(Number(summary?.year) || 0);
   const total = String(Number(summary?.total) || 0);
   const memberCount = String(Array.isArray(members) ? members.length : 0);
@@ -866,11 +932,17 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     'Week bars show once people have opened the site.',
     { wideLabel: true },
   );
+  const monthBars = looksBarsHtml(
+    summary?.monthBars,
+    'Month bars show once people have opened the site.',
+    { wideLabel: true },
+  );
   const memberRows = membersListHtml(members);
   const shareRows = postcardSharesListHtml(shares);
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
+    .replace(/data-looks="month"([^>]*)>[\s\S]*?</, `data-looks="month"$1>${month}<`)
     .replace(/data-looks="year"([^>]*)>[\s\S]*?</, `data-looks="year"$1>${year}<`)
     .replace(/data-looks="total"([^>]*)>[\s\S]*?</, `data-looks="total"$1>${total}<`)
     .replace(
@@ -892,6 +964,10 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     .replace(
       /<ol([^>]*data-looks-weeks[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1 style="${LOOKS_BARS_LIST_STYLE_WIDE}">${weekBars}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-months[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1 style="${LOOKS_BARS_LIST_STYLE_WIDE}">${monthBars}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,

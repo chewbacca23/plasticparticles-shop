@@ -26,6 +26,7 @@ import {
   looksFromRows,
   looksBarsHtml,
   recentDayBars,
+  recentMonthBars,
   recentWeekBars,
   shouldCountDocument,
   shouldRecordPath,
@@ -52,10 +53,12 @@ function withLooksCookie(url, cookie, init = {}) {
 const SITE_LOOKS = `<html><body>
 <p class="card-num" data-looks="today">—</p>
 <p class="card-num" data-looks="week">—</p>
+<p class="card-num" data-looks="month">—</p>
 <p class="card-num" data-looks="year">—</p>
 <p class="card-num" data-looks="total">—</p>
 <ol class="looks-bars" data-looks-days><li class="empty">no days</li></ol>
 <ol class="looks-bars" data-looks-weeks><li class="empty">no weeks</li></ol>
+<ol class="looks-bars" data-looks-months><li class="empty">no months</li></ol>
 <ol class="pages" data-looks-years><li class="empty">no years</li></ol>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
 <ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
@@ -108,6 +111,7 @@ describe('summarizeLooks', () => {
     const summary = summarizeLooks(withOld, new Date('2026-09-04T12:00:00+02:00'));
     assert.equal(summary.today, 3);
     assert.equal(summary.week, 3);
+    assert.equal(summary.month, 3);
     assert.equal(summary.year, 3);
     assert.equal(summary.total, 10);
     assert.deepEqual(summary.years, [
@@ -121,6 +125,10 @@ describe('summarizeLooks', () => {
     assert.equal(summary.dayBars.at(-1).looks, 3);
     assert.equal(summary.weekBars.length, 8);
     assert.equal(summary.weekBars.at(-1).looks, 3);
+    assert.equal(summary.monthBars.length, 12);
+    assert.equal(summary.monthBars.at(-1).month, '2026-09');
+    assert.equal(summary.monthBars.at(-1).looks, 3);
+    assert.equal(summary.monthBars.find((row) => row.month === '2025-12')?.looks, 7);
   });
 });
 
@@ -139,6 +147,27 @@ describe('recentDayBars and recentWeekBars', () => {
     assert.equal(weekBars.length, 2);
     assert.equal(weekBars.at(-1).looks, 7);
     assert.match(weekBars.at(-1).label, /–/);
+  });
+});
+
+describe('recentMonthBars', () => {
+  it('sums Berlin calendar months oldest to newest', () => {
+    const now = new Date('2026-09-04T12:00:00+02:00');
+    const days = {
+      '2026-09-01': 2,
+      '2026-09-04': 5,
+      '2026-08-20': 3,
+      '2026-07-01': 1,
+    };
+    const monthBars = recentMonthBars(days, now, 3);
+    assert.equal(monthBars.length, 3);
+    assert.equal(monthBars[0].month, '2026-07');
+    assert.equal(monthBars[0].looks, 1);
+    assert.equal(monthBars[1].month, '2026-08');
+    assert.equal(monthBars[1].looks, 3);
+    assert.equal(monthBars[2].month, '2026-09');
+    assert.equal(monthBars[2].looks, 7);
+    assert.match(monthBars[2].label, /Sep/);
   });
 });
 
@@ -452,6 +481,7 @@ describe('fillLooksInHtml', () => {
     const html = fillLooksInHtml(SITE_LOOKS, {
       today: 2,
       week: 5,
+      month: 11,
       year: 8,
       total: 9,
       years: [{ name: '2026', looks: 8 }],
@@ -463,9 +493,11 @@ describe('fillLooksInHtml', () => {
         { label: 'Thu', looks: 2 },
       ],
       weekBars: [{ label: '1–7 Sep', looks: 5 }],
+      monthBars: [{ label: 'Sep 26', looks: 11 }],
     });
     assert.match(html, /data-looks="today">2</);
     assert.match(html, /data-looks="week">5</);
+    assert.match(html, /data-looks="month">11</);
     assert.match(html, /data-looks="year">8</);
     assert.match(html, /data-looks="total">9</);
     assert.match(html, /Home/);
@@ -475,6 +507,7 @@ describe('fillLooksInHtml', () => {
     assert.match(html, />Instagram</);
     assert.match(html, /looks-bar-label"[^>]*>Thu</);
     assert.match(html, /1–7 Sep/);
+    assert.match(html, /Sep 26/);
     assert.match(html, /width:100%/);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
@@ -485,6 +518,7 @@ describe('looksDashboardPage', () => {
     const html = await looksDashboardPage({
       today: 2,
       week: 5,
+      month: 11,
       year: 8,
       total: 9,
       years: [{ name: '2026', looks: 8 }],
@@ -492,10 +526,14 @@ describe('looksDashboardPage', () => {
     }).text();
     assert.match(html, />2</);
     assert.match(html, />5</);
+    assert.match(html, />11</);
     assert.match(html, />8</);
     assert.match(html, />9</);
+    assert.match(html, /This month/);
     assert.match(html, /This year/);
+    assert.match(html, /<h2>12 months<\/h2>/);
     assert.match(html, /<h2>Years<\/h2>/);
+    assert.match(html, /n<sub>month<\/sub>/);
     assert.match(html, /n<sub>day<\/sub>/);
     assert.match(html, /Home/);
     const withFrom = await looksDashboardPage({
