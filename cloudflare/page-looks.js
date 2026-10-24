@@ -649,57 +649,63 @@ export function looksDashboardPage(summary, members = [], shares = []) {
       font-family: "Sofia Sans Condensed", "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; }
     a { color: inherit; }
     a:hover { color: var(--amber-hot); }
-    .site-shell { width: min(40rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
+    .site-shell { width: min(46rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; font-variant-numeric: tabular-nums lining-nums; }
     .eyebrow { margin:0 0 .4rem; letter-spacing:.16em; text-transform:uppercase; font-size:.78rem; color:var(--amber); font-weight:700; }
-    h1 { margin:0 0 .75rem; font-size: clamp(2rem, 4vw, 2.8rem); color:var(--paper); }
-    .lead { margin:0 0 1.75rem; color:rgba(215,224,232,.75); }
-    .cards { display:grid; gap:.85rem; margin:0 0 2.25rem; }
-    @media (min-width:640px) { .cards { grid-template-columns:repeat(2,1fr); } }
-    @media (min-width:900px) { .cards { grid-template-columns:repeat(4,1fr); } }
-    .card { padding:1.1rem 1.15rem; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); }
-    .card-label { margin:0; color:var(--amber); font-size:.78rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
-    .card-num { margin:.45rem 0 0; color:var(--paper); font-size:2.4rem; line-height:1; }
-    h2 { margin:2.25rem 0 .85rem; padding-left:1.15rem; font-size:1.35rem; }
-    ol { margin:0; padding:0; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; overflow:hidden; }
-    li { display:flex; justify-content:space-between; gap:1rem; padding:.9rem 1.15rem .9rem 1.65rem; border-top:1px solid rgba(215,224,232,.08); }
+    h1 { margin:0 0 .75rem; font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-weight:300; font-size: clamp(2rem, 4vw, 2.8rem); color:var(--paper); }
+    .lead { margin:0 0 1.75rem; color:rgba(215,224,232,.72); }
+    .cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; margin:0 0 2.25rem; border:1px solid rgba(215,224,232,.16); background:rgba(8,12,17,.45); }
+    @media (min-width:640px) { .cards { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    .card { padding:.95rem 1rem 1.05rem; border:0; border-right:1px solid rgba(215,224,232,.12); border-bottom:1px solid rgba(215,224,232,.12); border-radius:0; background:transparent; }
+    @media (min-width:640px) { .card:nth-child(4n){border-right:0} .card{border-bottom:0} }
+    @media (max-width:639px) { .card:nth-child(2n){border-right:0} .card:nth-child(n+3){border-bottom:0} }
+    .card-label { margin:0; color:var(--amber); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:.95rem; font-weight:300; letter-spacing:.04em; line-height:1; }
+    .card-label sub { font-size:.65em; }
+    .card-hint { margin:.28rem 0 0; color:rgba(215,224,232,.55); font-size:.68rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; }
+    .card-num { margin:.55rem 0 0; color:var(--paper); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:clamp(2rem,4.5vw,2.65rem); font-weight:300; letter-spacing:-.02em; line-height:1; font-variant-numeric:tabular-nums; }
+    h2 { margin:2.35rem 0 .55rem; padding:0; font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:1.15rem; font-weight:300; letter-spacing:.06em; text-transform:uppercase; }
+    ol { margin:0; padding:0; list-style:none; border:1px solid rgba(215,224,232,.14); border-radius:0; overflow:hidden; background:rgba(8,12,17,.4); }
+    li { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:1rem; align-items:baseline; padding:.72rem .95rem; border-top:1px solid rgba(215,224,232,.09); font-variant-numeric:tabular-nums; }
     li:first-child { border-top:0; }
-    li a { color:var(--paper); text-decoration:underline; text-decoration-color:rgba(240,194,122,.45); text-underline-offset:.18em; }
+    li a { color:var(--paper); text-decoration:underline; text-decoration-color:rgba(240,194,122,.35); text-underline-offset:.18em; }
     li a:hover { color: var(--amber-hot); text-decoration-color: var(--amber-hot); }
-    li span { color:var(--amber-hot); font-weight:600; }
+    li span:last-child { color:var(--amber-hot); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:1.05rem; font-weight:300; text-align:right; min-width:3ch; }
     li .looks-name { color:var(--paper); font-weight:400; }
-    .empty { color:rgba(215,224,232,.68); }
-    .looks-bars { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2.1rem,1fr); align-items:end; gap:.4rem; margin:0; padding:1.1rem 1rem .9rem; list-style:none; border:1px solid rgba(215,224,232,.1); border-radius:1rem; background:rgba(18,26,34,.55); min-height:12.5rem; overflow-x:auto; }
-    .looks-bar { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:.35rem; height:10.5rem; padding:0; border:0; min-width:0; }
-    .looks-bar-label { color:rgba(215,224,232,.78); font-size:.72rem; font-weight:600; text-align:center; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
-    .looks-bar-track { display:flex; flex-direction:column; justify-content:flex-end; width:100%; max-width:2.4rem; flex:1 1 auto; border-radius:8px 8px 4px 4px; background:rgba(215,224,232,.1); overflow:hidden; }
-    .looks-bar-fill { display:block; width:100%; height:var(--looks-bar,0%); min-height:0; border-radius:inherit; background:linear-gradient(180deg,#f0c27a,#d4a35a); }
-    .looks-bar-num { color:var(--amber-hot); font-weight:700; font-size:.78rem; font-variant-numeric:tabular-nums; line-height:1; }
-    .back { margin:1.5rem 0 0; padding-left:1.15rem; }
+    .empty { color:rgba(215,224,232,.62); }
+    .note { margin:.35rem 0 .75rem; color:rgba(215,224,232,.62); font-size:.9rem; }
+    .looks-bars { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2rem,1fr); align-items:end; gap:.35rem; margin:0; padding:1rem .75rem .75rem; list-style:none; border:1px solid rgba(215,224,232,.14); border-radius:0; min-height:13rem; overflow-x:auto; background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),rgba(215,224,232,.07) calc(25% - 1px),rgba(215,224,232,.07) 25%),rgba(8,12,17,.55); }
+    .looks-bar { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:.3rem; height:11rem; padding:0; border:0; min-width:0; }
+    .looks-bar-label { color:rgba(215,224,232,.72); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:.7rem; font-weight:300; letter-spacing:.04em; text-align:center; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; }
+    .looks-bar-track { display:flex; flex-direction:column; justify-content:flex-end; width:100%; max-width:1.55rem; flex:1 1 auto; border-radius:0; border-bottom:1px solid rgba(215,224,232,.28); background:transparent; overflow:hidden; }
+    .looks-bar-fill { display:block; width:100%; height:var(--looks-bar,0%); min-height:0; border-radius:0; background:#d4a35a; }
+    .looks-bar-num { color:var(--amber-hot); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-weight:300; font-size:.82rem; letter-spacing:.02em; font-variant-numeric:tabular-nums; line-height:1; }
+    .back { margin:1.5rem 0 0; }
     .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
   </style>
 </head>
 <body>
   <main class="site-shell">
-    <p class="eyebrow">Looks</p>
+    <p class="eyebrow">Open counts</p>
     <h1>Looks</h1>
-    <p class="lead">How many times someone opened a page. No names. Private for you.</p>
-    <div class="cards">
-      <article class="card"><p class="card-label">Today</p><p class="card-num">${today}</p></article>
-      <article class="card"><p class="card-label">Last 7 days</p><p class="card-num">${week}</p></article>
-      <article class="card"><p class="card-label">This year</p><p class="card-num">${year}</p></article>
-      <article class="card"><p class="card-label">All time</p><p class="card-num">${total}</p></article>
+    <p class="lead">Opens per page, day, and week — Berlin calendar. No names. Private for you.</p>
+    <div class="cards" role="group" aria-label="Summary counts">
+      <article class="card"><p class="card-label">n<sub>day</sub></p><p class="card-hint">Today</p><p class="card-num">${today}</p></article>
+      <article class="card"><p class="card-label">n<sub>7</sub></p><p class="card-hint">Last 7 days</p><p class="card-num">${week}</p></article>
+      <article class="card"><p class="card-label">n<sub>year</sub></p><p class="card-hint">This year</p><p class="card-num">${year}</p></article>
+      <article class="card"><p class="card-label">Σ</p><p class="card-hint">All time</p><p class="card-num">${total}</p></article>
     </div>
-    <h2>Last 14 days</h2>
+    <h2>14 days</h2>
+    <p class="note">Berlin days. Column height ∝ opens.</p>
     <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>
-    <h2>Last 8 weeks</h2>
+    <h2>8 weeks</h2>
+    <p class="note">Each column = 7 days.</p>
     <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE_WIDE}">${weekBars}</ol>
-    <h2>All the years</h2>
+    <h2>Years</h2>
     <ol>${yearRows}</ol>
-    <h2>Pages people opened</h2>
+    <h2>Pages</h2>
     <ol>${rows}</ol>
-    <h2>Where they opened from</h2>
+    <h2>Countries</h2>
     <ol>${countryRows}</ol>
-    <h2>What sent them</h2>
+    <h2>Referrers</h2>
     <ol>${fromRows}</ol>
     <h2>Free members <span data-members-count>${memberCount}</span></h2>
     <p class="lead" style="margin-top:-.35rem;margin-bottom:.85rem;font-size:.92rem">Private for you. Everyone who joined the free list, newest first.</p>
@@ -781,26 +787,29 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
     return `<li class="empty" style="grid-column:1/-1;color:rgba(215,224,232,0.68)">${emptyText}</li>`;
   }
   const max = Math.max(1, ...list.map((row) => Number(row.looks) || 0));
-  const colMin = opts.wideLabel ? '3.1rem' : '2.1rem';
+  const colMin = opts.wideLabel ? '3rem' : '2rem';
   const colStyle =
     'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;' +
-    `gap:0.35rem;height:10.5rem;padding:0;border:0;margin:0;list-style:none;min-width:${colMin}`;
+    `gap:0.3rem;height:11rem;padding:0;border:0;margin:0;list-style:none;min-width:${colMin}`;
   const labelStyle =
-    'color:rgba(215,224,232,0.78);font-size:0.72rem;font-weight:600;text-align:center;' +
-    'line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis';
+    'color:rgba(215,224,232,0.72);font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif;' +
+    'font-size:0.7rem;font-weight:300;letter-spacing:0.04em;text-align:center;line-height:1.15;' +
+    'max-width:100%;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase';
   const trackStyle =
-    'display:flex;flex-direction:column;justify-content:flex-end;width:100%;max-width:2.4rem;' +
-    'flex:1 1 auto;border-radius:8px 8px 4px 4px;background:rgba(215,224,232,0.12);overflow:hidden';
+    'display:flex;flex-direction:column;justify-content:flex-end;width:100%;max-width:1.55rem;' +
+    'flex:1 1 auto;border-radius:0;border-bottom:1px solid rgba(215,224,232,0.28);' +
+    'background:transparent;overflow:hidden';
   const numStyle =
-    'color:#f0c27a;font-weight:700;font-size:0.78rem;font-variant-numeric:tabular-nums;line-height:1';
+    'color:#f0c27a;font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif;' +
+    'font-weight:300;font-size:0.82rem;letter-spacing:0.02em;font-variant-numeric:tabular-nums;line-height:1';
   return list
     .map((row) => {
       const looks = Number(row.looks) || 0;
       const pct = Math.round((looks / max) * 100);
       const label = escapeHtml(row.label || '—');
       const fillStyle =
-        `display:block;width:100%;height:${pct}%;min-height:${looks > 0 ? '0.35rem' : '0'};` +
-        'border-radius:inherit;background:linear-gradient(180deg,#f0c27a,#d4a35a)';
+        `display:block;width:100%;height:${pct}%;min-height:${looks > 0 ? '0.28rem' : '0'};` +
+        'border-radius:0;background:#d4a35a';
       return (
         `<li class="looks-bar" style="${colStyle}">` +
         `<span class="looks-bar-num" style="${numStyle}">${looks}</span>` +
@@ -816,13 +825,15 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
 
 /** List shell styles so the chart box shows even without global.css. */
 export const LOOKS_BARS_LIST_STYLE =
-  'display:grid;grid-auto-flow:column;grid-auto-columns:minmax(2.1rem,1fr);align-items:end;' +
-  'gap:0.4rem;margin:0 0 0.5rem;padding:1.1rem 1rem 0.9rem;list-style:none;min-height:12.5rem;' +
-  'overflow-x:auto;border:1px solid rgba(215,224,232,0.1);border-radius:1rem;background:rgba(18,26,34,0.55)';
+  'display:grid;grid-auto-flow:column;grid-auto-columns:minmax(2rem,1fr);align-items:end;' +
+  'gap:0.35rem;margin:0 0 0.5rem;padding:1rem 0.75rem 0.75rem;list-style:none;min-height:13rem;' +
+  'overflow-x:auto;border:1px solid rgba(215,224,232,0.14);border-radius:0;' +
+  'background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),' +
+  'rgba(215,224,232,0.07) calc(25% - 1px),rgba(215,224,232,0.07) 25%),rgba(8,12,17,0.55)';
 
 export const LOOKS_BARS_LIST_STYLE_WIDE = LOOKS_BARS_LIST_STYLE.replace(
-  'minmax(2.1rem,1fr)',
-  'minmax(3.1rem,1fr)',
+  'minmax(2rem,1fr)',
+  'minmax(3rem,1fr)',
 );
 
 

@@ -13,60 +13,64 @@ import MemberDelete from '../components/MemberDelete.astro';
       <p class="eyebrow">Open counts</p>
       <h1 class="section-title">Looks</h1>
       <p class="section-lead">
-        Private for you. How many times someone opened a page, day by day and week by week.
-        No names. Counts start after this Worker is live.
+        Private for you. Opens per page, day, and week — Berlin calendar. No names. Counts start
+        after this Worker is live.
       </p>
 
-      <div class="cards">
+      <div class="cards" role="group" aria-label="Summary counts">
         <article class="card">
-          <p class="card-label">Today</p>
+          <p class="card-label">n<sub>day</sub></p>
+          <p class="card-hint">Today</p>
           <p class="card-num" data-looks="today">—</p>
         </article>
         <article class="card">
-          <p class="card-label">Last 7 days</p>
+          <p class="card-label">n<sub>7</sub></p>
+          <p class="card-hint">Last 7 days</p>
           <p class="card-num" data-looks="week">—</p>
         </article>
         <article class="card">
-          <p class="card-label">This year</p>
+          <p class="card-label">n<sub>year</sub></p>
+          <p class="card-hint">This year</p>
           <p class="card-num" data-looks="year">—</p>
         </article>
         <article class="card">
-          <p class="card-label">All time</p>
+          <p class="card-label">Σ</p>
+          <p class="card-hint">All time</p>
           <p class="card-num" data-looks="total">—</p>
         </article>
       </div>
 
-      <h2 class="pages-title">Last 14 days</h2>
-      <p class="note">Berlin days. Columns stand up; the tallest is the busiest day.</p>
+      <h2 class="pages-title">14 days</h2>
+      <p class="note">Berlin days. Column height ∝ opens. Max column = busiest day.</p>
       <ol class="looks-bars" data-looks-days>
         <li class="empty">Day bars show once people have opened the site.</li>
       </ol>
 
-      <h2 class="pages-title">Last 8 weeks</h2>
-      <p class="note">Each bar is seven days. Handy for “this week vs last week”.</p>
+      <h2 class="pages-title">8 weeks</h2>
+      <p class="note">Each column = 7 days. Compare this week to last.</p>
       <ol class="looks-bars" data-looks-weeks>
         <li class="empty">Week bars show once people have opened the site.</li>
       </ol>
 
-      <h2 class="pages-title">All the years</h2>
+      <h2 class="pages-title">Years</h2>
       <ol class="pages" data-looks-years>
         <li class="empty">Years show once people have opened the site.</li>
       </ol>
 
-      <h2 class="pages-title">Pages people opened</h2>
+      <h2 class="pages-title">Pages</h2>
       <ol class="pages" data-looks-pages>
         <li class="empty">Open Home or a ride, then refresh this page.</li>
       </ol>
 
-      <h2 class="pages-title">Where they opened from</h2>
+      <h2 class="pages-title">Countries</h2>
       <ol class="pages" data-looks-countries>
         <li class="empty">Country shows after someone opens a page.</li>
       </ol>
 
-      <h2 class="pages-title">What sent them</h2>
+      <h2 class="pages-title">Referrers</h2>
       <p class="note">
-        Tap a name to open that site (Instagram, Facebook, and so on). Browsers often hide the exact
-        post, so you get the network, not the single link.
+        Tap a name to open that site. Browsers often hide the exact post — you get the network, not
+        the single link.
       </p>
       <ol class="pages" data-looks-from>
         <li class="empty">The site that sent them shows after someone opens a page.</li>
@@ -99,48 +103,91 @@ import MemberDelete from '../components/MemberDelete.astro';
 
 <style>
   .looks {
-    max-width: 40rem;
+    max-width: 46rem;
+    font-variant-numeric: tabular-nums lining-nums;
   }
 
   .cards {
     display: grid;
-    gap: 0.85rem;
+    gap: 0;
     margin: 1.75rem 0 2.25rem;
+    border: 1px solid rgba(215, 224, 232, 0.16);
+    background: rgba(8, 12, 17, 0.45);
   }
 
   @media (min-width: 640px) {
     .cards {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
-  @media (min-width: 900px) {
+  @media (max-width: 639px) {
     .cards {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   .card {
-    padding: 1.1rem 1.15rem 1.2rem;
-    border: 1px solid rgba(215, 224, 232, 0.1);
-    border-radius: 1rem;
-    background: rgba(18, 26, 34, 0.55);
+    padding: 0.95rem 1rem 1.05rem;
+    border: 0;
+    border-right: 1px solid rgba(215, 224, 232, 0.12);
+    border-bottom: 1px solid rgba(215, 224, 232, 0.12);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  @media (min-width: 640px) {
+    .card:nth-child(4n) {
+      border-right: 0;
+    }
+
+    .card:nth-child(n + 1) {
+      border-bottom: 0;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .card:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .card:nth-child(n + 3) {
+      border-bottom: 0;
+    }
   }
 
   .card-label {
     margin: 0;
     color: var(--amber);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .card-label sub {
+    font-size: 0.65em;
+    bottom: -0.08em;
+  }
+
+  .card-hint {
+    margin: 0.28rem 0 0;
+    color: rgba(215, 224, 232, 0.55);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
   .card-num {
-    margin: 0.45rem 0 0;
+    margin: 0.55rem 0 0;
     color: var(--paper);
     font-family: var(--font-display);
-    font-size: 2.4rem;
+    font-size: clamp(2rem, 4.5vw, 2.65rem);
+    font-weight: 300;
+    letter-spacing: -0.02em;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 </style>
