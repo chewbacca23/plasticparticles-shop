@@ -348,11 +348,33 @@
       }
 
       .cms-brand-the {
+        position: relative;
+        z-index: 1;
+        isolation: isolate;
         font-size: 0.55em;
         font-weight: 300;
         letter-spacing: 0;
         margin-right: 0.02em;
         color: var(--crest-red);
+      }
+
+      .cms-brand-the::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: -1;
+        width: 2.15em;
+        height: 1.55em;
+        transform: translate(-48%, -52%) rotate(-12deg);
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse 42% 38% at 28% 42%, rgba(238, 243, 247, 0.72) 0%, transparent 72%),
+          radial-gradient(ellipse 48% 44% at 62% 48%, rgba(215, 224, 232, 0.58) 0%, transparent 70%),
+          radial-gradient(ellipse 28% 32% at 78% 28%, rgba(238, 243, 247, 0.5) 0%, transparent 68%),
+          radial-gradient(ellipse 22% 26% at 18% 68%, rgba(215, 224, 232, 0.45) 0%, transparent 65%);
+        filter: blur(0.35px);
+        opacity: 0.92;
       }
 
       .cms-brand-soul,

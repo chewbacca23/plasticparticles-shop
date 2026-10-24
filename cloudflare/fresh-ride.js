@@ -370,7 +370,7 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
 <body>
   <header>
     <div class="site-shell header-inner">
-      <a class="brand" href="/"><img src="/logo.png" alt="" width="40" height="51" /><span class="brand-mark" style="display:inline-flex;align-items:baseline;line-height:.85;letter-spacing:0;font-size:2.4rem"><span style="font-size:.55em;font-weight:300;letter-spacing:0;margin-right:.02em;color:#e31b23">the</span><span style="letter-spacing:-.045em">SOULSEARCHERS</span></span></a>
+      <a class="brand" href="/"><img src="/logo.png" alt="" width="40" height="51" /><span class="brand-mark" style="display:inline-flex;align-items:baseline;line-height:.85;letter-spacing:0;font-size:2.4rem"><span style="position:relative;z-index:1;isolation:isolate;font-size:.55em;font-weight:300;letter-spacing:0;margin-right:.02em;color:#e31b23"><span aria-hidden="true" style="position:absolute;left:50%;top:50%;z-index:-1;width:2.15em;height:1.55em;transform:translate(-48%,-52%) rotate(-12deg);pointer-events:none;background:radial-gradient(ellipse 42% 38% at 28% 42%,rgba(238,243,247,.72) 0%,transparent 72%),radial-gradient(ellipse 48% 44% at 62% 48%,rgba(215,224,232,.58) 0%,transparent 70%),radial-gradient(ellipse 28% 32% at 78% 28%,rgba(238,243,247,.5) 0%,transparent 68%),radial-gradient(ellipse 22% 26% at 18% 68%,rgba(215,224,232,.45) 0%,transparent 65%);filter:blur(.35px);opacity:.92"></span>the</span><span style="letter-spacing:-.045em">SOULSEARCHERS</span></span></a>
       <nav aria-label="Primary">
         <a href="/">Home</a>
         <a href="/stories">Rides</a>
