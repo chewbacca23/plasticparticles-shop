@@ -538,7 +538,7 @@ export function looksGatePage() {
   <meta name="robots" content="noindex, nofollow" />
   <title>The Soul Searchers</title>
   <style>
-    body { font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; background: #0c1218; color: #d7e0e8;
+    body { font-family: "Sofia Sans Condensed", "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; background: #0c1218; color: #d7e0e8;
       max-width: 28rem; margin: 4rem auto; padding: 0 1.2rem; line-height: 1.5; }
     a { color: #f0c27a; }
   </style>
@@ -646,7 +646,7 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber:#d4a35a; --amber-hot:#f0c27a; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
-      font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+      font-family: "Sofia Sans Condensed", "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; }
     a { color: inherit; }
     a:hover { color: var(--amber-hot); }
     .site-shell { width: min(40rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
@@ -1038,7 +1038,7 @@ export function membersDashboardPage(members = []) {
     :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber:#d4a35a; --amber-hot:#f0c27a; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
-      font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+      font-family: "Sofia Sans Condensed", "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; }
     a { color: inherit; }
     a:hover { color: var(--amber-hot); }
     .site-shell { width: min(40rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }

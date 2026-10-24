@@ -30,7 +30,20 @@ const canonical = 'https://thenewsoulsearchers.de/bar-italia';
     <meta property="og:url" content={canonical} />
     <meta name="theme-color" content="#140e0c" />
     <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="preload" href="/fonts/host-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/sofia-sans-extra-condensed-latin-300.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/sofia-sans-condensed-latin-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
   </head>
   <body>
     <slot />
@@ -49,8 +62,8 @@ const canonical = 'https://thenewsoulsearchers.de/bar-italia';
     --bi-font-mark:
       Futura, 'Futura PT', 'Futura Std', 'Century Gothic', 'URW Gothic', 'AppleGothic',
       'Tw Cen MT', 'Segoe UI', sans-serif;
-    --bi-font-display: 'Host Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    --bi-font-body: 'Host Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --bi-font-display: 'Sofia Sans Extra Condensed', 'Sofia Sans Condensed', 'Arial Narrow', sans-serif;
+    --bi-font-body: 'Sofia Sans Condensed', 'Sofia Sans Extra Condensed', 'Arial Narrow', sans-serif;
     --bi-red: #e10600;
   }
 

@@ -307,14 +307,17 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
   <title>${escapeHtml(title)} · The Soul Searchers</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <link rel="icon" type="image/png" href="/logo.png" />
-  <link rel="preload" href="/fonts/host-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/sofia-sans-extra-condensed-latin-300.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/sofia-sans-condensed-latin-400.woff2" as="font" type="font/woff2" crossorigin />
   <style>
-    @font-face { font-family:'Host Grotesk'; font-style:normal; font-weight:300 700; font-display:swap;
-      src:url('/fonts/host-grotesk-latin.woff2') format('woff2'); }
+    @font-face { font-family:'Sofia Sans Extra Condensed'; font-style:normal; font-weight:300; font-display:swap;
+      src:url('/fonts/sofia-sans-extra-condensed-latin-300.woff2') format('woff2'); }
+    @font-face { font-family:'Sofia Sans Condensed'; font-style:normal; font-weight:400; font-display:swap;
+      src:url('/fonts/sofia-sans-condensed-latin-400.woff2') format('woff2'); }
     :root { --ink:#0c1218; --fog:#d7e0e8; --paper:#eef3f7; --amber-hot:#f0c27a; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; color:var(--fog); background:var(--ink);
-      font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size:1.0625rem; line-height:1.65; }
+      font-family: "Sofia Sans Condensed", "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; font-size:1.0625rem; line-height:1.65; }
     a { color: inherit; }
     a:hover { color: var(--amber-hot); }
     .site-shell { width: min(72rem, calc(100% - 2rem)); margin: 0 auto; }
@@ -327,7 +330,7 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
     main { padding: 2.5rem 0 4rem; }
     article { max-width: 52rem; }
     .eyebrow { margin:0 0 .4rem; letter-spacing:.08em; text-transform:uppercase; font-size:.78rem; color:rgba(215,224,232,.55); }
-    h1 { margin:0 0 .75rem; font-family: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight:300; letter-spacing:-.03em; font-size: clamp(2rem, 4.5vw, 3.1rem); color:var(--paper); }
+    h1 { margin:0 0 .75rem; font-family: "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; font-weight:300; letter-spacing:.02em; font-size: clamp(2.2rem, 5vw, 3.4rem); color:var(--paper); }
     .dek { margin:0 0 1.75rem; color:rgba(215,224,232,.75); font-size:1.1rem; }
     .hero { margin:0 0 2rem; }
     figure { margin:0; overflow:hidden; border-radius:.9rem; box-shadow:0 18px 40px rgba(0,0,0,.25); }
