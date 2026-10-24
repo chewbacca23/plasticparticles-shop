@@ -339,8 +339,11 @@
       }
 
       .cms-brand-mark {
+        position: relative;
+        z-index: 0;
         display: inline-flex;
         align-items: baseline;
+        isolation: isolate;
         font-family: var(--font-display);
         font-size: 2.2rem;
         line-height: 0.85;
@@ -348,10 +351,21 @@
         white-space: nowrap;
       }
 
+      .cms-brand-splash {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: -1;
+        width: 112%;
+        height: 1.55em;
+        transform: translate(-50%, -52%) rotate(-4deg);
+        pointer-events: none;
+        overflow: visible;
+      }
+
       .cms-brand-the {
         position: relative;
         z-index: 1;
-        isolation: isolate;
         font-size: 0.55em;
         font-weight: 300;
         letter-spacing: 0;
@@ -359,20 +373,10 @@
         color: var(--crest-red);
       }
 
-      .cms-brand-splash {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        z-index: -1;
-        width: 4.1em;
-        height: 4.1em;
-        transform: translate(-50%, -52%) rotate(-8deg);
-        pointer-events: none;
-        overflow: visible;
-      }
-
       .cms-brand-soul,
       .cms-brand-searchers {
+        position: relative;
+        z-index: 1;
         letter-spacing: -0.045em;
       }
 
@@ -704,8 +708,8 @@
             <a class="cms-brand" href="/">
               <img src="/logo.png" alt="" width="40" height="51" />
               <span class="cms-brand-mark"
-                ><span class="cms-brand-the"
-                  ><svg class="cms-brand-splash" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+                >
+                  <svg class="cms-brand-splash" viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                     <path
                       fill="var(--paint-splash)"
                       d="M148.0 100.0L152.3 102.7L154.1 105.7L156.8 109.0L184.1 117.9L155.5 114.9L139.2 112.7L146.2 117.7L137.0 116.5L138.9 119.8L141.1 123.7L142.2 127.4L141.3 130.0L138.5 131.1L134.6 131.1L130.7 130.7L127.6 130.7L125.6 131.6L124.1 133.1L122.4 134.5L127.0 146.8L116.8 133.0L113.2 129.8L110.0 126.0L107.6 123.5L106.3 123.6L107.8 136.8L105.3 133.2L104.3 140.5L102.5 146.8L100.0 150.8L97.3 151.9L94.7 150.6L92.3 148.4L90.1 146.6L87.7 146.0L84.9 146.4L76.3 161.8L79.4 146.2L77.7 143.8L77.0 139.8L77.1 135.2L77.3 131.2L76.6 128.9L74.3 128.5L63.5 136.5L66.3 130.4L62.7 130.2L61.1 128.2L62.2 124.6L65.3 120.0L69.3 115.6L72.6 112.2L73.8 110.1L55.5 114.5L69.8 108.1L66.4 107.1L63.8 105.7L62.4 104.0L62.0 102.0L61.4 100.0L59.5 97.9L55.9 95.4L51.1 92.2L36.5 86.5L43.3 84.8L45.8 82.4L21.6 69.9L47.9 76.8L59.1 79.1L64.7 79.6L55.6 71.2L69.4 77.8L69.2 75.1L68.9 72.0L69.4 69.4L71.3 68.1L74.3 68.2L77.5 69.0L80.2 69.6L82.1 68.9L83.1 66.9L84.0 64.2L81.8 52.5L87.4 61.2L90.0 62.7L92.7 65.9L95.1 69.3L95.2 54.3L98.4 70.2L100.0 66.1L102.1 59.8L104.9 53.1L108.3 47.9L111.6 45.5L114.5 45.9L116.8 48.4L118.6 51.6L120.4 54.2L122.5 55.9L124.9 56.9L127.0 58.4L134.2 52.9L128.2 65.2L126.6 70.4L134.4 65.6L122.8 79.4L123.0 81.4L125.4 81.6L129.7 80.7L134.7 80.0L138.8 80.2L140.6 81.9L139.9 84.7L137.4 87.9L134.4 90.8L132.5 93.1L132.8 94.8L135.1 96.3L138.4 98.0Z"
@@ -764,7 +768,7 @@
                     <circle fill="var(--paint-splash)" cx="52.1" cy="3.0" r="0.8" />
                     <circle fill="var(--paint-splash)" cx="197.0" cy="8.7" r="0.9" />
                   </svg>
-                  the</span
+                <span class="cms-brand-the">the</span
                 ><span class="cms-brand-soul">SOUL</span
                 ><span class="cms-brand-searchers">SEARCHERS</span></span
               >
