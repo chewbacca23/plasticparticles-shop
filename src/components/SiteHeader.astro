@@ -1,5 +1,6 @@
 ---
 import { site } from '../site.config';
+import BrandMark from './BrandMark.astro';
 import { instagramBind } from '../lib/instagram';
 import settings from '../content/settings/instagram.json';
 
@@ -63,7 +64,7 @@ function groupActive(children: NavLink[]) {
   <div class="site-shell header-inner">
     <a class="brand" href="/">
       <img class="brand-logo" src={site.logo} alt="" width="40" height="51" decoding="async" />
-      <span class="brand-text">{site.mark}</span>
+      <BrandMark class="brand-text" />
     </a>
     <nav class="nav" aria-label="Primary" data-site-nav>
       {

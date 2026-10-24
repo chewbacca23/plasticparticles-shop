@@ -55,6 +55,7 @@
         --paper: #eef3f7;
         --amber: #d4a35a;
         --amber-hot: #f0c27a;
+        --crest-red: #e31b23;
         --font-display: 'Sofia Sans Extra Condensed', 'Sofia Sans Condensed', 'Arial Narrow', sans-serif;
         --font-body: 'Sofia Sans Condensed', 'Sofia Sans Extra Condensed', 'Arial Narrow', sans-serif;
       }
@@ -336,9 +337,28 @@
         filter: drop-shadow(0 0 12px rgba(212, 163, 90, 0.35));
       }
 
-      .cms-brand span {
+      .cms-brand-mark {
+        display: inline-flex;
+        align-items: baseline;
         font-family: var(--font-display);
         font-size: 1.15rem;
+        white-space: nowrap;
+      }
+
+      .cms-brand-the {
+        font-size: 0.72em;
+        font-weight: 300;
+        letter-spacing: 0.02em;
+        margin-right: 0.04em;
+        color: var(--crest-red);
+      }
+
+      .cms-brand-soul {
+        letter-spacing: 0.03em;
+      }
+
+      .cms-brand-searchers {
+        letter-spacing: -0.01em;
       }
 
       .cms-kicker {
@@ -668,7 +688,10 @@
           <div>
             <a class="cms-brand" href="/">
               <img src="/logo.png" alt="" width="40" height="51" />
-              <span>theSOULSEARCHERS</span>
+              <span class="cms-brand-mark"
+                ><span class="cms-brand-the">the</span><span class="cms-brand-soul">SOUL</span
+                ><span class="cms-brand-searchers">SEARCHERS</span></span
+              >
             </a>
             <p class="cms-kicker">Editor</p>
           </div>

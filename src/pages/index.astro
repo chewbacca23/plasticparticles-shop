@@ -6,6 +6,7 @@ import { collectFeed } from '../lib/feed';
 import { galleryMedia } from '../lib/media';
 import { buildRidePhotoHrefs, resolveHomeHeroSlides } from '../lib/home-hero';
 import { newestFirst } from '../lib/newest';
+import BrandMark from '../components/BrandMark.astro';
 import { site } from '../site.config';
 import homeSettings from '../content/settings/home.json';
 
@@ -162,7 +163,7 @@ const hasRideLinks = heroSlides.some((slide) => slide.ride);
 
     <div class="site-shell hero-copy">
       <img class="hero-logo reveal" src={site.logo} alt={site.mark} width="88" height="112" decoding="async" />
-      <p class="brand-hero reveal reveal-delay-1">{site.mark}</p>
+      <p class="brand-hero reveal reveal-delay-1"><BrandMark /></p>
       <h1 class="reveal reveal-delay-2">A cycling Blog</h1>
       <p class="hero-lead reveal reveal-delay-3">
         Tours and café stops, a bike in the luggage car.<br />

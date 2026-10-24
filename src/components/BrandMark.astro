@@ -1,0 +1,39 @@
+---
+import { site } from '../site.config';
+
+interface Props {
+  /** Extra class on the outer span (brand-text, brand-hero, …). */
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<span class:list={['brand-mark', className]} aria-label={site.name}>
+  <span class="brand-mark__the">the</span><span class="brand-mark__soul">SOUL</span
+  ><span class="brand-mark__searchers">SEARCHERS</span>
+</span>
+
+<style>
+  .brand-mark {
+    display: inline-flex;
+    align-items: baseline;
+    white-space: nowrap;
+  }
+
+  .brand-mark__the {
+    font-size: 0.72em;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    margin-right: 0.04em;
+    color: var(--crest-red, #e31b23);
+  }
+
+  .brand-mark__soul {
+    letter-spacing: 0.03em;
+  }
+
+  .brand-mark__searchers {
+    letter-spacing: -0.01em;
+  }
+</style>

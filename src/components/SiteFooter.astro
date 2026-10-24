@@ -1,5 +1,6 @@
 ---
 import { site } from '../site.config';
+import BrandMark from './BrandMark.astro';
 import { instagramBind } from '../lib/instagram';
 import settings from '../content/settings/instagram.json';
 
@@ -10,7 +11,7 @@ const instagram = instagramBind(settings);
 <footer class="footer">
   <div class="site-shell footer-inner">
     <div>
-      <p class="footer-brand">{site.mark}</p>
+      <p class="footer-brand"><BrandMark /></p>
       <p class="footer-tag">{site.tagline}</p>
     </div>
     <div class="footer-links">
