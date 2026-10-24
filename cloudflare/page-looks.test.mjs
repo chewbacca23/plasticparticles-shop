@@ -155,7 +155,7 @@ describe('looksBarsHtml', () => {
     assert.match(html, /height:100%/);
     assert.match(html, /looks-bar-num"[^>]*>4</);
     assert.match(html, /flex-direction:column/);
-    assert.match(html, /linear-gradient\(180deg/);
+    assert.match(html, /background:#d4a35a/);
   });
 });
 
