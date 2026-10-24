@@ -339,11 +339,8 @@
       }
 
       .cms-brand-mark {
-        position: relative;
-        z-index: 0;
         display: inline-flex;
         align-items: baseline;
-        isolation: isolate;
         font-family: var(--font-display);
         font-size: 2.2rem;
         line-height: 0.85;
@@ -351,23 +348,10 @@
         white-space: nowrap;
       }
 
-      .cms-brand-splash {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        z-index: -1;
-        width: 118%;
-        height: 1.7em;
-        max-width: none;
-        transform: translate(-50%, -52%) rotate(-3deg);
-        pointer-events: none;
-        user-select: none;
-        object-fit: fill;
-      }
-
       .cms-brand-the {
         position: relative;
         z-index: 1;
+        isolation: isolate;
         font-size: 0.55em;
         font-weight: 300;
         letter-spacing: 0;
@@ -375,10 +359,22 @@
         color: var(--crest-red);
       }
 
+      .cms-brand-splash {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: -1;
+        width: 3.4em;
+        height: 3.05em;
+        max-width: none;
+        transform: translate(-50%, -52%) rotate(-6deg);
+        pointer-events: none;
+        user-select: none;
+        object-fit: contain;
+      }
+
       .cms-brand-soul,
       .cms-brand-searchers {
-        position: relative;
-        z-index: 1;
         letter-spacing: -0.045em;
       }
 
@@ -710,9 +706,9 @@
             <a class="cms-brand" href="/">
               <img src="/logo.png" alt="" width="40" height="51" />
               <span class="cms-brand-mark"
-                >
-                  <img class="cms-brand-splash" src="/brand/ink-splat.png" alt="" width="258" height="230" decoding="async" aria-hidden="true" />
-                <span class="cms-brand-the">the</span
+                ><span class="cms-brand-the"
+                  ><img class="cms-brand-splash" src="/brand/ink-splat.png" alt="" width="258" height="230" decoding="async" aria-hidden="true" />
+                  the</span
                 ><span class="cms-brand-soul">SOUL</span
                 ><span class="cms-brand-searchers">SEARCHERS</span></span
               >
