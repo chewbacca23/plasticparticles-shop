@@ -63,7 +63,7 @@ function groupActive(children: NavLink[]) {
   <div class="site-shell header-inner">
     <a class="brand" href="/">
       <img class="brand-logo" src={site.logo} alt="" width="40" height="51" decoding="async" />
-      <span class="brand-text">{site.name}</span>
+      <span class="brand-text">{site.mark}</span>
     </a>
     <nav class="nav" aria-label="Primary" data-site-nav>
       {
@@ -495,7 +495,8 @@ function groupActive(children: NavLink[]) {
     font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 400;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
   }
 
   .nav {

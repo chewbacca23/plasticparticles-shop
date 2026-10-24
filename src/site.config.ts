@@ -1,5 +1,7 @@
 export const site = {
   name: 'The Soul Searchers',
+  /** Visual lockup on the hero, header, and footer. */
+  mark: 'theSOULSEARCHERS',
   shortName: 'Soul Searchers',
   tagline: 'A cycling blog. Tours and travel by bike.',
   description:

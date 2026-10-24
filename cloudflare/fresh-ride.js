@@ -367,7 +367,7 @@ export function renderRidePage({ slug, data = {}, body = '', kind = 'ride' } = {
 <body>
   <header>
     <div class="site-shell header-inner">
-      <a class="brand" href="/"><img src="/logo.png" alt="" width="40" height="51" /><span>The Soul Searchers</span></a>
+      <a class="brand" href="/"><img src="/logo.png" alt="" width="40" height="51" /><span>theSOULSEARCHERS</span></a>
       <nav aria-label="Primary">
         <a href="/">Home</a>
         <a href="/stories">Rides</a>
