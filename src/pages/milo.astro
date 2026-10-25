@@ -1,87 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-/**
- * Milo’s cube — six faces, six realms.
- * Swap the REALMS array anytime; the cube stays the door.
- */
-const REALMS = [
-  {
-    id: 'night',
-    face: 'front',
-    title: 'Night Ride',
-    kicker: 'Berlin after dark',
-    lead: 'Street lamps in a soft line. Milo clips in and the city thins out until it’s only tyres and breath.',
-    detail:
-      'A realm of quiet kilometres — canal paths, empty junctions, the soft amber that means you’re still moving.',
-    hue: '#1e3a45',
-    accent: '#f0c27a',
-  },
-  {
-    id: 'cafe',
-    face: 'back',
-    title: 'Café Dawn',
-    kicker: 'First light, first cup',
-    lead: 'The shutters are half up. Milo leans the bike and waits for the machine to wake.',
-    detail:
-      'Espresso steam, a window seat, and the map still folded. The ride hasn’t started — it has already begun.',
-    hue: '#3d2a1c',
-    accent: '#e8b86d',
-  },
-  {
-    id: 'col',
-    face: 'right',
-    title: 'The Col',
-    kicker: 'Up where the air thins',
-    lead: 'Hairpins stack like a ladder. Milo counts them out loud so the climb feels smaller than it is.',
-    detail:
-      'Stone, wind, and a summit marker that looks tiny until you’re next to it. Then the world opens.',
-    hue: '#2a3540',
-    accent: '#9eb6c4',
-  },
-  {
-    id: 'salt',
-    face: 'left',
-    title: 'Salt Road',
-    kicker: 'Sea on the left shoulder',
-    lead: 'The Riviera throws light back at the tarmac. Milo rides the line between spray and shade.',
-    detail:
-      'Warm air, salt on the lips, a café that still has sand under the tables. The ocean keeps pace.',
-    hue: '#1a4050',
-    accent: '#6eb0c4',
-  },
-  {
-    id: 'patch',
-    face: 'top',
-    title: 'Patch Box',
-    kicker: 'Small cloth, big story',
-    lead: 'Inside the cube: threads, needles, and the patches that mark where Milo has been.',
-    detail:
-      'Each square is a place kept close — stitched on a bag, a jersey, a quiet jacket for the next tour.',
-    hue: '#3a2428',
-    accent: '#e31b23',
-  },
-  {
-    id: 'rail',
-    face: 'bottom',
-    title: 'Rail Quiet',
-    kicker: 'Bike in the carriage',
-    lead: 'The train takes the long middle. Milo watches fields blur and plans the next clip-in.',
-    detail:
-      'A soft seat, a hung bike, and the strange peace of moving without pedalling — until the doors open again.',
-    hue: '#1c2430',
-    accent: '#d4a35a',
-  },
-] as const;
-
-const faceMeta = [
-  { face: 'front', label: 'Night Ride' },
-  { face: 'back', label: 'Café Dawn' },
-  { face: 'right', label: 'The Col' },
-  { face: 'left', label: 'Salt Road' },
-  { face: 'top', label: 'Patch Box' },
-  { face: 'bottom', label: 'Rail Quiet' },
-] as const;
+import { MILO_REALMS } from '../lib/milo-realms';
 ---
 
 <BaseLayout
@@ -100,26 +19,34 @@ const faceMeta = [
       <p class="eyebrow">A toy in space</p>
       <h1 class="section-title">Milo</h1>
       <p class="section-lead">
-        One little figure. One cube. Six realms. Drag to turn it — tap a face and that side opens so
-        you can see the world inside.
+        One little explorer. One cube. Six full-screen worlds. Drag to turn it — tap a face and that
+        side opens into the realm.
       </p>
     </div>
 
     <div class="milo-stage" data-milo-stage>
-      <p class="milo-hint" data-milo-hint>Drag to turn · tap a face to open</p>
+      <p class="milo-hint" data-milo-hint>Drag to turn · tap a face to enter</p>
       <div class="milo-scene" data-milo-scene>
         <div class="milo-cube" data-milo-cube role="group" aria-label="Milo’s six-realm cube">
           {
-            REALMS.map((realm) => (
+            MILO_REALMS.map((realm) => (
               <button
                 type="button"
                 class:list={['milo-face', `milo-face--${realm.face}`]}
                 data-milo-face={realm.face}
-                data-realm={realm.id}
+                data-realm-href={`/milo/${realm.id}`}
                 style={`--face-hue:${realm.hue};--face-accent:${realm.accent}`}
                 aria-label={`${realm.title}. Open this realm.`}
               >
                 <span class="milo-face-lid" aria-hidden="true">
+                  <img
+                    class="milo-face-fig"
+                    src={`/milo/${realm.figure}.png`}
+                    alt=""
+                    width="72"
+                    height="72"
+                    decoding="async"
+                  />
                   <span class="milo-face-mark">{realm.title}</span>
                   <span class="milo-face-kicker">{realm.kicker}</span>
                 </span>
@@ -131,62 +58,41 @@ const faceMeta = [
       </div>
     </div>
 
-    <div
-      class="milo-realm"
-      data-milo-realm
-      hidden
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="milo-realm-title"
-    >
-      <div class="milo-realm-panel">
-        <p class="milo-realm-kicker" data-milo-realm-kicker></p>
-        <h2 class="milo-realm-title" id="milo-realm-title" data-milo-realm-title></h2>
-        <p class="milo-realm-lead" data-milo-realm-lead></p>
-        <p class="milo-realm-detail" data-milo-realm-detail></p>
-        <button type="button" class="milo-realm-close" data-milo-close>Close the hatch</button>
-      </div>
-    </div>
-
     <div class="site-shell milo-key">
       <h2 class="milo-key-title">The six faces</h2>
       <ol class="milo-key-list">
         {
-          faceMeta.map((item) => {
-            const realm = REALMS.find((r) => r.face === item.face)!;
-            return (
-              <li>
-                <button type="button" data-milo-jump={realm.face}>
-                  <span class="milo-key-swatch" style={`background:${realm.hue};box-shadow:inset 0 0 0 1px ${realm.accent}55`} />
-                  <span>
-                    <strong>{realm.title}</strong>
-                    <em>{realm.kicker}</em>
-                  </span>
-                </button>
-              </li>
-            );
-          })
+          MILO_REALMS.map((realm) => (
+            <li>
+              <a href={`/milo/${realm.id}`}>
+                <span
+                  class="milo-key-swatch"
+                  style={`background:${realm.hue};box-shadow:inset 0 0 0 1px ${realm.accent}55`}
+                />
+                <span>
+                  <strong>{realm.title}</strong>
+                  <em>{realm.kicker}</em>
+                </span>
+              </a>
+            </li>
+          ))
         }
       </ol>
       <p class="milo-note">
-        Change the six stories whenever you like — same cube, new adventures. This page is Milo’s
-        door.
+        Underwater, Island, Moon — then Sand Sea, Cloud Rail, Ember Hollow. Same cube, new
+        adventures whenever you rewrite the realms.
       </p>
     </div>
   </section>
 
-  <script define:vars={{ REALMS }}>
+  <script>
     (function () {
       var root = document.querySelector('[data-milo]');
       if (!root) return;
 
       var cube = root.querySelector('[data-milo-cube]');
       var scene = root.querySelector('[data-milo-scene]');
-      var stage = root.querySelector('[data-milo-stage]');
-      var hint = root.querySelector('[data-milo-hint]');
-      var realmEl = root.querySelector('[data-milo-realm]');
-      var closeBtn = root.querySelector('[data-milo-close]');
-      if (!cube || !scene || !stage || !realmEl) return;
+      if (!cube || !scene) return;
 
       var rx = -18;
       var ry = 32;
@@ -195,7 +101,6 @@ const faceMeta = [
       var moved = false;
       var lastX = 0;
       var lastY = 0;
-      var openFace = null;
       var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       var FACE_POSE = {
@@ -226,7 +131,7 @@ const faceMeta = [
         var endRx = pose.rx;
         var endRy = nearestAngle(ry, pose.ry);
         var t0 = performance.now();
-        var dur = reduceMotion ? 1 : 520;
+        var dur = reduceMotion ? 1 : 480;
 
         function frame(now) {
           var t = Math.min(1, (now - t0) / dur);
@@ -240,55 +145,15 @@ const faceMeta = [
         requestAnimationFrame(frame);
       }
 
-      function realmByFace(face) {
-        for (var i = 0; i < REALMS.length; i++) {
-          if (REALMS[i].face === face) return REALMS[i];
-        }
-        return null;
-      }
-
-      function openRealm(face) {
-        var realm = realmByFace(face);
-        if (!realm) return;
-        openFace = face;
-        root.classList.add('milo--open');
-        cube.querySelectorAll('[data-milo-face]').forEach(function (btn) {
-          btn.classList.toggle('is-open', btn.getAttribute('data-milo-face') === face);
-        });
-        realmEl.hidden = false;
-        realmEl.style.setProperty('--realm-hue', realm.hue);
-        realmEl.style.setProperty('--realm-accent', realm.accent);
-        root.querySelector('[data-milo-realm-kicker]').textContent = realm.kicker;
-        root.querySelector('[data-milo-realm-title]').textContent = realm.title;
-        root.querySelector('[data-milo-realm-lead]').textContent = realm.lead;
-        root.querySelector('[data-milo-realm-detail]').textContent = realm.detail;
-        requestAnimationFrame(function () {
-          realmEl.classList.add('is-visible');
-        });
-        if (hint) hint.hidden = true;
-      }
-
-      function closeRealm() {
-        openFace = null;
-        root.classList.remove('milo--open');
-        cube.querySelectorAll('[data-milo-face].is-open').forEach(function (btn) {
-          btn.classList.remove('is-open');
-        });
-        realmEl.classList.remove('is-visible');
-        window.setTimeout(function () {
-          if (!openFace) realmEl.hidden = true;
-        }, 320);
-        if (hint) hint.hidden = false;
-        if (!reduceMotion) auto = true;
-      }
-
-      function chooseFace(face) {
-        if (openFace === face) {
-          closeRealm();
-          return;
-        }
+      function enterFace(btn) {
+        var face = btn.getAttribute('data-milo-face');
+        var href = btn.getAttribute('data-realm-href');
+        if (!face || !href) return;
+        btn.classList.add('is-open');
         tweenTo(face, function () {
-          openRealm(face);
+          window.setTimeout(function () {
+            window.location.href = href;
+          }, reduceMotion ? 0 : 280);
         });
       }
 
@@ -298,25 +163,11 @@ const faceMeta = [
             event.preventDefault();
             return;
           }
-          chooseFace(btn.getAttribute('data-milo-face'));
+          enterFace(btn);
         });
-      });
-
-      root.querySelectorAll('[data-milo-jump]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          chooseFace(btn.getAttribute('data-milo-jump'));
-          stage.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-        });
-      });
-
-      if (closeBtn) closeBtn.addEventListener('click', closeRealm);
-
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && openFace) closeRealm();
       });
 
       function onPointerDown(event) {
-        if (openFace) return;
         dragging = true;
         moved = false;
         auto = false;
@@ -346,7 +197,7 @@ const faceMeta = [
         } catch (err) {}
         window.setTimeout(function () {
           moved = false;
-          if (!openFace && !reduceMotion) auto = true;
+          if (!reduceMotion) auto = true;
         }, 180);
       }
 
@@ -362,7 +213,7 @@ const faceMeta = [
         function spin(now) {
           var dt = Math.min(32, now - last);
           last = now;
-          if (auto && !dragging && !openFace) {
+          if (auto && !dragging) {
             ry += dt * 0.012;
             rx = -18 + Math.sin(now / 2800) * 6;
             applyPose();
@@ -537,8 +388,9 @@ const faceMeta = [
     inset: 0;
     display: grid;
     align-content: end;
-    gap: 0.2rem;
-    padding: 0.85rem 0.9rem 1rem;
+    justify-items: start;
+    gap: 0.15rem;
+    padding: 0.65rem 0.75rem 0.85rem;
     text-align: left;
     background:
       linear-gradient(160deg, color-mix(in srgb, var(--face-hue) 88%, white 12%), var(--face-hue)),
@@ -554,6 +406,17 @@ const faceMeta = [
     backface-visibility: hidden;
   }
 
+  .milo-face-fig {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.35rem;
+    width: 38%;
+    height: auto;
+    opacity: 0.92;
+    filter: drop-shadow(0 0.2rem 0.35rem rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+  }
+
   .milo-face-well {
     position: absolute;
     inset: 0;
@@ -565,8 +428,11 @@ const faceMeta = [
   }
 
   .milo-face-mark {
+    position: relative;
+    z-index: 1;
+    max-width: 70%;
     font-family: var(--font-display);
-    font-size: clamp(1.15rem, 3.5vw, 1.45rem);
+    font-size: clamp(1rem, 3.2vw, 1.3rem);
     font-weight: 300;
     letter-spacing: 0.04em;
     line-height: 1.05;
@@ -575,11 +441,15 @@ const faceMeta = [
   }
 
   .milo-face-kicker {
+    position: relative;
+    z-index: 1;
+    max-width: 75%;
     color: color-mix(in srgb, var(--face-accent) 80%, white 20%);
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 500;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    line-height: 1.25;
   }
 
   .milo-face--front {
@@ -604,95 +474,6 @@ const faceMeta = [
   .milo-face.is-open .milo-face-lid {
     transform: rotateX(-118deg);
     box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
-  }
-
-  .milo--open .milo-cube {
-    animation: none;
-  }
-
-  .milo-realm {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: grid;
-    place-items: center;
-    padding: 1.25rem;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% 40%, color-mix(in srgb, var(--realm-hue, #1e3a45) 55%, transparent), transparent 70%),
-      rgba(8, 12, 17, 0.72);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
-  }
-
-  .milo-realm.is-visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .milo-realm-panel {
-    width: min(28rem, 100%);
-    padding: 1.5rem 1.4rem 1.35rem;
-    border: 1px solid color-mix(in srgb, var(--realm-accent, var(--amber)) 40%, transparent);
-    background:
-      linear-gradient(165deg, color-mix(in srgb, var(--realm-hue, #1e3a45) 92%, white 8%), var(--realm-hue, #1e3a45));
-    box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.45);
-    transform: translateY(0.75rem) scale(0.98);
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .milo-realm.is-visible .milo-realm-panel {
-    transform: none;
-  }
-
-  .milo-realm-kicker {
-    margin: 0;
-    color: color-mix(in srgb, var(--realm-accent, var(--amber-hot)) 85%, white 15%);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .milo-realm-title {
-    margin: 0.4rem 0 0.75rem;
-    color: var(--paper);
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 5vw, 2.75rem);
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    line-height: 1;
-  }
-
-  .milo-realm-lead,
-  .milo-realm-detail {
-    margin: 0 0 0.85rem;
-    color: rgba(238, 243, 247, 0.88);
-    max-width: 34em;
-  }
-
-  .milo-realm-detail {
-    color: rgba(215, 224, 232, 0.72);
-  }
-
-  .milo-realm-close {
-    appearance: none;
-    margin-top: 0.5rem;
-    padding: 0.55rem 0.9rem;
-    border: 1px solid color-mix(in srgb, var(--realm-accent, var(--amber)) 45%, transparent);
-    border-radius: 0;
-    background: rgba(8, 12, 17, 0.35);
-    color: var(--amber-hot);
-    font: inherit;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-  }
-
-  .milo-realm-close:hover,
-  .milo-realm-close:focus-visible {
-    background: rgba(8, 12, 17, 0.55);
-    outline: none;
   }
 
   .milo-key {
@@ -726,24 +507,18 @@ const faceMeta = [
     border-top: 0;
   }
 
-  .milo-key-list button {
+  .milo-key-list a {
     display: grid;
     grid-template-columns: 1.55rem minmax(0, 1fr);
     gap: 0.85rem;
     align-items: center;
-    width: 100%;
-    margin: 0;
     padding: 0.8rem 0.95rem;
-    border: 0;
-    background: transparent;
     color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
+    text-decoration: none;
   }
 
-  .milo-key-list button:hover,
-  .milo-key-list button:focus-visible {
+  .milo-key-list a:hover,
+  .milo-key-list a:focus-visible {
     background: rgba(240, 194, 122, 0.06);
     outline: none;
   }
