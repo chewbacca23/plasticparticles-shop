@@ -462,9 +462,17 @@ export default {
       const looks = await handleLooksRequest(request, env);
       if (looks) return looks;
 
+      // Await real page opens so Looks → open Home → refresh sees the new row.
+      // Background only for non-document fetches (css, etc. already skipped).
       const lookJob = recordDocumentLook(request, env);
-      if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(lookJob);
-      else await lookJob;
+      const fetchDest = (request.headers.get('sec-fetch-dest') || '').toLowerCase();
+      if (fetchDest === 'document' || fetchDest === '' || fetchDest === 'empty') {
+        await lookJob;
+      } else if (ctx && typeof ctx.waitUntil === 'function') {
+        ctx.waitUntil(lookJob);
+      } else {
+        await lookJob;
+      }
 
       const freshRide = await handleFreshRide(request, env);
       if (freshRide) return freshRide;

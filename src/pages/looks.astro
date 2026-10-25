@@ -45,7 +45,9 @@ import MemberDelete from '../components/MemberDelete.astro';
         </article>
       </div>
 
-      <h2 class="pages-title">Latest opens</h2>
+      <h2 class="pages-title">
+        Latest opens <span data-looks-recent-count>—</span>
+      </h2>
       <p class="note">
         Each row is one real page open. Newest first. No names — just path, place, and what sent
         them. Open Home in another tab, refresh, and watch a row land.
@@ -53,6 +55,71 @@ import MemberDelete from '../components/MemberDelete.astro';
       <ol class="pages" data-looks-recent>
         <li class="empty">Open any public page in another tab, then refresh — a row shows here.</li>
       </ol>
+      <script type="application/json" data-looks-recent-json>[]</script>
+      <script is:inline>
+        (function () {
+          var dataEl = document.querySelector('[data-looks-recent-json]');
+          var list = document.querySelector('ol[data-looks-recent]');
+          if (!dataEl || !list) return;
+          var rows;
+          try {
+            rows = JSON.parse(dataEl.textContent || '[]');
+          } catch (err) {
+            return;
+          }
+          if (!Array.isArray(rows) || !rows.length) return;
+          if (list.querySelector('.looks-recent')) return;
+
+          function esc(value) {
+            return String(value)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+          }
+          function whenLabel(iso) {
+            var at = new Date(iso);
+            if (isNaN(at.getTime())) return '—';
+            return new Intl.DateTimeFormat('en-GB', {
+              timeZone: 'Europe/Berlin',
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }).format(at);
+          }
+          list.innerHTML = rows
+            .map(function (row) {
+              var path = row.path === '/' ? 'Home' : esc(row.path || '/');
+              var href = esc(row.path || '/');
+              var bits = [];
+              if (row.country) bits.push(esc(row.country));
+              if (row.from) bits.push(esc(row.from));
+              var meta = bits.length
+                ? '<span class="looks-recent-meta">' + bits.join(' · ') + '</span>'
+                : '';
+              return (
+                '<li class="looks-recent">' +
+                '<span class="looks-recent-main">' +
+                '<a href="' +
+                href +
+                '">' +
+                path +
+                '</a>' +
+                meta +
+                '</span>' +
+                '<span class="looks-recent-when">' +
+                esc(whenLabel(row.t)) +
+                '</span>' +
+                '</li>'
+              );
+            })
+            .join('');
+          var countEl = document.querySelector('[data-looks-recent-count]');
+          if (countEl) countEl.textContent = String(rows.length);
+        })();
+      </script>
 
       <h2 class="pages-title">14 days</h2>
       <p class="note">Berlin days. Column height ∝ opens. Max column = busiest day.</p>

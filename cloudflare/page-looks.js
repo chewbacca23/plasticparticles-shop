@@ -84,6 +84,9 @@ export function shouldRecordPath(path) {
   if (path.startsWith('/admin')) return false;
   if (path.startsWith('/api/')) return false;
   if (/\.[a-z0-9]{1,8}$/i.test(path)) return false;
+  // Scanners / junk — keep the proof feed readable.
+  if (path.includes('/.git') || path.includes('/wp-') || path.includes('/php')) return false;
+  if (path.startsWith('/.') || path.startsWith('/_')) return false;
   return true;
 }
 
@@ -802,7 +805,7 @@ export function looksDashboardPage(summary, members = [], shares = []) {
       <article class="card"><p class="card-label">n<sub>year</sub></p><p class="card-hint">This year</p><p class="card-num">${year}</p></article>
       <article class="card"><p class="card-label">Σ</p><p class="card-hint">All time</p><p class="card-num">${total}</p></article>
     </div>
-    <h2>Latest opens</h2>
+    <h2>Latest opens <span>${Array.isArray(summary?.recent) ? summary.recent.length : 0}</span></h2>
     <p class="note">Each row is one real page open. Newest first. No names — just path, place, and what sent them. Open Home in another tab, refresh, and watch a row land.</p>
     <ol>${recentRows}</ol>
     <h2>14 days</h2>
@@ -1078,12 +1081,20 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
   );
   const memberRows = membersListHtml(members);
   const shareRows = postcardSharesListHtml(shares);
+  const recentList = Array.isArray(summary?.recent) ? summary.recent : [];
+  const recentCount = String(recentList.length);
+  // Embed JSON so the browser can paint the feed even if an HTML replace misses.
+  const recentJson = escapeHtml(JSON.stringify(recentList));
   return String(html)
     .replace(/data-looks="today"([^>]*)>[\s\S]*?</, `data-looks="today"$1>${today}<`)
     .replace(/data-looks="week"([^>]*)>[\s\S]*?</, `data-looks="week"$1>${week}<`)
     .replace(/data-looks="month"([^>]*)>[\s\S]*?</, `data-looks="month"$1>${month}<`)
     .replace(/data-looks="year"([^>]*)>[\s\S]*?</, `data-looks="year"$1>${year}<`)
     .replace(/data-looks="total"([^>]*)>[\s\S]*?</, `data-looks="total"$1>${total}<`)
+    .replace(
+      /data-looks-recent-count([^>]*)>[\s\S]*?</,
+      `data-looks-recent-count$1>${recentCount}<`,
+    )
     .replace(
       /data-members-count([^>]*)>[\s\S]*?</,
       `data-members-count$1>${memberCount}<`,
@@ -1095,6 +1106,10 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     .replace(
       /<ol([^>]*data-looks-recent[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${recentRows}</ol>`,
+    )
+    .replace(
+      /(<script[^>]*data-looks-recent-json[^>]*>)[\s\S]*?(<\/script>)/,
+      `$1${recentJson}$2`,
     )
     .replace(
       /<ol([^>]*data-looks-years[^>]*)>[\s\S]*?<\/ol>/,

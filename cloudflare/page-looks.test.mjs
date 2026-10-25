@@ -59,7 +59,9 @@ const SITE_LOOKS = `<html><body>
 <ol class="looks-bars" data-looks-days><li class="empty">no days</li></ol>
 <ol class="looks-bars" data-looks-weeks><li class="empty">no weeks</li></ol>
 <ol class="looks-bars" data-looks-months><li class="empty">no months</li></ol>
+<span data-looks-recent-count>—</span>
 <ol class="pages" data-looks-recent><li class="empty">no recent</li></ol>
+<script type="application/json" data-looks-recent-json>[]</script>
 <ol class="pages" data-looks-years><li class="empty">no years</li></ol>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
 <ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
@@ -529,6 +531,8 @@ describe('fillLooksInHtml', () => {
     assert.match(html, /looks-recent/);
     assert.match(html, /\/stories\/nice/);
     assert.match(html, /looks-recent-when/);
+    assert.match(html, /data-looks-recent-count[^>]*>1</);
+    assert.match(html, /data-looks-recent-json[^>]*>\[/);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
 });
