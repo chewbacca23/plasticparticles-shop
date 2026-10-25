@@ -460,8 +460,21 @@ describe('GET/POST /api/looks', () => {
       },
     });
     Object.defineProperty(request, 'cf', { value: { country: 'DE' } });
-    assert.deepEqual(lookFromRequest(request), { country: 'DE', from: 'Instagram' });
-    await recordDocumentLook(request, auth);
+    assert.deepEqual(lookFromRequest(request), {
+      country: 'DE',
+      from: 'Instagram',
+      ip: '',
+    });
+    const withIp = new Request('https://thenewsoulsearchers.de/now', {
+      headers: {
+        'sec-fetch-dest': 'document',
+        referer: 'https://www.instagram.com/',
+        'cf-connecting-ip': '203.0.113.10',
+      },
+    });
+    Object.defineProperty(withIp, 'cf', { value: { country: 'DE' } });
+    assert.equal(lookFromRequest(withIp).ip, '203.0.113.10');
+    await recordDocumentLook(withIp, auth);
     const html = await (
       await handleLooksPage(
         withLooksCookie('https://thenewsoulsearchers.de/looks', auth.cookie),

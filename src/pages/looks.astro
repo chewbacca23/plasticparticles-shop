@@ -13,8 +13,9 @@ import MemberDelete from '../components/MemberDelete.astro';
       <p class="eyebrow">Open counts</p>
       <h1 class="section-title">Looks</h1>
       <p class="section-lead">
-        Private for you. Opens per page, day, week, and month — Berlin calendar. No names. Counts
-        start after this Worker is live.
+        Private for you. Opens per page, day, week, and month — Berlin calendar. Latest opens keep
+        path, place, IP, and referrer for the last 40 hits — not on the public site. Counts start
+        after this Worker is live.
       </p>
 
       <div class="cards" role="group" aria-label="Summary counts">
@@ -49,8 +50,8 @@ import MemberDelete from '../components/MemberDelete.astro';
         Latest opens <span data-looks-recent-count>—</span>
       </h2>
       <p class="note">
-        Each row is one real page open. Newest first. No names — just path, place, and what sent
-        them. Open Home in another tab, refresh, and watch a row land.
+        Each row is one real page open. Newest first — path, country, IP, referrer. Private for
+        you. Open Home in another tab, refresh, and watch a row land.
       </p>
       <ol class="pages" data-looks-recent>
         <li class="empty">Open any public page in another tab, then refresh — a row shows here.</li>
@@ -95,6 +96,7 @@ import MemberDelete from '../components/MemberDelete.astro';
               var href = esc(row.path || '/');
               var bits = [];
               if (row.country) bits.push(esc(row.country));
+              if (row.ip) bits.push(esc(row.ip));
               if (row.from) bits.push(esc(row.from));
               var meta = bits.length
                 ? '<span class="looks-recent-meta">' + bits.join(' · ') + '</span>'

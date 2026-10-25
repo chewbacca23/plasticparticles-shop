@@ -120,6 +120,7 @@ export function applyLook(data, path, day, extras = {}) {
   };
   if (extras.country) entry.country = extras.country;
   if (extras.from) entry.from = extras.from;
+  if (extras.ip) entry.ip = extras.ip;
   next.recent.push(entry);
   if (next.recent.length > RECENT_LOOKS_LIMIT) {
     next.recent = next.recent.slice(-RECENT_LOOKS_LIMIT);
@@ -295,8 +296,26 @@ export function recentLooks(recent) {
       path: row.path,
       country: typeof row.country === 'string' ? row.country : '',
       from: typeof row.from === 'string' ? row.from : '',
+      ip: typeof row.ip === 'string' ? row.ip : '',
     }))
     .reverse();
+}
+
+/** Visitor IP for the private Latest opens feed (CF-Connecting-IP). */
+export function sanitizeIp(raw) {
+  const value = String(raw || '')
+    .split(',')[0]
+    .trim();
+  if (!value || value.length > 45) return '';
+  // IPv4
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(value)) {
+    const parts = value.split('.').map((n) => Number(n));
+    if (parts.every((n) => n >= 0 && n <= 255)) return value;
+    return '';
+  }
+  // IPv6 (compressed forms ok)
+  if (/^[0-9a-f:]+$/i.test(value) && value.includes(':')) return value.toLowerCase();
+  return '';
 }
 
 function topNamedCounts(map, label = (key) => key) {
@@ -438,6 +457,11 @@ export function lookFromRequest(request) {
   return {
     country: sanitizeCountry(request.cf?.country),
     from: sanitizeFrom(request.headers.get('referer'), request.url),
+    ip: sanitizeIp(
+      request.headers.get('cf-connecting-ip') ||
+        request.headers.get('true-client-ip') ||
+        request.headers.get('x-real-ip'),
+    ),
   };
 }
 
@@ -806,7 +830,7 @@ export function looksDashboardPage(summary, members = [], shares = []) {
       <article class="card"><p class="card-label">Σ</p><p class="card-hint">All time</p><p class="card-num">${total}</p></article>
     </div>
     <h2>Latest opens <span>${Array.isArray(summary?.recent) ? summary.recent.length : 0}</span></h2>
-    <p class="note">Each row is one real page open. Newest first. No names — just path, place, and what sent them. Open Home in another tab, refresh, and watch a row land.</p>
+    <p class="note">Each row is one real page open. Newest first — path, country, IP, referrer. Private for you. Open Home in another tab, refresh, and watch a row land.</p>
     <ol>${recentRows}</ol>
     <h2>14 days</h2>
     <p class="note">Berlin days. Column height ∝ opens.</p>
@@ -890,6 +914,7 @@ export function looksRecentRows(recent, emptyText) {
       const when = escapeHtml(berlinLookTime(row.t));
       const bits = [];
       if (row.country) bits.push(escapeHtml(countryLabel(row.country)));
+      if (row.ip) bits.push(escapeHtml(row.ip));
       if (row.from) bits.push(escapeHtml(row.from));
       const meta = bits.length
         ? `<span class="looks-recent-meta">${bits.join(' · ')}</span>`
