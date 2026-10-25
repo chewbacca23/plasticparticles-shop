@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import MiloFirstDive from '../../components/MiloFirstDive.astro';
 import { MILO_REALMS, miloRealmById } from '../../lib/milo-realms';
 
 export function getStaticPaths() {
@@ -13,6 +14,7 @@ if (!realm) {
 }
 
 const figureSrc = `/milo/${realm.figure}.png`;
+const isFirstDive = realm.id === 'underwater';
 ---
 
 <BaseLayout
@@ -21,6 +23,9 @@ const figureSrc = `/milo/${realm.figure}.png`;
   robots="noindex, nofollow"
   watermark={false}
 >
+  {isFirstDive ? (
+    <MiloFirstDive />
+  ) : (
   <section
     class:list={['realm', `realm--${realm.theme}`]}
     style={`--realm-hue:${realm.hue};--realm-accent:${realm.accent}`}
@@ -110,6 +115,7 @@ const figureSrc = `/milo/${realm.figure}.png`;
       </p>
     </div>
   </section>
+  )}
 </BaseLayout>
 
 <style>
