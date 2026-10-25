@@ -186,6 +186,8 @@ describe('looksBarsHtml', () => {
     assert.match(html, /flex-direction:column/);
     assert.match(html, /looks-line/);
     assert.match(html, /<polyline /);
+    assert.match(html, /looks-line-dot/);
+    assert.match(html, /border-radius:50%/);
     assert.match(html, /rgba\(212,163,90,0\.38\)/);
   });
 });

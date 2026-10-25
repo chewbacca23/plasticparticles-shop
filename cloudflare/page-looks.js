@@ -736,6 +736,7 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     .looks-bars { position:relative; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2rem,1fr); align-items:end; gap:.35rem; margin:0; padding:1rem .75rem .75rem; list-style:none; border:1px solid rgba(215,224,232,.14); border-radius:0; min-height:13rem; overflow-x:auto; background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),rgba(215,224,232,.07) calc(25% - 1px),rgba(215,224,232,.07) 25%),rgba(8,12,17,.55); }
     .looks-line { position:absolute; left:.75rem; right:.75rem; top:1.85rem; bottom:1.55rem; margin:0; padding:0; list-style:none; pointer-events:none; z-index:2; }
     .looks-line-svg { display:block; width:100%; height:100%; overflow:visible; }
+    .looks-line-dot { position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%; background:#f0c27a; border:1.5px solid #0c1218; box-sizing:border-box; }
     .looks-bar { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:.3rem; height:11rem; padding:0; border:0; min-width:0; }
     .looks-bar-label { color:rgba(215,224,232,.72); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:.7rem; font-weight:300; letter-spacing:.04em; text-align:center; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; }
     .looks-bar-track { display:flex; flex-direction:column; justify-content:flex-end; width:100%; max-width:1.55rem; flex:1 1 auto; border-radius:0; border-bottom:1px solid rgba(215,224,232,.28); background:transparent; overflow:hidden; }
@@ -882,12 +883,18 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
     `${pts[0].x.toFixed(2)},100 ` +
     linePoints +
     ` ${pts[pts.length - 1].x.toFixed(2)},100`;
+  // CSS dots (not SVG <circle>): preserveAspectRatio="none" stretches the chart
+  // SVG, which turns vector circles into ovals — real round markers stay round.
   const dots = pts
-    .map(
-      (p) =>
-        `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="1.35" fill="#f0c27a" ` +
-        `stroke="#0c1218" stroke-width="0.6" vector-effect="non-scaling-stroke" />`,
-    )
+    .map((p) => {
+      const left = p.x.toFixed(2);
+      const top = p.y.toFixed(2);
+      return (
+        `<span class="looks-line-dot" style="position:absolute;left:${left}%;top:${top}%;` +
+        `width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;` +
+        `background:#f0c27a;border:1.5px solid #0c1218;box-sizing:border-box"></span>`
+      );
+    })
     .join('');
   const lineOverlay =
     `<li class="looks-line" aria-hidden="true" style="position:absolute;left:0.75rem;right:0.75rem;` +
@@ -897,7 +904,7 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
     `<polygon points="${areaPoints}" fill="rgba(240,194,122,0.12)" />` +
     `<polyline points="${linePoints}" fill="none" stroke="#f0c27a" stroke-width="1.75" ` +
     `stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />` +
-    `${dots}</svg></li>`;
+    `</svg>${dots}</li>`;
 
   const columns = list
     .map((row) => {
