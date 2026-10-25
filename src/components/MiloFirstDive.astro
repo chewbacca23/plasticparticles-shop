@@ -1,6 +1,134 @@
 ---
-/** First Milo adventure: swim into the cube → island shore → free dive. */
+/**
+ * First Milo adventure — swim into the cube → island shore → underwater world
+ * with numbered cubes Milo can hit to open (like the old Plastic Particles sea).
+ */
 const figure = '/milo/explorer-a.png';
+
+const FINDS = [
+  {
+    n: 1,
+    x: 420,
+    y: 220,
+    title: 'Nice',
+    blurb: 'Where the Alps meet the sea — Promenade light and a long ride waiting.',
+    href: '/stories/nice',
+  },
+  {
+    n: 2,
+    x: 720,
+    y: 380,
+    title: 'The mighty mountain',
+    blurb: 'Hairpins like a ladder. The summit looks tiny until you’re next to it.',
+    href: '/stories/the-mighty-mountain',
+  },
+  {
+    n: 3,
+    x: 980,
+    y: 160,
+    title: 'My personal ride',
+    blurb: 'A ride that belongs to one pair of legs and one quiet map.',
+    href: '/stories/my-personal-ride',
+  },
+  {
+    n: 4,
+    x: 1180,
+    y: 420,
+    title: 'The patch is here',
+    blurb: 'Small cloth, big story — stitched close for the next tour.',
+    href: '/stories/the-patch-is-here',
+  },
+  {
+    n: 5,
+    x: 1480,
+    y: 240,
+    title: 'Wonderful patches',
+    blurb: 'Threads and colours that mark where the road has already been.',
+    href: '/stories/the-most-wonderful-patches',
+  },
+  {
+    n: 6,
+    x: 1720,
+    y: 460,
+    title: 'Last shots of Nice',
+    blurb: 'Gold on the bay, one more look before the train.',
+    href: '/stories/the-last-shots-of-nice',
+  },
+  {
+    n: 7,
+    x: 1980,
+    y: 180,
+    title: 'Night before a tour',
+    blurb: 'Bags packed, mind already on the first kilometre.',
+    href: '/stories/the-night-before-a-tour',
+  },
+  {
+    n: 8,
+    x: 2220,
+    y: 360,
+    title: 'Write it down',
+    blurb: 'Notes from the saddle — so the ride doesn’t vanish.',
+    href: '/stories/write-it-down',
+  },
+  {
+    n: 9,
+    x: 2480,
+    y: 200,
+    title: 'Christoph from Cologne',
+    blurb: 'A mate on the road, kilometres shared without much talk.',
+    href: '/stories/christoph-my-mate-from-cologne',
+  },
+  {
+    n: 10,
+    x: 640,
+    y: 520,
+    title: 'Café dawn',
+    blurb: 'Steam, a window seat, the map still folded.',
+    href: '/milo/island',
+  },
+  {
+    n: 11,
+    x: 1320,
+    y: 560,
+    title: 'Salt road',
+    blurb: 'Sea on the left shoulder, warm air on the lips.',
+    href: '/milo/island',
+  },
+  {
+    n: 12,
+    x: 1880,
+    y: 560,
+    title: 'Moon dust',
+    blurb: 'Quiet boots and Earth like a postcard on the horizon.',
+    href: '/milo/moon',
+  },
+  {
+    n: 13,
+    x: 2680,
+    y: 320,
+    title: 'Sand sea',
+    blurb: 'Wind writes lines across the dunes.',
+    href: '/milo/sand',
+  },
+  {
+    n: 14,
+    x: 2900,
+    y: 480,
+    title: 'Cloud rail',
+    blurb: 'A thin track through the weather.',
+    href: '/milo/cloud',
+  },
+  {
+    n: 15,
+    x: 3100,
+    y: 240,
+    title: 'Ember hollow',
+    blurb: 'Warmth without the burn — sparks like tiny street lamps.',
+    href: '/milo/ember',
+  },
+];
+
+const WORLD_W = 3400;
 ---
 
 <section class="dive" data-dive data-act="intro">
@@ -9,7 +137,6 @@ const figure = '/milo/explorer-a.png';
     <a href="/milo">Cube</a>
   </p>
 
-  <!-- Act 1: cube in space, Milo swims in -->
   <div class="dive-act dive-act--intro" data-act-panel="intro">
     <div class="dive-space" aria-hidden="true"></div>
     <div class="dive-cube-wrap" data-dive-cube>
@@ -26,59 +153,94 @@ const figure = '/milo/explorer-a.png';
     <p class="dive-caption" data-caption>Milo swims into the cube…</p>
   </div>
 
-  <!-- Act 2–3: island shore -->
   <div class="dive-act dive-act--shore" data-act-panel="shore" hidden>
     <div class="shore-sky" aria-hidden="true">
       <span class="shore-sun"></span>
       <span class="shore-palm"></span>
     </div>
-    <div class="shore-sea" aria-hidden="true">
-      <span class="shore-wave"></span>
-    </div>
+    <div class="shore-sea" aria-hidden="true"><span class="shore-wave"></span></div>
     <div class="shore-sand" aria-hidden="true"></div>
     <img class="dive-milo dive-milo--shore" data-milo-shore src={figure} alt="Milo on the shore" width="200" height="200" />
     <p class="dive-caption dive-caption--shore" data-caption-shore>The cube opens into an island.</p>
     <button type="button" class="dive-jump" data-dive-jump hidden>Jump in</button>
   </div>
 
-  <!-- Act 4: free dive -->
   <div class="dive-act dive-act--sea" data-act-panel="sea" hidden>
-    <div class="sea-fx" aria-hidden="true">
-      <span class="sea-caustic"></span>
-      <span class="sea-kelp"></span>
-      <span class="sea-kelp sea-kelp--2"></span>
-      <span class="sea-bubble" data-bubbles></span>
+    <div class="sea-viewport" data-sea-view>
+      <div class="sea-world" data-sea-world style={`width:${WORLD_W}px`}>
+        <div class="sea-fx" aria-hidden="true">
+          <span class="sea-caustic"></span>
+          <span class="sea-kelp" style="left:8%"></span>
+          <span class="sea-kelp" style="left:28%;height:34vh;animation-delay:-1s"></span>
+          <span class="sea-kelp" style="left:52%;height:44vh;animation-delay:-2.1s"></span>
+          <span class="sea-kelp" style="left:74%;height:30vh;animation-delay:-0.6s"></span>
+          <span class="sea-kelp" style="left:90%;height:38vh;animation-delay:-1.7s"></span>
+          <span class="sea-bubbles" data-bubbles></span>
+        </div>
+
+        {
+          FINDS.map((find) => (
+            <button
+              type="button"
+              class="sea-num"
+              data-sea-num={find.n}
+              data-title={find.title}
+              data-blurb={find.blurb}
+              data-href={find.href}
+              style={`left:${find.x}px;top:${find.y}px`}
+              aria-label={`Number ${find.n}. Swim into it to open.`}
+            >
+              <span class="sea-num-face">{find.n}</span>
+            </button>
+          ))
+        }
+
+        <img
+          class="dive-milo dive-milo--swim"
+          data-milo-swim
+          src={figure}
+          alt="Milo diving"
+          width="140"
+          height="140"
+          draggable="false"
+        />
+      </div>
     </div>
-    <div class="sea-play" data-sea-play>
-      <img
-        class="dive-milo dive-milo--swim"
-        data-milo-swim
-        src={figure}
-        alt="Milo diving"
-        width="140"
-        height="140"
-        draggable="false"
-      />
-    </div>
+
     <p class="dive-hud">
-      Drag or use arrows / WASD to swim · <a href="/milo">Back to cube</a>
+      Swim into the numbers to open them · arrows / WASD or drag ·
+      <span data-find-count>0</span>/{FINDS.length} ·
+      <a href="/milo">Cube</a>
     </p>
+  </div>
+
+  <div class="sea-popup" data-sea-popup hidden role="dialog" aria-modal="true">
+    <div class="sea-popup-panel">
+      <p class="sea-popup-num" data-popup-num></p>
+      <h2 class="sea-popup-title" data-popup-title></h2>
+      <p class="sea-popup-blurb" data-popup-blurb></p>
+      <p class="sea-popup-actions">
+        <a class="sea-popup-link" data-popup-link href="#">Open</a>
+        <button type="button" class="sea-popup-close" data-popup-close>Keep diving</button>
+      </p>
+    </div>
   </div>
 </section>
 
-<script>
+<script define:vars={{ WORLD_W, FINDS_LEN: FINDS.length }}>
   (function () {
     var root = document.querySelector('[data-dive]');
     if (!root) return;
 
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var miloIntro = root.querySelector('[data-milo-intro]');
     var miloShore = root.querySelector('[data-milo-shore]');
     var miloSwim = root.querySelector('[data-milo-swim]');
-    var cubeWrap = root.querySelector('[data-dive-cube]');
     var jumpBtn = root.querySelector('[data-dive-jump]');
     var caption = root.querySelector('[data-caption]');
     var captionShore = root.querySelector('[data-caption-shore]');
+    var popup = root.querySelector('[data-sea-popup]');
+    var findCountEl = root.querySelector('[data-find-count]');
+    var opened = 0;
     var panels = {
       intro: root.querySelector('[data-act-panel="intro"]'),
       shore: root.querySelector('[data-act-panel="shore"]'),
@@ -148,42 +310,112 @@ const figure = '/milo/explorer-a.png';
       });
     }
 
-    // —— Free swim ——
+    function openFind(btn) {
+      if (!popup || btn.classList.contains('is-open')) return;
+      btn.classList.add('is-open', 'is-bump');
+      opened += 1;
+      if (findCountEl) findCountEl.textContent = String(opened);
+      popup.hidden = false;
+      root.querySelector('[data-popup-num]').textContent = '#' + btn.getAttribute('data-sea-num');
+      root.querySelector('[data-popup-title]').textContent = btn.getAttribute('data-title') || '';
+      root.querySelector('[data-popup-blurb]').textContent = btn.getAttribute('data-blurb') || '';
+      var link = root.querySelector('[data-popup-link]');
+      var href = btn.getAttribute('data-href') || '/milo';
+      link.setAttribute('href', href);
+      requestAnimationFrame(function () {
+        popup.classList.add('is-visible');
+        btn.classList.remove('is-bump');
+      });
+    }
+
+    function closePopup() {
+      if (!popup) return;
+      popup.classList.remove('is-visible');
+      window.setTimeout(function () {
+        popup.hidden = true;
+      }, 220);
+    }
+
+    var closeBtn = root.querySelector('[data-popup-close]');
+    if (closeBtn) closeBtn.addEventListener('click', closePopup);
+    if (popup) {
+      popup.addEventListener('click', function (event) {
+        if (event.target === popup) closePopup();
+      });
+    }
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closePopup();
+    });
+
+    root.querySelectorAll('[data-sea-num]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openFind(btn);
+      });
+    });
+
     var swimStarted = false;
     function startSwim() {
       if (swimStarted || !miloSwim) return;
       swimStarted = true;
-      var play = root.querySelector('[data-sea-play]');
-      if (!play) return;
+      var view = root.querySelector('[data-sea-view]');
+      var world = root.querySelector('[data-sea-world]');
+      if (!view || !world) return;
 
-      var x = play.clientWidth * 0.5;
-      var y = play.clientHeight * 0.45;
+      var worldW = WORLD_W;
+      var x = 180;
+      var y = Math.min(320, view.clientHeight * 0.45);
       var vx = 0;
       var vy = 0;
       var keys = Object.create(null);
       var pointing = false;
       var tx = x;
       var ty = y;
+      var miloW = 96;
+      var miloH = 96;
+
+      function cam() {
+        var vw = view.clientWidth;
+        var camX = Math.max(0, Math.min(x - vw * 0.35, worldW - vw));
+        world.style.transform = 'translate3d(' + -camX + 'px,0,0)';
+        return camX;
+      }
 
       function clamp() {
-        var pad = 48;
-        var maxX = play.clientWidth - pad;
-        var maxY = play.clientHeight - pad;
-        x = Math.max(pad, Math.min(maxX, x));
+        var pad = 40;
+        var maxY = Math.max(pad, view.clientHeight - pad);
+        x = Math.max(pad, Math.min(worldW - pad, x));
         y = Math.max(pad, Math.min(maxY, y));
       }
 
       function place() {
         miloSwim.style.transform =
           'translate(' +
-          (x - miloSwim.offsetWidth / 2) +
+          (x - miloW / 2) +
           'px,' +
-          (y - miloSwim.offsetHeight / 2) +
+          (y - miloH / 2) +
           'px) scaleX(' +
-          (vx < -0.15 ? -1 : 1) +
+          (vx < -0.2 ? -1 : 1) +
           ') rotate(' +
-          Math.max(-12, Math.min(12, vy * 2.5)) +
+          Math.max(-14, Math.min(14, vy * 2.2)) +
           'deg)';
+        cam();
+      }
+
+      function hits() {
+        var miloBox = { x: x - miloW * 0.28, y: y - miloH * 0.28, w: miloW * 0.56, h: miloH * 0.56 };
+        root.querySelectorAll('[data-sea-num]:not(.is-open)').forEach(function (btn) {
+          var nx = parseFloat(btn.style.left) || 0;
+          var ny = parseFloat(btn.style.top) || 0;
+          var size = 52;
+          if (
+            miloBox.x < nx + size &&
+            miloBox.x + miloBox.w > nx &&
+            miloBox.y < ny + size &&
+            miloBox.y + miloBox.h > ny
+          ) {
+            openFind(btn);
+          }
+        });
       }
 
       function onKey(down, event) {
@@ -210,23 +442,26 @@ const figure = '/milo/explorer-a.png';
         onKey(false, e);
       });
 
-      play.addEventListener('pointerdown', function (event) {
+      view.addEventListener('pointerdown', function (event) {
+        if (event.target.closest('[data-sea-num]') || event.target.closest('[data-sea-popup]')) return;
         pointing = true;
-        play.setPointerCapture(event.pointerId);
-        var rect = play.getBoundingClientRect();
-        tx = event.clientX - rect.left;
+        view.setPointerCapture(event.pointerId);
+        var camX = cam();
+        var rect = view.getBoundingClientRect();
+        tx = event.clientX - rect.left + camX;
         ty = event.clientY - rect.top;
       });
-      play.addEventListener('pointermove', function (event) {
+      view.addEventListener('pointermove', function (event) {
         if (!pointing) return;
-        var rect = play.getBoundingClientRect();
-        tx = event.clientX - rect.left;
+        var camX = cam();
+        var rect = view.getBoundingClientRect();
+        tx = event.clientX - rect.left + camX;
         ty = event.clientY - rect.top;
       });
-      play.addEventListener('pointerup', function () {
+      view.addEventListener('pointerup', function () {
         pointing = false;
       });
-      play.addEventListener('pointercancel', function () {
+      view.addEventListener('pointercancel', function () {
         pointing = false;
       });
 
@@ -234,32 +469,29 @@ const figure = '/milo/explorer-a.png';
       function tick(now) {
         var dt = Math.min(32, now - last) / 16.67;
         last = now;
-
         var ax = 0;
         var ay = 0;
         if (keys.arrowleft || keys.a) ax -= 1;
         if (keys.arrowright || keys.d) ax += 1;
         if (keys.arrowup || keys.w) ay -= 1;
         if (keys.arrowdown || keys.s) ay += 1;
-
         if (pointing) {
-          ax += (tx - x) * 0.04;
-          ay += (ty - y) * 0.04;
+          ax += (tx - x) * 0.035;
+          ay += (ty - y) * 0.035;
         }
-
-        vx = vx * 0.86 + ax * 1.5 * dt;
-        vy = vy * 0.86 + ay * 1.5 * dt;
-        x += vx * dt * 3.2;
-        y += vy * dt * 3.2;
+        vx = vx * 0.86 + ax * 1.55 * dt;
+        vy = vy * 0.86 + ay * 1.55 * dt;
+        x += vx * dt * 3.4;
+        y += vy * dt * 3.4;
         clamp();
         place();
+        if (!popup || popup.hidden) hits();
         requestAnimationFrame(tick);
       }
 
       place();
       requestAnimationFrame(tick);
 
-      // Ambient bubbles near Milo
       var bubbleHost = root.querySelector('[data-bubbles]');
       if (bubbleHost && !reduce) {
         window.setInterval(function () {
@@ -271,7 +503,7 @@ const figure = '/milo/explorer-a.png';
           window.setTimeout(function () {
             b.remove();
           }, 2800);
-        }, 420);
+        }, 480);
       }
     }
 
@@ -306,7 +538,7 @@ const figure = '/milo/explorer-a.png';
     position: fixed;
     top: 0.75rem;
     right: 0.85rem;
-    z-index: 20;
+    z-index: 30;
     display: flex;
     gap: 0.75rem;
     margin: 0;
@@ -338,6 +570,7 @@ const figure = '/milo/explorer-a.png';
     left: 50%;
     bottom: 12%;
     translate: -50% 0;
+    z-index: 6;
     margin: 0;
     padding: 0.45rem 0.85rem;
     border: 1px solid rgba(240, 194, 122, 0.28);
@@ -357,7 +590,6 @@ const figure = '/milo/explorer-a.png';
     user-select: none;
   }
 
-  /* —— Intro / cube —— */
   .dive-space {
     position: absolute;
     inset: 0;
@@ -414,7 +646,6 @@ const figure = '/milo/explorer-a.png';
     inset: 0;
     border: 1px solid rgba(94, 196, 216, 0.45);
     background: linear-gradient(160deg, rgba(30, 80, 100, 0.85), rgba(10, 40, 55, 0.92));
-    box-shadow: inset 0 0 1.5rem rgba(94, 196, 216, 0.15);
   }
 
   .dive-cube-face--f {
@@ -434,27 +665,6 @@ const figure = '/milo/explorer-a.png';
   }
   .dive-cube-face--bo {
     transform: rotateX(-90deg) translateZ(5.5rem);
-  }
-
-  @media (max-width: 520px) {
-    .dive-cube-face--f {
-      transform: translateZ(4.2rem);
-    }
-    .dive-cube-face--b {
-      transform: rotateY(180deg) translateZ(4.2rem);
-    }
-    .dive-cube-face--r {
-      transform: rotateY(90deg) translateZ(4.2rem);
-    }
-    .dive-cube-face--l {
-      transform: rotateY(-90deg) translateZ(4.2rem);
-    }
-    .dive-cube-face--t {
-      transform: rotateX(90deg) translateZ(4.2rem);
-    }
-    .dive-cube-face--bo {
-      transform: rotateX(-90deg) translateZ(4.2rem);
-    }
   }
 
   .dive-milo--intro {
@@ -492,7 +702,6 @@ const figure = '/milo/explorer-a.png';
     transition: opacity 0.4s ease;
   }
 
-  /* —— Shore —— */
   .dive-act--shore {
     background: linear-gradient(180deg, #4aa3c4 0%, #6eb8c9 40%, #c9b07a 40.2%, #c2a06a 62%, #2f6b5a 62.2%, #1e4a40 100%);
   }
@@ -602,7 +811,6 @@ const figure = '/milo/explorer-a.png';
     appearance: none;
     padding: 0.65rem 1.2rem;
     border: 1px solid rgba(240, 194, 122, 0.5);
-    border-radius: 0;
     background: rgba(8, 12, 17, 0.45);
     color: #f0c27a;
     font: inherit;
@@ -611,17 +819,28 @@ const figure = '/milo/explorer-a.png';
     cursor: pointer;
   }
 
-  .dive-jump:hover,
-  .dive-jump:focus-visible {
-    background: rgba(8, 12, 17, 0.7);
-    outline: none;
+  /* —— Underwater world —— */
+  .dive-act--sea {
+    background: #061820;
   }
 
-  /* —— Sea / free dive —— */
-  .dive-act--sea {
+  .sea-viewport {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    touch-action: none;
+    cursor: crosshair;
     background:
-      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(70, 180, 210, 0.32), transparent 55%),
+      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(70, 180, 210, 0.28), transparent 55%),
       linear-gradient(180deg, #123a4a 0%, #0a2430 45%, #061820 100%);
+  }
+
+  .sea-world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    will-change: transform;
   }
 
   .sea-fx {
@@ -634,8 +853,9 @@ const figure = '/milo/explorer-a.png';
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 28% 16% at 32% 22%, rgba(150, 230, 255, 0.14), transparent 60%),
-      radial-gradient(ellipse 22% 12% at 68% 30%, rgba(150, 230, 255, 0.1), transparent 60%);
+      radial-gradient(ellipse 20% 14% at 18% 22%, rgba(150, 230, 255, 0.12), transparent 60%),
+      radial-gradient(ellipse 18% 12% at 55% 30%, rgba(150, 230, 255, 0.1), transparent 60%),
+      radial-gradient(ellipse 22% 14% at 82% 24%, rgba(150, 230, 255, 0.1), transparent 60%);
     animation: caustic 5s ease-in-out infinite alternate;
   }
 
@@ -651,20 +871,12 @@ const figure = '/milo/explorer-a.png';
   .sea-kelp {
     position: absolute;
     bottom: -2%;
-    left: 10%;
-    width: 1.2rem;
+    width: 1.15rem;
     height: 40vh;
     border-radius: 2rem;
     background: linear-gradient(180deg, transparent, rgba(40, 120, 90, 0.55));
     transform-origin: bottom;
     animation: sway 5s ease-in-out infinite;
-  }
-
-  .sea-kelp--2 {
-    left: auto;
-    right: 14%;
-    height: 32vh;
-    animation-delay: -1.4s;
   }
 
   @keyframes sway {
@@ -677,23 +889,71 @@ const figure = '/milo/explorer-a.png';
     }
   }
 
-  .sea-play {
-    position: absolute;
-    inset: 0;
-    touch-action: none;
-    cursor: crosshair;
-  }
-
   .dive-milo--swim {
     left: 0;
     top: 0;
-    width: min(26vw, 8.5rem);
+    width: 6rem;
     will-change: transform;
-    transition: none;
+    z-index: 8;
+  }
+
+  .sea-num {
+    position: absolute;
+    z-index: 4;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin: 0;
+    padding: 0;
+    border: 2px solid rgba(255, 245, 200, 0.85);
+    border-radius: 0.35rem;
+    background: linear-gradient(160deg, #f0c27a, #d4a35a 55%, #a87838);
+    box-shadow:
+      0 0.35rem 0 #7a5420,
+      0 0.6rem 1.2rem rgba(0, 0, 0, 0.35);
+    color: #1a1208;
+    font-family: var(--font-display, 'Sofia Sans Extra Condensed', sans-serif);
+    font-size: 1.35rem;
+    font-weight: 300;
+    cursor: pointer;
+    transform-origin: center bottom;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      filter 0.3s ease;
+  }
+
+  .sea-num-face {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sea-num:hover,
+  .sea-num:focus-visible {
+    filter: brightness(1.08);
+    outline: none;
+  }
+
+  .sea-num.is-bump {
+    transform: translateY(-0.55rem) scale(1.08);
+  }
+
+  .sea-num.is-open {
+    background: linear-gradient(160deg, rgba(255, 250, 230, 0.95), rgba(240, 220, 160, 0.9));
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 1.5rem rgba(240, 194, 122, 0.45);
+    color: #5a4018;
+    pointer-events: auto;
+  }
+
+  .sea-num.is-open .sea-num-face {
+    font-size: 0.95rem;
   }
 
   .sea-pop {
     position: absolute;
+    z-index: 3;
     width: 0.4rem;
     height: 0.4rem;
     margin: -0.2rem 0 0 -0.2rem;
@@ -713,20 +973,115 @@ const figure = '/milo/explorer-a.png';
   .dive-hud {
     position: absolute;
     left: 50%;
-    bottom: 1rem;
+    bottom: 0.85rem;
     translate: -50% 0;
-    z-index: 8;
+    z-index: 20;
     margin: 0;
     padding: 0.4rem 0.75rem;
     border: 1px solid rgba(94, 196, 216, 0.3);
-    background: rgba(8, 12, 17, 0.5);
-    font-size: 0.8rem;
-    color: rgba(215, 224, 232, 0.78);
+    background: rgba(8, 12, 17, 0.55);
+    font-size: 0.78rem;
+    color: rgba(215, 224, 232, 0.8);
     white-space: nowrap;
   }
 
   .dive-hud a {
     color: #f0c27a;
+  }
+
+  .sea-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background: rgba(6, 16, 24, 0.72);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+
+  .sea-popup.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sea-popup-num {
+    margin: 0;
+    color: #f0c27a;
+    font-family: var(--font-display, sans-serif);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+  }
+
+  .sea-popup > :is(.sea-popup-num, .sea-popup-title, .sea-popup-blurb, .sea-popup-actions) {
+    width: min(26rem, 100%);
+  }
+
+  .sea-popup-title,
+  .sea-popup-blurb,
+  .sea-popup-actions,
+  .sea-popup-num {
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+  }
+
+  .sea-popup-title {
+    margin: 0.35rem 0 0.65rem;
+    padding-top: 1.1rem;
+    border: 1px solid rgba(240, 194, 122, 0.4);
+    border-bottom: 0;
+    background: linear-gradient(165deg, #2a4050, #1a2a35);
+    font-family: var(--font-display, sans-serif);
+    font-size: clamp(1.8rem, 5vw, 2.4rem);
+    font-weight: 300;
+  }
+
+  .sea-popup-num {
+    margin: 0;
+    padding-top: 1rem;
+    border: 1px solid rgba(240, 194, 122, 0.4);
+    border-bottom: 0;
+    background: linear-gradient(165deg, #2a4050, #1a2a35);
+  }
+
+  .sea-popup-blurb {
+    margin: 0;
+    padding-bottom: 0.5rem;
+    border-left: 1px solid rgba(240, 194, 122, 0.4);
+    border-right: 1px solid rgba(240, 194, 122, 0.4);
+    background: linear-gradient(165deg, #2a4050, #1a2a35);
+    color: rgba(215, 224, 232, 0.85);
+  }
+
+  .sea-popup-actions {
+    margin: 0;
+    padding-bottom: 1.15rem;
+    border: 1px solid rgba(240, 194, 122, 0.4);
+    border-top: 0;
+    background: linear-gradient(165deg, #2a4050, #1a2a35);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .sea-popup-link,
+  .sea-popup-close {
+    appearance: none;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid rgba(240, 194, 122, 0.45);
+    background: rgba(8, 12, 17, 0.4);
+    color: #f0c27a;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .sea-popup-link:hover,
+  .sea-popup-close:hover {
+    background: rgba(8, 12, 17, 0.65);
   }
 
   @media (prefers-reduced-motion: reduce) {
