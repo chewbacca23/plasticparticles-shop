@@ -60,8 +60,11 @@ export function berlinMonthLabel(monthKey) {
   }).format(at);
 }
 
+/** Keep the last N single opens so Henrik can see real hits, not only totals. */
+export const RECENT_LOOKS_LIMIT = 40;
+
 export function emptyLooks() {
-  return { total: 0, days: {}, paths: {}, countries: {}, from: {} };
+  return { total: 0, days: {}, paths: {}, countries: {}, from: {}, recent: [] };
 }
 
 export function sanitizePath(raw) {
@@ -91,6 +94,7 @@ export function applyLook(data, path, day, extras = {}) {
     paths: { ...(data.paths || {}) },
     countries: { ...(data.countries || {}) },
     from: { ...(data.from || {}) },
+    recent: Array.isArray(data.recent) ? [...data.recent] : [],
   };
   next.total += 1;
   next.days[day] = (Number(next.days[day]) || 0) + 1;
@@ -100,6 +104,22 @@ export function applyLook(data, path, day, extras = {}) {
   }
   if (extras.from) {
     next.from[extras.from] = (Number(next.from[extras.from]) || 0) + 1;
+  }
+  const at =
+    extras.at instanceof Date
+      ? extras.at
+      : extras.at
+        ? new Date(extras.at)
+        : new Date();
+  const entry = {
+    t: Number.isNaN(at.getTime()) ? new Date().toISOString() : at.toISOString(),
+    path,
+  };
+  if (extras.country) entry.country = extras.country;
+  if (extras.from) entry.from = extras.from;
+  next.recent.push(entry);
+  if (next.recent.length > RECENT_LOOKS_LIMIT) {
+    next.recent = next.recent.slice(-RECENT_LOOKS_LIMIT);
   }
   return next;
 }
@@ -244,6 +264,7 @@ export function summarizeLooks(data, now = new Date()) {
   const dayBars = recentDayBars(days, now, 14);
   const weekBars = recentWeekBars(days, now, 8);
   const monthBars = recentMonthBars(days, now, 12);
+  const recent = recentLooks(data.recent);
   return {
     today: Number(days[today]) || 0,
     week,
@@ -254,10 +275,25 @@ export function summarizeLooks(data, now = new Date()) {
     pages,
     countries,
     from,
+    recent,
     dayBars,
     weekBars,
     monthBars,
   };
+}
+
+/** Newest-first single opens for the proof feed. */
+export function recentLooks(recent) {
+  const list = Array.isArray(recent) ? recent : [];
+  return [...list]
+    .filter((row) => row && typeof row === 'object' && typeof row.path === 'string')
+    .map((row) => ({
+      t: typeof row.t === 'string' ? row.t : '',
+      path: row.path,
+      country: typeof row.country === 'string' ? row.country : '',
+      from: typeof row.from === 'string' ? row.from : '',
+    }))
+    .reverse();
 }
 
 function topNamedCounts(map, label = (key) => key) {
@@ -429,6 +465,7 @@ export function kvLooksStore(kv) {
           countries:
             parsed.countries && typeof parsed.countries === 'object' ? parsed.countries : {},
           from: parsed.from && typeof parsed.from === 'object' ? parsed.from : {},
+          recent: Array.isArray(parsed.recent) ? parsed.recent.slice(-RECENT_LOOKS_LIMIT) : [],
         };
       } catch {
         return emptyLooks();
@@ -514,7 +551,7 @@ export function looksStatsBindingInfo(env) {
 export async function recordLook(store, rawPath, now = new Date(), extras = {}) {
   const path = sanitizePath(rawPath);
   if (!shouldRecordPath(path)) return { recorded: false, path };
-  const data = applyLook(await store.load(), path, berlinDay(now), extras);
+  const data = applyLook(await store.load(), path, berlinDay(now), { ...extras, at: now });
   await store.save(data);
   return { recorded: true, path, total: data.total };
 }
@@ -663,6 +700,10 @@ export function looksDashboardPage(summary, members = [], shares = []) {
   const year = Number(summary?.year) || 0;
   const total = Number(summary?.total) || 0;
   const rows = looksPageRows(summary?.pages);
+  const recentRows = looksRecentRows(
+    summary?.recent,
+    'Open any public page in another tab, then refresh — a row shows here.',
+  );
   const countryRows = looksNamedRows(
     summary?.countries,
     'Country shows after someone opens a page.',
@@ -731,6 +772,9 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     li a:hover { color: var(--amber-hot); text-decoration-color: var(--amber-hot); }
     li span:last-child { color:var(--amber-hot); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:1.05rem; font-weight:300; text-align:right; min-width:3ch; }
     li .looks-name { color:var(--paper); font-weight:400; }
+    .looks-recent-main { display:flex; flex-direction:column; gap:.2rem; min-width:0; }
+    .looks-recent-meta { color:rgba(215,224,232,.62); font-size:.88rem; }
+    .looks-recent-when { color:var(--amber-hot); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:.95rem; font-weight:300; text-align:right; white-space:nowrap; }
     .empty { color:rgba(215,224,232,.62); }
     .note { margin:.35rem 0 .75rem; color:rgba(215,224,232,.62); font-size:.9rem; }
     .looks-bars { position:relative; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2rem,1fr); align-items:end; gap:.35rem; margin:0; padding:1rem .75rem .75rem; list-style:none; border:1px solid rgba(215,224,232,.14); border-radius:0; min-height:13rem; overflow-x:auto; background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),rgba(215,224,232,.07) calc(25% - 1px),rgba(215,224,232,.07) 25%),rgba(8,12,17,.55); }
@@ -758,6 +802,9 @@ export function looksDashboardPage(summary, members = [], shares = []) {
       <article class="card"><p class="card-label">n<sub>year</sub></p><p class="card-hint">This year</p><p class="card-num">${year}</p></article>
       <article class="card"><p class="card-label">Σ</p><p class="card-hint">All time</p><p class="card-num">${total}</p></article>
     </div>
+    <h2>Latest opens</h2>
+    <p class="note">Each row is one real page open. Newest first. No names — just path, place, and what sent them. Open Home in another tab, refresh, and watch a row land.</p>
+    <ol>${recentRows}</ol>
     <h2>14 days</h2>
     <p class="note">Berlin days. Column height ∝ opens.</p>
     <ol class="looks-bars" style="${LOOKS_BARS_LIST_STYLE}">${dayBars}</ol>
@@ -805,6 +852,53 @@ export function looksPageRows(pages) {
       const label = row.path === '/' ? 'Home' : escapeHtml(row.path);
       const href = escapeHtml(row.path);
       return `<li><a href="${href}">${label}</a><span>${Number(row.looks) || 0}</span></li>`;
+    })
+    .join('');
+}
+
+/** Berlin clock for one open (25 Oct, 21:05). */
+export function berlinLookTime(iso) {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(at);
+}
+
+/**
+ * Single opens, newest first — path + time + optional country / referrer.
+ * @param {{ t?: string, path?: string, country?: string, from?: string }[]} recent
+ * @param {string} emptyText
+ */
+export function looksRecentRows(recent, emptyText) {
+  const list = Array.isArray(recent) ? recent : [];
+  if (!list.length) {
+    return `<li class="empty">${emptyText}</li>`;
+  }
+  return list
+    .map((row) => {
+      const path = row.path === '/' ? 'Home' : escapeHtml(row.path || '/');
+      const href = escapeHtml(row.path || '/');
+      const when = escapeHtml(berlinLookTime(row.t));
+      const bits = [];
+      if (row.country) bits.push(escapeHtml(countryLabel(row.country)));
+      if (row.from) bits.push(escapeHtml(row.from));
+      const meta = bits.length
+        ? `<span class="looks-recent-meta">${bits.join(' · ')}</span>`
+        : '';
+      return (
+        `<li class="looks-recent">` +
+        `<span class="looks-recent-main">` +
+        `<a href="${href}">${path}</a>${meta}` +
+        `</span>` +
+        `<span class="looks-recent-when">${when}</span>` +
+        `</li>`
+      );
     })
     .join('');
 }
@@ -952,6 +1046,10 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
   const memberCount = String(Array.isArray(members) ? members.length : 0);
   const shareCount = String(Array.isArray(shares) ? shares.length : 0);
   const rows = looksPageRows(summary?.pages);
+  const recentRows = looksRecentRows(
+    summary?.recent,
+    'Open any public page in another tab, then refresh — a row shows here.',
+  );
   const countryRows = looksNamedRows(
     summary?.countries,
     'Country shows after someone opens a page.',
@@ -993,6 +1091,10 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     .replace(
       /data-postcard-shares-count([^>]*)>[\s\S]*?</,
       `data-postcard-shares-count$1>${shareCount}<`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-recent[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${recentRows}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-years[^>]*)>[\s\S]*?<\/ol>/,

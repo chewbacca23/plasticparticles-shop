@@ -59,6 +59,7 @@ const SITE_LOOKS = `<html><body>
 <ol class="looks-bars" data-looks-days><li class="empty">no days</li></ol>
 <ol class="looks-bars" data-looks-weeks><li class="empty">no weeks</li></ol>
 <ol class="looks-bars" data-looks-months><li class="empty">no months</li></ol>
+<ol class="pages" data-looks-recent><li class="empty">no recent</li></ol>
 <ol class="pages" data-looks-years><li class="empty">no years</li></ol>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
 <ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
@@ -129,6 +130,10 @@ describe('summarizeLooks', () => {
     assert.equal(summary.monthBars.at(-1).month, '2026-09');
     assert.equal(summary.monthBars.at(-1).looks, 3);
     assert.equal(summary.monthBars.find((row) => row.month === '2025-12')?.looks, 7);
+    assert.equal(summary.recent.length, 3);
+    assert.equal(summary.recent[0].path, '/now');
+    assert.equal(summary.recent[0].from, 'Google');
+    assert.equal(summary.recent[2].path, '/');
   });
 });
 
@@ -492,6 +497,14 @@ describe('fillLooksInHtml', () => {
       pages: [{ path: '/', looks: 4 }],
       countries: [{ name: 'Germany', looks: 3 }],
       from: [{ name: 'Instagram', looks: 2 }],
+      recent: [
+        {
+          t: '2026-09-04T10:05:00.000Z',
+          path: '/stories/nice',
+          country: 'DE',
+          from: 'Instagram',
+        },
+      ],
       dayBars: [
         { label: 'Wed', looks: 1 },
         { label: 'Thu', looks: 2 },
@@ -513,6 +526,9 @@ describe('fillLooksInHtml', () => {
     assert.match(html, /1–7 Sep/);
     assert.match(html, /Sep 26/);
     assert.match(html, /width:100%/);
+    assert.match(html, /looks-recent/);
+    assert.match(html, /\/stories\/nice/);
+    assert.match(html, /looks-recent-when/);
     assert.match(html, /<footer>Looks<\/footer>/);
   });
 });

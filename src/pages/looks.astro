@@ -45,6 +45,15 @@ import MemberDelete from '../components/MemberDelete.astro';
         </article>
       </div>
 
+      <h2 class="pages-title">Latest opens</h2>
+      <p class="note">
+        Each row is one real page open. Newest first. No names — just path, place, and what sent
+        them. Open Home in another tab, refresh, and watch a row land.
+      </p>
+      <ol class="pages" data-looks-recent>
+        <li class="empty">Open any public page in another tab, then refresh — a row shows here.</li>
+      </ol>
+
       <h2 class="pages-title">14 days</h2>
       <p class="note">Berlin days. Column height ∝ opens. Max column = busiest day.</p>
       <ol class="looks-bars" data-looks-days>
