@@ -381,8 +381,9 @@ p {
   font-size: 0.9rem;
 }
 
-/* Upright day/week columns — plot paper, square bars (Worker-injected too). */
+/* Upright day/week/month columns + stock-ticker line (Worker-injected too). */
 .looks .looks-bars {
+  position: relative;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(2rem, 1fr);
@@ -406,12 +407,34 @@ p {
     rgba(8, 12, 17, 0.55);
 }
 
+.looks .looks-line {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: 1.85rem;
+  bottom: 1.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.looks .looks-line-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .looks .looks-bars[data-looks-weeks],
 .looks .looks-bars[data-looks-months] {
   grid-auto-columns: minmax(3rem, 1fr);
 }
 
 .looks .looks-bar {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -456,7 +479,7 @@ p {
   height: var(--looks-bar, 0%);
   min-height: 0;
   border-radius: 0;
-  background: var(--amber);
+  background: rgba(212, 163, 90, 0.38);
 }
 
 .looks .looks-bar-num {

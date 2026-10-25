@@ -184,7 +184,9 @@ describe('looksBarsHtml', () => {
     assert.match(html, /height:100%/);
     assert.match(html, /looks-bar-num"[^>]*>4</);
     assert.match(html, /flex-direction:column/);
-    assert.match(html, /background:#d4a35a/);
+    assert.match(html, /looks-line/);
+    assert.match(html, /<polyline /);
+    assert.match(html, /rgba\(212,163,90,0\.38\)/);
   });
 });
 

@@ -733,11 +733,13 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     li .looks-name { color:var(--paper); font-weight:400; }
     .empty { color:rgba(215,224,232,.62); }
     .note { margin:.35rem 0 .75rem; color:rgba(215,224,232,.62); font-size:.9rem; }
-    .looks-bars { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2rem,1fr); align-items:end; gap:.35rem; margin:0; padding:1rem .75rem .75rem; list-style:none; border:1px solid rgba(215,224,232,.14); border-radius:0; min-height:13rem; overflow-x:auto; background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),rgba(215,224,232,.07) calc(25% - 1px),rgba(215,224,232,.07) 25%),rgba(8,12,17,.55); }
-    .looks-bar { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:.3rem; height:11rem; padding:0; border:0; min-width:0; }
+    .looks-bars { position:relative; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(2rem,1fr); align-items:end; gap:.35rem; margin:0; padding:1rem .75rem .75rem; list-style:none; border:1px solid rgba(215,224,232,.14); border-radius:0; min-height:13rem; overflow-x:auto; background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),rgba(215,224,232,.07) calc(25% - 1px),rgba(215,224,232,.07) 25%),rgba(8,12,17,.55); }
+    .looks-line { position:absolute; left:.75rem; right:.75rem; top:1.85rem; bottom:1.55rem; margin:0; padding:0; list-style:none; pointer-events:none; z-index:2; }
+    .looks-line-svg { display:block; width:100%; height:100%; overflow:visible; }
+    .looks-bar { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:.3rem; height:11rem; padding:0; border:0; min-width:0; }
     .looks-bar-label { color:rgba(215,224,232,.72); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-size:.7rem; font-weight:300; letter-spacing:.04em; text-align:center; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; }
     .looks-bar-track { display:flex; flex-direction:column; justify-content:flex-end; width:100%; max-width:1.55rem; flex:1 1 auto; border-radius:0; border-bottom:1px solid rgba(215,224,232,.28); background:transparent; overflow:hidden; }
-    .looks-bar-fill { display:block; width:100%; height:var(--looks-bar,0%); min-height:0; border-radius:0; background:#d4a35a; }
+    .looks-bar-fill { display:block; width:100%; height:var(--looks-bar,0%); min-height:0; border-radius:0; background:rgba(212,163,90,.38); }
     .looks-bar-num { color:var(--amber-hot); font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; font-weight:300; font-size:.82rem; letter-spacing:.02em; font-variant-numeric:tabular-nums; line-height:1; }
     .back { margin:1.5rem 0 0; }
     .back a { color:var(--amber-hot); font-weight:600; text-decoration:none; }
@@ -838,10 +840,9 @@ export function looksFromRows(items, emptyText) {
 }
 
 /**
- * Day/week Looks charts as upright columns (grew left-to-right before;
- * now 90° counter-clockwise so tallest day is easiest to spot).
- * Inline styles on purpose: Worker-injected nodes miss Astro scoped CSS,
- * and a stale deploy without global.css still needs visible bars.
+ * Day/week/month Looks charts as upright columns plus a stock-ticker line
+ * through the peaks. Inline styles on purpose: Worker-injected nodes miss
+ * Astro scoped CSS, and a stale deploy without global.css still needs bars.
  * @param {{ label?: string, looks?: number }[]} bars
  * @param {string} emptyText
  * @param {{ wideLabel?: boolean }} [opts]
@@ -852,10 +853,11 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
     return `<li class="empty" style="grid-column:1/-1;color:rgba(215,224,232,0.68)">${emptyText}</li>`;
   }
   const max = Math.max(1, ...list.map((row) => Number(row.looks) || 0));
+  const n = list.length;
   const colMin = opts.wideLabel ? '3rem' : '2rem';
   const colStyle =
     'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;' +
-    `gap:0.3rem;height:11rem;padding:0;border:0;margin:0;list-style:none;min-width:${colMin}`;
+    `gap:0.3rem;height:11rem;padding:0;border:0;margin:0;list-style:none;min-width:${colMin};position:relative;z-index:1`;
   const labelStyle =
     'color:rgba(215,224,232,0.72);font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif;' +
     'font-size:0.7rem;font-weight:300;letter-spacing:0.04em;text-align:center;line-height:1.15;' +
@@ -867,14 +869,44 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
   const numStyle =
     'color:#f0c27a;font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif;' +
     'font-weight:300;font-size:0.82rem;letter-spacing:0.02em;font-variant-numeric:tabular-nums;line-height:1';
-  return list
+
+  // Stock-ticker line through bar tops (viewBox 0–100; y=0 is peak).
+  const pts = list.map((row, i) => {
+    const looks = Number(row.looks) || 0;
+    const x = n === 1 ? 50 : (i / (n - 1)) * 100;
+    const y = 100 - (looks / max) * 100;
+    return { x, y, looks };
+  });
+  const linePoints = pts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+  const areaPoints =
+    `${pts[0].x.toFixed(2)},100 ` +
+    linePoints +
+    ` ${pts[pts.length - 1].x.toFixed(2)},100`;
+  const dots = pts
+    .map(
+      (p) =>
+        `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="1.35" fill="#f0c27a" ` +
+        `stroke="#0c1218" stroke-width="0.6" vector-effect="non-scaling-stroke" />`,
+    )
+    .join('');
+  const lineOverlay =
+    `<li class="looks-line" aria-hidden="true" style="position:absolute;left:0.75rem;right:0.75rem;` +
+    `top:1.85rem;bottom:1.55rem;margin:0;padding:0;list-style:none;pointer-events:none;z-index:2">` +
+    `<svg class="looks-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none" ` +
+    `style="display:block;width:100%;height:100%;overflow:visible">` +
+    `<polygon points="${areaPoints}" fill="rgba(240,194,122,0.12)" />` +
+    `<polyline points="${linePoints}" fill="none" stroke="#f0c27a" stroke-width="1.75" ` +
+    `stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />` +
+    `${dots}</svg></li>`;
+
+  const columns = list
     .map((row) => {
       const looks = Number(row.looks) || 0;
       const pct = Math.round((looks / max) * 100);
       const label = escapeHtml(row.label || '—');
       const fillStyle =
         `display:block;width:100%;height:${pct}%;min-height:${looks > 0 ? '0.28rem' : '0'};` +
-        'border-radius:0;background:#d4a35a';
+        'border-radius:0;background:rgba(212,163,90,0.38)';
       return (
         `<li class="looks-bar" style="${colStyle}">` +
         `<span class="looks-bar-num" style="${numStyle}">${looks}</span>` +
@@ -886,11 +918,13 @@ export function looksBarsHtml(bars, emptyText, opts = {}) {
       );
     })
     .join('');
+
+  return lineOverlay + columns;
 }
 
 /** List shell styles so the chart box shows even without global.css. */
 export const LOOKS_BARS_LIST_STYLE =
-  'display:grid;grid-auto-flow:column;grid-auto-columns:minmax(2rem,1fr);align-items:end;' +
+  'position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(2rem,1fr);align-items:end;' +
   'gap:0.35rem;margin:0 0 0.5rem;padding:1rem 0.75rem 0.75rem;list-style:none;min-height:13rem;' +
   'overflow-x:auto;border:1px solid rgba(215,224,232,0.14);border-radius:0;' +
   'background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),' +
