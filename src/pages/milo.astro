@@ -104,6 +104,8 @@ import { MILO_REALMS } from '../lib/milo-realms';
       var dragging = false;
       var moved = false;
       var busy = false;
+      var captured = false;
+      var pressFace = null;
       var lastX = 0;
       var lastY = 0;
       var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -195,13 +197,13 @@ import { MILO_REALMS } from '../lib/milo-realms';
         });
       }
 
+      // Enter on pointerup (not click) — capture was stealing face taps
       cube.querySelectorAll('[data-milo-face]').forEach(function (btn) {
-        btn.addEventListener('click', function (event) {
-          if (moved || busy) {
+        btn.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            return;
+            if (!busy) enterFace(btn);
           }
-          enterFace(btn);
         });
       });
 
@@ -209,17 +211,30 @@ import { MILO_REALMS } from '../lib/milo-realms';
         if (busy) return;
         dragging = true;
         moved = false;
+        captured = false;
         auto = false;
         lastX = event.clientX;
         lastY = event.clientY;
-        scene.setPointerCapture(event.pointerId);
+        pressFace = event.target && event.target.closest
+          ? event.target.closest('[data-milo-face]')
+          : null;
       }
 
       function onPointerMove(event) {
         if (!dragging || busy) return;
         var dx = event.clientX - lastX;
         var dy = event.clientY - lastY;
-        if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+        if (Math.abs(dx) + Math.abs(dy) > 8) {
+          moved = true;
+          pressFace = null;
+          if (!captured) {
+            captured = true;
+            try {
+              scene.setPointerCapture(event.pointerId);
+            } catch (err) {}
+          }
+        }
+        if (!moved) return;
         ry += dx * 0.45;
         rx -= dy * 0.45;
         rx = Math.max(-68, Math.min(68, rx));
@@ -231,9 +246,18 @@ import { MILO_REALMS } from '../lib/milo-realms';
       function onPointerUp(event) {
         if (!dragging) return;
         dragging = false;
-        try {
-          scene.releasePointerCapture(event.pointerId);
-        } catch (err) {}
+        if (captured) {
+          try {
+            scene.releasePointerCapture(event.pointerId);
+          } catch (err) {}
+        }
+        captured = false;
+        var faceBtn = pressFace;
+        pressFace = null;
+        if (!moved && faceBtn && !busy) {
+          enterFace(faceBtn);
+          return;
+        }
         window.setTimeout(function () {
           moved = false;
           if (!reduceMotion && !busy) auto = true;
