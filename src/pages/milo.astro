@@ -5,7 +5,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
 
 <BaseLayout
   title="Milo"
-  description="Milo’s cube — turn it in space, open a face, step into one of six realms."
+  description="Milo’s cube — turn it, tap a face, watch it unfold into a whole world."
 >
   <section class="milo" data-milo>
     <div class="milo-sky" aria-hidden="true">
@@ -14,18 +14,19 @@ import { MILO_REALMS } from '../lib/milo-realms';
       <span class="milo-star"></span>
       <span class="milo-glow"></span>
     </div>
+    <div class="milo-wash" data-milo-wash aria-hidden="true"></div>
 
     <div class="site-shell milo-intro">
       <p class="eyebrow">A toy in space</p>
       <h1 class="section-title">Milo</h1>
       <p class="section-lead">
-        One little explorer. One cube. Six worlds. The first face: Milo swims in, the cube shrinks,
-        and a big island realm opens — bump the numbered packages with his head, like before.
+        One little explorer. One cube. Six worlds. Tap a face — the cube unfolds flat and that
+        side becomes the whole screen: game, shop, realm.
       </p>
     </div>
 
     <div class="milo-stage" data-milo-stage>
-      <p class="milo-hint" data-milo-hint>Drag to turn · tap a face to enter</p>
+      <p class="milo-hint" data-milo-hint>Drag to turn · tap a face to unfold</p>
       <div class="milo-scene" data-milo-scene>
         <div class="milo-cube" data-milo-cube role="group" aria-label="Milo’s six-realm cube">
           {
@@ -35,8 +36,9 @@ import { MILO_REALMS } from '../lib/milo-realms';
                 class:list={['milo-face', `milo-face--${realm.face}`]}
                 data-milo-face={realm.face}
                 data-realm-href={`/milo/${realm.id}`}
+                data-realm-hue={realm.hue}
                 style={`--face-hue:${realm.hue};--face-accent:${realm.accent}`}
-                aria-label={`${realm.title}. Open this realm.`}
+                aria-label={`${realm.title}. Unfold into this realm.`}
               >
                 <span class="milo-face-lid" aria-hidden="true">
                   <img
@@ -79,8 +81,8 @@ import { MILO_REALMS } from '../lib/milo-realms';
         }
       </ol>
       <p class="milo-note">
-        Underwater, Island, Moon — then Sand Sea, Cloud Rail, Ember Hollow. Same cube, new
-        adventures whenever you rewrite the realms.
+        Hit a side — the cube unfolds and that world takes the whole screen. Underwater is the
+        game; the other faces are realms waiting for their shops and stories.
       </p>
     </div>
   </section>
@@ -92,6 +94,8 @@ import { MILO_REALMS } from '../lib/milo-realms';
 
       var cube = root.querySelector('[data-milo-cube]');
       var scene = root.querySelector('[data-milo-scene]');
+      var wash = root.querySelector('[data-milo-wash]');
+      var hint = root.querySelector('[data-milo-hint]');
       if (!cube || !scene) return;
 
       var rx = -18;
@@ -99,6 +103,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
       var auto = true;
       var dragging = false;
       var moved = false;
+      var busy = false;
       var lastX = 0;
       var lastY = 0;
       var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -131,7 +136,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
         var endRx = pose.rx;
         var endRy = nearestAngle(ry, pose.ry);
         var t0 = performance.now();
-        var dur = reduceMotion ? 1 : 480;
+        var dur = reduceMotion ? 1 : 420;
 
         function frame(now) {
           var t = Math.min(1, (now - t0) / dur);
@@ -148,18 +153,51 @@ import { MILO_REALMS } from '../lib/milo-realms';
       function enterFace(btn) {
         var face = btn.getAttribute('data-milo-face');
         var href = btn.getAttribute('data-realm-href');
-        if (!face || !href) return;
-        btn.classList.add('is-open');
+        var hue = btn.getAttribute('data-realm-hue') || '#0a2a38';
+        if (!face || !href || busy) return;
+        busy = true;
+        auto = false;
+        dragging = false;
+
+        btn.classList.add('is-chosen');
+        root.classList.add('is-unfolding');
+        root.setAttribute('data-unfold', face);
+        if (hint) hint.textContent = 'Unfolding…';
+        if (wash) wash.style.setProperty('--wash-hue', hue);
+
+        // Face the side, then unfold the whole net flat and grow into the world
         tweenTo(face, function () {
+          cube.classList.add('is-flat');
+          var startRx = rx;
+          var startRy = ry;
+          var endRy = nearestAngle(ry, 0);
+          var t0 = performance.now();
+          var dur = reduceMotion ? 1 : 720;
+
+          function flattenFrame(now) {
+            var t = Math.min(1, (now - t0) / dur);
+            var e = 1 - Math.pow(1 - t, 3);
+            rx = startRx + (0 - startRx) * e;
+            ry = startRy + (endRy - startRy) * e;
+            applyPose();
+            if (t < 1) requestAnimationFrame(flattenFrame);
+          }
+          requestAnimationFrame(flattenFrame);
+
           window.setTimeout(function () {
-            window.location.href = href;
+            root.classList.add('is-blown');
           }, reduceMotion ? 0 : 280);
+
+          window.setTimeout(function () {
+            var sep = href.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = href + sep + 'from=cube';
+          }, reduceMotion ? 0 : 1100);
         });
       }
 
       cube.querySelectorAll('[data-milo-face]').forEach(function (btn) {
         btn.addEventListener('click', function (event) {
-          if (moved) {
+          if (moved || busy) {
             event.preventDefault();
             return;
           }
@@ -168,6 +206,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
       });
 
       function onPointerDown(event) {
+        if (busy) return;
         dragging = true;
         moved = false;
         auto = false;
@@ -177,7 +216,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
       }
 
       function onPointerMove(event) {
-        if (!dragging) return;
+        if (!dragging || busy) return;
         var dx = event.clientX - lastX;
         var dy = event.clientY - lastY;
         if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
@@ -197,7 +236,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
         } catch (err) {}
         window.setTimeout(function () {
           moved = false;
-          if (!reduceMotion) auto = true;
+          if (!reduceMotion && !busy) auto = true;
         }, 180);
       }
 
@@ -213,7 +252,7 @@ import { MILO_REALMS } from '../lib/milo-realms';
         function spin(now) {
           var dt = Math.min(32, now - last);
           last = now;
-          if (auto && !dragging) {
+          if (auto && !dragging && !busy) {
             ry += dt * 0.012;
             rx = -18 + Math.sin(now / 2800) * 6;
             applyPose();
@@ -474,6 +513,194 @@ import { MILO_REALMS } from '../lib/milo-realms';
   .milo-face.is-open .milo-face-lid {
     transform: rotateX(-118deg);
     box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
+  }
+
+  /* —— Unfold: cube opens flat, chosen face becomes the world —— */
+  .milo-wash {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    background: var(--wash-hue, #0a2a38);
+    opacity: 0;
+    transform: scale(0.35);
+    transition:
+      opacity 0.55s ease 0.35s,
+      transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s;
+  }
+
+  .milo.is-unfolding .milo-intro,
+  .milo.is-unfolding .milo-key {
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+
+  .milo.is-unfolding .milo-hint {
+    color: rgba(240, 194, 122, 0.85);
+  }
+
+  .milo.is-unfolding .milo-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 0;
+    place-content: center;
+    background: transparent;
+  }
+
+  .milo.is-unfolding .milo-scene {
+    width: min(100vw, 100dvh);
+    height: min(100vw, 100dvh);
+    max-width: 100vw;
+    max-height: 100dvh;
+  }
+
+  .milo.is-unfolding .milo-cube {
+    animation: none;
+    transition:
+      transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      width 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      height 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Flatten into a cross net, then grow */
+  .milo-cube.is-flat {
+    --size: min(22vmin, 9.5rem);
+    width: var(--size);
+    height: var(--size);
+    margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+    transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(1.2);
+  }
+
+  .milo-cube.is-flat .milo-face {
+    transition:
+      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.55s ease 0.15s,
+      filter 0.55s ease;
+  }
+
+  .milo-cube.is-flat .milo-face--front {
+    transform: translateZ(0);
+  }
+  .milo-cube.is-flat .milo-face--top {
+    transform: rotateX(0deg) translateY(-100%);
+  }
+  .milo-cube.is-flat .milo-face--bottom {
+    transform: rotateX(0deg) translateY(100%);
+  }
+  .milo-cube.is-flat .milo-face--left {
+    transform: rotateY(0deg) translateX(-100%);
+  }
+  .milo-cube.is-flat .milo-face--right {
+    transform: rotateY(0deg) translateX(100%);
+  }
+  .milo-cube.is-flat .milo-face--back {
+    transform: rotateY(0deg) translateX(200%);
+  }
+
+  /* Keep the chosen face as the visual heart; others soften */
+  .milo.is-blown .milo-wash {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .milo.is-blown .milo-cube.is-flat {
+    transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(3.6);
+  }
+
+  .milo.is-blown .milo-face:not(.is-chosen) {
+    opacity: 0.2;
+    filter: blur(1px);
+  }
+
+  .milo.is-blown .milo-face.is-chosen {
+    z-index: 3;
+    opacity: 1;
+    filter: none;
+    box-shadow: 0 0 0 0.15rem rgba(240, 194, 122, 0.35);
+  }
+
+  .milo.is-blown .milo-face.is-chosen .milo-face-lid {
+    transform: none;
+  }
+
+  /* When a non-front face was chosen, pull that panel to center of the net */
+  .milo[data-unfold='back'] .milo-cube.is-flat .milo-face--back {
+    transform: rotateY(0deg) translateX(0);
+  }
+  .milo[data-unfold='back'] .milo-cube.is-flat .milo-face--front {
+    transform: translateX(-100%);
+  }
+  .milo[data-unfold='back'] .milo-cube.is-flat .milo-face--right {
+    transform: translateX(100%);
+  }
+  .milo[data-unfold='back'] .milo-cube.is-flat .milo-face--left {
+    transform: translateX(-200%);
+  }
+
+  .milo[data-unfold='right'] .milo-cube.is-flat .milo-face--right {
+    transform: rotateY(0deg) translateX(0);
+  }
+  .milo[data-unfold='right'] .milo-cube.is-flat .milo-face--front {
+    transform: translateX(-100%);
+  }
+  .milo[data-unfold='right'] .milo-cube.is-flat .milo-face--back {
+    transform: translateX(100%);
+  }
+  .milo[data-unfold='right'] .milo-cube.is-flat .milo-face--left {
+    transform: translateX(-200%);
+  }
+
+  .milo[data-unfold='left'] .milo-cube.is-flat .milo-face--left {
+    transform: rotateY(0deg) translateX(0);
+  }
+  .milo[data-unfold='left'] .milo-cube.is-flat .milo-face--front {
+    transform: translateX(100%);
+  }
+  .milo[data-unfold='left'] .milo-cube.is-flat .milo-face--back {
+    transform: translateX(-100%);
+  }
+  .milo[data-unfold='left'] .milo-cube.is-flat .milo-face--right {
+    transform: translateX(200%);
+  }
+
+  .milo[data-unfold='top'] .milo-cube.is-flat .milo-face--top {
+    transform: rotateX(0deg) translateY(0);
+  }
+  .milo[data-unfold='top'] .milo-cube.is-flat .milo-face--front {
+    transform: translateY(100%);
+  }
+  .milo[data-unfold='top'] .milo-cube.is-flat .milo-face--bottom {
+    transform: translateY(200%);
+  }
+  .milo[data-unfold='top'] .milo-cube.is-flat .milo-face--back {
+    transform: translateY(-100%);
+  }
+
+  .milo[data-unfold='bottom'] .milo-cube.is-flat .milo-face--bottom {
+    transform: rotateX(0deg) translateY(0);
+  }
+  .milo[data-unfold='bottom'] .milo-cube.is-flat .milo-face--front {
+    transform: translateY(-100%);
+  }
+  .milo[data-unfold='bottom'] .milo-cube.is-flat .milo-face--top {
+    transform: translateY(-200%);
+  }
+  .milo[data-unfold='bottom'] .milo-cube.is-flat .milo-face--back {
+    transform: translateY(100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .milo-wash,
+    .milo.is-unfolding .milo-cube,
+    .milo-cube.is-flat .milo-face {
+      transition: none !important;
+    }
   }
 
   .milo-key {

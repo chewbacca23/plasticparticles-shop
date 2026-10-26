@@ -27,7 +27,7 @@ const isFirstDive = realm.id === 'underwater';
     <MiloFirstDive />
   ) : (
   <section
-    class:list={['realm', `realm--${realm.theme}`]}
+    class:list={['realm', `realm--${realm.theme}`, Astro.url.searchParams.get('from') === 'cube' && 'realm--from-cube']}
     style={`--realm-hue:${realm.hue};--realm-accent:${realm.accent}`}
     data-realm={realm.id}
   >
@@ -139,6 +139,21 @@ const isFirstDive = realm.id === 'underwater';
     overflow: hidden;
     color: var(--paper, #eef3f7);
     background: var(--realm-hue);
+  }
+
+  .realm--from-cube {
+    animation: realm-in 0.55s ease both;
+  }
+
+  @keyframes realm-in {
+    from {
+      opacity: 0.35;
+      filter: saturate(0.7);
+    }
+    to {
+      opacity: 1;
+      filter: none;
+    }
   }
 
   .realm-fx {

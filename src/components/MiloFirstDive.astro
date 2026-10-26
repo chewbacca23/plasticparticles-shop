@@ -1,7 +1,7 @@
 ---
 /**
- * First Milo realm: swim into the cube → cube shrinks → big island world
- * where Milo hits numbered packages with his head (same feel as the old game).
+ * First Milo realm: island game — head-bump numbered packages.
+ * Hub unfolds the cube into this full-screen world (?from=cube skips the old swim intro).
  */
 const figure = '/milo/explorer-a.png';
 const figureB = '/milo/explorer-b.png';
@@ -492,7 +492,8 @@ const PACKAGES = [
       requestAnimationFrame(loop);
     }
 
-    if (reduce) enterRealm();
+    var fromCube = /(?:\?|&)from=cube(?:&|$)/.test(window.location.search);
+    if (reduce || fromCube) enterRealm();
     else runIntro();
   })();
 </script>
