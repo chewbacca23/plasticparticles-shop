@@ -61,7 +61,7 @@ export function berlinMonthLabel(monthKey) {
 }
 
 /** Keep the last N single opens so Henrik can see real hits, not only totals. */
-export const RECENT_LOOKS_LIMIT = 40;
+export const RECENT_LOOKS_LIMIT = 10;
 
 export function emptyLooks() {
   return { total: 0, days: {}, paths: {}, countries: {}, cities: {}, from: {}, recent: [] };
