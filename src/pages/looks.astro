@@ -50,8 +50,8 @@ import MemberDelete from '../components/MemberDelete.astro';
         Latest opens <span data-looks-recent-count>—</span>
       </h2>
       <p class="note">
-        Each row is one real page open. Newest first — path, country, IP, referrer. Private for
-        you. Open Home in another tab, refresh, and watch a row land.
+        Each row is one real page open. Newest first — path, city, country, IP, referrer. Private
+        for you. Open Home in another tab, refresh, and watch a row land.
       </p>
       <ol class="pages" data-looks-recent>
         <li class="empty">Open any public page in another tab, then refresh — a row shows here.</li>
@@ -95,6 +95,7 @@ import MemberDelete from '../components/MemberDelete.astro';
               var path = row.path === '/' ? 'Home' : esc(row.path || '/');
               var href = esc(row.path || '/');
               var bits = [];
+              if (row.city) bits.push(esc(row.city));
               if (row.country) bits.push(esc(row.country));
               if (row.ip) bits.push(esc(row.ip));
               if (row.from) bits.push(esc(row.from));
@@ -149,6 +150,15 @@ import MemberDelete from '../components/MemberDelete.astro';
       <h2 class="pages-title">Pages</h2>
       <ol class="pages" data-looks-pages>
         <li class="empty">Open Home or a ride, then refresh this page.</li>
+      </ol>
+
+      <h2 class="pages-title">Cities</h2>
+      <p class="note">
+        Approximate from the connection (IP geo) — Cologne, Freiburg, and the rest. VPN or mobile
+        hubs can land on the wrong town. New opens only from now on.
+      </p>
+      <ol class="pages" data-looks-cities>
+        <li class="empty">City shows after someone opens a page.</li>
       </ol>
 
       <h2 class="pages-title">Countries</h2>

@@ -64,7 +64,7 @@ export function berlinMonthLabel(monthKey) {
 export const RECENT_LOOKS_LIMIT = 40;
 
 export function emptyLooks() {
-  return { total: 0, days: {}, paths: {}, countries: {}, from: {}, recent: [] };
+  return { total: 0, days: {}, paths: {}, countries: {}, cities: {}, from: {}, recent: [] };
 }
 
 export function sanitizePath(raw) {
@@ -96,6 +96,7 @@ export function applyLook(data, path, day, extras = {}) {
     days: { ...(data.days || {}) },
     paths: { ...(data.paths || {}) },
     countries: { ...(data.countries || {}) },
+    cities: { ...(data.cities || {}) },
     from: { ...(data.from || {}) },
     recent: Array.isArray(data.recent) ? [...data.recent] : [],
   };
@@ -104,6 +105,9 @@ export function applyLook(data, path, day, extras = {}) {
   next.paths[path] = (Number(next.paths[path]) || 0) + 1;
   if (extras.country) {
     next.countries[extras.country] = (Number(next.countries[extras.country]) || 0) + 1;
+  }
+  if (extras.city) {
+    next.cities[extras.city] = (Number(next.cities[extras.city]) || 0) + 1;
   }
   if (extras.from) {
     next.from[extras.from] = (Number(next.from[extras.from]) || 0) + 1;
@@ -119,6 +123,7 @@ export function applyLook(data, path, day, extras = {}) {
     path,
   };
   if (extras.country) entry.country = extras.country;
+  if (extras.city) entry.city = extras.city;
   if (extras.from) entry.from = extras.from;
   if (extras.ip) entry.ip = extras.ip;
   next.recent.push(entry);
@@ -264,6 +269,7 @@ export function summarizeLooks(data, now = new Date()) {
     .sort((a, b) => b.looks - a.looks || a.path.localeCompare(b.path))
     .slice(0, 12);
   const countries = topNamedCounts(data.countries, countryLabel);
+  const cities = topNamedCounts(data.cities, (key) => key, 24);
   const from = topNamedCounts(data.from);
   const dayBars = recentDayBars(days, now, 14);
   const weekBars = recentWeekBars(days, now, 8);
@@ -278,6 +284,7 @@ export function summarizeLooks(data, now = new Date()) {
     years,
     pages,
     countries,
+    cities,
     from,
     recent,
     dayBars,
@@ -295,6 +302,7 @@ export function recentLooks(recent) {
       t: typeof row.t === 'string' ? row.t : '',
       path: row.path,
       country: typeof row.country === 'string' ? row.country : '',
+      city: typeof row.city === 'string' ? row.city : '',
       from: typeof row.from === 'string' ? row.from : '',
       ip: typeof row.ip === 'string' ? row.ip : '',
     }))
@@ -318,11 +326,12 @@ export function sanitizeIp(raw) {
   return '';
 }
 
-function topNamedCounts(map, label = (key) => key) {
+function topNamedCounts(map, label = (key) => key, limit = 12) {
+  const n = Math.max(1, Math.min(48, Number(limit) || 12));
   return Object.entries(map || {})
     .map(([key, looks]) => ({ name: label(key), looks: Number(looks) || 0 }))
     .sort((a, b) => b.looks - a.looks || a.name.localeCompare(b.name))
-    .slice(0, 12);
+    .slice(0, n);
 }
 
 const COUNTRY_NAMES = {
@@ -374,6 +383,18 @@ export function sanitizeCountry(raw) {
   const code = String(raw || '').trim().toUpperCase();
   if (!/^[A-Z]{2}$|^T1$/.test(code)) return '';
   return code;
+}
+
+/** Approximate city from Cloudflare IP geo (Cologne, Freiburg, …). */
+export function sanitizeCity(raw) {
+  const value = String(raw || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!value || value.length > 60) return '';
+  if (/^unknown$/i.test(value)) return '';
+  // Letters, marks, spaces, hyphen, apostrophe, period — drop junk
+  if (!/^[\p{L}\p{M}][\p{L}\p{M}\s.'’\-]*$/u.test(value)) return '';
+  return value;
 }
 
 const FROM_NAMES = {
@@ -456,6 +477,7 @@ export function fromSiteHref(name) {
 export function lookFromRequest(request) {
   return {
     country: sanitizeCountry(request.cf?.country),
+    city: sanitizeCity(request.cf?.city),
     from: sanitizeFrom(request.headers.get('referer'), request.url),
     ip: sanitizeIp(
       request.headers.get('cf-connecting-ip') ||
@@ -491,6 +513,7 @@ export function kvLooksStore(kv) {
           paths: parsed.paths && typeof parsed.paths === 'object' ? parsed.paths : {},
           countries:
             parsed.countries && typeof parsed.countries === 'object' ? parsed.countries : {},
+          cities: parsed.cities && typeof parsed.cities === 'object' ? parsed.cities : {},
           from: parsed.from && typeof parsed.from === 'object' ? parsed.from : {},
           recent: Array.isArray(parsed.recent) ? parsed.recent.slice(-RECENT_LOOKS_LIMIT) : [],
         };
@@ -735,6 +758,10 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     summary?.countries,
     'Country shows after someone opens a page.',
   );
+  const cityRows = looksNamedRows(
+    summary?.cities,
+    'City shows after someone opens a page (approximate — Cologne, Freiburg, …).',
+  );
   const fromRows = looksFromRows(
     summary?.from,
     'The site that sent them shows after someone opens a page.',
@@ -830,7 +857,7 @@ export function looksDashboardPage(summary, members = [], shares = []) {
       <article class="card"><p class="card-label">Σ</p><p class="card-hint">All time</p><p class="card-num">${total}</p></article>
     </div>
     <h2>Latest opens <span>${Array.isArray(summary?.recent) ? summary.recent.length : 0}</span></h2>
-    <p class="note">Each row is one real page open. Newest first — path, country, IP, referrer. Private for you. Open Home in another tab, refresh, and watch a row land.</p>
+    <p class="note">Each row is one real page open. Newest first — path, city, country, IP, referrer. Private for you. Open Home in another tab, refresh, and watch a row land.</p>
     <ol>${recentRows}</ol>
     <h2>14 days</h2>
     <p class="note">Berlin days. Column height ∝ opens.</p>
@@ -845,6 +872,9 @@ export function looksDashboardPage(summary, members = [], shares = []) {
     <ol>${yearRows}</ol>
     <h2>Pages</h2>
     <ol>${rows}</ol>
+    <h2>Cities</h2>
+    <p class="note">Approximate from the connection (IP geo). VPN or mobile hubs can land on the wrong town.</p>
+    <ol>${cityRows}</ol>
     <h2>Countries</h2>
     <ol>${countryRows}</ol>
     <h2>Referrers</h2>
@@ -913,6 +943,7 @@ export function looksRecentRows(recent, emptyText) {
       const href = escapeHtml(row.path || '/');
       const when = escapeHtml(berlinLookTime(row.t));
       const bits = [];
+      if (row.city) bits.push(escapeHtml(row.city));
       if (row.country) bits.push(escapeHtml(countryLabel(row.country)));
       if (row.ip) bits.push(escapeHtml(row.ip));
       if (row.from) bits.push(escapeHtml(row.from));
@@ -1082,6 +1113,10 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     summary?.countries,
     'Country shows after someone opens a page.',
   );
+  const cityRows = looksNamedRows(
+    summary?.cities,
+    'City shows after someone opens a page (approximate — Cologne, Freiburg, …).',
+  );
   const fromRows = looksFromRows(
     summary?.from,
     'The site that sent them shows after someone opens a page.',
@@ -1155,6 +1190,10 @@ export function fillLooksInHtml(html, summary, members = [], shares = []) {
     .replace(
       /<ol([^>]*data-looks-pages[^>]*)>[\s\S]*?<\/ol>/,
       `<ol$1>${rows}</ol>`,
+    )
+    .replace(
+      /<ol([^>]*data-looks-cities[^>]*)>[\s\S]*?<\/ol>/,
+      `<ol$1>${cityRows}</ol>`,
     )
     .replace(
       /<ol([^>]*data-looks-countries[^>]*)>[\s\S]*?<\/ol>/,

@@ -64,6 +64,7 @@ const SITE_LOOKS = `<html><body>
 <script type="application/json" data-looks-recent-json>[]</script>
 <ol class="pages" data-looks-years><li class="empty">no years</li></ol>
 <ol class="pages" data-looks-pages><li class="empty">none</li></ol>
+<ol class="pages" data-looks-cities><li class="empty">no city</li></ol>
 <ol class="pages" data-looks-countries><li class="empty">no country</li></ol>
 <ol class="pages" data-looks-from><li class="empty">no from</li></ol>
 <footer>Looks</footer>
@@ -103,9 +104,21 @@ describe('shouldRecordPath', () => {
 describe('summarizeLooks', () => {
   it('adds today, the week, the year, and the busiest pages', () => {
     const today = berlinDay(new Date('2026-09-04T12:00:00+02:00'));
-    const data = applyLook(emptyLooks(), '/', today, { country: 'DE', from: 'Instagram' });
-    const next = applyLook(data, '/now', today, { country: 'FR', from: 'Instagram' });
-    const extra = applyLook(next, '/now', today, { country: 'DE', from: 'Google' });
+    const data = applyLook(emptyLooks(), '/', today, {
+      country: 'DE',
+      city: 'Cologne',
+      from: 'Instagram',
+    });
+    const next = applyLook(data, '/now', today, {
+      country: 'FR',
+      city: 'Paris',
+      from: 'Instagram',
+    });
+    const extra = applyLook(next, '/now', today, {
+      country: 'DE',
+      city: 'Cologne',
+      from: 'Google',
+    });
     const withOld = {
       ...extra,
       days: { ...extra.days, '2025-12-31': 7 },
@@ -123,6 +136,7 @@ describe('summarizeLooks', () => {
     ]);
     assert.deepEqual(summary.pages[0], { path: '/now', looks: 2 });
     assert.deepEqual(summary.countries[0], { name: 'Germany', looks: 2 });
+    assert.deepEqual(summary.cities[0], { name: 'Cologne', looks: 2 });
     assert.deepEqual(summary.from[0], { name: 'Instagram', looks: 2 });
     assert.equal(summary.dayBars.length, 14);
     assert.equal(summary.dayBars.at(-1).looks, 3);
@@ -459,9 +473,10 @@ describe('GET/POST /api/looks', () => {
         referer: 'https://www.instagram.com/',
       },
     });
-    Object.defineProperty(request, 'cf', { value: { country: 'DE' } });
+    Object.defineProperty(request, 'cf', { value: { country: 'DE', city: 'Cologne' } });
     assert.deepEqual(lookFromRequest(request), {
       country: 'DE',
+      city: 'Cologne',
       from: 'Instagram',
       ip: '',
     });
@@ -472,8 +487,9 @@ describe('GET/POST /api/looks', () => {
         'cf-connecting-ip': '203.0.113.10',
       },
     });
-    Object.defineProperty(withIp, 'cf', { value: { country: 'DE' } });
+    Object.defineProperty(withIp, 'cf', { value: { country: 'DE', city: 'Freiburg' } });
     assert.equal(lookFromRequest(withIp).ip, '203.0.113.10');
+    assert.equal(lookFromRequest(withIp).city, 'Freiburg');
     await recordDocumentLook(withIp, auth);
     const html = await (
       await handleLooksPage(
@@ -482,6 +498,7 @@ describe('GET/POST /api/looks', () => {
       )
     ).text();
     assert.match(html, /Germany/);
+    assert.match(html, /Freiburg/);
     assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
     assert.match(html, />Instagram</);
   });
@@ -511,12 +528,14 @@ describe('fillLooksInHtml', () => {
       years: [{ name: '2026', looks: 8 }],
       pages: [{ path: '/', looks: 4 }],
       countries: [{ name: 'Germany', looks: 3 }],
+      cities: [{ name: 'Cologne', looks: 2 }],
       from: [{ name: 'Instagram', looks: 2 }],
       recent: [
         {
           t: '2026-09-04T10:05:00.000Z',
           path: '/stories/nice',
           country: 'DE',
+          city: 'Cologne',
           from: 'Instagram',
         },
       ],
@@ -534,6 +553,7 @@ describe('fillLooksInHtml', () => {
     assert.match(html, /data-looks="total">9</);
     assert.match(html, /Home/);
     assert.match(html, /Germany/);
+    assert.match(html, /Cologne/);
     assert.match(html, /class="looks-name">2026</);
     assert.match(html, /href="https:\/\/www\.instagram\.com\/"/);
     assert.match(html, />Instagram</);
@@ -570,6 +590,7 @@ describe('looksDashboardPage', () => {
     assert.match(html, /This year/);
     assert.match(html, /<h2>12 months<\/h2>/);
     assert.match(html, /<h2>Years<\/h2>/);
+    assert.match(html, /<h2>Cities<\/h2>/);
     assert.match(html, /n<sub>month<\/sub>/);
     assert.match(html, /n<sub>day<\/sub>/);
     assert.match(html, /Home/);
@@ -581,9 +602,11 @@ describe('looksDashboardPage', () => {
       years: [{ name: '2026', looks: 1 }],
       pages: [],
       countries: [{ name: 'France', looks: 1 }],
+      cities: [{ name: 'Freiburg', looks: 1 }],
       from: [{ name: 'Google', looks: 1 }],
     }).text();
     assert.match(withFrom, /France/);
+    assert.match(withFrom, /Freiburg/);
     assert.match(withFrom, /href="https:\/\/www\.google\.com\/"/);
     assert.match(withFrom, />Google</);
   });
